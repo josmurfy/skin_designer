@@ -1,0 +1,198 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" data-bs-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-manufacturer').toggleClass('d-none');" class="btn btn-light d-lg-none"><i class="fa-solid fa-filter"></i></button>
+        <a href="{{ add }}" data-bs-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i></a>
+        <button type="button" id="btn-delete" data-bs-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger"><i class="fa-regular fa-trash-can"></i></button>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+
+    {% if error_warning %}
+      <div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> {{ error_warning }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> {{ success }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+
+    <div class="row">
+
+      {# ── RIGHT: Filter panel ── #}
+      <div id="filter-manufacturer" class="col-lg-3 col-md-12 order-lg-last d-none d-lg-block mb-3">
+        <div class="card">
+          <div class="card-header">
+            <i class="fa-solid fa-filter"></i> {{ text_filter }}
+            <button type="button" id="btn-reset-filter" class="btn btn-sm btn-outline-secondary float-end" data-bs-toggle="tooltip" title="{{ button_reset }}"><i class="fa-solid fa-rotate-left"></i></button>
+          </div>
+          <div class="card-body">
+            <form id="form-filter">
+              <div class="mb-3">
+                <label for="input-filter-name" class="form-label">{{ entry_name }}</label>
+                <input type="text" id="input-filter-name" name="filter_name" value="{{ filter_name }}" placeholder="{{ entry_name }}" class="form-control" />
+              </div>
+              <div class="mb-3">
+                <label for="input-filter-card-type" class="form-label">{{ entry_card_type }}</label>
+                <select id="input-filter-card-type" name="filter_card_type" class="form-select" onchange="$('#btn-filter').trigger('click');">
+                  <option value=""></option>
+                  {% for ct in card_types %}
+                    <option value="{{ ct.card_type_id }}" {% if filter_card_type == ct.card_type_id %}selected="selected"{% endif %}>{{ ct.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="input-filter-status" class="form-label">{{ entry_status }}</label>
+                <select id="input-filter-status" name="filter_status" class="form-select" onchange="$('#btn-filter').trigger('click');">
+                  <option value=""></option>
+                  <option value="1" {% if filter_status == '1' %}selected="selected"{% endif %}>{{ text_enabled }}</option>
+                  <option value="0" {% if filter_status == '0' %}selected="selected"{% endif %}>{{ text_disabled }}</option>
+                </select>
+              </div>
+              <div class="text-end">
+                <button type="button" id="btn-filter" class="btn btn-light"><i class="fa-solid fa-filter"></i> {{ button_filter }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {# ── LEFT: Table ── #}
+      <div class="col-lg-9 col-md-12">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-industry"></i> {{ text_list }}</div>
+          <div class="card-body">
+
+            <form id="form-card-manufacturer" method="post" action="{{ delete }}">
+              <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                  <thead>
+                    <tr>
+                      <td class="text-center" style="width:1px;">
+                        <input type="checkbox" id="checkbox-all" onclick="cardManufacturerSelectAll(this);" />
+                      </td>
+                      <td>
+                        <a href="{{ sort_name }}" class="text-decoration-none text-body fw-semibold">{{ column_name }}
+                          {% if sort == 'name' %}
+                            {% if order == 'ASC' %}<i class="fa-solid fa-sort-up"></i>{% else %}<i class="fa-solid fa-sort-down"></i>{% endif %}
+                          {% else %}
+                            <i class="fa-solid fa-sort text-muted"></i>
+                          {% endif %}
+                        </a>
+                      </td>
+                      <td class="fw-semibold">{{ column_card_type }}</td>
+                      <td class="text-center fw-semibold" style="width:100px;">
+                        <a href="{{ sort_status }}" class="text-decoration-none text-body fw-semibold">{{ column_status }}
+                          {% if sort == 'status' %}
+                            {% if order == 'ASC' %}<i class="fa-solid fa-sort-up"></i>{% else %}<i class="fa-solid fa-sort-down"></i>{% endif %}
+                          {% else %}
+                            <i class="fa-solid fa-sort text-muted"></i>
+                          {% endif %}
+                        </a>
+                      </td>
+                      <td class="text-end fw-semibold" style="width:100px;">{{ column_action }}</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% if manufacturers %}
+                      {% for manufacturer in manufacturers %}
+                        <tr>
+                          <td class="text-center">
+                            <input type="checkbox" name="selected[]" value="{{ manufacturer.manufacturer_id }}" />
+                          </td>
+                          <td>{{ manufacturer.name }}</td>
+                          <td><small class="text-muted">{{ manufacturer.card_type }}</small></td>
+                          <td class="text-center">
+                            {% if manufacturer.status == text_enabled %}
+                              <span class="badge bg-success">{{ text_enabled }}</span>
+                            {% else %}
+                              <span class="badge bg-danger">{{ text_disabled }}</span>
+                            {% endif %}
+                          </td>
+                          <td class="text-end">
+                            <a href="{{ manufacturer.edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i></a>
+                          </td>
+                        </tr>
+                      {% endfor %}
+                    {% else %}
+                      <tr>
+                        <td colspan="5" class="text-center">{{ text_no_results }}</td>
+                      </tr>
+                    {% endif %}
+                  </tbody>
+                </table>
+              </div>
+            </form>
+
+            <div class="row">
+              <div class="col-sm-6">{{ pagination|raw }}</div>
+              <div class="col-sm-6 text-end">{{ results }}</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+var TEXT_SELECT_ONE_MFR     = '{{ text_select_one_mfr|escape('js') }}';
+var TEXT_CONFIRM_DELETE_MFR = '{{ text_confirm_delete_mfr|escape('js') }}';
+var TEXT_NAME_LENGTH_ERROR  = '{{ text_name_length_error|escape('js') }}';
+var TEXT_CONFIRM_DELETE = '{{ text_confirm_delete|escape('js') }}';
+var URL_DELETE          = '{{ delete|escape('js') }}';
+var URL_BASE            = '{{ cancel|escape('js') }}';
+
+function htmlspecialchars(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+function cardManufacturerSelectAll(source) {
+    document.querySelectorAll('#form-card-manufacturer input[name="selected[]"]').forEach(function(cb) {
+        cb.checked = source.checked;
+    });
+}
+
+document.getElementById('btn-delete').addEventListener('click', function() {
+    var selected = document.querySelectorAll('#form-card-manufacturer input[name="selected[]"]:checked');
+    if (selected.length === 0) { alert('{{ text_no_results|escape('js') }}'); return; }
+    if (confirm(TEXT_CONFIRM_DELETE)) {
+        document.getElementById('form-card-manufacturer').submit();
+    }
+});
+
+document.getElementById('btn-filter').addEventListener('click', function() {
+    var params = new URLSearchParams(window.location.search);
+    params.set('filter_name',      document.getElementById('input-filter-name').value);
+    params.set('filter_card_type', document.getElementById('input-filter-card-type').value);
+    params.set('filter_status',    document.getElementById('input-filter-status').value);
+    params.set('page', '1');
+    window.location.href = window.location.pathname + '?' + params.toString();
+});
+
+document.getElementById('input-filter-name').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('btn-filter').click();
+});
+
+document.getElementById('btn-reset-filter').addEventListener('click', function() {
+    var params = new URLSearchParams(window.location.search);
+    params.delete('filter_name');
+    params.delete('filter_card_type');
+    params.delete('filter_status');
+    params.set('page', '1');
+    window.location.href = window.location.pathname + '?' + params.toString();
+});
+</script>
+
+{{ footer }}

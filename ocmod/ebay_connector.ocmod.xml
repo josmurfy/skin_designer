@@ -1,0 +1,692 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<modification>
+        <name>Webkul Opencart eBay Connector</name>
+        <version>2.0.0</version>
+        <code>eBay_connector</code>
+        <author>Webkul</author>
+        <link>http://webkul.com</link>
+
+        <file path="admin/controller/startup/startup.php">
+          <operation>
+            <search><![CDATA[
+               $this->registry->set('openbay', new Openbay($this->registry));
+            ]]></search>
+            <add position="after"><![CDATA[
+            	if($this->config->get('ebay_connector_status')){
+            		$this->registry->set('Ebayconnector', new Ebayconnector($this->registry));
+            	}
+            ]]></add>
+          </operation>
+        </file>
+				<file path="admin/controller/common/filemanager.php">
+					 <operation>
+							 <search><![CDATA[
+							 foreach (array_keys($this->request->files['file']['name']) as $key) {
+							 ]]></search>
+							 <add position="after"><![CDATA[
+									 $image_name = $this->request->files['file']['name'][$key];
+									 $image_name = str_replace(' ', '', $image_name);
+				 $image_name = preg_replace('/[@#$%^&*~?]/', '', $image_name);
+				 $this->request->files['file']['name'][$key] = $image_name;
+							 ]]></add>
+					 </operation>
+			 </file>
+
+        <file path="catalog/controller/startup/startup.php">
+          <operation>
+            <search><![CDATA[
+               $this->registry->set('openbay', new Openbay($this->registry));
+            ]]></search>
+            <add position="after"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $this->registry->set('Ebayconnector', new Ebayconnector($this->registry));
+              }
+            ]]></add>
+          </operation>
+        </file>
+
+        <file path="admin/view/template/common/header.tpl">
+          <operation>
+            <search><![CDATA[
+              <script src="view/javascript/common.js" type="text/javascript"></script>
+            ]]></search>
+            <add position="after"><![CDATA[
+							<style>
+								#menu > li > a{
+									overflow: hidden;
+								}
+						  </style>
+              <script src='view/javascript/ebay_connector/jstz.min.js' type='text/javascript'></script>
+              <script type="text/javascript">
+                    timezone = jstz.determine();
+                    var customer_timezone = timezone.name();
+                    document.cookie = escape("demo_timezone") + "=" + customer_timezone + "; path=/";
+              </script>
+            ]]></add>
+          </operation>
+        </file>
+
+        <file path="admin/controller/common/column_left.php">
+          <operation>
+            <search><![CDATA[
+               // Catalog
+            ]]></search>
+            <add position="after"><![CDATA[
+							// opencart_ebay_connector code starts here
+              if ($this->config->get('ebay_connector_status')) {
+								$this->load->language('ebay_map/ebay_ocmod');
+                $opencart_ebay_connector = array();
+								if ($this->user->hasPermission('access', 'ebay_map/ebay_template_listing')) {
+                  $opencart_ebay_connector[] = array(
+                    'name'     => $this->language->get('text_ebay_template_listing'),
+                    'href'     => $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'], true),
+                    'children' => array()
+                  );
+                }
+
+                if ($this->user->hasPermission('access', 'ebay_map/ebay_account')) {
+                  $opencart_ebay_connector[] = array(
+                    'name'     => $this->language->get('text_ebay_account'),
+                    'href'     => $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'], true),
+                    'children' => array()
+                  );
+                }
+
+								if ($this->user->hasPermission('access', 'ebay_map/ebay_category_list')) {
+									$opencart_ebay_connector[] = array(
+										'name'     => $this->language->get('text_ebay_category_list'),
+										'href'     => $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'], true),
+										'children' => array()
+									);
+								}
+
+								if ($this->user->hasPermission('access', 'ebay_map/ebay_specification_list')) {
+									$opencart_ebay_connector[] = array(
+										'name'     => $this->language->get('text_ebay_specification_list'),
+										'href'     => $this->url->link('ebay_map/ebay_specification_list', 'token=' . $this->session->data['token'], true),
+										'children' => array()
+									);
+								}
+
+								if ($this->user->hasPermission('access', 'ebay_map/ebay_condition_list')) {
+									$opencart_ebay_connector[] = array(
+										'name'     => $this->language->get('text_ebay_condition_list'),
+										'href'     => $this->url->link('ebay_map/ebay_condition_list', 'token=' . $this->session->data['token'], true),
+										'children' => array()
+									);
+								}
+
+								if ($this->user->hasPermission('access', 'ebay_map/ebay_sync_products') && $this->config->get('ebay_connector_syncproduct_status')) {
+ 		               $opencart_ebay_connector[] = array(
+ 		                 'name'     => $this->load->language('ebay_map/ebay_sync_products')['text_ebay_sync_products'],
+ 		                 'href'     => $this->url->link('ebay_map/ebay_sync_products', 'token=' . $this->session->data['token'], true),
+ 		                 'children' => array()
+ 		               );
+ 		             }
+
+								 if ($this->user->hasPermission('access', 'ebay_map/price_qty_rule')) {
+									 $opencart_ebay_connector[] = array(
+										 'name'     => $this->language->get('text_price_quantity_rule'),
+										 'href'     => $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'], true),
+										 'children' => array()
+									 );
+								 }
+
+								 if ($this->user->hasPermission('access', 'ebay_map/product_data')) {
+									 $opencart_ebay_connector[] = array(
+										 'name'     => $this->language->get('text_product_data_mapping'),
+										 'href'     => $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'], true),
+										 'children' => array()
+									 );
+								 }
+
+								 if ($this->user->hasPermission('access', 'ebay_map/seller_category')) {
+									 $opencart_ebay_connector[] = array(
+										 'name'     => $this->language->get('text_seller_category'),
+										 'href'     => $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'], true),
+										 'children' => array()
+									 );
+								 }
+
+                if ($opencart_ebay_connector) {
+                  $data['menus'][] = array(
+                    'id'       => 'menu-ebay-connector',
+                    'icon'     => 'fa-retweet',
+                    'name'     => $this->language->get('text_opencart_ebay_connector'),
+                    'href'     => '',
+                    'children' => $opencart_ebay_connector
+                  );
+                }
+              }
+							// opencart_ebay_connector code ends here
+            ]]></add>
+          </operation>
+        </file>
+        <file path="admin/controller/catalog/product.php">
+          <operation>
+            <search><![CDATA[
+              $this->model_catalog_product->addProduct($this->request->post);
+            ]]></search>
+            <add position="replace"><![CDATA[$product_id = $this->model_catalog_product->addProduct($this->request->post);
+						if ($this->config->get('ebay_connector_status')) {
+              $this->load->model('ebay_map/ebay_map_product');
+              $this->model_ebay_map_ebay_map_product->__saveOpencartProductData($product_id, $this->request->post);
+            }
+              ]]></add>
+          </operation>
+					<operation>
+					<search><![CDATA[
+					$this->model_catalog_product->deleteProduct($product_id);
+					]]></search>
+					<add position="before"><![CDATA[
+			  if ($this->config->get('ebay_connector_status')){
+					$this->load->model('ebay_map/ebay_map_product');
+					$this->model_ebay_map_ebay_map_product->deleteOpencartProductWithEbay($product_id);
+				}
+						]]></add>
+					</operation>
+
+          <operation>
+            <search><![CDATA[
+              $this->model_catalog_product->editProduct($this->request->get['product_id'], $this->request->post);
+            ]]></search>
+            <add position="replace"><![CDATA[
+							/**
+								* opencart ebay connector code
+								*/
+							 if($this->config->get('ebay_connector_status')){
+								 $this->load->model('ebay_map/ebay_map_product');
+								 $result = $this->model_ebay_map_ebay_map_product->__reviseEbayItem($this->request->get['product_id'], $this->request->post);
+									if(isset($result['response']['error']) && $result['response']['error']){
+											$this->error['warning'] = $result['response']['message'];
+											$this->getForm();
+											return;
+									}
+							 }
+							$this->model_catalog_product->editProduct($this->request->get['product_id'], $this->request->post);
+
+							if($this->config->get('ebay_connector_status')){
+								 $this->model_ebay_map_ebay_map_product->__saveOpencartProductData($this->request->get['product_id'], $this->request->post);
+							}
+							 /**
+								* end here
+								*/
+                  ]]></add>
+          </operation>
+
+          <operation>
+            <search><![CDATA[
+              $product_total = $this->model_catalog_product->getTotalProducts($filter_data);
+            ]]></search>
+            <add position="after"><![CDATA[
+            /**
+             * opencart ebay connector code
+             */
+              if($this->config->get('ebay_connector_status')){
+                  $getEbayClient = $this->Ebayconnector->_eBayAuthSession();
+                  $this->load->model('ebay_map/ebay_map_product');
+                  $data['entry_relist_ebay_product']  = $this->language->get('entry_relist_ebay_product');
+                  $data['text_processing']            = $this->language->get('text_processing');
+                  $data['button_close']               = $this->language->get('button_close');
+                  $data['ebay_connector_status']      = $this->config->get('ebay_connector_status');
+              }
+                  ]]></add>
+          </operation>
+
+          <operation>
+            <search><![CDATA[
+              $special = false;
+            ]]></search>
+						<add position="before"><![CDATA[
+             /**
+               * opencart ebay connector code
+               */
+              $sync_status = $ebay_account_id = false;
+              if ($this->config->get('ebay_connector_status')) {
+								$this->load->language('ebay_map/ebay_ocmod');
+								$data['entry_relist_ebay_product'] = $this->language->get('entry_relist_ebay_product');
+								$data['text_processing'] = $this->language->get('text_processing');
+
+                if (isset($getEbayClient) && $getEbayClient) {
+                  $getEbayMapEntry = $this->model_ebay_map_ebay_map_product->getProducts(array('filter_oc_product_id' => $result['product_id']));
+
+                  if (isset($getEbayMapEntry[0]) && $getEbayMapEntry[0]) {
+                    $ebay_account_id = $getEbayMapEntry[0]['account_id'];
+                    $sync_status = true;
+                  } else {
+									  $sync_status = false;
+									}
+                }
+              }
+              /**
+               * end here
+               */
+                  ]]></add>
+          </operation>
+
+          <operation>
+            <search><![CDATA[
+              'edit'       => $this->url->link('catalog/product/edit', 'token=' . $this->session->data['token'] . '&product_id=' . $result['product_id'] . $url, true)
+            ]]></search>
+            <add position="replace"><![CDATA[
+              'edit'       => $this->url->link('catalog/product/edit', 'token=' . $this->session->data['token'] . '&product_id=' . $result['product_id'] . $url, true),
+              'ebay_sync_status' => $sync_status,
+              'ebay_account_id'  => $ebay_account_id,
+            ]]></add>
+          </operation>
+					<operation>
+            <search><![CDATA[
+              	if ($this->error && !isset($this->error['warning'])) {
+            ]]></search>
+            <add position="before"><![CDATA[
+							// ebay template validate code
+							if($this->config->get('ebay_connector_status') && isset($this->request->post['product_ebay_template']) && $this->request->post['product_ebay_template']){
+								$this->load->model('ebay_map/ebay_template_listing');
+								$product_id = isset($this->request->get['product_id']) ? $this->request->get['product_id']: 0;
+								$result = $this->model_ebay_map_ebay_template_listing->__validateProducteBayTemplate($product_id, $this->request->post);
+								if(isset($result['error'])){
+									$this->error['warning'] = $result['message'];
+								}
+							}
+							if($this->config->get('ebay_connector_status') && isset($this->request->post['scheduling_type']) && $this->request->post['scheduling_type']=='schedule') {
+
+								if(isset($this->request->post['scheduling_date']) && strlen($this->request->post['scheduling_date'])<2){
+									$this->error['warning'] =$this->language->get('warning_date_time');
+								}
+                if((isset($this->request->post['scheduling_time']) && strlen($this->request->post['scheduling_time'])<2)){
+                $this->error['warning'] =$this->language->get('warning_date_time');
+                }
+							}
+            ]]></add>
+          </operation>
+					<operation>
+            <search><![CDATA[
+              	foreach ($categories as $category_id) {
+            ]]></search>
+            <add position="before"><![CDATA[
+							$exists = array();
+							$new_array = array();
+							$getAllEbayCondition_temp = $this->Ebayconnector->getAllEbayCondition();
+
+							foreach ($getAllEbayCondition_temp as $key => $value) {
+								 $new_array[$value['oc_category_id']] = $value['ebay_category_id'];
+							}
+            ]]></add>
+          </operation>
+					<operation>
+            <search><![CDATA[
+              	$category_info['name'] : $category_info['name']
+            ]]></search>
+            <add position="after" offset="1"><![CDATA[
+							if (array_key_exists($category_info['category_id'], $new_array)) {
+								$exists[$category_info['category_id']] = $new_array[$category_info['category_id']];
+							}
+            ]]></add>
+          </operation>
+					<operation>
+            <search><![CDATA[
+              	// Filters
+            ]]></search>
+            <add position="before"><![CDATA[
+							foreach ($data['getEbaySpecification'] as $key => $value) {
+								if (!array_key_exists($value['oc_category_id'], $exists)) {
+									unset($data['getEbaySpecification'][$key]);
+								}
+							}
+
+							foreach ($data['getEbayCondition'] as $key => $value) {
+								if (!array_key_exists($value['oc_category_id'], $exists)) {
+									unset($data['getEbayCondition'][$key]);
+								}
+							}
+            ]]></add>
+          </operation>
+        </file>
+        <file path="admin/view/template/catalog/product_list.tpl">
+          <operation>
+            <search><![CDATA[
+              <a href="<?php echo $product['edit']; ?>" data-bs-toggle="tooltip" title="<?php echo $button_edit; ?>" class="btn btn-primary"><i class="fa fa-pencil"></i></a></td>
+            ]]></search>
+            <add position="replace"><![CDATA[
+              <a href="<?php echo $product['edit']; ?>" data-bs-toggle="tooltip" title="<?php echo $button_edit; ?>" class="btn btn-primary"><i class="fa fa-pencil"></i></a>
+              <?php if(isset($ebay_connector_status) && $ebay_connector_status ){
+                if(isset($product['ebay_sync_status']) && $product['ebay_sync_status']){ ?>
+                  <!-- Button trigger modal -->
+                  <button type="button" class="btn btn-warning start_sync_ebay" data-product-id="<?php echo $product['product_id']; ?>" data-account-id="<?php echo $product['ebay_account_id']; ?>"  data-bs-toggle="tooltip" title="<?php echo $entry_relist_ebay_product; ?>"><i class="fa fa-compress" aria-hidden="true"></i></button>
+              <?php } } ?>
+            </td>
+                  ]]></add>
+          </operation>
+
+          <operation>
+            <search><![CDATA[
+              </form>
+            ]]></search>
+            <add position="after"><![CDATA[
+              <!-- Modal -->
+                <div class="modal fade" id="ebay_sync" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+                  <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                      <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                        <h4 class="modal-title" id="myModalLabel"><?php echo $entry_relist_ebay_product; ?></h4>
+                      </div>
+                      <div class="modal-body">
+                        <div class="row">
+                          <div class="col-sm-12 form-group">
+                            <label class="col-sm-2 control-label"><?php echo $text_processing; ?></label>
+                            <div class="col-sm-10" style="margin-top:10px">
+                              <div class="progress">
+                                <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
+                              </div>
+                              <div id="progress-text"></div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo $button_close; ?></button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ]]></add>
+          </operation>
+          <operation>
+            <search><![CDATA[
+              <?php echo $footer; ?>
+            ]]></search>
+            <add position="before"><![CDATA[
+              <script type="text/javascript">
+                $('.start_sync_ebay').on('click', function(){
+                  var getProductId = $(this).data('product-id');
+                  var getAccountId = $(this).data('account-id');
+
+                  $('.alert').remove();
+                  $('#ebay_sync  #progress-bar').css('width', '0%');
+                  $('#ebay_sync  #progress-bar').removeClass('progress-bar-danger progress-bar-success');
+                  $('#ebay_sync  #progress-text').html('');
+                  $('#ebay_sync').modal('show');
+
+                  $('#ebay_sync  #progress-bar').css('width', '100%');
+                  $('#ebay_sync  #progress-text').html('<span class="text-info pull-left"> Synchronization Currently processing...</span>');
+
+                  $.ajax({
+                    url: 'index.php?route=ebay_map/ebay_map_product/reviseEbayItem&token=<?php echo $token; ?>&account_id='+getAccountId,
+                    type: 'post',
+                    dataType: 'json',
+                    data: 'product_id=' + getProductId,
+                    beforeSend: function(){
+                      $('#ebay_sync').find('.alert').remove();
+                    },
+                    success: function(json) {
+                        if (json.error && json.error != 'undefined') {
+                          $('#ebay_sync  #progress-bar').addClass('progress-bar-danger');
+                          $('#ebay_sync .modal-body').append('<div class="alert alert-danger">'+json.error+'</div>');
+                        }
+
+                        if (json.success) {
+                          if(!json.error){
+                            $('#ebay_sync  #progress-bar').addClass('progress-bar-success');
+                          }
+                          $('#ebay_sync .modal-body').append('<div class="alert alert-success">'+json.success+'</div>');
+                        }
+                    },
+                    complete: function(){
+                      // $('#ebay_sync  #progress-bar').addClass('progress-bar-success');
+                      // $('#ebay_sync  #progress-text').html('<span class="text-success pull-left"> Relist process has been completed.</span>');
+                    },
+                    error: function(xhr, ajaxOptions, thrownError) {
+                      alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                    }
+                  });
+
+                })
+              </script>
+            ]]></add>
+          </operation>
+        </file>
+        <file path="admin/model/catalog/product.php">
+          <operation>
+            <search><![CDATA[
+              foreach ($product_attribute_query->rows as $product_attribute) {
+            ]]></search>
+            <add position="after"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $getSpecificationEntry = $this->Ebayconnector->checkSpecificationEntry(array('attribute_id' => $product_attribute['attribute_id']));
+                  if(isset($getSpecificationEntry) && $getSpecificationEntry){
+                    continue;
+                  }
+              }
+               ]]></add>
+          </operation>
+          <operation>
+            <search><![CDATA[
+              $this->db->query("DELETE FROM " . DB_PREFIX . "coupon_product WHERE product_id = '" . (int)$product_id . "'");
+            ]]></search>
+            <add position="after"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $this->db->query("DELETE FROM " . DB_PREFIX . "wk_ebay_product_to_condition WHERE oc_product_id = '" . (int)$product_id . "'");
+              }
+               ]]></add>
+          </operation>
+          <operation>
+            <search><![CDATA[
+              foreach ($product_option_query->rows as $product_option) {
+            ]]></search>
+            <add position="after"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $getVariationEntry = $this->Ebayconnector->checkVariationEntry($product_option);
+                  if(isset($getVariationEntry) && $getVariationEntry){
+                    continue;
+                }
+              }
+               ]]></add>
+          </operation>
+        </file>
+
+        <file path="admin/model/catalog/attribute.php">
+          <operation>
+            <search><![CDATA[
+              if (!empty($data['filter_attribute_group_id'])) {
+            ]]></search>
+            <add position="before"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $sql .= " AND a.attribute_group_id NOT IN (SELECT attr_group_id FROM ".DB_PREFIX."wk_specification_map) ";
+              }
+              ]]></add>
+          </operation>
+          <operation>
+            <search><![CDATA[
+              $query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "attribute");
+            ]]></search>
+            <add position="replace"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $query = $this->db->query("SELECT COUNT(*) AS total FROM ".DB_PREFIX."attribute a LEFT JOIN ".DB_PREFIX."attribute_group ag ON(a.attribute_group_id = ag.attribute_group_id) WHERE a.attribute_group_id NOT IN (SELECT attr_group_id FROM ".DB_PREFIX."wk_specification_map) ");
+              }else{
+                $query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "attribute");
+              }
+              ]]></add>
+          </operation>
+        </file>
+
+        <file path="admin/model/catalog/attribute_group.php">
+          <operation>
+            <search><![CDATA[
+              WHERE agd.language_id = '" . (int)$this->config->get('config_language_id') . "'";
+            ]]></search>
+            <add position="after"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $sql .= " AND ag.attribute_group_id NOT IN (SELECT attr_group_id FROM ".DB_PREFIX."wk_specification_map) ";
+              }
+              ]]></add>
+          </operation>
+          <operation>
+            <search><![CDATA[
+              $query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "attribute_group");
+            ]]></search>
+            <add position="replace"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $query = $this->db->query("SELECT COUNT(*) AS total FROM ".DB_PREFIX."attribute_group WHERE attribute_group_id NOT IN (SELECT attr_group_id FROM ".DB_PREFIX."wk_specification_map) ");
+              }else{
+                $query = $this->db->query("SELECT COUNT(*) AS total FROM " . DB_PREFIX . "attribute_group");
+              }
+              ]]></add>
+          </operation>
+        </file>
+				<file path="admin/model/catalog/category.php">
+				 <operation>
+					 <search><![CDATA[
+						 $this->db->query("DELETE FROM " . DB_PREFIX . "category WHERE category_id = '" . (int)$category_id . "'");
+					 ]]></search>
+					 <add position="before"><![CDATA[
+						 if($this->config->get('ebay_connector_status')){
+								 $getMappedEntry = $this->db->query("SELECT * FROM ".DB_PREFIX."wk_ebaysync_categories WHERE opencart_category_id = '".(int)$category_id."' ")->row;
+								 if(!empty($getMappedEntry)){
+										 $this->load->model('ebay_map/ebay_map_category');
+										 $this->model_ebay_map_ebay_map_category->deleteMapCategory($getMappedEntry['id']);
+								 }
+						 }
+						 ]]></add>
+				 </operation>
+			 	</file>
+         <file path="admin/model/catalog/option.php">
+          <operation>
+            <search><![CDATA[
+              if (!empty($data['filter_name'])) {
+            ]]></search>
+            <add position="before"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                $sql .= " AND o.option_id NOT IN (SELECT variation_id FROM ".DB_PREFIX."wk_ebay_variation) ";
+              }
+              ]]></add>
+          </operation>
+          <operation>
+            <search><![CDATA[
+              $query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "option`");
+            ]]></search>
+            <add position="replace"><![CDATA[
+              if($this->config->get('ebay_connector_status')){
+                  $query = $this->db->query("SELECT COUNT(*) AS total FROM `".DB_PREFIX."option` WHERE option_id NOT IN (SELECT variation_id FROM ".DB_PREFIX."wk_ebay_variation) ");
+              }else{
+                  $query = $this->db->query("SELECT COUNT(*) AS total FROM `" . DB_PREFIX . "option`");
+              }
+              ]]></add>
+          </operation>
+        </file>
+
+				<file path="catalog/model/checkout/order.php">
+          <operation>
+            <search><![CDATA[
+              $order_status = '';
+            ]]></search>
+            <add position="after" offset="1"><![CDATA[
+                if ($this->config->get('ebay_connector_status')){
+										$this->load->model('catalog/ebay_product_map');
+							 			$this->model_catalog_ebay_product_map->updateStockAteBay($order_info, $order_status_id, $comment);
+                }
+            ]]></add>
+           </operation>
+				 </file>
+
+				 <!-- start eBay Sync product -->
+
+		     <file path="admin/controller/catalog/product.php">
+		         <operation>
+		           <search><![CDATA[
+		             if (isset($this->request->post['selected']))
+		           ]]></search>
+		           <add position="before"><![CDATA[
+		         		if (isset($this->session->data['errors'])) {
+		         			$data['ebay_sync_errors'] = $this->session->data['errors'];
+		         			unset($this->session->data['errors']);
+		         		} else {
+		         			$data['ebay_sync_errors'] = array();
+		         		}
+
+		         		if (isset($this->session->data['ebay_success'])) {
+		         			$data['ebay_sync_success'] = $this->session->data['ebay_success'];
+		         			unset($this->session->data['ebay_success']);
+		         		} else {
+		         			$data['ebay_sync_success'] = array();
+		         		}
+		           ]]></add>
+		         </operation>
+		         <operation>
+		           <search><![CDATA[
+		             $this->model_ebay_map_ebay_map_product->__saveOpencartProductData($this->request->get['product_id'], $this->request->post);
+		           ]]></search>
+		           <add position="after" offset="1"><![CDATA[
+		 						if ($this->config->get('ebay_connector_syncproduct_status')) {
+		 							$tData = array(
+		 							'product_id' => $this->request->get['product_id'],
+		 							'price_quantity' => 0
+		 							);
+		 							$allErrors = $allSuccess = [];
+		 							$this->registry->set('Ebaysyncproducts', new Ebaysyncproducts($this->registry));
+		 							$allSyncIds = $this->Ebaysyncproducts->getAllSyncIds($tData, true);
+
+		 							foreach ($allSyncIds['variations'] as $k => $val) {
+		 							$name = $k['data']['product_description'][1]['name'];
+		 							if( $val['ebayApiResponse']['error'] ) {
+		 							$allErrors[$k] = $name . ' ' . $val['ebayApiResponse']['message'];
+		 							} else {
+		 							$allSuccess[$k] = $name . ' ' . $val['ebayApiResponse']['message'];
+		 							}
+		 							}
+		 						}
+		           ]]></add>
+		         </operation>
+		         <operation>
+		           <search><![CDATA[
+		             public function delete(
+		           ]]></search>
+		           <add position="before" offset="6"><![CDATA[
+		             if ($this->config->get('ebay_connector_syncproduct_status') && count($allErrors)){
+		       				$this->session->data['errors'] = $allErrors;
+		       				if( COUNT($allSuccess) ) {
+		       					$this->session->data['ebay_success'] = $allSuccess;
+		       				}
+		       				unset($this->session->data['success']);
+		       				$this->response->redirect($this->url->link('catalog/product', 'token=' . $this->session->data['token'] . $url, true));
+		       			} else {
+		       				$this->session->data['success'] = "Synced all products successfully";
+		       			}
+		           ]]></add>
+		         </operation>
+
+						 <!-- end eBay Sync product -->
+		     </file>
+		     <file path="admin/model/catalog/product.php">
+
+					 <!-- start eBay Sync product -->
+
+		         <operation>
+		           <search><![CDATA[
+		             $sql .= " GROUP BY p.product_id";
+		           ]]></search>
+		           <add position="after"><![CDATA[
+		 						if ($this->config->get('ebay_connector_syncproduct_status')) {
+		 							if( isset($this->request->get['ebaySyncStatus']) && $this->request->get['ebaySyncStatus'] ) {
+		 							$sql .= " having esp.source_product is null and esp.destination_product is null";
+		 							}
+		 						}
+		           ]]></add>
+		         </operation>
+		         <operation>
+		           <search><![CDATA[
+		             public function getProducts(
+		           ]]></search>
+		           <add position="after"><![CDATA[
+		             if( isset($this->request->get['ebaySyncStatus']) && $this->request->get['ebaySyncStatus'] && $this->config->get('ebay_connector_syncproduct_status')) {
+		         			$sql = "SELECT esp.source_product, esp.destination_product, p.*, pd.* FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) LEFT JOIN `" . DB_PREFIX."wk_ebay_sync_products` esp ON(esp.source_product = p.product_id || esp.destination_product = p.product_id) WHERE pd.language_id = '" . (int)$this->config->get('config_language_id') . "'";
+		         		}
+		         		else
+		           ]]></add>
+		         </operation>
+
+						 <!-- end eBay Connector Sync Customization -->
+		     </file>
+
+
+    </modification>

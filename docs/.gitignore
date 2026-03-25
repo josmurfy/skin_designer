@@ -1,0 +1,6 @@
+# Documentation - Garder tous les fichiers .md
+!*.md
+
+# Ne pas commiter les backups même si présents par erreur
+*.backup
+*.backup.*

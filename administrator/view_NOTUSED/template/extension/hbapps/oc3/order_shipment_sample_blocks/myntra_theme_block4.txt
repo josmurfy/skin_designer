@@ -1,0 +1,8 @@
+<tr>
+                        <td style="padding-top:10px;text-align:left"><b style="font-size:20px">What Happens Next?</b>
+                          <p style="color:#7e818b;line-height:1.5"> We will send you a confirmation once your bag of joy is out for delivery. <br>
+                            If you want to reach us, please <a href="#" style="text-decoration:underline;font-weight:600;color:#282c3f" target="_blank"> Contact Us </a> here. </p></td>
+                      </tr>
+                      <tr>
+                        <td align="center"><a href="#" target="_blank"> <img src="{store_url}image/catalog/hb_shipment/delivery-1.gif" alt="" height="160" class="CToWUd"> </a> </td>
+                      </tr>

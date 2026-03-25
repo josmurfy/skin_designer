@@ -1,0 +1,11 @@
+@charset "UTF-8";
+
+div.inline_ad {
+    display:inline-block;
+    text-align:center;
+    vertical-align:top;
+}
+
+img.social {
+    width:20px;
+}

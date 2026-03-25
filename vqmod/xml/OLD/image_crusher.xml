@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+        <id>Image Crusher</id>
+        <version>2.0.2</version>
+        <vqmver>2.5.1</vqmver>
+        <author>paddysherry.com</author>
+        <file name="admin/controller/common/filemanager.php">
+                
+
+                <!--Build a custom message that informs the user how much percent they have reduced the image by-->
+                <operation>
+                        <search position="replace"><![CDATA[
+                        $json['success'] = $this->language->get('text_uploaded');
+                        ]]></search>
+                        <add><![CDATA[
+                        //If image crusher is turned off there is no compression so just show the default popup msg.
+                        if (isset($percentageSaving)) {
+                            $json['success'] = $this->language->get('image_crusher_popup_success') . $percentageSaving;
+                        } else {
+                            $json['success'] = $this->language->get('text_uploaded'); 
+                        }
+                        
+                        ]]></add>
+                </operation>
+
+                <!--compress the image if the module is turned on in admin-->
+                <operation>
+                        <search position="replace"><![CDATA[
+                        move_uploaded_file($this->request->files['file']['tmp_name'], $directory . '/' . $filename);
+                        ]]></search>
+                        <add><![CDATA[
+                    
+                        $source = $this->request->files['file'];
+                       
+                        //get the size of the original file for comparison later.             
+                        $originalFileSize = filesize($source['tmp_name']);
+
+                        move_uploaded_file($this->request->files['file']['tmp_name'], $directory . '/' . $filename);
+                                
+                        //check if image crusher is turned on in admin
+                        if ($this->config->get('image_crusher_image_optimise_on') === 'on') {
+                        
+                                $newpic = $directory . '/' . $filename;  
+                        
+                                //the new image will get saved in the image/data directory
+                                $compressedImage = '../image/catalog/'. $filename;
+                               
+                                //only compress jpegs                                
+                                if ($source['type'] === 'image/jpeg')  { 
+                                    $image2 = imagecreatefromjpeg($newpic);
+                                    //get the compression level and apply it to the image
+                                    imagejpeg($image2, $compressedImage, $this->fetchCompressionLevel());
+                                } elseif ($source['type'] === 'image/png') {
+                                    $this->compressPngs($newpic, $compressedImage, $this->fetchCompressionLevel()); 
+                                }
+
+                                //get the size of the optimised file and compare to the original
+                                $newFileSize = filesize($compressedImage);
+                                $percentageSaving = $this->imageSaving($originalFileSize, $newFileSize);
+                        }
+
+                        ]]></add>
+                </operation>
+        
+                <!--work out the compression level to apply to the image-->
+                <!--work out the percentage saving of the compressed image versus the original image-->
+                <operation>
+                        <search position="before"><![CDATA[
+                        public function upload() {
+                        ]]></search>
+                        <add><![CDATA[
+                        
+                   
+                        //this function checks the compression level as set in the admin
+                        //the lowest compression level availiable is 46 because anything smaller degrades the image quality significantly.
+                        public function fetchCompressionLevel() {
+                                
+                                $compressionLevel = $this->config->get('image_crusher_compression_level');  
+                              
+                                if ($compressionLevel == 1) {
+                                        $quality = 96;
+                                } elseif ($compressionLevel == 2) {
+                                        $quality = 94;
+                                } elseif ($compressionLevel == 3) {
+                                        $quality = 88;
+                                } elseif ($compressionLevel == 4) {
+                                        $quality = 82;
+                                } elseif ($compressionLevel == 5) {
+                                        $quality = 76;
+                                } elseif ($compressionLevel == 6) {
+                                        $quality = 70;
+                                } elseif ($compressionLevel == 7) {
+                                        $quality = 64;
+                                } elseif ($compressionLevel == 8) {
+                                        $quality = 58;
+                                } elseif ($compressionLevel == 9) {
+                                        $quality = 52; 
+                                } elseif ($compressionLevel == 10) {
+                                        $quality = 46; 
+                                } 
+         
+                                return $quality;                     
+                        }
+
+                        //work out the percentage saving of the original image versus the optimised image
+                        public function imageSaving($originalFileSize, $newFileSize)
+                        {
+                                $difference = $originalFileSize - $newFileSize;
+                                
+                                $saving = ($difference/$originalFileSize)*100;
+                                $roundedFigure = round($saving);
+                                return $roundedFigure . '%';  
+                        }
+
+                        /*
+                        * Compress pngs with full color. PNG-24 images are not compressed but retain alpha transparenct
+                        * @param $originalImage - string - source file path.
+                        * @param $newImageName - string -newImageNameination file path.
+                        * @param $quality - string -The image quality setting from the admin. 
+                        * @return boolean
+                        *
+                        */
+                        public function compressPngs($originalImage, $newImageName, $quality) {
+                
+                            // Size
+                            $imageSize = getimagesize($originalImage);
+
+                            //Dimensions
+                            $imageWidth = $imageSize[0];
+                            $imageHeight = $imageSize[1];
+
+                            // Source - get a handle to our image. This will be false if we pass anything other than png
+                            $sourceImage = imagecreatefrompng($originalImage);
+
+                            // Destination - create a background with the width and height of our input image
+                            $destination = imagecreatetruecolor($imageWidth, $imageHeight);
+
+                            // if this has no alpha transparency defined as an index
+                            // it could be a palette image??
+                            $palette = (imagecolortransparent($sourceImage)<0);
+
+                            //Hardcorde the quality to be 9. This is for pngs with alpha or tranparency as the file get bigger if the quality is anything else.
+                            //Images that dont have transparency use the quality slider from admin and fetchCompressionLevelForPng works out the quality.
+                            $pngQuality = 9;
+                            
+                            /**ALPHA IMAGES**/
+                            // If this has transparency, or is defined
+                            if (!$palette || (ord(file_get_contents ($originalImage, false, null, 25, 1)) & 4)) {
+                                //print ("Is Alpha");
+                                // Has indexed transparent color
+                                if(($transparentColour = imagecolorstotal($sourceImage)) && $transparentColour<=256)
+                                    imagetruecolortopalette($destination, false, $transparentColour);
+                                    imagealphablending($destination, false);
+                                    $alpha = imagecolorallocatealpha($destination, 0, 0, 0, 127);
+                                    imagefill($destination, 0, 0, $alpha);
+                                    imagesavealpha($destination, true);
+                            }
+
+                            // Resample Image
+                            //print ("Resampling Image");
+                            imagecopyresampled($destination, $sourceImage, 0, 0, 0, 0, $imageWidth, $imageHeight, $imageSize[0], $imageSize[1]);
+
+                            // Did the original PNG supported Alpha?
+                            if ((ord(file_get_contents ($originalImage, false, null, 25, 1)) & 4)) {
+                                //print ("Testing is there is Alpha transparency");
+
+                                // we dont have to check every pixel.
+                                // We take a sample of 2500 pixels (for images between 50X50 up to 500X500), then 1/100 pixels thereafter.
+                                $dx = min(max(floor($imageWidth/50), 1), 10);
+                                $dy = min(max(floor($imageHeight/50), 1), 10);
+
+                                $palette = true;
+                                for($x = 0; $x < $imageWidth; $x = $x + $dx) {
+                                    for($y = 0; $y < $imageHeight; $y = $y + $dy) {
+                                        $col = imagecolorsforindex($destination, imagecolorat($destination,$x,$y));
+                                        // How transparent until it's actually visible
+                                        // I reackon atleast 10% of 127 before its noticeable, e.g. ~13
+                                        if ($col['alpha'] > 13) {
+                                            $palette = false;
+                                            break 2;
+                                        }
+                                    }
+                                }
+                                //var_dump(!$palette);
+                            }
+
+                            /***FULL COLOR IMAGES**/
+                            if ($palette) {
+                                //print "Converting to indexed colors";
+                                imagetruecolortopalette($destination, false, 256);
+                                $pngQuality = $this->fetchCompressionLevelForPng($quality);
+                            }
+
+                            // Save file, Add filters... although sometimes better without.
+                            return imagepng($destination, $newImageName, $pngQuality, PNG_ALL_FILTERS);
+                        }
+
+                        /*
+                        * Convert the quality to an int between 2 and 8 for PNG's with full color.
+                        * @param $qualitySetting - string. The quality passed through from the form in the admin page
+                        * @return - boolean
+                        *
+                        */
+                        public function fetchCompressionLevelForPng($qualitySetting) {
+
+                            $compressionLevel = intval($qualitySetting);
+
+                            if ($compressionLevel == 1) {
+                                    $quality = 8;
+                            } elseif ($compressionLevel == 2) {
+                                    $quality = 8;
+                            } elseif ($compressionLevel == 3) {
+                                    $quality = 7;
+                            } elseif ($compressionLevel == 4) {
+                                    $quality = 7;
+                            } elseif ($compressionLevel == 5) {
+                                    $quality = 6;
+                            } elseif ($compressionLevel == 6) {
+                                    $quality = 5;
+                            } elseif ($compressionLevel == 7) {
+                                    $quality = 4;
+                            } elseif ($compressionLevel == 8) {
+                                    $quality = 4;
+                            } elseif ($compressionLevel == 9) {     
+                                    $quality = 3; 
+                            } elseif ($compressionLevel == 10) {
+                                    $quality = 2; 
+                            } else {
+                                //default to 3 if something weird is passed in
+                                $quality = 3; 
+                            } 
+
+                            return $quality;                     
+                        }
+                        
+                        
+                        ]]></add>
+                </operation>
+
+                <!--Call the image crusher language file so we can use a variable in the success popup after uploading an image-->
+                <operation>
+                        <search position="after"><![CDATA[
+                        public function upload() {
+                        ]]></search>
+                        <add><![CDATA[
+                        
+                        $this->language->load('module/image_crusher');
+                        
+                        ]]></add>
+                </operation>
+        </file>
+
+        <!--Edits to setting.php-->
+        <file name="admin/controller/setting/setting.php">
+            <!--Set the max upload size to be 20MB instead of 300kb-->
+            <operation>
+                <search position="replace"><![CDATA[
+                $data['config_file_max_size'] = 300000;
+                ]]></search>
+                <add><![CDATA[
+                $data['config_file_max_size'] = 20000000;
+                
+                ]]></add>
+            </operation>
+        </file>
+</modification>

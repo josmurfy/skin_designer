@@ -1,0 +1,26 @@
+<modification>
+	
+	<id><![CDATA[Call Cfgeoip Controller]]></id>
+	
+	<version><![CDATA[0.1]]></version>
+	
+	<vqmver><![CDATA[2.x]]></vqmver>
+	<author><![CDATA[Codefire]]></author>
+	
+	<file path="system/config/catalog.php" name="">
+		
+		<operation>
+			
+			<search position="replace"><![CDATA[
+			'startup/seo_url'
+			 ]]></search>
+			<add><![CDATA[
+			'startup/seo_url',
+			'startup/cfgeoip'
+			]]></add>
+		
+		</operation>
+		
+	</file>
+	
+</modification>

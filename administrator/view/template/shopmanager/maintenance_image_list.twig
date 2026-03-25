@@ -1,0 +1,1070 @@
+<!-- Statistiques -->
+<div class="alert alert-info">
+  <strong>{{ text_statistics }}</strong><br>
+  {{ text_total_checked }} <strong>{{ total_checked }}</strong> {{ text_products }}<br>
+  {{ text_missing_images }} <strong class="text-danger">{{ missing_images }}</strong>
+</div>
+
+<!-- Bouton de correction -->
+<div class="mb-3">
+  <button type="button" id="btn-check-ebay-images-selected" class="btn btn-primary" style="display:none;">
+    <i class="fa-brands fa-ebay"></i> {{ button_check_ebay_images }}
+  </button>
+  <button type="button" id="btn-import-ebay-selected" class="btn btn-success" style="display:none;">
+    <i class="fa-brands fa-ebay"></i> {{ button_import_ebay_images }}
+  </button>
+  <button type="button" id="btn-fix-selected" class="btn btn-warning" style="display:none;">
+    <i class="fa-solid fa-wrench"></i> Fix Selected Images
+  </button>
+</div>
+
+<!-- Tableau des résultats -->
+<div class="table-responsive">
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th class="text-center" style="width: 1px;"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', $(this).prop('checked'));" class="form-check-input" id="select-all"/></th>
+        <th><a href="{{ sort_product_id }}"{% if sort == 'p.product_id' %} class="{{ order|lower }}"{% endif %}>{{ column_id }}</a></th>
+        <th><a href="{{ sort_name }}"{% if sort == 'pd.name' %} class="{{ order|lower }}"{% endif %}>{{ column_name }}</a></th>
+        <th>{{ column_main_image }}</th>
+        <th>{{ column_secondary_images }}</th>
+        <th>{{ column_orphan_images }}</th>
+        <th>{{ column_status }}</th>
+        <th>{{ column_action }}</th>
+      </tr>
+    </thead>
+            <tbody>
+              {% for product in products %}
+                <tr class="{% if product.has_missing %}table-danger{% else %}table-success{% endif %}" data-product-id="{{ product.product_id }}">
+                  <td class="text-center">
+                    <input type="checkbox" name="selected[{{ product.product_id }}]" value="{{ product.product_id }}" class="form-check-input" />
+                  </td>
+                  <td>{{ product.product_id }}</td>
+                  <td>{{ product.name }}</td>
+                  <td>
+                    {% if product.main_image %}
+                      {% if product.main_image_exists %}
+                        <div class="actual-image-container" style="display: inline-block; position: relative; cursor: pointer; border: 3px solid {% if product.is_low_resolution or product.is_old_nomenclature %}#dc3545{% else %}#28a745{% endif %}; border-radius: 4px; padding: 2px;">
+                          <img src="{{ product.main_image_thumb }}" alt="{{ product.name }}" class="img-thumbnail"/>
+                          <div class="fullsize-actual-image-wrapper">
+                            <img src="{{ constant('HTTP_CATALOG') }}image/{{ product.main_image_fullsize }}" alt="{{ product.name }}" class="fullsize-actual-image" data-resolution="{{ product.main_image_resolution }}">
+                            <div class="fullsize-resolution-overlay"></div>
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="d-flex align-items-start gap-2">
+                          <div>
+                            <i class="fa-solid fa-times text-danger"></i> 
+                            <small class="text-danger">{{ product.main_image }}</small><br>
+                            <small class="text-muted">{{ text_file_not_found }}</small>
+                          </div>
+                          <div class="form-check">
+                            <input type="checkbox" class="form-check-input remove-missing-image" 
+                                   data-product-id="{{ product.product_id }}" 
+                                   data-image-path="{{ product.main_image }}"
+                                   data-type="main"
+                                   id="remove-main-{{ product.product_id }}">
+                            <label class="form-check-label" for="remove-main-{{ product.product_id }}" style="font-size: 11px;">
+                              Remove from DB
+                            </label>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <i class="fa-solid fa-exclamation-triangle text-warning"></i> {{ text_no_image }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if product.secondary_images %}
+                      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                        {% for sec_img in product.secondary_images %}
+                          {% if sec_img.exists %}
+                            <div class="actual-image-container" style="display: inline-block; position: relative; cursor: pointer; border: 3px solid {% if sec_img.is_low_resolution or sec_img.wrong_extension %}#dc3545{% else %}#28a745{% endif %}; border-radius: 4px; padding: 2px;">
+                              <img src="{{ sec_img.thumb }}" alt="Secondary" class="img-thumbnail" style="width: 40px; height: 40px;"/>
+                              <div class="fullsize-actual-image-wrapper">
+                                <img src="{{ constant('HTTP_CATALOG') }}image/{{ sec_img.fullsize }}" alt="Secondary" class="fullsize-actual-image" data-resolution="{{ sec_img.resolution }}">
+                                <div class="fullsize-resolution-overlay"></div>
+                              </div>
+                            </div>
+                          {% else %}
+                            <div style="text-align: center; width: 60px;">
+                              <i class="fa-solid fa-times text-danger" title="{{ sec_img.image }}"></i><br>
+                              <input type="checkbox" class="form-check-input remove-missing-image mt-1" 
+                                     data-product-id="{{ product.product_id }}" 
+                                     data-image-path="{{ sec_img.image }}"
+                                     data-type="secondary"
+                                     style="font-size: 10px;">
+                            </div>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                      <small class="text-muted d-block mt-1">
+                        {{ text_total }} {{ product.secondary_images|length }}
+                        {% if product.missing_secondary > 0 %}
+                          | <span class="text-danger">{{ text_missing }} {{ product.missing_secondary }}</span>
+                        {% endif %}
+                      </small>
+                    {% else %}
+                      <span class="text-muted">{{ text_none }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if product.orphan_images|length > 0 %}
+                      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start;">
+                        {% for orphan_img in product.orphan_images %}
+                          <div class="actual-image-container" style="text-align: center; width: 60px;">
+                            <img src="{{ constant('HTTP_CATALOG') }}image/{{ orphan_img.image }}"
+                                 alt="Orphan Image"
+                                 class="img-thumbnail"
+                                 data-image-path="{{ orphan_img.image }}"
+                                 data-resolution="{{ orphan_img.resolution }}"
+                                 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
+                                 title="{{ orphan_img.image }}">
+                            <div style="display: flex; gap: 2px; justify-content: center; margin-top: 2px;">
+                              <input type="checkbox" class="form-check-input add-orphan-secondary" 
+                                     data-product-id="{{ product.product_id }}" 
+                                     data-image-path="{{ orphan_img.image }}"
+                                  checked
+                                     title="Add as secondary"
+                                     style="font-size: 12px; width: 16px; height: 16px;">
+                            </div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                      <small class="text-muted d-block mt-1">
+                        {{ product.orphan_images|length }} orphan image(s) found
+                      </small>
+                    {% else %}
+                      <span class="text-muted">{{ text_none }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-start" style="max-width: 300px;">
+                    {% if product.has_missing or product.is_low_resolution or product.is_wrong_path or product.is_old_nomenclature %}
+                      <span class="badge bg-danger mb-1">Problems</span><br>
+                      <small>{{ product.status_message|raw }}</small>
+                    {% else %}
+                      <span class="badge bg-success">{{ status_ok }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ product.edit }}" class="btn btn-primary btn-sm" target="_blank">
+                      <i class="fa-solid fa-pencil"></i> {{ button_edit }}
+                    </a>
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="8" class="text-center">No products found!</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Button to remove selected missing images -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <button type="button" id="remove-selected-images" class="btn btn-danger" style="display:none;">
+              <i class="fa-solid fa-trash"></i> Remove Selected Missing Images
+            </button>
+            <button type="button" id="add-orphan-images-btn" class="btn btn-success" style="display:none;">
+              <i class="fa-solid fa-plus"></i> Add Selected Orphan Images
+            </button>
+          </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="row">
+          <div class="col-sm-6 text-start">{{ results }}</div>
+          <div class="col-sm-6 text-end">{{ pagination }}</div>
+        </div>
+
+<!-- Progress Modal for Fix Images -->
+<div class="modal fade" id="fixProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-wrench"></i> Fixing Images</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="fix-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="fix-status-message" class="alert alert-info mb-2">
+          <strong>Status:</strong> <span id="fix-current-status">Starting...</span>
+        </div>
+        <div id="fix-products-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;">
+          <!-- Product processing details will be appended here with scroll -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="fix-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal for Check eBay Images -->
+<div class="modal fade" id="checkEbayImagesModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-brands fa-ebay"></i> {{ text_check_ebay_modal_title }}</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="check-ebay-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="check-ebay-status-message" class="alert alert-info mb-2">
+          <strong>Status:</strong> <span id="check-ebay-current-status">{{ text_check_ebay_preparing }}</span>
+        </div>
+        <div id="check-ebay-details" style="max-height: 420px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="check-ebay-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal for Import eBay Images -->
+<div class="modal fade" id="importEbayProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-brands fa-ebay"></i> {{ text_import_ebay_modal_title }}</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="import-ebay-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="import-ebay-status-message" class="alert alert-info mb-2">
+          <strong>Status:</strong> <span id="import-ebay-current-status">{{ text_import_ebay_preparing }}</span>
+        </div>
+        <div id="import-ebay-products-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="import-ebay-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal for Remove Images -->
+<div class="modal fade" id="removeProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-trash"></i> Removing Images</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="remove-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-danger" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="remove-status-message" class="alert alert-warning">
+          <strong>Status:</strong> <span id="remove-current-status">Starting...</span>
+        </div>
+        <div id="remove-details" style="max-height: 200px; overflow-y: auto; font-size: 0.9em;">
+          <!-- Details will be appended here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="remove-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="view/javascript/shopmanager/bootstrap_helper.js" type="text/javascript"></script>
+<script type="text/javascript"><!--
+window.TEXT_IMPORT_EBAY_CONFIRM = '{{ text_import_ebay_confirm|escape('js') }}';
+window.TEXT_IMPORT_EBAY_PREPARING = '{{ text_import_ebay_preparing|escape('js') }}';
+window.TEXT_IMPORT_EBAY_PROCESSING = '{{ text_import_ebay_processing|escape('js') }}';
+window.TEXT_IMPORT_EBAY_COMPLETE = '{{ text_import_ebay_complete|escape('js') }}';
+window.TEXT_IMPORT_EBAY_REFRESHING = '{{ text_import_ebay_refreshing|escape('js') }}';
+window.TEXT_IMPORT_EBAY_NO_SELECTION = '{{ text_import_ebay_no_selection|escape('js') }}';
+window.TEXT_CHECK_EBAY_CONFIRM = '{{ text_check_ebay_confirm|escape('js') }}';
+window.TEXT_CHECK_EBAY_PREPARING = '{{ text_check_ebay_preparing|escape('js') }}';
+window.TEXT_CHECK_EBAY_PROCESSING = '{{ text_check_ebay_processing|escape('js') }}';
+window.TEXT_CHECK_EBAY_COMPLETE = '{{ text_check_ebay_complete|escape('js') }}';
+window.TEXT_CHECK_EBAY_NO_SELECTION = '{{ text_check_ebay_no_selection|escape('js') }}';
+window.TEXT_CHECK_EBAY_NOTIFY_MORE = '{{ text_check_ebay_notify_more|escape('js') }}';
+window.TEXT_CHECK_EBAY_OK = '{{ text_check_ebay_ok|escape('js') }}';
+
+// Handle checkbox changes
+$(document).off('change.maintenanceImageList', '.remove-missing-image').on('change.maintenanceImageList', '.remove-missing-image', function() {
+    const checkedCount = $('.remove-missing-image:checked').length;
+    if (checkedCount > 0) {
+        $('#remove-selected-images').show();
+    } else {
+        $('#remove-selected-images').hide();
+    }
+});
+
+// Handle remove selected images button
+$(document).off('click.maintenanceImageList', '#remove-selected-images').on('click.maintenanceImageList', '#remove-selected-images', function() {
+    const checkedBoxes = $('.remove-missing-image:checked');
+    
+    if (checkedBoxes.length === 0) {
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to remove ' + checkedBoxes.length + ' missing image(s) from the database?')) {
+        return;
+    }
+    
+    // Show progress modal
+    showModal(document.getElementById('removeProgressModal'));
+    $('#remove-progress-bar').css('width', '0%').text('0%');
+    $('#remove-current-status').text('Preparing to remove images...');
+    $('#remove-details').html('');
+    $('#remove-close-btn').hide();
+    
+    const imagesToRemove = [];
+    checkedBoxes.each(function() {
+        imagesToRemove.push({
+            product_id: $(this).data('product-id'),
+            image_path: $(this).data('image-path'),
+            type: $(this).data('type')
+        });
+    });
+    
+    $('#remove-current-status').text('Removing ' + imagesToRemove.length + ' image reference(s)...');
+    $('#remove-details').append('<div class="text-info"><i class="fa-solid fa-hourglass-start"></i> Sending request...</div>');
+    
+    $.ajax({
+        url: 'index.php?route=shopmanager/maintenance_image.removeMissingImages&user_token={{ user_token }}',
+        type: 'post',
+        data: { images: imagesToRemove },
+        dataType: 'json',
+        beforeSend: function() {
+            $('#remove-selected-images').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing...');
+            $('#remove-progress-bar').css('width', '50%').text('50%');
+        },
+        success: function(json) {
+            $('#remove-progress-bar').css('width', '100%').text('100%').removeClass('progress-bar-animated');
+            
+            if (json['success']) {
+                $('#remove-current-status').text('Completed successfully!');
+                $('#remove-details').append('<div class="text-success"><i class="fa-solid fa-check-circle"></i> ' + json['success'] + '</div>');
+                
+                // Reload the product list after a short delay
+                setTimeout(function() {
+                    var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+                    if (url === '') {
+                        url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+                    }
+                    $('#report').load(url);
+                    hideModal(document.getElementById('removeProgressModal'));
+                }, 1500);
+            }
+            
+            if (json['error']) {
+                $('#remove-current-status').text('Error occurred!');
+                $('#remove-details').append('<div class="text-danger"><i class="fa-solid fa-exclamation-circle"></i> ' + json['error'] + '</div>');
+                $('#remove-close-btn').show();
+            }
+        },
+        error: function(xhr, ajaxOptions, thrownError) {
+            $('#remove-progress-bar').css('width', '100%').removeClass('progress-bar-animated').addClass('bg-danger');
+            $('#remove-current-status').text('Request failed!');
+            $('#remove-details').append('<div class="text-danger"><i class="fa-solid fa-times-circle"></i> ' + thrownError + '</div>');
+            $('#remove-close-btn').show();
+        },
+        complete: function() {
+            $('#remove-selected-images').prop('disabled', false).html('<i class="fa-solid fa-trash"></i> Remove Selected Missing Images');
+        }
+    });
+});
+
+// Handle orphan image checkbox changes
+$(document).off('change.maintenanceImageList', '.add-orphan-main, .add-orphan-secondary').on('change.maintenanceImageList', '.add-orphan-main, .add-orphan-secondary', function() {
+    const checkedCount = $('.add-orphan-main:checked, .add-orphan-secondary:checked').length;
+    if (checkedCount > 0) {
+        $('#add-orphan-images-btn').show();
+    } else {
+        $('#add-orphan-images-btn').hide();
+    }
+    
+    // Prevent both checkboxes from being checked for the same image
+    if ($(this).hasClass('add-orphan-main') && $(this).is(':checked')) {
+        $(this).closest('div').find('.add-orphan-secondary').prop('checked', false);
+    } else if ($(this).hasClass('add-orphan-secondary') && $(this).is(':checked')) {
+        $(this).closest('div').find('.add-orphan-main').prop('checked', false);
+    }
+});
+
+// Handle add orphan images button
+$(document).off('click.maintenanceImageList', '#add-orphan-images-btn').on('click.maintenanceImageList', '#add-orphan-images-btn', function() {
+    const mainChecked = $('.add-orphan-main:checked');
+    const secondaryChecked = $('.add-orphan-secondary:checked');
+    
+    if (mainChecked.length === 0 && secondaryChecked.length === 0) {
+        return;
+    }
+    
+    // Group by product_id
+    const productImages = {};
+    
+    mainChecked.each(function() {
+        const productId = $(this).data('product-id');
+        const imagePath = $(this).data('image-path');
+        
+        if (!productImages[productId]) {
+            productImages[productId] = [];
+        }
+        
+        productImages[productId].push({
+            image: imagePath,
+            type: 'main'
+        });
+    });
+    
+    secondaryChecked.each(function() {
+        const productId = $(this).data('product-id');
+        const imagePath = $(this).data('image-path');
+        
+        if (!productImages[productId]) {
+            productImages[productId] = [];
+        }
+        
+        productImages[productId].push({
+            image: imagePath,
+            type: 'secondary'
+        });
+    });
+    
+    if (!confirm('Are you sure you want to add ' + (mainChecked.length + secondaryChecked.length) + ' orphan image(s) to their products?')) {
+        return;
+    }
+    
+    // Process each product
+    let completed = 0;
+    const totalProducts = Object.keys(productImages).length;
+    
+    for (const productId in productImages) {
+        $.ajax({
+            url: 'index.php?route=shopmanager/maintenance_image.addOrphanImages&user_token={{ user_token }}',
+            type: 'post',
+            data: { 
+                product_id: productId,
+                images: productImages[productId]
+            },
+            dataType: 'json',
+            success: function(json) {
+                completed++;
+                
+                if (json['error']) {
+                    console.error('Product ' + productId + ': ' + json['error']);
+                }
+                
+                if (completed === totalProducts) {
+                    alert('Orphan images have been added.');
+                    var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+                    if (url === '') {
+                        url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+                    }
+                    $('#report').load(url);
+                }
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                completed++;
+                console.error('Error for product ' + productId + ': ' + thrownError);
+                
+                if (completed === totalProducts) {
+                    alert('Orphan images have been added with some errors. Check console.');
+                    var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+                    if (url === '') {
+                        url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+                    }
+                    $('#report').load(url);
+                }
+            }
+        });
+    }
+});
+
+// Handle checkbox changes for fix button
+$(document).off('change.maintenanceImageList', 'input[name*=\'selected\']').on('change.maintenanceImageList', 'input[name*=\'selected\']', function() {
+    const checkedCount = $('input[name*=\'selected\']:checked').length;
+    if (checkedCount > 0) {
+    $('#btn-check-ebay-images-selected').show();
+    $('#btn-import-ebay-selected').show();
+        $('#btn-fix-selected').show();
+    } else {
+    $('#btn-check-ebay-images-selected').hide();
+    $('#btn-import-ebay-selected').hide();
+        $('#btn-fix-selected').hide();
+    }
+});
+
+// Handle select all checkbox
+$('#select-all').on('change', function() {
+    const checkedCount = $('input[name*=\'selected\']:checked').length;
+    if (checkedCount > 0) {
+    $('#btn-check-ebay-images-selected').show();
+    $('#btn-import-ebay-selected').show();
+        $('#btn-fix-selected').show();
+    } else {
+    $('#btn-check-ebay-images-selected').hide();
+    $('#btn-import-ebay-selected').hide();
+        $('#btn-fix-selected').hide();
+    }
+});
+
+// Check eBay images count/name vs DB for selected products
+$(document).off('click.maintenanceImageList', '#btn-check-ebay-images-selected').on('click.maintenanceImageList', '#btn-check-ebay-images-selected', function() {
+  const checkedBoxes = $('input[name*=\'selected\']:checked');
+
+  if (checkedBoxes.length === 0) {
+    alert(TEXT_CHECK_EBAY_NO_SELECTION);
+    return;
+  }
+
+  const confirmText = TEXT_CHECK_EBAY_CONFIRM.replace('%d', checkedBoxes.length);
+  if (!confirm(confirmText)) {
+    return;
+  }
+
+  showModal(document.getElementById('checkEbayImagesModal'));
+
+  $('#check-ebay-progress-bar').css('width', '0%').text('0%').removeClass('bg-danger').addClass('progress-bar-animated bg-primary');
+  $('#check-ebay-current-status').text(TEXT_CHECK_EBAY_PREPARING);
+  $('#check-ebay-details').html('');
+  $('#check-ebay-close-btn').hide();
+
+  const productIds = [];
+  checkedBoxes.each(function() {
+    productIds.push($(this).val());
+  });
+
+  let currentIndex = 0;
+  const totalProducts = productIds.length;
+  let notifyCount = 0;
+  let errorCount = 0;
+  const notifyProductIds = [];
+
+  function showOnlyProblemRows(problemIds) {
+    const problemMap = {};
+    for (let i = 0; i < problemIds.length; i++) {
+      problemMap[String(problemIds[i])] = true;
+    }
+
+    let visibleProblems = 0;
+
+    $('table tbody tr').each(function() {
+      const row = $(this);
+      const rowProductId = String(row.data('product-id') || '');
+      const rowCheckbox = row.find('input[name*=\'selected\']');
+
+      if (!rowProductId || rowCheckbox.length === 0) {
+        return;
+      }
+
+      const isProblem = !!problemMap[rowProductId];
+      row.toggle(isProblem);
+      rowCheckbox.prop('checked', isProblem);
+
+      if (isProblem) {
+        visibleProblems++;
+      }
+    });
+
+    $('#select-all').prop('checked', visibleProblems > 0);
+
+    if (visibleProblems > 0) {
+      $('#btn-check-ebay-images-selected').show();
+      $('#btn-import-ebay-selected').show();
+      $('#btn-fix-selected').show();
+      $('#check-ebay-details').append('<div class="alert alert-warning mt-2 p-2"><i class="fa-solid fa-filter"></i> Showing only products in problem (eBay has more images than DB). Click Import eBay Images to import them.</div>');
+    } else {
+      $('#btn-import-ebay-selected').hide();
+      $('#btn-fix-selected').hide();
+      $('#check-ebay-details').append('<div class="alert alert-success mt-2 p-2"><i class="fa-solid fa-circle-check"></i> No products in problem were found.</div>');
+    }
+  }
+
+  function processNextCheck() {
+    if (currentIndex >= totalProducts) {
+      $('#check-ebay-progress-bar').css('width', '100%').text('100%').removeClass('progress-bar-animated').addClass('bg-success');
+      $('#check-ebay-current-status').text(TEXT_CHECK_EBAY_COMPLETE + ' - notify: ' + notifyCount + ', errors: ' + errorCount);
+      $('#btn-check-ebay-images-selected').prop('disabled', false).html('<i class="fa-brands fa-ebay"></i> {{ button_check_ebay_images|escape('js') }}');
+      showOnlyProblemRows(notifyProductIds);
+      $('#check-ebay-close-btn').show();
+      return;
+    }
+
+    const productId = productIds[currentIndex];
+    const progressPercent = Math.round((currentIndex / totalProducts) * 100);
+    $('#check-ebay-progress-bar').css('width', progressPercent + '%').text(progressPercent + '%');
+    $('#check-ebay-current-status').text(TEXT_CHECK_EBAY_PROCESSING.replace('%1$d', currentIndex + 1).replace('%2$d', totalProducts).replace('%3$s', productId));
+
+    $.ajax({
+      url: 'index.php?route=shopmanager/maintenance_image.checkEbayImageComparison&user_token={{ user_token }}',
+      type: 'post',
+      data: { product_id: productId },
+      dataType: 'json',
+      success: function(json) {
+        if (json.success) {
+          const badge = json.notify
+            ? '<span class="badge bg-danger">ALERT</span>'
+            : '<span class="badge bg-success">OK</span>';
+
+          const headerText = json.notify ? TEXT_CHECK_EBAY_NOTIFY_MORE : TEXT_CHECK_EBAY_OK;
+          if (json.notify) {
+            notifyCount++;
+            notifyProductIds.push(String(json.product_id));
+          }
+
+          let html = '';
+          html += '<div class="card mb-2" style="border-left: 3px solid ' + (json.notify ? '#dc3545' : '#28a745') + ';">';
+          html += '<div class="card-body p-2">';
+          html += '<div><strong>#' + json.product_id + '</strong> ' + badge + ' - ' + headerText + '</div>';
+          html += '<div class="small text-muted">eBay item: ' + (json.marketplace_item_id || '-') + '</div>';
+          html += '<div class="small">eBay: <strong>' + json.ebay_count + '</strong> | DB(main+sec): <strong>' + json.db_count + '</strong> (main=' + json.db_main_count + ', sec=' + json.db_secondary_count + ')</div>';
+
+          html += '</div></div>';
+          $('#check-ebay-details').append(html);
+        } else {
+          errorCount++;
+          const err = json.error || 'Unknown error';
+          $('#check-ebay-details').append('<div class="alert alert-danger mb-2 p-2"><strong>#' + productId + '</strong> - ' + err + '</div>');
+        }
+
+        $('#check-ebay-details').scrollTop($('#check-ebay-details')[0].scrollHeight);
+        currentIndex++;
+        processNextCheck();
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        errorCount++;
+        $('#check-ebay-details').append('<div class="alert alert-danger mb-2 p-2"><strong>#' + productId + '</strong> - Error: ' + thrownError + '</div>');
+        currentIndex++;
+        processNextCheck();
+      }
+    });
+  }
+
+  $('#btn-check-ebay-images-selected').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> {{ text_check_ebay_modal_title|escape('js') }}');
+  processNextCheck();
+});
+
+// Handle import eBay images for selected products
+$(document).off('click.maintenanceImageList', '#btn-import-ebay-selected').on('click.maintenanceImageList', '#btn-import-ebay-selected', function() {
+  const checkedBoxes = $('input[name*=\'selected\']:checked');
+
+  if (checkedBoxes.length === 0) {
+    alert(TEXT_IMPORT_EBAY_NO_SELECTION);
+    return;
+  }
+
+  const confirmText = TEXT_IMPORT_EBAY_CONFIRM.replace('%d', checkedBoxes.length);
+  if (!confirm(confirmText)) {
+    return;
+  }
+
+  showModal(document.getElementById('importEbayProgressModal'));
+
+  $('#import-ebay-progress-bar').css('width', '0%').text('0%').removeClass('bg-danger').addClass('progress-bar-animated bg-success');
+  $('#import-ebay-current-status').text(TEXT_IMPORT_EBAY_PREPARING);
+  $('#import-ebay-products-list').html('');
+  $('#import-ebay-close-btn').hide();
+
+  const productIds = [];
+  checkedBoxes.each(function() {
+    productIds.push($(this).val());
+  });
+
+  let currentIndex = 0;
+  const totalProducts = productIds.length;
+  let successCount = 0;
+  let skippedCount = 0;
+  let errorCount = 0;
+
+  function processNextImport() {
+    if (currentIndex >= totalProducts) {
+      $('#import-ebay-progress-bar').css('width', '100%').text('100%').removeClass('progress-bar-animated');
+      $('#import-ebay-current-status').text(TEXT_IMPORT_EBAY_COMPLETE + ' (' + successCount + ' ok, ' + skippedCount + ' skipped, ' + errorCount + ' errors)');
+      $('#btn-import-ebay-selected').prop('disabled', false).html('<i class="fa-brands fa-ebay"></i> {{ button_import_ebay_images|escape('js') }}');
+
+      setTimeout(function() {
+        $('#import-ebay-products-list').append('<div class="alert alert-info mt-2 p-2"><i class="fa-solid fa-sync"></i> ' + TEXT_IMPORT_EBAY_REFRESHING + '</div>');
+        var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+        if (url === '') {
+          url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+        }
+        $('#report').load(url, function() {
+          hideModal(document.getElementById('importEbayProgressModal'));
+        });
+      }, 1200);
+      return;
+    }
+
+    const productId = productIds[currentIndex];
+    const progressPercent = Math.round((currentIndex / totalProducts) * 100);
+    $('#import-ebay-progress-bar').css('width', progressPercent + '%').text(progressPercent + '%');
+    $('#import-ebay-current-status').text(TEXT_IMPORT_EBAY_PROCESSING.replace('%1$d', currentIndex + 1).replace('%2$d', totalProducts).replace('%3$s', productId));
+
+    const productCard = $('<div class="card mb-2" id="import-product-' + productId + '" style="border-left: 3px solid #0d6efd;"></div>');
+    const productBody = $('<div class="card-body p-2"></div>');
+    productBody.html('<div class="d-flex align-items-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div><strong>Product #' + productId + '</strong> <span class="ms-2 text-muted">Processing...</span></div>');
+    productCard.append(productBody);
+    $('#import-ebay-products-list').append(productCard);
+    $('#import-ebay-products-list').scrollTop($('#import-ebay-products-list')[0].scrollHeight);
+
+    $.ajax({
+      url: 'index.php?route=shopmanager/maintenance_image.importEbayImages&user_token={{ user_token }}',
+      type: 'post',
+      data: { product_id: productId },
+      dataType: 'json',
+      success: function(json) {
+        if (json.success) {
+          successCount++;
+          $('#import-product-' + productId).css('border-left-color', '#28a745');
+          $('#import-product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-check-circle text-success me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-success">Success</span></div><div class="small text-muted mt-1">' + json.message + '</div>');
+        } else if (json.skipped) {
+          skippedCount++;
+          $('#import-product-' + productId).css('border-left-color', '#ffc107');
+          $('#import-product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-forward text-warning me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-warning">Skipped</span></div><div class="small text-muted mt-1">' + json.message + '</div>');
+        } else {
+          errorCount++;
+          $('#import-product-' + productId).css('border-left-color', '#dc3545');
+          $('#import-product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-times-circle text-danger me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-danger">Error</span></div><div class="small text-danger mt-1">' + (json.error || 'Unknown error') + '</div>');
+        }
+
+        currentIndex++;
+        processNextImport();
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        errorCount++;
+        $('#import-product-' + productId).css('border-left-color', '#dc3545');
+        $('#import-product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-times-circle text-danger me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-danger">Failed</span></div><div class="small text-danger mt-1">Error: ' + thrownError + '</div>');
+
+        currentIndex++;
+        processNextImport();
+      }
+    });
+  }
+
+  $('#btn-import-ebay-selected').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> {{ text_import_ebay_modal_title|escape('js') }}');
+  processNextImport();
+});
+
+// Handle fix selected images button
+$(document).off('click.maintenanceImageList', '#btn-fix-selected').on('click.maintenanceImageList', '#btn-fix-selected', function() {
+    const checkedBoxes = $('input[name*=\'selected\']:checked');
+    
+    if (checkedBoxes.length === 0) {
+        return;
+    }
+    
+    if (!confirm('This will attempt to fix images for ' + checkedBoxes.length + ' selected product(s).\n\nActions:\n• Move images to correct directory\n• Convert to WebP format\n• Update database references\n• Clean up old directories\n\nContinue?')) {
+        return;
+    }
+    
+    // Show progress modal
+    showModal(document.getElementById('fixProgressModal'));
+    $('#fix-progress-bar').css('width', '0%').text('0%').addClass('progress-bar-animated');
+    $('#fix-current-status').text('Preparing to fix images...');
+    $('#fix-products-list').html('');
+    $('#fix-close-btn').hide();
+    
+    const productIds = [];
+    checkedBoxes.each(function() {
+        productIds.push($(this).val());
+    });
+    
+    // Collect orphans to add
+    const orphansToAdd = [];
+    $('.add-orphan-secondary:checked').each(function() {
+        orphansToAdd.push({
+            product_id: $(this).data('product-id'),
+            image_path: $(this).data('image-path')
+        });
+    });
+    
+    let currentIndex = 0;
+    const totalProducts = productIds.length;
+    let allRemainingFiles = {}; // Accumulate remaining files from all products
+    
+    $('#fix-current-status').html('<i class="fa-solid fa-spinner fa-spin"></i> Processing ' + totalProducts + ' product(s)...');
+    if (orphansToAdd.length > 0) {
+        $('#fix-products-list').append('<div class="alert alert-info mb-2 p-2"><i class="fa-solid fa-plus-circle"></i> <strong>' + orphansToAdd.length + ' orphan image(s) will be added</strong></div>');
+    }
+    
+    // Process products one by one
+    function processNextProduct() {
+        if (currentIndex >= totalProducts) {
+            // All done processing
+            $('#fix-progress-bar').css('width', '100%').text('100%').removeClass('progress-bar-animated').addClass('bg-success');
+            $('#fix-current-status').html('<i class="fa-solid fa-check-circle text-success"></i> All products processed successfully!');
+            $('#btn-fix-selected').prop('disabled', false).html('<i class="fa-solid fa-wrench"></i> Fix Selected Images');
+            
+            // Check if there are remaining files to handle
+            if (Object.keys(allRemainingFiles).length > 0) {
+                $('#fix-products-list').append('<div class="alert alert-warning mt-2 p-2"><i class="fa-solid fa-folder-open"></i> <strong>Old directories contain remaining files</strong></div>');
+                handleRemainingFiles(allRemainingFiles, 'fixProgressModal');
+            } else {
+                // Reload the product list
+                setTimeout(function() {
+                    $('#fix-products-list').append('<div class="alert alert-success mt-2 p-2"><i class="fa-solid fa-sync"></i> Refreshing product list...</div>');
+                    var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+                    if (url === '') {
+                        url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+                    }
+                    $('#report').load(url, function() {
+                        hideModal(document.getElementById('fixProgressModal'));
+                    });
+                }, 1500);
+            }
+            return;
+        }
+        
+        const productId = productIds[currentIndex];
+        const progressPercent = Math.round((currentIndex / totalProducts) * 100);
+        
+        $('#fix-progress-bar').css('width', progressPercent + '%').text(progressPercent + '%');
+        $('#fix-current-status').html('<i class="fa-solid fa-spinner fa-spin"></i> Processing product #' + productId + ' (' + (currentIndex + 1) + ' of ' + totalProducts + ')');
+        
+        // Add product processing card
+        const productCard = $('<div class="card mb-2" id="product-' + productId + '" style="border-left: 3px solid #0d6efd;"></div>');
+        const productBody = $('<div class="card-body p-2"></div>');
+        productBody.html('<div class="d-flex align-items-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div><strong>Product #' + productId + '</strong> <span class="ms-2 text-muted">Processing...</span></div>');
+        productCard.append(productBody);
+        $('#fix-products-list').append(productCard);
+        
+        // Scroll to bottom
+        $('#fix-products-list').scrollTop($('#fix-products-list')[0].scrollHeight);
+        
+        // Filter orphans for this product
+        const productOrphans = orphansToAdd.filter(o => o.product_id == productId);
+        
+        $.ajax({
+            url: 'index.php?route=shopmanager/maintenance_image.fixImages&user_token={{ user_token }}',
+            type: 'post',
+            data: { 
+                product_ids: [productId],
+                orphans: productOrphans
+            },
+            dataType: 'json',
+            success: function(json) {
+                if (json['success']) {
+                    $('#product-' + productId).css('border-left-color', '#28a745');
+                    $('#product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-check-circle text-success me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-success">Success</span></div><div class="small text-muted mt-1">' + json['success'] + '</div>');
+                    
+                    // Accumulate remaining files
+                    if (json['remaining_files']) {
+                        for (let pid in json['remaining_files']) {
+                            allRemainingFiles[pid] = json['remaining_files'][pid];
+                        }
+                        $('#product-' + productId + ' .card-body').append('<div class="small text-warning mt-1"><i class="fa-solid fa-exclamation-triangle"></i> Old directory has remaining files</div>');
+                    }
+                } else if (json['error']) {
+                    $('#product-' + productId).css('border-left-color', '#dc3545');
+                    $('#product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-times-circle text-danger me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-danger">Error</span></div><div class="small text-danger mt-1">' + json['error'] + '</div>');
+                }
+                
+                currentIndex++;
+                processNextProduct();
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                $('#product-' + productId).css('border-left-color', '#dc3545');
+                $('#product-' + productId + ' .card-body').html('<div class="d-flex align-items-center"><i class="fa-solid fa-times-circle text-danger me-2"></i><strong>Product #' + productId + '</strong> <span class="ms-2 text-danger">Failed</span></div><div class="small text-danger mt-1">Error: ' + thrownError + '</div>');
+                
+                currentIndex++;
+                processNextProduct();
+            }
+        });
+    }
+    
+    // Disable button
+    $('#btn-fix-selected').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing...');
+    
+    // Start processing
+    processNextProduct();
+});
+
+// Handle remaining files in old directories
+function handleRemainingFiles(remainingFiles, modalId) {
+    let message = 'The following old directories still contain files:\n\n';
+    let directories = [];
+    let fileCount = 0;
+    
+    for (let productId in remainingFiles) {
+        let data = remainingFiles[productId];
+        message += 'Product ' + productId + ' - Directory: ' + data.directory + '\n';
+        message += 'Files: ' + data.files.join(', ') + '\n\n';
+        directories.push(data);
+        fileCount += data.files.length;
+        
+        $('#fix-products-list').append('<div class="alert alert-warning mb-2 p-2"><i class="fa-solid fa-folder"></i> <strong>Product ' + productId + ':</strong> ' + data.files.length + ' file(s) in ' + data.directory + '<br><small class="text-muted">' + data.files.join(', ') + '</small></div>');
+    }
+    
+    message += 'Do you want to delete these ' + fileCount + ' remaining file(s)?';
+    
+    if (confirm(message)) {
+        $('#fix-current-status').html('<i class="fa-solid fa-trash-alt"></i> Deleting remaining files...');
+        $('#fix-products-list').append('<div class="alert alert-info mb-2 p-2"><i class="fa-solid fa-trash-alt"></i> Deleting ' + fileCount + ' file(s)...</div>');
+        
+        $.ajax({
+            url: 'index.php?route=shopmanager/maintenance_image.deleteRemainingFiles&user_token={{ user_token }}',
+            type: 'post',
+            data: { directories: directories },
+            dataType: 'json',
+            success: function(json) {
+                
+                if (json['success']) {
+                    $('#fix-current-status').html('<i class="fa-solid fa-check-circle text-success"></i> Cleanup completed!');
+                    $('#fix-products-list').append('<div class="alert alert-success mb-2 p-2"><i class="fa-solid fa-check-circle"></i> ' + json['success'] + '</div>');
+                }
+                if (json['error']) {
+                    $('#fix-products-list').append('<div class="alert alert-danger mb-2 p-2"><i class="fa-solid fa-exclamation-circle"></i> ' + json['error'] + '</div>');
+                }
+                
+                // Reload the product list
+                setTimeout(function() {
+                    $('#fix-products-list').append('<div class="alert alert-success mt-2 p-2"><i class="fa-solid fa-sync"></i> Refreshing product list...</div>');
+                    var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+                    if (url === '') {
+                        url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+                    }
+                    $('#report').load(url, function() {
+                        hideModal(document.getElementById(modalId));
+                    });
+                }, 1500);
+            },
+            error: function(xhr, ajaxOptions, thrownError) {
+                $('#fix-products-list').append('<div class="alert alert-danger mb-2 p-2"><i class="fa-solid fa-times-circle"></i> Error deleting files: ' + thrownError + '</div>');
+                $('#fix-close-btn').show();
+            }
+        });
+    } else {
+        // User chose not to delete - just reload
+        $('#fix-progress-bar').css('width', '100%').text('100%').removeClass('progress-bar-animated');
+        $('#fix-current-status').text('Completed (files kept)');
+        $('#fix-details').append('<div class="text-info"><i class="fa-solid fa-info-circle"></i> Old files were kept in place</div>');
+        
+        setTimeout(function() {
+            var url = window.location.search.replace('?route=shopmanager/maintenance_image', '?route=shopmanager/maintenance_image.list');
+            if (url === '') {
+                url = '?route=shopmanager/maintenance_image.list&user_token={{ user_token }}';
+            }
+            $('#report').load(url);
+            hideModal(document.getElementById(modalId));
+        }, 1500);
+    }
+}
+
+if (typeof window.initImageResolutionCheck !== 'function') {
+  window.initImageResolutionCheck = function() {
+    document.querySelectorAll('.actual-image-container').forEach(function(container) {
+      const fullsizeImg = container.querySelector('.fullsize-actual-image, .actual-image-preview');
+      const resolutionOverlay = container.querySelector('.fullsize-resolution-overlay');
+
+      if (!fullsizeImg || !resolutionOverlay) {
+        return;
+      }
+
+      const resolution = fullsizeImg.getAttribute('data-resolution');
+      if (!resolution) {
+        return;
+      }
+
+      const parts = resolution.split('x');
+      const width = parseInt(parts[0], 10);
+      const height = parseInt(parts[1], 10);
+
+      resolutionOverlay.textContent = resolution;
+      resolutionOverlay.classList.remove('low-res', 'good-res');
+      if (!isNaN(width) && !isNaN(height) && (width < 400 || height < 600)) {
+        resolutionOverlay.classList.add('low-res');
+      } else {
+        resolutionOverlay.classList.add('good-res');
+      }
+    });
+  };
+}
+
+if (typeof window.initImagePreview !== 'function') {
+  window.initImagePreview = function() {
+    document.querySelectorAll('.actual-image-container').forEach(function(container) {
+      if (container.dataset.previewInitialized === 'true') {
+        return;
+      }
+
+      container.dataset.previewInitialized = 'true';
+
+      const thumbnail = container.querySelector('.img-thumbnail, .thumbnail-actual-image');
+      const wrapper = container.querySelector('.fullsize-actual-image-wrapper');
+
+      if (!thumbnail || !wrapper) {
+        return;
+      }
+
+      thumbnail.addEventListener('mouseenter', function() {
+        const oldClone = document.getElementById('temp-fullsize-preview');
+        if (oldClone) {
+          oldClone.remove();
+        }
+
+        const clone = wrapper.cloneNode(true);
+        clone.id = 'temp-fullsize-preview';
+        clone.style.display = 'block';
+        clone.addEventListener('mouseleave', function() {
+          const self = document.getElementById('temp-fullsize-preview');
+          if (self) {
+            self.remove();
+          }
+        });
+        document.body.appendChild(clone);
+      });
+
+      thumbnail.addEventListener('mouseleave', function() {
+        setTimeout(function() {
+          const hovered = document.querySelector('#temp-fullsize-preview:hover');
+          if (!hovered) {
+            const clone = document.getElementById('temp-fullsize-preview');
+            if (clone) {
+              clone.remove();
+            }
+          }
+        }, 80);
+      });
+
+      wrapper.addEventListener('mouseenter', function() {
+        wrapper.style.display = 'block';
+      });
+
+      wrapper.addEventListener('mouseleave', function() {
+        wrapper.style.display = 'none';
+      });
+    });
+
+    document.removeEventListener('mouseleave', window.__maintenanceImagePreviewBodyLeave);
+    window.__maintenanceImagePreviewBodyLeave = function() {
+      const clone = document.getElementById('temp-fullsize-preview');
+      if (clone) {
+        clone.remove();
+      }
+    };
+    document.addEventListener('mouseleave', window.__maintenanceImagePreviewBodyLeave);
+  };
+}
+
+// Initialize image resolution checking and preview for orphan images
+if (typeof initImageResolutionCheck === 'function') {
+    initImageResolutionCheck();
+}
+if (typeof initImagePreview === 'function') {
+    initImagePreview();
+}
+//--></script>
+

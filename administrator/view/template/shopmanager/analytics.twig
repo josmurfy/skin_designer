@@ -1,0 +1,401 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" id="button-sync-marketplace" data-bs-toggle="tooltip" title="Sync Marketplace" class="btn btn-warning"><i class="fa-brands fa-ebay"></i> Sync eBay</button>
+        <button type="button" id="button-refresh" data-bs-toggle="tooltip" title="{{ text_refresh }}" class="btn btn-info"><i class="fa-solid fa-refresh"></i> {{ text_refresh }}</button>
+        <button type="button" id="button-export" data-bs-toggle="tooltip" title="{{ text_export }}" class="btn btn-success"><i class="fa-solid fa-download"></i> {{ text_export }}</button>
+      </div>
+      <h1><i class="fa-solid fa-chart-line"></i> {{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    
+    {# Period Selector #}
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="btn-group" role="group" id="period-selector">
+          <input type="radio" class="btn-check" name="period" id="period-today" value="today" {% if period == 'today' %}checked{% endif %}>
+          <label class="btn btn-outline-primary" for="period-today">{{ text_today }}</label>
+          
+          <input type="radio" class="btn-check" name="period" id="period-week" value="week" {% if period == 'week' %}checked{% endif %}>
+          <label class="btn btn-outline-primary" for="period-week">{{ text_week }}</label>
+          
+          <input type="radio" class="btn-check" name="period" id="period-month" value="month" {% if period == 'month' %}checked{% endif %}>
+          <label class="btn btn-outline-primary" for="period-month">{{ text_month }}</label>
+          
+          <input type="radio" class="btn-check" name="period" id="period-year" value="year" {% if period == 'year' %}checked{% endif %}>
+          <label class="btn btn-outline-primary" for="period-year">{{ text_year }}</label>
+        </div>
+      </div>
+    </div>
+
+    {# Alerts Section #}
+    {% if analytics_data.alerts|length > 0 %}
+    <div class="row mb-3">
+      <div class="col-12">
+        <div class="card border-warning">
+          <div class="card-header bg-warning text-white"><i class="fa-solid fa-exclamation-triangle"></i> {{ text_alerts }}</div>
+          <div class="card-body">
+            {% for alert in analytics_data.alerts %}
+              <div class="alert alert-{{ alert.type }} mb-2" role="alert">
+                <strong>{{ alert.count }}</strong> - {{ alert.message }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# Marketplace Sync Progress (hidden by default) #}
+    <div class="row mb-3 d-none" id="sync-progress-container">
+      <div class="col-12">
+        <div class="card border-info">
+          <div class="card-header bg-info text-white"><i class="fa-brands fa-ebay"></i> Marketplace Synchronization</div>
+          <div class="card-body">
+            <div class="mb-2">
+              <strong id="sync-message">Initializing sync...</strong>
+            </div>
+            <div class="progress" style="height: 25px;">
+              <div id="sync-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Overview Cards #}
+    <div class="row mb-3" id="overview-section">
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-primary">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">{{ stat_total_products }}</h6>
+                <h3 class="mb-0" id="stat-total-products">{{ analytics_data.overview.total_products }}</h3>
+              </div>
+              <div class="text-primary">
+                <i class="fa-solid fa-box fa-3x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-success">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">{{ stat_revenue }}</h6>
+                <h3 class="mb-0" id="stat-revenue">${{ analytics_data.overview.revenue|number_format(2) }}</h3>
+              </div>
+              <div class="text-success">
+                <i class="fa-solid fa-dollar-sign fa-3x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-info">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">{{ stat_orders_count }}</h6>
+                <h3 class="mb-0" id="stat-orders">{{ analytics_data.overview.orders_count }}</h3>
+              </div>
+              <div class="text-info">
+                <i class="fa-solid fa-shopping-cart fa-3x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-xl-3 col-md-6 mb-3">
+        <div class="card border-warning">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h6 class="text-muted mb-1">{{ stat_inventory_value }}</h6>
+                <h3 class="mb-0" id="stat-inventory-value">${{ analytics_data.overview.inventory_value|number_format(2) }}</h3>
+              </div>
+              <div class="text-warning">
+                <i class="fa-solid fa-warehouse fa-3x opacity-50"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Two Column Layout #}
+    <div class="row">
+      {# Left Column #}
+      <div class="col-lg-6">
+        
+        {# Inventory Health #}
+        <div class="card mb-3">
+          <div class="card-header bg-primary text-white"><i class="fa-solid fa-heart-pulse"></i> {{ text_inventory_health }}</div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <td>{{ stat_low_stock }}</td>
+                  <td class="text-end"><span class="badge bg-warning">{{ analytics_data.inventory.low_stock }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_out_of_stock }}</td>
+                  <td class="text-end"><span class="badge bg-danger">{{ analytics_data.inventory.out_of_stock }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_without_location }}</td>
+                  <td class="text-end"><span class="badge bg-warning">{{ analytics_data.inventory.without_location }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_without_image }}</td>
+                  <td class="text-end"><span class="badge bg-info">{{ analytics_data.inventory.without_image }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_unallocated }}</td>
+                  <td class="text-end"><span class="badge bg-secondary">{{ analytics_data.inventory.unallocated }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_avg_stock_level }}</td>
+                  <td class="text-end"><strong>{{ analytics_data.inventory.avg_stock_level }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {# Marketplace Performance #}
+        <div class="card mb-3">
+          <div class="card-header bg-success text-white"><i class="fa-brands fa-ebay"></i> {{ text_marketplace_performance }}</div>
+          <div class="card-body">
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <td>{{ stat_ebay_listed }}</td>
+                  <td class="text-end"><span class="badge bg-success">{{ analytics_data.marketplace.ebay_listed }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_ready_to_list }}</td>
+                  <td class="text-end"><span class="badge bg-primary">{{ analytics_data.marketplace.ready_to_list }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_with_errors }}</td>
+                  <td class="text-end"><span class="badge bg-danger">{{ analytics_data.marketplace.with_errors }}</span></td>
+                </tr>
+                <tr>
+                  <td>{{ stat_avg_listing_price }}</td>
+                  <td class="text-end"><strong>${{ analytics_data.marketplace.avg_listing_price|number_format(2) }}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {# Location Analysis #}
+        <div class="card mb-3">
+          <div class="card-header bg-info text-white"><i class="fa-solid fa-location-dot"></i> {{ text_location_analysis }}</div>
+          <div class="card-body">
+            {% if analytics_data.locations|length > 0 %}
+              <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-striped">
+                  <thead class="sticky-top bg-white">
+                    <tr>
+                      <th>{{ column_location }}</th>
+                      <th class="text-end">{{ column_count }}</th>
+                      <th class="text-end">{{ column_quantity }}</th>
+                      <th class="text-end">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for location in analytics_data.locations %}
+                      <tr>
+                        <td>{{ location.location }}</td>
+                        <td class="text-end">{{ location.product_count }}</td>
+                        <td class="text-end">{{ location.total_quantity }}</td>
+                        <td class="text-end">${{ location.total_value|number_format(2) }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">{{ text_no_data }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+
+      {# Right Column #}
+      <div class="col-lg-6">
+        
+        {# Sales Performance #}
+        <div class="card mb-3">
+          <div class="card-header bg-success text-white"><i class="fa-solid fa-chart-line"></i> {{ text_sales_performance }}</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <h6>Completed Orders</h6>
+              <h4>${{ analytics_data.sales.completed_revenue|number_format(2) }}</h4>
+              <p class="text-muted">{{ analytics_data.sales.completed_orders }} orders completed</p>
+            </div>
+            
+            {# Sales by Status #}
+            {% if analytics_data.sales.by_status|length > 0 %}
+              <h6 class="mt-3">Orders by Status</h6>
+              <table class="table table-sm">
+                <tbody>
+                  {% for status in analytics_data.sales.by_status %}
+                    <tr>
+                      <td>{{ status.status_name }}</td>
+                      <td class="text-end">{{ status.count }}</td>
+                      <td class="text-end">${{ status.total|number_format(2) }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Top Products #}
+        <div class="card mb-3">
+          <div class="card-header bg-warning text-dark"><i class="fa-solid fa-trophy"></i> {{ text_top_products }}</div>
+          <div class="card-body">
+            {% if analytics_data.top_products|length > 0 %}
+              <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm table-hover">
+                  <thead class="sticky-top bg-white">
+                    <tr>
+                      <th>#</th>
+                      <th>{{ column_product }}</th>
+                      <th class="text-end">{{ column_sales }}</th>
+                      <th class="text-end">{{ column_revenue }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for product in analytics_data.top_products %}
+                      <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>
+                          <strong>{{ product.name }}</strong><br>
+                          <small class="text-muted">{{ product.sku }}</small>
+                        </td>
+                        <td class="text-end">{{ product.units_sold }}</td>
+                        <td class="text-end"><strong>${{ product.revenue|number_format(2) }}</strong></td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">{{ text_no_data }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Category Performance #}
+        <div class="card mb-3">
+          <div class="card-header bg-secondary text-white"><i class="fa-solid fa-layer-group"></i> {{ text_category_performance }}</div>
+          <div class="card-body">
+            {% if analytics_data.categories|length > 0 %}
+              <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm table-striped">
+                  <thead class="sticky-top bg-white">
+                    <tr>
+                      <th>{{ column_category }}</th>
+                      <th class="text-end">Products</th>
+                      <th class="text-end">Sold</th>
+                      <th class="text-end">Revenue</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for category in analytics_data.categories %}
+                      <tr>
+                        <td>{{ category.category_name }}</td>
+                        <td class="text-end">{{ category.product_count }}</td>
+                        <td class="text-end">{{ category.units_sold }}</td>
+                        <td class="text-end">${{ category.revenue|number_format(2) }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">{{ text_no_data }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    {# Bottom Products (Full Width) #}
+    <div class="row">
+      <div class="col-12">
+        <div class="card mb-3">
+          <div class="card-header bg-danger text-white"><i class="fa-solid fa-arrow-trend-down"></i> {{ text_bottom_products }} (Slow Moving)</div>
+          <div class="card-body">
+            {% if analytics_data.bottom_products|length > 0 %}
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>{{ column_product }}</th>
+                      <th>{{ column_sku }}</th>
+                      <th class="text-end">{{ column_stock }}</th>
+                      <th class="text-end">Price</th>
+                      <th class="text-end">{{ column_sales }}</th>
+                      <th>Last Synced</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for product in analytics_data.bottom_products %}
+                      <tr>
+                        <td>{{ product.name }}</td>
+                        <td><code>{{ product.sku }}</code></td>
+                        <td class="text-end">{{ product.quantity }}</td>
+                        <td class="text-end">${{ product.price|number_format(2) }}</td>
+                        <td class="text-end">{{ product.units_sold }}</td>
+                        <td>
+                          {% if product.last_sync and product.last_sync != '0000-00-00 00:00:00' %}
+                            <span class="badge bg-info">{{ product.last_sync|date('Y-m-d H:i') }}</span>
+                          {% else %}
+                            <span class="badge bg-warning">Never synced</span>
+                          {% endif %}
+                        </td>
+                      </tr>
+                    {% endfor %}
+<input type="hidden" id="url_sync_marketplace" value="index.php?route=shopmanager/analytics.importMarketplace&user_token={{ user_token }}">
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="text-muted">{{ text_no_data }}</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<input type="hidden" id="user_token" value="{{ user_token }}">
+<input type="hidden" id="url_get_data" value="{{ url_get_data }}">
+<input type="hidden" id="url_export" value="{{ url_export }}">
+
+{{ footer }}

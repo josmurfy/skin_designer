@@ -1,0 +1,81 @@
+{% set skuLength = sku|length %}
+{% set fontSize = (280 / skuLength)|round %}
+{% if fontSize > 56 %}{% set fontSize = 56 %}{% endif %}
+<html>
+<head>
+  <style>
+    @page { margin:0; }
+    body { margin:0; padding:0; }
+    .label-container {
+      width:76.2mm;
+      height:25.4mm;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+      font-family:Arial, sans-serif;
+      position:relative;
+      page-break-after:always;
+      box-sizing:border-box;
+    }
+    .qr-code {
+      width:24mm;
+      height:24mm;
+      margin-right:1mm;
+    }
+    .text-container {
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      box-sizing:border-box;
+      overflow:hidden;
+    }
+    .upc {
+      font-size:12px;
+      text-align:center;
+      font-weight:bold;
+      margin:0;
+    }
+    .sku {
+      font-size: {{ fontSize }}px;
+      text-align:center;
+      font-weight:bold;
+      margin:0;
+      white-space:nowrap;
+      display:block;
+    }
+  </style>
+</head>
+<body>
+{% for i in 1..quantity %}
+  <div class="label-container">
+    <img class="qr-code" src="{{ qrCodeFile }}" alt="QR Code">
+    <div class="text-container">
+      <div class="sku">{{ sku|e }}</div>
+      {% if upc is defined and upc is not empty and upc != 'null' %}
+        <div class="upc">UPC: {{ upc|e }}</div>
+      {% endif %}
+    </div>
+  </div>
+{% endfor %}
+</body>
+<script>
+  // Auto-fit: réduit la police jusqu'à ce que le texte rentre dans le container
+  document.querySelectorAll('.sku').forEach(function(el) {
+    var container = el.closest('.text-container');
+    if (!container) return;
+    var maxW = container.offsetWidth - 4;
+    var maxH = container.offsetHeight - (container.querySelector('.upc') ? 18 : 4);
+    var fs   = parseFloat(window.getComputedStyle(el).fontSize);
+    while ((el.scrollWidth > maxW || el.offsetHeight > maxH) && fs > 6) {
+      fs -= 0.5;
+      el.style.fontSize = fs + 'px';
+    }
+  });
+  window.print();
+  window.onafterprint = function(){ window.close(); };
+</script>
+</html>

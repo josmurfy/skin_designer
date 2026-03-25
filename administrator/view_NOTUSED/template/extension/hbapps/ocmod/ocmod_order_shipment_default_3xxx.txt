@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>Add Shipment Details to Orders [default][3xxx]</name>
+    <version>{huntbee_version}</version>
+    <author>HuntBee OpenCart Services</author>
+    <link>https://www.huntbee.com</link>
+	<code>huntbee_courier_options_ocmod</code>
+		
+
+		<file path="admin/view/template/sale/order_info.twig">			
+			<operation>
+                <search><![CDATA[<div id="history"></div>]]></search>
+                <add position="after"><![CDATA[
+				<div id="shipment-form"></div>
+				]]></add>
+            </operation>
+
+			<operation>
+                <search><![CDATA[{{ footer }}]]></search>
+                <add position="before"><![CDATA[
+				<script type="text/javascript">
+				    $('#shipment-form').load('index.php?route=extension/hbapps/order_shipment/shipment_form&user_token={{ user_token }}&order_id={{ order_id }}&store_id={{ store_id }}');
+				</script> 
+				]]>
+                </add>
+            </operation>			
+        </file>
+        
+        <file path="admin/controller/sale/order.php">
+		    <operation>
+                <search><![CDATA[$results = $this->model_sale_order->getOrders($filter_data);]]></search>
+                <add position="before"><![CDATA[$this->load->model('extension/hbapps/order_shipment');]]></add>
+            </operation>
+            
+		    <operation>
+                <search><![CDATA['shipping_code' => $result['shipping_code'],]]></search>
+                <add position="before"><![CDATA[
+                    'is_all_shipped'          => $this->model_extension_hbapps_order_shipment->is_all_shipped($result['order_id']),
+    			]]></add>
+            </operation>
+		</file>
+		
+		<file path="admin/view/template/sale/order_list.twig">
+            <operation>
+                <search><![CDATA[<a href="{{ order.view }}" data-toggle="tooltip" title="{{ button_view }}" class="btn btn-primary"><i class="fa fa-eye"></i></a>]]></search>
+                <add position="replace"><![CDATA[
+    				<a href="{{ order.view }}" data-toggle="tooltip" title="{{ button_view }}" class="btn btn-primary"><i class="fa fa-eye"></i></a>
+                    <a onclick="openShipmentForm({{ order['order_id'] }});" data-toggle="tooltip" title="Update Order Shipment" class="btn btn-warning {{ order['is_all_shipped']? ' css_shipped':' css_ship_pending' }}" ><i class="fa fa-truck"></i></a>
+    			]]></add>
+            </operation>
+            
+            <operation>
+                <search><![CDATA[</form>]]></search>
+                <add position="before"><![CDATA[
+                    <style>
+                        .css_shipped{background-color:green !important; border-color:green !important;}
+                        .css_ship_pending{background-color:red !important;border-color:red !important;}
+                        .css_shipped:hover{border-color:green !important;}
+                        .css_ship_pending:hover{border-color:red !important;}
+                    </style>
+    				<div id="shipment-form-holder" class="hb-white-popup mfp-with-anim mfp-hide">
+    				    <div id="shipment-form-fields"></div>
+    				</div>
+
+                    <script type="text/javascript" src="view/javascript/hb_magnific_popup/jquery.magnific-popup.min.js"></script>
+                    <link href="view/javascript/hb_magnific_popup/magnific-popup.css" rel="stylesheet">
+                    <link href="view/javascript/hb_magnific_popup/popup-effect.css" rel="stylesheet">
+                    
+                    <script type="text/javascript">
+                    function openShipmentForm(order_id) {
+                    	$('#shipment-form-fields').html('');
+                    	$('#shipment-form-fields').html('<center><i class="fa fa-refresh fa-spin fa-3x fa-fw"></i></center>');
+                    	$('#shipment-form-fields').load('index.php?route=extension/hbapps/order_shipment/shipment_form&user_token={{ user_token }}&order_id='+order_id);
+                    	
+                    	$.magnificPopup.open({
+                            items: {src: "#shipment-form-holder"},
+                            type: "inline",
+                            removalDelay: 800,
+                            midClick: !0,
+                            callbacks: {
+                                beforeOpen: function() {
+                                    this.st.mainClass = "mfp-zoom-in"
+                                }
+                            }
+                        })
+                    
+                    }
+                    </script>
+    			]]></add>
+            </operation>
+        </file>
+		
+		<!--STORE FRONT  -->
+		<file path="catalog/controller/account/order.php">
+            <operation error="skip">
+                <search><![CDATA[$data['histories'] = array();]]></search>
+                <add position="before"><![CDATA[
+
+				$this->language->load('extension/module/order_shipment');
+				$data['column_service']     = $this->language->get('column_service');
+				$data['column_code']        = $this->language->get('column_code');
+				$data['column_link']        = $this->language->get('column_link');
+				$data['text_courier']       = $this->language->get('text_courier');
+				$data['column_delivery_date']       = $this->language->get('column_delivery_date');
+				$data['column_shipped_quantity']       = $this->language->get('column_shipped_quantity');
+				
+				$data['order_shipment_data'] = array();
+				
+				$order_shipment_data = $this->db->query("SELECT *, a.id as shipment_id, c.name as pname, b.name as cname FROM " . DB_PREFIX . "hb_shipment_order_info a , `" . DB_PREFIX . "hb_shipping_company` b, " . DB_PREFIX . "order_product c where a.courier_id = b.id and a.order_product_id = c.order_product_id and a.order_id = c.order_id and a.order_id = '".(int)$this->request->get['order_id']."'");
+	
+        		if ($order_shipment_data->rows) {	
+					$order_shipments = 	$order_shipment_data->rows;	
+					$query_count = $this->db->query("SELECT count(*) as count FROM `" . DB_PREFIX . "hb_shipment_order_info` WHERE order_id = '".(int)$order_id."' AND `code` = (SELECT code FROM " . DB_PREFIX . "hb_shipment_order_info WHERE order_id = '".(int)$order_id."' LIMIT 1)");
+					if ($query_count->row['count'] == count($order_shipments)) {
+						$data['bulk'] = 1;
+					}else{
+						$data['bulk'] = 0;
+					}
+					
+        			foreach ($order_shipments as $row) {
+						$option_data = array();
+
+						$options = $this->model_account_order->getOrderOptions($this->request->get['order_id'], $row['order_product_id']);
+		
+						foreach ($options as $option) {
+							if ($option['type'] != 'file') {
+								$value = $option['value'];
+							} else {
+								$upload_info = $this->model_tool_upload->getUploadByCode($option['value']);
+		
+								if ($upload_info) {
+									$value = $upload_info['name'];
+								} else {
+									$value = '';
+								}
+							}
+		
+							$option_data[] = array(
+								'name'  => $option['name'],
+								'value' => (utf8_strlen($value) > 20 ? utf8_substr($value, 0, 20) . '..' : $value)
+							);
+						}
+						
+        				//$data['bulk'] = $row['bulk'];
+        				$data['partner_name'] = $row['cname'];
+        				$data['tracking_number'] = $row['code'];
+        				$data['tracking_link'] = str_replace('{tracking_id}',$row['code'],$row['link']);
+        				$data['delivery_date'] = ($row['delivery_date'] == NULL or $row['delivery_date'] == '0000-00-00') ? '' : date('d-m-Y',strtotime($row['delivery_date']));
+        				
+        				$data['order_shipment_data'][] = array(
+        					'shipment_id'	=> $row['shipment_id'],
+        					'product_id'	=> $row['product_id'],
+        					'product_name'	=> $row['pname'],
+							'option'   		=> $option_data,
+							'model'			=> $row['model'],
+							'shipped_qty'	=> $row['shipped_qty'],
+        					'partner_name'	=> $row['cname'],
+        					'code'			=> $row['code'],
+        					'tracking_link'	=> str_replace('{tracking_id}',$row['code'],$row['link']),
+        					'delivery_date'	=> ($row['delivery_date'] == NULL or $row['delivery_date'] == '0000-00-00') ? '' : date('d-m-Y',strtotime($row['delivery_date'])) ,
+        					'mail'			=> $row['mail']
+        				);
+        			}
+        		}
+				
+				]]>
+                </add>
+            </operation>
+		</file>
+		
+		<file path="catalog/view/theme/*/template/account/order_info.twig">
+            <operation error="log">
+                <search><![CDATA[<div class="buttons clearfix">]]></search>
+                <add position="before"><![CDATA[
+				{% if (order_shipment_data) %} 
+				 <h3>{{ text_courier }}</h3>
+				  {% if (bulk == 1) %} 
+				    <table class="table table-bordered table-hover">
+                        <tr>
+				            <td class="text-left"><b>{{ column_service }}: </b></td>
+				            <td class="text-left">{{ partner_name }} </td>
+				        </tr>
+				        <tr>
+				            <td class="text-left"><b>{{ column_code }}: </b> </td>
+				            <td class="text-left">{{ tracking_number }} </td>
+				        </tr>
+				        <tr>
+				            <td class="text-left"><b>{{ column_link }}: </b> </td>
+				            <td class="text-left"><a href="{{ tracking_link }}" target="_blank">{{ tracking_link }}</a> </td>
+				        </tr>
+				        <tr>
+				            <td class="text-left"><b>{{ column_delivery_date }}: </b> </td>
+				            <td class="text-left">{{ delivery_date }} </td>
+				        </tr>
+				    </table>
+				  {% else %} 
+				  <table class="table table-bordered table-hover">
+					<thead>
+					  <tr>
+						<td class="text-left">{{ column_name }}</td>
+						<td class="text-left">{{ column_model }}</td>
+						<td class="text-center">{{ column_shipped_quantity }}</td>
+						<td class="text-left">{{ column_service }}</td>
+						<td class="text-left">{{ column_code }}</td>
+						<td class="text-left">{{ column_link }}</td>
+						<td class="text-right">{{ column_delivery_date }}</td>
+					  </tr>
+					</thead>
+					<tbody>
+					  {% for shipment in order_shipment_data %} 
+					  <tr>
+						<td class="text-left">{{ shipment['product_name'] }}
+						{% for option in shipment.option %} <br />
+						&nbsp;<small> - {{ option.name }}: {{ option.value }}</small> {% endfor %}</td>
+						<td class="text-left">{{ shipment['model'] }}</td>
+						<td class="text-center">{{ shipment['shipped_qty'] }}</td>
+						<td class="text-left">{{ shipment['partner_name'] }}</td>
+						<td class="text-left">{{ shipment['code'] }}</td>
+						<td class="text-left"><a href="{{ shipment['tracking_link'] }}" target="_blank">{{ shipment['tracking_link'] }}</a></td>
+						<td class="text-right">{{ shipment['delivery_date'] }}</td>
+					  </tr>
+					  {% endfor %} 
+					</tbody>
+				  </table>
+				  {% endif %} 
+				  {% endif %}
+				]]>
+                </add>
+            </operation>
+        </file>
+
+</modification>

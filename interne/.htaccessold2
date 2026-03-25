@@ -1,0 +1,17 @@
+# Rewrite to www
+Options +FollowSymLinks
+RewriteEngine on
+RewriteCond %{HTTP_HOST} ^www.phoenixliquidation.ca[nc]
+RewriteRule ^(.*)$ http://www.www.phoenixliquidation.ca/$1 [r=301,nc]
+
+# Password Protect file
+<Files /admin/interne>
+AuthName "Prompt"
+AuthType Basic
+AuthUserFile /public_html/phoenixliquidation/admin/interne/.htpasswd
+Require valid-user
+</Files>
+
+# Change default directory page
+DirectoryIndex index.php
+

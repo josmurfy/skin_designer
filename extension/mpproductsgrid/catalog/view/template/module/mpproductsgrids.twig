@@ -1,0 +1,60 @@
+
+{% for type,key in products %}
+  {% for key1,upproducts in key %}
+    {% for subproduct in upproducts %}
+      <div class="mpgrid_item {% if subproduct.highlight %} mpgrid_item--size-a {% endif %} {{ mpgrids[ type ][ key1 ].id }}">
+        <form method="post" data-oc-toggle="ajax" data-oc-load="{{ cart }}" data-oc-target="#header-cart">
+          <div class="inner-mpg">
+
+            <div class="mpgridslider" data-sliderignition="{% if subproduct.images %}{{ show_product_additional_images }}{% else %}0{% endif %}" data-sliderbuttons="{{ show_prevnextbuttons }}" data-sliderpagedots="{{ show_pagedots }}" data-sliderauto="{{ slider_autoplay }}" data-sliderautospeed="{{ slider_autoplayspeed }}" data-sliderpauseonhover="{{ slider_pauseautoplayonhover }}">
+              <div class="mpgridslider_additional"><a href="{{ subproduct.href }}"><img src="{{ subproduct.thumb }}" alt="{{ subproduct.name }}" /></a></div>
+              {% if subproduct.images %}
+              {% for image in subproduct.images %}
+              <div class="mpgridslider_additional"><a href="{{ subproduct.href }}"><img src="{{ image.thumb }}" alt="{{ subproduct.name }}" /></a></div>
+              {% endfor %}
+              {% endif %}
+            </div>
+            <div class="meta content">
+              {% if show_product_name %}<h3 class="meta__title">{{ subproduct.name }}</h3>{% endif %}
+
+              {% if subproduct.rating %}
+              <div class="rating">
+                {% for i in 1..5 %}
+                  {% if subproduct.rating < i %}
+                    <span class="fa-stack"><i class="fa-regular fa-star fa-stack-1x"></i></span>
+                  {% else %}
+                    <span class="fa-stack"><i class="fa-solid fa-star fa-stack-1x"></i><i class="fa-regular fa-star fa-stack-1x"></i></span>
+                  {% endif %}
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {% if subproduct.price %}
+              <span class="meta__price">
+                <div class="price">
+                  {% if not subproduct.special %}
+                  <span class="price-new">{{ subproduct.price }}</span>
+                  {% else %}
+                  <span class="price-new">{{ subproduct.special }}</span> <span class="price-old">{{ subproduct.price }}</span>
+                  {% endif %}
+                  {% if subproduct.tax %}
+                  <span class="price-tax">{{ text_tax }} {{ subproduct.tax }}</span>
+                  {% endif %}
+                </div>
+              </span>
+              {% endif %}
+              {% if show_product_description %}<span class="meta__brand hidden-sm"><p>{{ subproduct.description }}</p></span>{% endif %}
+              <div class="button-group">
+                <button type="submit" formaction="{{ add_to_cart }}" data-bs-toggle="tooltip" title="{{ button_cart }}"><i class="fa-solid fa-shopping-cart"></i></button>
+                <button type="submit" formaction="{{ add_to_wishlist }}" data-bs-toggle="tooltip" title="{{ button_wishlist }}"><i class="fa-solid fa-heart"></i></button>
+                <button type="submit" formaction="{{ add_to_compare }}" data-bs-toggle="tooltip" title="{{ button_compare }}"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+              </div>
+            </div>
+            <input type="hidden" name="product_id" value="{{ subproduct.product_id }}"/>
+            <input type="hidden" name="quantity" value="{{ subproduct.minimum }}"/>
+          </div>
+        </form>
+      </div>
+    {% endfor %}
+  {% endfor %}
+{% endfor %}

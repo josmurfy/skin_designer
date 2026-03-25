@@ -1,0 +1,131 @@
+<style>
+/* Modifier le spinner */
+.spinner-grow {
+    animation: spin 1s linear infinite;
+}
+
+/* Animation pour rendre le spinner plus fluide */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Personnalisation de la modale */
+.modal-content {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background-color: #f9f9f9;
+}
+
+.modal-header {
+    padding: 15px;
+}
+
+.modal-body {
+    padding: 30px;
+}
+
+.modal-title {
+    font-size: 20px;
+}
+
+/* Spinner */
+.spinner-grow {
+    animation: spin 1s linear infinite;
+}
+
+/* Mouvement de traitement */
+.processing-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.moving-bar {
+    width: 30%;
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 5px;
+    position: absolute;
+    left: 0;
+    animation: moveBar 2s ease-in-out infinite;
+}
+
+/* Animation de la barre de traitement */
+@keyframes moveBar {
+    0% {
+        left: -30%;
+    }
+    50% {
+        left: 50%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+/* Animation du spinner */
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Custom style for custom-wait-popup-modal */
+.custom-wait-popup-modal .modal-content {
+    border-radius: 20px;
+    background-color: #f0f0f0; /* Example background color */
+}
+
+.custom-wait-popup-modal .modal-header {
+    background-color: #0056b3; /* Example header background color */
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.custom-wait-popup-modal .modal-title {
+    color: white;
+    font-weight: bold;
+}
+
+.custom-wait-popup-modal .modal-body {
+    text-align: center;
+    padding: 30px;
+}
+
+.custom-wait-popup-modal .spinner-grow {
+    width: 3rem;
+    height: 3rem;
+}
+
+.custom-wait-popup-modal .processing-bar {
+    margin-top: 20px;
+}
+
+.custom-wait-popup-modal .moving-bar {
+    background-color: #007bff;
+}
+
+.custom-wait-popup-modal p {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #999;
+}
+</style>
+<!-- Modale Bootstrap avec mouvement de traitement -->
+
+<div id="loading-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6); z-index:9999;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:20px 30px; border-radius:8px; width:400px; max-width:90%; box-shadow:0 0 15px rgba(0,0,0,0.3); text-align:center;">
+        <div id="loading-spinner" style="margin-bottom:10px;">
+            <img src="https://i.imgur.com/llF5iyg.gif" width="50" alt="Loading..."> <!-- Spinner GIF -->
+        </div>
+        <h4 id="loading-title">Chargement...</h4>
+        <div id="loading-messages" style="max-height:200px; overflow-y:auto; text-align:left; margin-top:10px; font-size:14px;"></div>
+        <button onclick="hideLoadingPopup()" style="margin-top:15px; display:none;" id="close-loading-btn">Fermer</button>
+    </div>
+</div>

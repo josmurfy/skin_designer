@@ -1,0 +1,357 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" onclick="window.print();" class="btn btn-info"><i class="fa-solid fa-print"></i> {{ button_print }}</button>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="row">
+      <div id="filter-report" class="col-lg-3 col-md-12 order-lg-last d-none d-lg-block mb-3">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-filter"></i> {{ text_filter }}</div>
+          <div class="card-body">
+            <form id="form-filter">
+              <input type="hidden" name="user_token" value="{{ user_token }}">
+              
+              <div class="mb-3">
+                <label for="input-product-id" class="form-label">{{ entry_product_id }}</label>
+                <input type="text" name="filter_product_id" value="{{ filter_product_id }}" placeholder="{{ entry_product_id }}" id="input-product-id" class="form-control"/>
+              </div>
+              
+              <div class="mb-3">
+                <label for="input-name" class="form-label">{{ entry_name }}</label>
+                <input type="text" name="filter_name" value="{{ filter_name }}" placeholder="{{ entry_name }}" id="input-name" class="form-control"/>
+              </div>
+              
+              <div class="mb-3">
+                <label for="input-model" class="form-label">{{ entry_model }}</label>
+                <input type="text" name="filter_model" value="{{ filter_model }}" placeholder="{{ entry_model }}" id="input-model" class="form-control"/>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" name="filter_image_issue" value="1" id="input-image-issue" class="form-check-input" {% if filter_image_issue %}checked{% endif %}>
+                  <label for="input-image-issue" class="form-check-label">{{ entry_image_issue }}</label>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" name="filter_low_resolution" value="1" id="input-low-resolution" class="form-check-input" {% if filter_low_resolution %}checked{% endif %}>
+                  <label for="input-low-resolution" class="form-check-label">{{ entry_low_resolution }}</label>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" name="filter_wrong_path" value="1" id="input-wrong-path" class="form-check-input" {% if filter_wrong_path %}checked{% endif %}>
+                  <label for="input-wrong-path" class="form-check-label">{{ entry_wrong_path }}</label>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" name="filter_old_nomenclature" value="1" id="input-old-nomenclature" class="form-check-input" {% if filter_old_nomenclature %}checked{% endif %}>
+                  <label for="input-old-nomenclature" class="form-check-label">{{ entry_old_nomenclature }}</label>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" name="filter_orphan_images" value="1" id="input-orphan-images" class="form-check-input" {% if filter_orphan_images %}checked{% endif %}>
+                  <label for="input-orphan-images" class="form-check-label">{{ entry_orphan_images }}</label>
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <div class="form-check">
+                  <input type="checkbox" name="filter_zero_quantity" value="1" id="input-zero-quantity" class="form-check-input" {% if filter_zero_quantity %}checked{% endif %}>
+                  <label for="input-zero-quantity" class="form-check-label">{{ entry_zero_quantity }}</label>
+                </div>
+              </div>
+              
+              <div class="text-end">
+                <button type="button" id="button-filter" class="btn btn-light"><i class="fa-solid fa-filter"></i> {{ button_filter }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-9 col-md-12">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-list"></i> {{ text_list }}</div>
+          <div id="report" class="card-body" data-oc-load="{{ action }}" data-oc-target="#report">{{ list }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de validation -->
+<div class="modal fade" id="validation-modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Validation Required</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="validation-info"></div>
+        <div id="validation-progress" style="display:none;">
+          <div class="progress mt-3">
+            <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+          </div>
+          <p class="text-center mt-2"><small id="validation-status"></small></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Show Current Data</button>
+        <button type="button" id="btn-start-validation" class="btn btn-primary">Start Validation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="view/javascript/shopmanager/bootstrap_helper.js" type="text/javascript"></script>
+<script>
+// Check validation status on page load
+$(document).ready(function() {
+    checkValidationStatus();
+});
+
+function checkValidationStatus() {
+    $.ajax({
+        url: 'index.php?route=shopmanager/maintenance_image.checkValidationStatus&user_token={{ user_token }}',
+        dataType: 'json',
+        success: function(json) {
+            if (json.needs_validation) {
+                var message = '';
+                
+                if (json.validated === 0) {
+                    message = '<div class="alert alert-warning"><i class="fa-solid fa-exclamation-triangle"></i> <strong>No products have been validated yet.</strong><br>';
+                    message += 'Total products: <strong>' + json.total_products + '</strong><br>';
+                    message += 'It is recommended to run validation before using filters.</div>';
+                } else {
+                    message = '<div class="alert alert-info"><i class="fa-solid fa-info-circle"></i> <strong>Validation incomplete</strong><br>';
+                    message += 'Validated: <strong>' + json.validated + '</strong> / <strong>' + json.total_products + '</strong> (' + json.percentage + '%)<br>';
+                    message += 'Some products need validation or have outdated validation data.</div>';
+                }
+                
+                $('#validation-info').html(message);
+                showModal(document.getElementById('validation-modal'));
+            }
+        },
+        error: function() {
+            console.log('Failed to check validation status');
+        }
+    });
+}
+
+// Start validation button
+var validationStats = {
+    start_time: null,
+    total_products: 0,
+    validated: 0,
+    errors: 0,
+    with_issues: 0
+};
+
+$('#btn-start-validation').on('click', function() {
+    $(this).prop('disabled', true);
+    $('.btn-close, .btn-secondary').prop('disabled', true);
+    $('#validation-progress').show();
+    validationStats.start_time = new Date();
+    
+    // Check if table needs to be created first
+    $.ajax({
+        url: 'index.php?route=shopmanager/maintenance_image.checkValidationStatus&user_token={{ user_token }}',
+        dataType: 'json',
+        success: function(json) {
+            validationStats.total_products = json.total_products;
+            
+            if (json.message && json.message.includes('créée')) {
+                // Need to create table
+                $('#validation-status').html('<i class="fa-solid fa-cog fa-spin"></i> Creating maintenance table...');
+                $.ajax({
+                    url: 'index.php?route=shopmanager/maintenance_image.createValidationTable&user_token={{ user_token }}',
+                    type: 'post',
+                    dataType: 'json',
+                    success: function(result) {
+                        if (result.error) {
+                            alert('Error: ' + result.error);
+                        } else {
+                            validateBatch(0, json.total_products);
+                        }
+                    }
+                });
+            } else {
+                validateBatch(0, json.total_products);
+            }
+        }
+    });
+});
+
+function validateBatch(offset, total) {
+    var validated = validationStats.validated;
+    var percentage = Math.round((validated / total) * 100);
+    var elapsed = ((new Date() - validationStats.start_time) / 1000).toFixed(1);
+    var speed = validated > 0 ? (validated / elapsed).toFixed(1) : 0;
+    var remaining = total - validated;
+    var eta = speed > 0 ? (remaining / speed).toFixed(0) : '?';
+    
+    $('#progress-bar').css('width', percentage + '%').text(percentage + '%');
+    $('#validation-status').html(
+        '<i class="fa-solid fa-spinner fa-spin"></i> <strong>Validating...</strong><br>' +
+        'Progress: <strong>' + validated + '</strong> / <strong>' + total + '</strong> products<br>' +
+        '<small>Speed: ' + speed + ' products/sec | ETA: ' + eta + 's | Elapsed: ' + elapsed + 's</small>'
+    );
+    
+    $.ajax({
+        url: 'index.php?route=shopmanager/maintenance_image.validateBatch&user_token={{ user_token }}',
+        type: 'post',
+        data: {offset: offset},
+        dataType: 'json',
+        timeout: 120000, // 120 seconds timeout
+        success: function(json) {
+            console.log('Batch response:', json);
+            
+            if (json.error) {
+                alert('Error: ' + json.error);
+                return;
+            }
+            
+            // Log warnings if any
+            if (json.warnings && json.warnings.length > 0) {
+                console.warn('Validation warnings:', json.warnings);
+            }
+            
+            // Accumulate validated count
+            validationStats.validated += json.validated;
+            
+            console.log('Progress:', validationStats.validated, '/', total, 'Completed:', json.completed, 'Next offset:', json.next_offset);
+            
+            if (json.completed) {
+                var total_time = ((new Date() - validationStats.start_time) / 1000).toFixed(1);
+                var avg_speed = (validationStats.validated / total_time).toFixed(1);
+                
+                var summary = '<div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> <strong>Validation Complete!</strong></div>';
+                summary += '<div class="card"><div class="card-body">';
+                summary += '<h6 class="card-title">Summary</h6>';
+                summary += '<ul class="list-unstyled mb-0">';
+                summary += '<li><i class="fa-solid fa-check text-success"></i> Total validated: <strong>' + validationStats.validated + '</strong> products</li>';
+                summary += '<li><i class="fa-solid fa-clock text-info"></i> Total time: <strong>' + total_time + '</strong> seconds</li>';
+                summary += '<li><i class="fa-solid fa-gauge text-primary"></i> Average speed: <strong>' + avg_speed + '</strong> products/sec</li>';
+                summary += '</ul>';
+                summary += '</div></div>';
+                
+                $('#validation-info').html(summary);
+                $('#validation-progress').hide();
+                $('#btn-start-validation').hide();
+                $('.btn-secondary').hide();
+                
+                // Add reload button
+                var reloadBtn = $('<button type="button" class="btn btn-primary">Reload List</button>');
+                reloadBtn.on('click', function() {
+                    $('#report').html('<div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-3x"></i><br><br>Loading...</div>');
+                    $('#report').load('index.php?route=shopmanager/maintenance_image.list&user_token={{ user_token }}');
+                    hideModal(document.getElementById('validation-modal'));
+                });
+                $('.modal-footer').html(reloadBtn);
+            } else {
+                // Continue validation
+                validateBatch(json.next_offset, total);
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText,
+                statusCode: xhr.status,
+                offset: offset,
+                validated_so_far: validationStats.validated
+            });
+            
+            var errorMsg = 'Validation stopped at ' + validationStats.validated + ' products';
+            if (status === 'timeout') {
+                errorMsg += '\n\nTimeout: The server took too long to respond.';
+            } else if (xhr.responseText) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.error) {
+                        errorMsg += '\n\nError: ' + response.error;
+                    }
+                } catch(e) {
+                    // Show first 500 chars of response
+                    errorMsg += '\n\nResponse: ' + xhr.responseText.substring(0, 500);
+                }
+            }
+            errorMsg += '\n\nCheck console (F12) for details.';
+            
+            // Show error in modal instead of alert
+            $('#validation-status').html(
+                '<div class="alert alert-danger">' +
+                '<i class="fa-solid fa-exclamation-triangle"></i> <strong>Error!</strong><br>' +
+                errorMsg.replace(/\n/g, '<br>') +
+                '</div>'
+            );
+        }
+    });
+}
+
+// Handle pagination and sorting clicks
+$('#report').on('click', 'thead a, .pagination a', function(e) {
+    e.preventDefault();
+    
+    // Show loading spinner
+    $('#report').html('<div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-3x"></i><br><br>Loading...</div>');
+    
+    $('#report').load(this.href);
+});
+
+$('#button-filter').on('click', function() {
+    var url = '';
+    
+    var filter_product_id = $('input[name=\'filter_product_id\']').val();
+    if (filter_product_id) {
+        url += '&filter_product_id=' + encodeURIComponent(filter_product_id);
+    }
+    
+    var filter_name = $('input[name=\'filter_name\']').val();
+    if (filter_name) {
+        url += '&filter_name=' + encodeURIComponent(filter_name);
+    }
+    
+    var filter_model = $('input[name=\'filter_model\']').val();
+    if (filter_model) {
+        url += '&filter_model=' + encodeURIComponent(filter_model);
+    }
+    
+    // Send filter values explicitly (1 if checked, 0 if unchecked)
+    url += '&filter_image_issue=' + ($('input[name=\'filter_image_issue\']').is(':checked') ? '1' : '0');
+    url += '&filter_low_resolution=' + ($('input[name=\'filter_low_resolution\']').is(':checked') ? '1' : '0');
+    url += '&filter_wrong_path=' + ($('input[name=\'filter_wrong_path\']').is(':checked') ? '1' : '0');
+    url += '&filter_old_nomenclature=' + ($('input[name=\'filter_old_nomenclature\']').is(':checked') ? '1' : '0');
+    url += '&filter_orphan_images=' + ($('input[name=\'filter_orphan_images\']').is(':checked') ? '1' : '0');
+    url += '&filter_zero_quantity=' + ($('input[name=\'filter_zero_quantity\']').is(':checked') ? '1' : '0');
+    
+    window.history.pushState({}, null, 'index.php?route=shopmanager/maintenance_image&user_token={{ user_token }}' + url);
+    
+    // Show loading spinner
+    $('#report').html('<div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-3x text-primary"></i><br><br><strong>Loading products...</strong></div>');
+    
+    $('#report').load('index.php?route=shopmanager/maintenance_image.list&user_token={{ user_token }}' + url);
+});
+</script>
+
+{{ footer }}

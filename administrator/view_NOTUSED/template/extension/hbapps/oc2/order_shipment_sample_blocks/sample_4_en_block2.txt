@@ -1,0 +1,18 @@
+<table style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;background-position:center bottom;background-color:#FFFFFF;border-radius:5px;" width="100%" cellspacing="0" cellpadding="0" bgcolor="#ffffff"> 
+	 <tr style="border-collapse:collapse;"> 
+	  <td class="es-m-txt-l" align="left" style="Margin:0;padding-bottom:5px;padding-top:20px;padding-left:20px;padding-right:20px;"><h2 style="Margin:0;line-height:26px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:22px;font-style:normal;font-weight:normal;color:#3F3D3D;">Dear {firstname},</h2></td> 
+	 </tr> 
+	 <tr style="border-collapse:collapse;"> 
+	  <td align="left" style="padding:0;Margin:0;padding-top:10px;padding-left:20px;padding-right:20px;"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D;">Your order has been shipped!</p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D;">Expected Delivery by <strong>{delivery_date}</strong>.</p><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D;">The items has been shipped via our shipping partner {shipment_partner}</p></td> 
+	 </tr> 
+	 <tr style="border-collapse:collapse;"> 
+	  <td align="left" style="Margin:0;padding-bottom:5px;padding-top:10px;padding-left:20px;padding-right:20px;"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D;">Tracking link {tracking_link}</p></td> 
+	 </tr> 
+	 <tr style="border-collapse:collapse;"> 
+	  <td align="left" style="Margin:0;padding-top:10px;padding-bottom:10px;padding-left:20px;padding-right:20px;"><span class="es-button-border" style="border-style:solid;border-color:#2CB543;background:#31CB4B none repeat scroll 0% 0%;border-width:0px;display:inline-block;border-radius:7px;width:auto;"><a href="{tracking_link}" class="es-button" target="_blank" style="mso-style-priority:100 !important;text-decoration:none;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:18px;color:#FFFFFF;border-style:solid;border-color:#2980D9;border-width:10px 25px 10px 25px;display:inline-block;background:#2980D9;border-radius:7px;font-weight:normal;font-style:normal;line-height:22px;width:auto;text-align:center;">Track Order</a></span></td> 
+	 </tr> 
+	 <tr style="border-collapse:collapse;"> 
+	  <td align="left" style="Margin:0;padding-bottom:5px;padding-top:10px;padding-left:20px;padding-right:20px;"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D;">The following items are shipped</p></td> 
+	 </tr> 
+
+	</table>

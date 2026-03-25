@@ -1,0 +1,150 @@
+<style>
+/* Modifier le spinner */
+.spinner-grow {
+    animation: spin 1s linear infinite;
+}
+
+/* Animation pour rendre le spinner plus fluide */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Personnalisation de la modale */
+.modal-content {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+
+.modal-header {
+    padding: 15px;
+    background-color: #0056b3;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    color: white;
+}
+
+.modal-body {
+    padding: 30px;
+    text-align: center;
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* Spinner */
+.spinner-grow {
+    animation: spin 1s linear infinite;
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Mouvement de traitement */
+.processing-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #f1f1f1;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+    margin-top: 20px;
+}
+
+.moving-bar {
+    width: 30%;
+    height: 100%;
+    background-color: #007bff;
+    border-radius: 5px;
+    position: absolute;
+    left: 0;
+    animation: moveBar 2s ease-in-out infinite;
+}
+
+/* Animation de la barre de traitement */
+@keyframes moveBar {
+    0% { left: -30%; }
+    50% { left: 50%; }
+    100% { left: 100%; }
+}
+
+/* Custom style for alert-error-modal */
+.alert-error-modal .modal-content {
+    border-radius: 20px;
+    background-color: #f0f0f0;
+}
+
+.alert-error-modal .modal-header {
+    background-color: #0056b3;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+
+.alert-error-modal .modal-title {
+    color: white;
+    font-weight: bold;
+}
+
+.alert-error-modal .modal-body {
+    text-align: center;
+    padding: 30px;
+}
+
+.alert-error-modal .spinner-grow {
+    width: 3rem;
+    height: 3rem;
+}
+
+.alert-error-modal .processing-bar {
+    margin-top: 20px;
+}
+
+.alert-error-modal .moving-bar {
+    background-color: #007bff;
+}
+
+.alert-error-modal p {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #999;
+}
+
+.alert-error-modal .modal-footer {
+    padding: 15px;
+    text-align: right;
+    border-top: 1px solid #e9ecef;
+}
+
+.alert-error-modal .btn {
+    margin-left: 10px;
+}
+
+/* Adjust modal dialog width and center it */
+.alert-error-modal .modal-dialog {
+    width: 80%;
+    margin: auto;
+}
+</style>
+
+<div id="alert-error" class="modal fade alert-error-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ heading_title }}</h5>
+                <button type="button" class="close btn-close" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- The content will be dynamically inserted by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-close">{{ text_close }}</button>
+                <button type="button" class="btn btn-primary btn-retry">{{ text_retry }}</button>
+                <button type="button" class="btn btn-warning btn-fix-issue">{{ text_fix_issue }}</button>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,112 @@
+body {
+	font-family: 'Open Sans', sans-serif;
+	font-weight: 400;
+	color: #000;
+	font-size: 15px;
+	line-height: 20px;
+	width: 100%;
+	font-weight: bold;
+}
+@media print {
+    .pagebreak { page-break-before: always; } /* page-break-after works, as well */
+}
+h1, h2, h3, h4, h5, h6 {
+	color: #FFF;
+}
+/* default font size */
+.fa {
+	font-size: 14px;
+}
+/* Override the bootstrap defaults */
+h1 {
+	font-size: 38px;
+}
+h2 {
+	font-size: 27px;
+}
+h3 {
+	font-size: 21px;
+}
+h4 {
+	font-size: 15px;
+}
+h5 {
+	font-size: 12px;
+}
+h6 {
+	font-size: 10.2px;
+}
+a {
+	color: #000000;
+	font-weight: bold;
+}
+a:hover {
+	text-decoration: none;
+}
+legend {
+	font-size: 18px;
+	padding: 7px 0px
+}
+label {
+	font-size: 12px;
+	font-weight: normal;
+}
+input[type=text] {
+    width: 100%;
+    padding: 8px 10px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+	font-weight: bold;
+	text-align:center;
+}
+textarea  {
+    width: 100%;
+    padding: 8px 10px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+	font-weight: bold;
+}
+
+select {
+    width: 100%;
+    padding: 8px 10px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    border: 2px solid #ccc;
+    -webkit-transition: 0.5s;
+    transition: 0.5s;
+    outline: none;
+	font-weight: bold;
+}
+select:focus {
+    border: 3px solid #555;
+}
+
+input[type=text]:focus {
+    border: 3px solid #555;
+}
+textarea:focus {
+    border: 3px solid #555;
+}
+.fsSubmitButton
+{
+	border-top:		2px solid #a3ceda;
+	border-left:		2px solid #a3ceda;
+	border-right:		2px solid #4f6267;
+	border-bottom:		2px solid #4f6267;
+	height:			200px;
+	width:			400px;
+	padding:		10px 20px !important;
+	font-size:		25px !important;
+	background-color:	#ffffff;
+	font-weight:		bold;
+	color:			#000000;
+}

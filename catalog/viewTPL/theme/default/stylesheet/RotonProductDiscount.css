@@ -1,0 +1,21 @@
+﻿/*********************************/
+/**	RotonProductDiscount - 2019 **/
+/*********************************/
+.triangle-topleft {
+    display: block;
+    position: absolute;
+    z-index: 999;
+    width: 0;
+    height: 0;
+    border-top: 60px solid red;
+    border-right: 60px solid transparent;
+	cursor: pointer;
+}
+
+.save-discount {
+    color: #fff;
+    position: absolute;
+    bottom: 20px;
+    left: 5px;
+    font-weight: bold;
+}

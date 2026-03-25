@@ -1,0 +1,375 @@
+{{ header }}
+<style>
+*, *::after, *::before {
+  box-sizing: border-box;
+}
+
+.modalmarket {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: 200ms ease-in-out;
+  border: 1px solid black;
+  border-radius: 10px;
+  z-index: 10;
+  background-color: white;
+  width: 900px;
+  height: 400px;
+  max-width: 80%;
+overflow-y: auto;
+}
+
+.modalmarket.active {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.modalmarket-header {
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid black;
+}
+
+.modalmarket-header .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.modalmarket-header .close-button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.modalmarket-body {
+  padding: 10px 15px;
+}
+
+#overlay {
+  position: fixed;
+  opacity: 0;
+  transition: 200ms ease-in-out;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, .5);
+  pointer-events: none;
+}
+
+#overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+</style>
+{{ column_left }}
+
+        
+  
+
+
+ <div class="container-fluid" id="content">
+<div class="modalmarket" id="modalmarket">
+
+  <div class="modalmarket-header">
+    <div class="title">{{ text_add }}
+    </div>
+    <button data-close-button class="close-button">&times;</button>
+  </div>
+  <div class="modalmarket-body" id="modalmarket-body">
+    <div class="marketplace-grid-modal">
+      <div class="search-bar-wrapper">
+      {# <div class="ui input search-bar">
+          <input placeholder="Search for Stores and Marketplaces by typing the name here" type="text" value="">
+          </div> #}
+      </div>
+      <div class="title"><h1>Connect with a Marketplace by clicking on a tile below</h1>
+      </div>
+      <div class="marketplace-grid">
+       <button class="btn btn-light">
+        
+          <img src="{{ amazon }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_amazon_account }}"onClick="window.open('{{ add_amazon_account }}', '_self')">
+          <div class="title">Connect
+          </div>
+        </button>
+        <button class="btn btn-light">
+        
+          <img src="{{ bonanza }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_bonanza_account }}"onClick="window.open('{{ add_bonanza_account }}', '_self')">
+          <div class="title">Connect
+          </div>
+        </button>
+        <button class="btn btn-light">
+        
+          <img src="{{ ebay }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_ebay_account }}" onClick="window.open('{{ add_ebay_account }}', '_self')">
+          <div class="title">Connect
+          </div>
+        </button>
+        <button class="btn btn-light">
+        
+          <img src="{{ etsy }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_etsy_account }}" onClick="window.open('{{ add_etsy_account }}', '_self')">
+          <div class="title">Connect
+          </div>
+        </button>
+        <button class="btn btn-light">
+        
+          <img src="{{ opencart }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_opencart_account }}" onClick="instruction_opencart();">
+          <div class="title">Connect
+          </div>
+        </button>
+        <button class="btn btn-light">
+        
+        <img src="{{ shipstation }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_shipstation_account }}" onClick="instruction_shipstation();">
+        <div class="title">Connect
+        </div>
+      </button>
+        <button class="btn btn-light">
+        
+          <img src="{{ shopify }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_shopify_account }}" onClick="instruction_shopify();">
+          <div class="title">Connect
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+  <ul class="breadcrumb">
+    {% for breadcrumb in breadcrumbs %}
+      <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+    {% endfor %}
+  </ul>
+  <div class="row">{{ column_left }}
+    {% if column_left and column_right %}
+    {% set class = 'col-sm-6' %}
+  {% elseif column_left or column_right %}
+    {% set class = 'col-sm-9' %}
+  {% else %}
+    {% set class = 'col-sm-12' %}
+  {% endif %}
+    <div id="content" class="{{ class }}">{{ content_top }}
+
+      <h1>{{ heading_title_account }}
+      </h1>
+
+
+             <div class="panel panel-default" style="margin-top: 5.8%;">
+        <div class="panel-heading"  style="display:inline-block;width:100%;">
+          <h3 class="panel-title"><i class="fa fa-list"></i> {{ text_marketplace_account_list }}</h3>
+        </div>
+      {% if error_warning %}
+      <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+      {% if success %}
+      <div class="alert alert-success"><i class="fa fa-check-circle"></i> {{ success }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+     
+        <div class="panel-body">
+         
+    
+            <div class="table-responsive"> 
+              <div class="pull-right">
+            <button data-modalmarket-target="#modalmarket" title="{{ button_add_account }}" class="btn btn-lg btn-success"><i class="fa-solid fa-circle-plus"></i> {{ text_add }}</button>
+
+        </div>
+                  <form action="{{ delete }}" method="post" enctype="multipart/form-data" id="form-marketplace-account">
+
+              <table class="table table-bordered table-hover">
+                <thead>
+                  <tr class="info">
+                    <td colspan="2" class="text-center">{% if sort == 'marketplace_connector_store_name' %}
+                      <a href="{{ sort_marketplace_store_name }}" class="{{ order|lower }}">{{ column_marketplace_store_name }}</a>
+                    {% else %}
+                      <a href="{{ sort_marketplace_store_name }}">{{ column_marketplace_store_name }}</a>
+                    {% endif %}</td>
+                   
+                      <td colspan="1" class="text-center">{% if sort == 'marketplace_connector_marketplace_id' %}
+                      <a href="{{ sort_marketplace_id }}" class="{{ order|lower }}">{{ column_marketplace_sites }}</a>
+                    {% else %}
+                      <a href="{{ sort_marketplace_id }}">{{ column_marketplace_sites }}</a>
+                    {% endif %}</td>
+                    <td colspan="1" class="text-center">
+                      {{ column_status }}
+                    </td>
+                    <td colspan="2" class="text-center">
+                      {{ column_action }}
+                    </td>
+                  </tr>
+                </thead>
+                <tbody>
+                               <input type="hidden" name="delete_account_id" id="delete-account-id" value="" />
+                         <input type="hidden" name="refresh_account_id" id="refresh-account-id" value="" />
+
+                  {% if marketplace_accounts %}
+                  {% for account in marketplace_accounts %}
+                  <tr>
+                    
+              
+                    <td colspan="2" class="text-center">{{ account.store_name }}</td>
+                 
+                    <td colspan="1" class="text-center"><img src="{{ account.marketplace_image }}" title="{{ account.marketplace_name }}" alt="{{ account.marketplace_name }}"  /></td>
+                    <td class="text-center">{{ account.marketplace_status_image|raw }}</td>
+                    <td colspan="2" class="text-center">
+                            <button type="button" data-toggle="tooltip" id="account-refresh-{{ account.account_id }}" title="{{ button_refresh }}" class="btn btn-success" onClick="window.open('{{ account.url_connexion }}', '_self')"><i class="fa fa-refresh"></i></button>
+                            <button type="button" data-toggle="tooltip" id="account-delete-{{ account.account_id }}" title="{{ button_delete }}" class="btn btn-danger"  onClick="delete_account({{ account.account_id }});"><i class="fa fa-trash-o"></i></button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                {% else %}
+                  <tr>
+                    <td class="text-center" colspan="7">{{ text_no_results }}</td>
+                  </tr>
+                {% endif %}
+                </tbody>
+              </table>
+            </div>
+          </form>
+     <div class="row">
+      <div class="col-sm-6 text-left">{{ pagination }}</div>
+      <div class="col-sm-6 text-left">{{ results }}</div>
+       </div>
+ </div>
+
+    {{ content_bottom }} 
+    </div>
+
+    {{ column_right }}  
+  </div>
+</div>
+       
+
+{{ footer }}
+
+ <script type="text/javascript">
+const openModalButtons = document.querySelectorAll('[data-modalmarket-target]')
+const closeModalButtons = document.querySelectorAll('[data-close-button]')
+const overlay = document.getElementById('overlay')
+
+openModalButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const modalmarket = document.querySelector(button.dataset.modalmarketTarget)
+    openModal(modalmarket)
+  })
+})
+
+overlay.addEventListener('click', () => {
+  const modals = document.querySelectorAll('.modalmarket.active')
+  modals.forEach(modalmarket => {
+    closeModal(modalmarket)
+  })
+})
+
+closeModalButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const modalmarket = button.closest('.modalmarket')
+    closeModal(modalmarket)
+  })
+})
+
+function openModal(modalmarket) {
+  if (modalmarket == null) return
+  modalmarket.classList.add('active')
+  overlay.classList.add('active')
+}
+
+function closeModal(modalmarket) {
+  if (modalmarket == null) return
+  modalmarket.classList.remove('active')
+  overlay.classList.remove('active')
+}
+
+$('#button-filter').on('click', function() {
+  var url = 'index.php?route=shopmanager/connect';
+
+  var filter_marketplace_id = $('input[name=\'filter_marketplace_id\']').val();
+
+  if (filter_marketplace_id) {
+    url += '&filter_marketplace_id=' + encodeURIComponent(filter_marketplace_id);
+  }
+
+  var filter_store_name = $('input[name=\'filter_store_name\']').val();
+
+  if (filter_store_name) {
+    url += '&filter_store_name=' + encodeURIComponent(filter_store_name);
+  }
+
+  var filter_marketplace_user_id = $('input[name=\'filter_marketplace_user_id\']').val();
+
+  if (filter_marketplace_user_id) {
+    url += '&filter_marketplace_user_id=' + encodeURIComponent(filter_marketplace_user_id);
+  }
+
+  location = url;
+});
+function instruction_opencart(){
+   $.ajax({
+          url: 'index.php?route=shopmanager/opencart/openInstruction',
+           method: "POST",
+        dataType: 'json',
+        crossDomain: true,
+           success:function(json) {
+       html =json['html'];
+    $('#modalmarket-body').html(html);
+        
+           },
+        error: function(xhr, ajaxOptions, thrownError) {
+            showAlertPopup(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+        }
+      });
+        
+};
+function instruction_shopify(){
+   $.ajax({
+          url: 'index.php?route=shopmanager/shopify/openInstruction',
+           method: "POST",
+        dataType: 'json',
+        crossDomain: true,
+           success:function(json) {
+       html =json['html'];
+    $('#modalmarket-body').html(html);
+        
+           }
+      });
+        
+};
+function instruction_shipstation(){
+   $.ajax({
+          url: 'index.php?route=shopmanager/shipstation/openInstruction',
+           method: "POST",
+        dataType: 'json',
+        crossDomain: true,
+           success:function(json) {
+       html =json['html'];
+    $('#modalmarket-body').html(html);
+        
+           }
+      });
+        
+};
+function refresh_account(account_id) {
+ //showAlertPopup('test' + account_id);
+  document.getElementById('refresh_account_id').value=account_id;
+
+   // showAlertPopup($result + account_id);
+    document.getElementById('refresh_account_id').value="";
+
+};
+function delete_account(account_id) {
+ //showAlertPopup('test' + account_id);
+  document.getElementById('delete_account_id').value=account_id;
+  $result=confirm('{{ text_confirm }}') ? $('#form-marketplace-account').submit() : false;
+  if ($result == false){
+   // showAlertPopup($result + account_id);
+    document.getElementById('delete_account_id').value="";
+  }
+};
+
+
+</script>

@@ -1,0 +1,65 @@
+# =====================================================
+# CONFIG SENSIBLE (mots de passe DB, clés API)
+# =====================================================
+config.php
+administrator/config.php
+
+# =====================================================
+# SAUVEGARDES YODA (fichiers temporaires)
+# =====================================================
+*.backup
+*.backup_*
+
+# =====================================================
+# LOGS & TEMP
+# =====================================================
+logs/
+tmp/
+administrator/temp/
+storage_phoenixliquidation/
+error.log
+debug.txt
+
+# =====================================================
+# IMAGES (trop lourdes pour GitHub — stocker sur serveur)
+# =====================================================
+image/cache/
+image/catalog/
+image/data/
+image/temp/
+
+# =====================================================
+# DOSSIERS NON VERSIONNÉS
+# =====================================================
+# Backup avant upgrade (garder séparé)
+phoenixliquidation_backup_avant_upgrade/
+
+# Storage externe
+storage_phoenixliquidation/
+
+# Données eBay brutes (dev seulement)
+dev/*.json
+dev/*.csv
+dev/*.txt
+
+# =====================================================
+# FICHIERS SYSTÈME
+# =====================================================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# =====================================================
+# COMPOSER
+# =====================================================
+vendor/
+composer.lock
+
+# =====================================================
+# FICHIERS TEMPORAIRES WORKLOAD
+# =====================================================
+docs/WORKLOAD_*.txt
+docs/WORKLOAD_*.md
+docs/LOG_*.md
+docs/REPORT_*.md

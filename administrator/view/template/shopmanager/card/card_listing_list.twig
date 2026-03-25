@@ -1,0 +1,221 @@
+<style>
+.listing-disabled td { opacity: 0.4; filter: grayscale(40%); }
+.listing-disabled .badge { background-color: #aaa !important; }
+#listing-img-preview {
+  display: none;
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  background: #fff;
+  border: 3px solid #333;
+  box-shadow: 0 0 30px rgba(0,0,0,0.55);
+  padding: 8px;
+  border-radius: 4px;
+  max-width: 90vw; max-height: 90vh;
+}
+#listing-img-preview img {
+  max-width: 85vw; max-height: 85vh;
+  width: auto; height: auto; display: block;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(1.25); }
+}
+</style>
+<div id="listing-img-preview"><img src="" alt=""></div>
+<form id="form-listing" method="post" data-oc-toggle="ajax" data-oc-load="{{ action }}" data-oc-target="#listing">
+  <input type="hidden" name="user_token" value="{{ user_token }}" />
+  <!-- Bouton dynamique batch -->
+  <div id="batch-action-container" style="margin-bottom: 15px; display: none;">
+    <button type="button" id="batch-publish-btn" class="btn btn-success" style="display: none;">
+      <i class="fa-solid fa-upload"></i> Publier sur eBay (<span id="batch-count">0</span>)
+    </button>
+    <button type="button" id="batch-end-btn" class="btn btn-danger" style="display: none;">
+      <i class="fa-solid fa-stop"></i> Terminer les annonces (<span id="batch-count-end">0</span>)
+    </button>
+    <button type="button" id="batch-ebay-sync-btn" class="btn btn-warning ms-2">
+      <i class="fa-solid fa-rotate"></i> {{ button_batch_ebay_sync }} (<span id="batch-count-sync">0</span>)
+    </button>
+    <button type="button" id="batch-assign-btn" class="btn btn-secondary ms-2" style="display:none;">
+      <i class="fa-solid fa-layer-group"></i> Recalculer Batches (<span id="batch-count-assign">0</span>)
+    </button>
+    <button type="button" id="batch-health-check-btn" class="btn btn-info ms-2" style="display:none;">
+      <i class="fa-solid fa-heart-pulse"></i> <span id="btn-health-check-label">Vérif. eBay</span> (<span id="batch-count-health">0</span>)
+    </button>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 1px;"><input type="checkbox" onclick="$('input[name*=\'selected\']:not([data-auto-disabled])').prop('checked', $(this).prop('checked'));" class="form-check-input"/></th>
+          <th class="text-center"><a href="{{ sort_listing_id }}"{% if sort == 'l.listing_id' %} class="{{ order|lower }}"{% endif %}>{{ column_listing_id }}</a></th>
+          <th class="text-center" style="width:50px;">{{ column_image }}</th>
+          <th class="text-start"><a href="{{ sort_set_name }}"{% if sort == 'l.set_name' %} class="{{ order|lower }}"{% endif %}>{{ column_set_name }}</a></th>
+          <th class="text-center"><a href="{{ sort_card_type }}"{% if sort == 'ct.name' %} class="{{ order|lower }}"{% endif %}>{{ column_sport }}</a></th>
+          <th class="text-center"><a href="{{ sort_year }}"{% if sort == 'l.year' %} class="{{ order|lower }}"{% endif %}>{{ column_year }}</a></th>
+          <th class="text-center"><a href="{{ sort_manufacturer }}"{% if sort == 'l.brand' %} class="{{ order|lower }}"{% endif %}>{{ column_manufacturer }}</a></th>
+          <th class="text-center"><a href="{{ sort_variation }}"{% if sort == 'variation_count' %} class="{{ order|lower }}"{% endif %}>{{ column_cards }}</a></th>
+          <th class="text-center"><a href="{{ sort_quantity }}"{% if sort == 'total_quantity' %} class="{{ order|lower }}"{% endif %}>{{ column_quantity }}</a></th>
+          <th class="text-end"><a href="{{ sort_value }}"{% if sort == 'total_value' %} class="{{ order|lower }}"{% endif %}>Valeur</a></th>
+          <th class="text-center" style="width:80px;"><a href="{{ sort_location }}"{% if sort == 'l.location' %} class="{{ order|lower }}"{% endif %}>{{ column_location }}</a></th>
+          <th class="text-center">eBay</th>
+          <th class="text-center" title="{{ column_ebay_health_title }}"><i class="fa-solid fa-heart-pulse"></i></th>
+          <th class="text-center"><a href="{{ sort_status }}"{% if sort == 'l.status' %} class="{{ order|lower }}"{% endif %}>{{ column_status }}</a></th>
+          <th class="text-end">{{ column_action }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% if listings %}
+          {% for listing in listings %}
+            {% set is_disabled = (listing.total_quantity <= 0 or not listing.status) %}
+            {% set is_partial = (listing.published_batches > 0 and listing.published_batches < listing.total_batches) %}
+            <tr{% if is_disabled %} class="listing-disabled"{% endif %}>
+              <td class="text-center">
+                {% if listing.listing_id in selected %}
+                  <input type="checkbox" name="selected[]" value="{{ listing.listing_id }}" data-ebay-status="{{ listing.is_published ? 'published' : 'not_published' }}"{% if is_partial %} data-partial="1"{% endif %}{% if is_disabled %} data-auto-disabled="1"{% endif %} checked="checked" class="form-check-input listing-checkbox"/>
+                {% else %}
+                  <input type="checkbox" name="selected[]" value="{{ listing.listing_id }}" data-ebay-status="{{ listing.is_published ? 'published' : 'not_published' }}"{% if is_partial %} data-partial="1"{% endif %}{% if is_disabled %} data-auto-disabled="1"{% endif %} class="form-check-input listing-checkbox"/>
+                {% endif %}
+              </td>
+              <td class="text-center">{{ listing.listing_id }}</td>
+              <td class="text-center" style="width:50px; padding:3px 2px;">
+                {% if listing.first_image %}
+                  <img src="{{ listing.first_image }}" class="listing-thumb"
+                       style="width:38px; height:38px; object-fit:contain; cursor:zoom-in; border-radius:3px; background:#f5f5f5;"
+                       alt="{{ listing.set_name }}">
+                {% else %}
+                  <span class="text-muted" style="font-size:0.75em;">—</span>
+                {% endif %}
+              </td>
+              <td class="text-start">
+                {% if listing.ebay_url %}
+                  <a href="{{ listing.ebay_url }}"
+                     target="ebaylisting"
+                     rel="noopener"
+                     class="text-decoration-none js-open-ebay-listing"
+                     data-ebay-url="{{ listing.ebay_url }}"
+                     style="cursor:pointer; position:relative; z-index:2; display:inline-block;">
+                    {{ listing.set_name }}
+                  </a>
+                {% else %}
+                  {{ listing.set_name }}
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <span class="badge bg-info">{{ listing.card_type }}</span>
+              </td>
+              <td class="text-center">{{ listing.year }}</td>
+              <td class="text-center">{{ listing.manufacturer }}</td>
+              <td class="text-center">
+                <span class="badge bg-primary">{{ listing.variation_count }}</span>
+              </td>
+              <td class="text-center">
+                {% if listing.total_quantity > 0 %}
+                  <span class="badge bg-success">{{ listing.total_quantity }}</span>
+                {% else %}
+                  <span class="badge bg-danger">0</span>
+                {% endif %}
+              </td>
+              <td class="text-end" style="font-size:0.85em; white-space:nowrap;">
+                ${{ listing.total_value }}
+              </td>
+              <td class="text-center location" style="min-width:90px;">
+                <span id="cloc-{{ listing.listing_id }}" class="pedit-clocation{% if listing.location %} btn btn-sm btn-outline-secondary{% endif %}" rel="{{ listing.listing_id }}" rel1="{{ listing.location }}" style="cursor:pointer; font-size:0.78em; font-weight:600; letter-spacing:0.04em; padding:2px 6px;">
+                  {{ listing.location ? listing.location : '—' }}
+                </span>
+                {% if listing.location %}
+                <button type="button" class="btn btn-sm btn-warning btn-print-clocation ms-1" data-location="{{ listing.location }}" title="{{ button_print_label }}" style="padding:2px 5px; font-size:0.75em;">
+                  <i class="fa-solid fa-print"></i>
+                </button>
+                {% endif %}
+              </td>
+              <td class="text-center"
+                  data-listing-id="{{ listing.listing_id }}"
+                  data-published-batches="{{ listing.published_batches }}"
+                  data-total-batches="{{ listing.total_batches }}">
+                {% if listing.total_batches > 0 %}
+                  {% set all_pub  = (listing.published_batches == listing.total_batches) %}
+                  {% set some_pub = (listing.published_batches > 0) %}
+                  <img src="../image/{{ listing.ebay_thumb }}"
+                       alt="eBay"
+                       class="ebay-publish-icon"
+                       data-listing-id="{{ listing.listing_id }}"
+                       data-ebay-url="{{ listing.ebay_url }}"
+                       style="width:20px; height:auto; opacity:{{ all_pub ? '1' : (some_pub ? '0.7' : '0.3') }}; cursor:pointer;"
+                       title="{{ listing.published_batches }}/{{ listing.total_batches }} batches publiés — cliquer pour republier">
+                  <br><small class="ebay-fraction" style="font-size:0.75em; color:{{ all_pub ? '#28a745' : (some_pub ? '#fd7e14' : '#6c757d') }};">
+                    {{ listing.published_batches }}/{{ listing.total_batches }}
+                  </small>
+                {% else %}
+                  <img src="../image/{{ listing.ebay_thumb }}"
+                       alt="Not Listed"
+                       class="ebay-publish-icon"
+                       data-listing-id="{{ listing.listing_id }}"
+                       data-ebay-url="{{ listing.ebay_url }}"
+                       style="width:20px; height:auto; opacity:0.3; cursor:pointer;"
+                       title="Aucun batch — publier sur eBay">
+                  <br><small class="ebay-fraction" style="font-size:0.75em; color:#6c757d;">0/0</small>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% set all_ok = (listing.count_no_offer == 0 and listing.count_unpublished == 0 and listing.count_google_images == 0) %}
+                {% if listing.to_sync %}
+                  <span title="Sync eBay requis" class="me-1">
+                    <i class="fa-solid fa-heart-pulse" style="color:#fd7e14; animation:pulse 1.2s infinite;"></i>
+                  </span>
+                {% endif %}
+                <span title="{{ listing.count_no_offer }} without offer_id" class="me-1">
+                  <i class="fa-solid fa-tag listing-tag-icon" data-listing-id="{{ listing.listing_id }}" style="color: {{ listing.count_no_offer == 0 ? '#28a745' : '#dc3545' }};"></i>
+                  {% if listing.count_no_offer > 0 %}<small class="listing-tag-count text-danger">{{ listing.count_no_offer }}</small>{% endif %}
+                </span>
+                <span title="{{ listing.count_unpublished }} not published" class="me-1">
+                  <i class="fa-solid fa-circle-check" style="color: {{ listing.count_unpublished == 0 ? '#28a745' : '#dc3545' }};"></i>
+                  {% if listing.count_unpublished > 0 %}<small class="text-danger">{{ listing.count_unpublished }}</small>{% endif %}
+                </span>
+                <span title="{{ listing.count_google_images }} Google images">
+                  <i class="fa-solid fa-image" style="color: {{ listing.count_google_images == 0 ? '#28a745' : '#dc3545' }};"></i>
+                  {% if listing.count_google_images > 0 %}<small class="text-danger">{{ listing.count_google_images }}</small>{% endif %}
+                </span>
+                {% if listing.health_status == 1 %}
+                  <span class="health-status-icon ms-1" data-listing-id="{{ listing.listing_id }}" title="eBay OK">
+                    <i class="fa-solid fa-heart-pulse" style="color:#28a745;"></i>
+                  </span>
+                {% elseif listing.health_status == 2 or listing.health_status == 3 %}
+                  <span class="health-status-icon ms-1" data-listing-id="{{ listing.listing_id }}" title="{{ listing.health_error|e }}">
+                    <i class="fa-solid fa-heart-pulse" style="color:#dc3545;"></i>
+                  </span>
+                {% else %}
+                  <span class="health-status-icon ms-1" data-listing-id="{{ listing.listing_id }}" title="Jamais vérifié ou &gt; 6 mois">
+                    <i class="fa-solid fa-heart-pulse" style="color:#aaaaaa;"></i>
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-center">
+                {% if listing.status %}
+                  <i class="fa-solid fa-circle-dot" style="color:#28a745; font-size:1.2em;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ listing.status_text }}"></i>
+                {% else %}
+                  <i class="fa-solid fa-circle-xmark" style="color:#dc3545; font-size:1.2em;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ listing.status_text }}"></i>
+                {% endif %}
+              </td>
+              <td class="text-end">
+                <a href="{{ listing.edit }}" data-bs-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-pencil"></i></a>
+
+              </td>
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td class="text-center" colspan="15">{{ text_no_results }}</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <div class="col-sm-6 text-start">{{ pagination }}</div>
+    <div class="col-sm-6 text-end">{{ results }}</div>
+  </div>
+</form>
+
+

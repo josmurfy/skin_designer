@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+						<ReviseItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
+						  <RequesterCredentials>
+							<eBayAuthToken>v^1.1#i^1#I^3#r^1#p^3#f^0#t^Ul4xMF82OjFDQjZFNjU1RTE2NzdEM0Y0QzExRDhFMDg5OEVBNUY1XzNfMSNFXjI2MA==</eBayAuthToken>
+						</RequesterCredentials>
+							<ErrorLanguage>en_US</ErrorLanguage>
+							<WarningLevel>High</WarningLevel>
+							  <Item> 
+								<ItemID>296296624147</ItemID>
+								<Quantity>4</Quantity><SKU>26457</SKU>
+							 </Item>
+						</ReviseItemRequest>

@@ -1,0 +1,254 @@
+    
+  
+  <div class="table-responsive">
+  <table id="Specific-table" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+        <th style="width: 1px;" class="text-center">
+        <input type="checkbox" onclick="toggleSelectRows(this);" />
+    </th>
+            <th><?php echo $text_specific_type; ?>:</th>
+            <th><?php echo $text_specific_type; ?>:</th>
+            <th><?php echo $text_specific_value; ?>:</th>
+        </tr>
+    </thead>
+    <tbody>
+
+<!-- Common Attributes -->
+
+<input type="hidden" name="category_specific_names_json" value="<?php echo htmlspecialchars(json_encode($category_specific_names), ENT_QUOTES, 'UTF-8'); ?>" />
+
+<?php
+
+if (!empty($specifics_result)) { ?>
+<?php foreach ($specifics_result as $key => $value) { 
+  $is_selected='';
+    if (isset($value) && $value != '' && (!is_array($value) && strpos($value, ' +) === false) || is_array($value)) { ?>
+  
+        <?php 
+        // Initialisation du tableau pour stocker les valeurs déjà imprimées
+        $printedValues = [];
+        $replacement_term = isset($category_specific_key[$key]) ? $category_specific_key[$key]['replacement_term'] : null;
+      //print("<pre>" . print_r($category_specific_key[$key]['key_set'], true) . "</pre>");
+        $key_set = isset($category_specific_key[$key]['key_set']) ? $category_specific_key[$key]['key_set'] : null;
+
+        // Déterminer la classe de la couleur en fonction de key_set
+        $class = '';
+        $checked = '';
+        if ($key_set == 1) {
+            $class = 'strong-success';  // Vert pour succès
+            $checked = ' checked ';
+        } elseif ($key_set == 2) {
+            $class = 'strong-warning';  // Jaune pour avertissement    
+        } else {
+            $class = 'strong-danger';   // Rouge pour alerte
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $subKey => $subValue) {
+                if (is_array($subValue)) {
+                    $data = [];
+                  
+                    // Vérifier si cest un tableau associatif ou numérique
+                    if (isset($subValue['role']) && isset($subValue['name'])) {
+                        $data['role'] = $subValue['role'];
+                        $data['name'] = $subValue['name'];
+                    } else {
+                        foreach ($subValue as $innerKey => $innerValue) {
+                            if (is_array($innerValue) && isset($innerValue['role']) && isset($innerValue['name'])) {
+                                $data['role'] = $innerValue['role'];
+                                $data['name'] = $innerValue['name'];
+                            }
+                        }
+                    }
+
+                    // Si les données ne sont pas déjà imprimées
+                    if (!empty($data) && !in_array($data, $printedValues)) {
+                        $printedValues[] = $data;
+                        $jsonData = htmlspecialchars(json_encode($data));
+
+                        if (is_array($data['name'])) {
+                            foreach ($data['name'] as $name) {
+                             
+                                if (is_array($data['role'])) {
+                                    foreach ($data['role'] as $role) {
+                                        $singleData = ['role' => $role, 'name' => $name];
+                                        $jsonSingleData = htmlspecialchars(json_encode($singleData));
+
+                                        echo '<tr class="' . $class . '">';
+                                        echo '<td><input type="checkbox" '.$checked.' class="save-data-checkbox" onClick="SelectRow(this)"  name="specifics_checkbox[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . $jsonSingleData . '"></td>';
+                                        echo '<td>' . ($key) . '</td>';
+                                        echo '<td><select class="form-control" class="form-control" name="specifics_select[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]">';
+                                        echo '<option value="" selected></option>';
+
+                                        
+                                        // Boucle pour afficher toutes les options de $category_specific_names
+                                        if (isset($category_specific_names)) {
+                                            foreach ($category_specific_names as $category_specific_name) {
+                                                $selected = ($category_specific_name == $replacement_term) ? 'selected' : '';
+                                                if($selected == 'selected') $is_selected='yes';
+                                                echo '<option value="' . htmlspecialchars($category_specific_name) . '" ' . $selected . '>' . htmlspecialchars($category_specific_name) . '</option>';
+                                            }
+                                        }
+                                        if($is_selected == '' &&  $replacement_term!='')  echo '<option value="' . htmlspecialchars($replacement_term) . '" selected >' . htmlspecialchars($replacement_term) . '</option>';
+
+                                        echo '</select></td>';
+                                  //      echo '<td>' . ($singleData['role']) . ': ' . htmlspecialchars($singleData['name']) . '</td>';
+                                        echo '<td><input type="text" name="specifics_text[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . htmlspecialchars($singleData['name']) . '" placeholder="' . $text_specific_value . '" class="form-control" /></td>';
+
+                                        echo '</tr>';
+                                    }
+                                } else {
+                                    $singleData = ['role' => $data['role'], 'name' => $name];
+                                    $jsonSingleData = htmlspecialchars(json_encode($singleData));
+
+                                    echo '<tr class="' . $class . '">';
+                                    echo '<td><input type="checkbox" '.$checked.' class="save-data-checkbox" onClick="SelectRow(this)" name="specifics_checkbox[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . $jsonSingleData . '"></td>';
+                                    echo '<td>' . ($key) . '</td>';
+                                    echo '<td><select class="form-control" class="form-control" name="specifics_select[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]">';
+                                    echo '<option value="" selected></option>';
+           
+
+                                    // Boucle pour afficher toutes les options de $category_specific_names
+                                    if (isset($category_specific_names)) {
+                                        foreach ($category_specific_names as $category_specific_name) {
+                                            $selected = ($category_specific_name == $replacement_term) ? 'selected' : '';
+                                            if($selected == 'selected') $is_selected='yes';
+                                            echo '<option value="' . htmlspecialchars($category_specific_name) . '" ' . $selected . '>' . htmlspecialchars($category_specific_name) . '</option>';
+                                        }
+                                    }
+                                    if($is_selected == '' &&  $replacement_term!='')  echo '<option value="' . htmlspecialchars($replacement_term) . '" selected >' . htmlspecialchars($replacement_term) . '</option>';
+
+                                    echo '</select></td>';
+                                 //   echo '<td>' . ($data['role']) . ': ' . htmlspecialchars($name) . '</td>';
+                                    echo '<td><input type="text" name="specifics_text[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . htmlspecialchars($name) . '" placeholder="' . $text_specific_value . '" class="form-control" /></td>';
+
+                                    echo '</tr>';
+                                }
+                            }
+                        } else {
+                            if (is_array($data['role'])) {
+                                foreach ($data['role'] as $role) {
+                                    $singleData = ['role' => $role, 'name' => $data['name']];
+                                    $jsonSingleData = htmlspecialchars(json_encode($singleData));
+
+                                    echo '<tr class="' . $class . '">';
+                                    echo '<td><input type="checkbox" '.$checked.' class="save-data-checkbox" onClick="SelectRow(this)" name="specifics_checkbox[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . $jsonSingleData . '"></td>';
+                                    echo '<td>' . ($key) . '</td>';
+                                    echo '<td><select class="form-control" class="form-control" name="specifics_select[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]">';
+                                    echo '<option value="" selected></option>';
+          
+
+                                    // Boucle pour afficher toutes les options de $category_specific_names
+                                    if (isset($category_specific_names)) {
+                                        foreach ($category_specific_names as $category_specific_name) {
+                                            $selected = ($category_specific_name == $replacement_term) ? 'selected' : '';
+                                            if($selected == 'selected') $is_selected='yes';
+                                            echo '<option value="' . htmlspecialchars($category_specific_name) . '" ' . $selected . '>' . htmlspecialchars($category_specific_name) . '</option>';
+                                        }
+                                    }
+                                    if($is_selected == '' &&  $replacement_term!='')  echo '<option value="' . htmlspecialchars($replacement_term) . '" selected >' . htmlspecialchars($replacement_term) . '</option>';
+
+                                    echo '</select></td>';
+                                 //   echo '<td>' . ($singleData['role']) . ': ' . htmlspecialchars($singleData['name']) . '</td>';
+                                    echo '<td><input type="text" name="specifics_text[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . htmlspecialchars($singleData['name']) . '" placeholder="' . $text_specific_value . '" class="form-control" /></td>';
+
+                                    echo '</tr>';
+                                }
+                            } else {
+                                echo '<tr class="' . $class . '">';
+                                echo '<td><input type="checkbox" '.$checked.' class="save-data-checkbox" onClick="SelectRow(this)" name="specifics_checkbox[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="'  . $jsonData . '"></td>';
+                                echo '<td>' . ($key) . '</td>';
+                                echo '<td><select class="form-control" class="form-control" name="specifics_select[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]">';
+                                echo '<option value="" selected></option>';
+
+
+                                // Boucle pour afficher toutes les options de $category_specific_names
+                                if (isset($category_specific_names)) {
+                                    foreach ($category_specific_names as $category_specific_name) {
+                                        $selected = ($category_specific_name == $replacement_term) ? 'selected' : '';
+                                        if($selected == 'selected') $is_selected='yes';
+                                        echo '<option value="' . htmlspecialchars($category_specific_name) . '" ' . $selected . '>' . htmlspecialchars($category_specific_name) . '</option>';
+                                    }
+                                }
+                                if($is_selected == '' &&  $replacement_term!='')  echo '<option value="' . htmlspecialchars($replacement_term) . '" selected >' . htmlspecialchars($replacement_term) . '</option>';
+
+                                echo '</select></td>';
+                           //     echo '<td>' . ($data['role']) . ': ' . htmlspecialchars($data['name']) . '</td>';          
+                                echo '<td><input type="text" name="specifics_text[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . htmlspecialchars($data['name']) . '" placeholder="' . $text_specific_value . '" class="form-control" /></td>';
+
+                                echo '</tr>';
+                            }
+                        }
+                    }
+                } else {
+                    if (!in_array($subValue, $printedValues)) {
+                        $printedValues[] = $subValue;
+                        echo '<tr class="' . $class . '">';
+                        echo '<td><input type="checkbox" '.$checked.' class="save-data-checkbox" onClick="SelectRow(this)" name="specifics_checkbox[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="'  . htmlspecialchars($subValue) . '"></td>';
+                        echo '<td>' . ($key) . '</td>';
+                        echo '<td><select class="form-control" class="form-control" name="specifics_select[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]">';
+                        echo '<option value="" selected></option>';
+
+                        // Boucle pour afficher toutes les options de $category_specific_names
+                        if (isset($category_specific_names)) {
+                            foreach ($category_specific_names as $category_specific_name) {
+                                $selected = ($category_specific_name == $replacement_term) ? 'selected' : '';
+                                if($selected == 'selected') $is_selected='yes';
+                                echo '<option value="' . htmlspecialchars($category_specific_name) . '" ' . $selected . '>' . htmlspecialchars($category_specific_name) . '</option>';
+                            }
+                            if($is_selected == '' &&  $replacement_term!='')  echo '<option value="' . htmlspecialchars($replacement_term) . '" selected >' . htmlspecialchars($replacement_term) . '</option>';
+
+                        }
+
+                        echo '</select></td>';
+                       // echo '<td>' . htmlspecialchars($subValue) . '</td>';
+                        echo '<td><input type="text" name="specifics_text[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . htmlspecialchars($subValue) . '" placeholder="' . $text_specific_value . '" class="form-control" /></td>';
+                        echo '</tr>';
+                    }
+                }
+            }
+        } else {
+            echo '<tr class="' . $class . '">';
+            echo '<td><input type="checkbox" '.$checked.' class="save-data-checkbox" onClick="SelectRow(this)" name="specifics_checkbox[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="'  . htmlspecialchars($value) . '"></td>';
+            echo '<td>' . ($key) . '</td>';
+            echo '<td><select class="form-control" class="form-control" name="specifics_select[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]">';
+            echo '<option value="" selected></option>';
+
+            // Boucle pour afficher toutes les options de $category_specific_names
+            if (isset($category_specific_names)) {
+                foreach ($category_specific_names as $category_specific_name) {
+                    $selected = ($category_specific_name == $replacement_term) ? 'selected' : '';
+                    if($selected == 'selected') $is_selected='yes';
+                    echo '<option value="' . htmlspecialchars($category_specific_name) . '" ' . $selected . '>' . htmlspecialchars($category_specific_name) . '</option>';
+                }
+                if($is_selected == '' &&  $replacement_term!='')  echo '<option value="' . htmlspecialchars($replacement_term) . '" selected >' . htmlspecialchars($replacement_term) . '</option>';
+            }
+
+            echo '</select></td>';
+         //   echo '<td>' . htmlspecialchars($value) . '</td>';
+            echo '<td><input type="text" name="specifics_text[' . (((isset($replacement_term) && $replacement_term != '') ? $replacement_term : $key)) . '][]" value="' . htmlspecialchars($value) . '" placeholder="' . $text_specific_value . '" class="form-control" /></td>';
+
+            echo '</tr>';
+        }
+        ?>
+
+    <?php } ?>
+<?php } ?>
+<?php } ?>
+
+    </tbody>
+    <tfoot>
+    
+</tfoot>
+  </table>
+</div>
+
+   
+
+   
+ 
+
+  
+        
+

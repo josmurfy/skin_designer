@@ -1,0 +1,150 @@
+balance_transaction_id,created,available_on,currency,gross,fee,net,reporting_category,description
+txn_1JHalcIpajvZRX5DSl1LdYQQ,2021-07-26 16:51:16,2021-08-01 20:00:00,cad,62.53,2.11,60.42,charge,PhoenixLiquidation: Order #2882 (danikakristen@gmail.com)
+txn_3JKFfdIpajvZRX5D18GiVqnV,2021-08-03 00:56:08,2021-08-09 20:00:00,cad,31.44,1.21,30.23,charge,PhoenixLiquidation: Order #2903 (lorozali@gmail.com)
+txn_3JNevuIpajvZRX5D2WK3zmxU,2021-08-12 10:31:01,2021-08-18 20:00:00,cad,65.45,2.2,63.25,charge,PhoenixLiquidation: Order #2921 (contact@thebrewandbubble.com)
+txn_3JOCjnIpajvZRX5D2a50m6R2,2021-08-13 22:36:46,2021-08-20 20:00:00,cad,72.9,2.41,70.49,charge,PhoenixLiquidation: Order #2925 (ekillins@rogers.com)
+txn_3JPsQPIpajvZRX5D1AWXDnmV,2021-08-18 13:19:41,2021-08-24 20:00:00,cad,245.15,7.41,237.74,charge,PhoenixLiquidation: Order #2939 (skondrachova@yahoo.ca)
+txn_3JRfmZIpajvZRX5D1WBaFyKT,2021-08-23 12:13:59,2021-08-29 20:00:00,cad,77.72,2.55,75.17,charge,PhoenixLiquidation: Order #2948 (warda.shaheen@gmail.com)
+txn_3JRkhtIpajvZRX5D1k6Ju7Ei,2021-08-23 17:29:28,2021-08-29 20:00:00,cad,77.58,3.02,74.56,charge,PhoenixLiquidation: Order #2949 (kjprospects@gmail.com)
+txn_3JSAT9IpajvZRX5D1PSVXrVe,2021-08-24 20:59:57,2021-08-31 20:00:00,cad,37.18,1.38,35.8,charge,PhoenixLiquidation: Order #2952 (enriko090@msn.com)
+txn_3JT6MxIpajvZRX5D0HFkSW9z,2021-08-27 10:49:27,2021-09-02 20:00:00,cad,218.39,6.63,211.76,charge,PhoenixLiquidation: Order #2960 (oli3oli@hotmail.com)
+txn_3JTUxdIpajvZRX5D1wpt9v00,2021-08-28 13:04:56,2021-09-03 20:00:00,cad,120.66,3.8,116.86,charge,PhoenixLiquidation: Order #2961 (etienne.pl@hotmail.com)
+txn_3JTltpIpajvZRX5D1mVdAoXV,2021-08-29 07:10:08,2021-09-04 20:00:00,cad,21.79,0.93,20.86,charge,PhoenixLiquidation: Order #2964 (fortier@cooptel.qc.ca)
+txn_3JUsiCIpajvZRX5D2JWmW6mg,2021-09-01 08:38:44,2021-09-07 20:00:00,cad,29.24,1.15,28.09,charge,PhoenixLiquidation: Order #2972 (melissa_cloutier_@hotmail.com)
+txn_3JPsQPIpajvZRX5D15caHqmg,2021-09-01 16:22:30,2021-09-01 16:22:30,cad,-24.51,0,-24.51,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #2939 (skondrachova@yahoo.ca))
+txn_3JXp5jIpajvZRX5D1oGVfZVQ,2021-09-09 11:23:10,2021-09-15 20:00:00,cad,93.04,3,90.04,charge,PhoenixLiquidation: Order #3020 (steve.ebels@gmail.com)
+txn_3JYIWOIpajvZRX5D0Tk7UhPL,2021-09-10 18:48:39,2021-09-16 20:00:00,cad,39.43,1.44,37.99,charge,PhoenixLiquidation: Order #3028 (rachelnieblas06@gmail.com)
+txn_3JYWyxIpajvZRX5D2BTSBFKS,2021-09-11 10:15:07,2021-09-17 20:00:00,cad,33.25,1.46,31.79,charge,PhoenixLiquidation: Order #3031 (snlocke0327@gmail.com)
+txn_3JYZMPIpajvZRX5D27uIHaLg,2021-09-11 12:47:28,2021-09-17 20:00:00,cad,22.51,0.95,21.56,charge,PhoenixLiquidation: Order #3035 (Justinlavergne@gmail.com)
+txn_3JYk1aIpajvZRX5D1qczVLb5,2021-09-12 00:10:42,2021-09-18 20:00:00,cad,214.64,6.52,208.12,charge,PhoenixLiquidation: Order #3041 (garrychristiansen29@gmail.com)
+txn_3JYxHfIpajvZRX5D15ZbzaLu,2021-09-12 14:20:10,2021-09-18 20:00:00,cad,53.67,1.86,51.81,charge,PhoenixLiquidation: Order #3043 (vulfgong@hotmail.com)
+txn_3JZ1RxIpajvZRX5D1g7g7ZVQ,2021-09-12 18:47:04,2021-09-18 20:00:00,cad,25.91,1.21,24.7,charge,PhoenixLiquidation: Order #3049 (ciarrar22@gmail.com)
+txn_3JYk1aIpajvZRX5D1tq01gPu,2021-09-13 09:22:05,2021-09-18 20:00:00,cad,-214.64,0,-214.64,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3041 (garrychristiansen29@gmail.com))
+txn_3JZOXPIpajvZRX5D1yq648FU,2021-09-13 19:26:15,2021-09-19 20:00:00,cad,55.94,2.26,53.68,charge,PhoenixLiquidation: Order #3058 (cmmartel54@gmail.com)
+txn_3JZP4RIpajvZRX5D0loeNXbx,2021-09-13 20:00:22,2021-09-20 20:00:00,cad,29.96,1.35,28.61,charge,PhoenixLiquidation: Order #3060 (cmmartel54@gmail.com)
+txn_3JZcujIpajvZRX5D0NW16SZY,2021-09-14 10:47:18,2021-09-20 20:00:00,cad,218.39,6.63,211.76,charge,PhoenixLiquidation: Order #3064 (oli3oli@hotmail.com)
+txn_3JaIs3IpajvZRX5D1OsF2nIY,2021-09-16 07:35:18,2021-09-22 20:00:00,cad,39.17,1.44,37.73,charge,PhoenixLiquidation: Order #3083 (taryndzelme@gmail.com)
+txn_3JaVZmIpajvZRX5D1WcY6YA4,2021-09-16 21:09:17,2021-09-23 20:00:00,cad,21.74,0.93,20.81,charge,PhoenixLiquidation: Order #3090 (tonydellaposta@gmail.com)
+txn_3JasanIpajvZRX5D0rwQv2TC,2021-09-17 21:43:53,2021-09-24 20:00:00,cad,124.38,3.91,120.47,charge,PhoenixLiquidation: Order #3099 (emily_swain_01@hotmail.com)
+txn_3Jb4t9IpajvZRX5D0UduZjs4,2021-09-18 10:51:39,2021-09-24 20:00:00,cad,371.55,13.3,358.25,charge,PhoenixLiquidation: Order #3102 (Jvanderford@protonmail.com)
+txn_3Jb8NCIpajvZRX5D2awgQRe4,2021-09-18 14:34:53,2021-09-24 20:00:00,cad,56.31,2.27,54.04,charge,PhoenixLiquidation: Order #3104 (tammygill0709@gmail.com)
+txn_3JbPKqIpajvZRX5D2mLSn4Yy,2021-09-19 08:41:35,2021-09-25 20:00:00,cad,127.28,4.75,122.53,charge,PhoenixLiquidation: Order #3112 (almerazcesar@yahoo.com)
+txn_3JbWq7IpajvZRX5D1A7S6qLn,2021-09-19 16:42:22,2021-09-25 20:00:00,cad,26.39,1.07,25.32,charge,PhoenixLiquidation: Order #3117 (winniesexy_13@hotmail.com)
+txn_3Jbb6oIpajvZRX5D07QWsuyA,2021-09-19 21:15:53,2021-09-26 20:00:00,cad,415.75,12.36,403.39,charge,PhoenixLiquidation: Order #3121 (timmgirl@yahoo.ca)
+txn_3JbWq7IpajvZRX5D1mAwZnWr,2021-09-21 21:56:14,2021-09-25 20:00:00,cad,-26.39,0,-26.39,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3117 (winniesexy_13@hotmail.com))
+txn_3JdeoXIpajvZRX5D1xyYPjYZ,2021-09-25 13:37:33,2021-10-01 20:00:00,cad,28.29,1.29,27,charge,PhoenixLiquidation: Order #3197 (ikensg@yahoo.com)
+txn_3JeHynIpajvZRX5D1pMwhtZD,2021-09-27 07:26:44,2021-10-03 20:00:00,cad,19.24,0.97,18.27,charge,PhoenixLiquidation: Order #3198 (umoroz@yahoo.com)
+txn_3Jeot9IpajvZRX5D2MCu7ssh,2021-09-28 18:35:07,2021-10-04 20:00:00,cad,26.14,1.21,24.93,charge,PhoenixLiquidation: Order #3205 (jyann13@yahoo.com)
+txn_3Jfeq6IpajvZRX5D1CQwPbfK,2021-10-01 02:03:25,2021-10-07 20:00:00,cad,19.72,0.99,18.73,charge,PhoenixLiquidation: Order #3220 (lalamarie42096@gmail.com)
+txn_3JgZEtIpajvZRX5D0F7dMIPY,2021-10-03 14:16:47,2021-10-09 20:00:00,cad,59.33,2.02,57.31,charge,PhoenixLiquidation: Order #3229 (raika.marie@gmail.com)
+txn_3JgZEtIpajvZRX5D0ms2EyNX,2021-10-05 16:09:02,2021-10-09 20:00:00,cad,-59.33,0,-59.33,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3229 (raika.marie@gmail.com))
+txn_3JhNm4IpajvZRX5D0PDWUiIi,2021-10-05 20:14:23,2021-10-12 20:00:00,cad,48.3,1.7,46.6,charge,PhoenixLiquidation: Order #3238 (Dwaynersimms@gmail.com)
+txn_3JhSOyIpajvZRX5D2hNMf5Of,2021-10-06 01:10:52,2021-10-12 20:00:00,cad,28.83,1.31,27.52,charge,PhoenixLiquidation: Order #3240 (lizdehesa@yahoo.com)
+txn_3JhlpqIpajvZRX5D0YzTFSZ5,2021-10-06 21:55:53,2021-10-13 20:00:00,cad,75.98,2.5,73.48,charge,PhoenixLiquidation: Order #3246 (francoisgaudreault@hotmail.com)
+txn_3Ji03JIpajvZRX5D09QletlP,2021-10-07 13:06:45,2021-10-13 20:00:00,cad,28.25,1.29,26.96,charge,PhoenixLiquidation: Order #3252 (arcaughron@gmail.com)
+txn_3JkvGcIpajvZRX5D1gqWzvD0,2021-10-15 14:36:33,2021-10-21 20:00:00,cad,190.8,5.83,184.97,charge,PhoenixLiquidation: Order #3260 (francinedamour@hotmail.com)
+txn_3JlkDtIpajvZRX5D0tzVfEmf,2021-10-17 21:01:08,2021-10-24 20:00:00,cad,60.54,2.42,58.12,charge,PhoenixLiquidation: Order #3267 (lmerlak24@gmail.com)
+txn_3JasanIpajvZRX5D0QpJhAZn,2021-10-21 10:27:33,2021-10-21 10:27:33,cad,-94.82,0,-94.82,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3099 (emily_swain_01@hotmail.com))
+txn_3Jn85RIpajvZRX5D0Ts8bVed,2021-10-21 16:42:09,2021-10-27 20:00:00,cad,38.03,1.63,36.4,charge,PhoenixLiquidation: Order #3330 (bgoodwyne@gmail.com)
+txn_3JnNTAIpajvZRX5D1LVZieMU,2021-10-22 09:07:40,2021-10-28 20:00:00,cad,51.76,1.8,49.96,charge,PhoenixLiquidation: Order #3333 (martineserge@live.ca)
+txn_3JnOeOIpajvZRX5D2SZr6n3T,2021-10-22 10:23:20,2021-10-28 20:00:00,cad,27.94,1.28,26.66,charge,PhoenixLiquidation: Order #3334 (tristancapps910@gmail.com)
+txn_3JnPA0IpajvZRX5D0vdcaIOP,2021-10-22 10:56:00,2021-10-28 20:00:00,cad,39.66,1.69,37.97,charge,PhoenixLiquidation: Order #3335 (Hastingssheree@gmail.com)
+txn_3JnaBvIpajvZRX5D2lzYnPot,2021-10-22 22:42:42,2021-10-29 20:00:00,cad,124.73,4.67,120.06,charge,PhoenixLiquidation: Order #3336 (kkleiman@wccusd.net)
+txn_1JngN2IpajvZRX5De0Iny0qc,2021-10-23 05:18:32,2021-10-24 20:00:00,cad,-60.54,15,-75.54,dispute,Chargeback withdrawal for ch_3JlkDtIpajvZRX5D0nC6DzHk
+txn_3JnqpUIpajvZRX5D0yIooN8z,2021-10-23 16:28:40,2021-10-29 20:00:00,cad,33.77,1.48,32.29,charge,PhoenixLiquidation: Order #3339 (suliamanq@gmail.com)
+txn_3JnupnIpajvZRX5D2Upogurv,2021-10-23 20:45:14,2021-10-30 20:00:00,cad,49.91,1.75,48.16,charge,PhoenixLiquidation: Order #3340 (faydra_@hotmail.com)
+txn_3Jny6yIpajvZRX5D0pSef4b3,2021-10-24 00:15:11,2021-10-30 20:00:00,cad,36.38,1.57,34.81,charge,PhoenixLiquidation: Order #3341 (fadenusta679@gmail.com)
+txn_3JoEduIpajvZRX5D048bZh1G,2021-10-24 17:54:17,2021-10-30 20:00:00,cad,174.87,6.42,168.45,charge,PhoenixLiquidation: Order #3342 (tmthyfx@gmail.com)
+txn_3JoEduIpajvZRX5D0obSos3f,2021-10-25 12:35:52,2021-10-30 20:00:00,cad,-174.88,0,-174.88,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3342 (tmthyfx@gmail.com))
+txn_3JnqpUIpajvZRX5D0hoeTh2B,2021-10-25 12:39:56,2021-10-29 20:00:00,cad,-33.77,0,-33.77,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3339 (suliamanq@gmail.com))
+txn_3JoWTkIpajvZRX5D23rjIy5N,2021-10-25 12:57:00,2021-10-31 20:00:00,cad,175.34,6.44,168.9,charge,PhoenixLiquidation: Order #3345 (tmthyfx@gmail.com)
+txn_3JpOtvIpajvZRX5D16PwidZz,2021-10-27 23:03:38,2021-11-03 20:00:00,cad,56.19,2.27,53.92,charge,PhoenixLiquidation: Order #3347 (summerdelacerda@yahoo.com)
+txn_3JpOtvIpajvZRX5D1otrTO3v,2021-10-29 16:32:41,2021-11-03 20:00:00,cad,-56.22,0,-56.22,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3347 (summerdelacerda@yahoo.com))
+txn_3JsfWoIpajvZRX5D1LE0xMwY,2021-11-05 23:25:18,2021-11-11 19:00:00,cad,90.96,2.94,88.02,charge,PhoenixLiquidation: Order #3352 (shaydavis21@yahoo.com)
+txn_3JulZpIpajvZRX5D2HshJWJy,2021-11-11 17:17:05,2021-11-16 19:00:00,cad,120.7,3.8,116.9,charge,PhoenixLiquidation: Order #3354 (mathanyjay@gmail.com)
+txn_3Jv4CVIpajvZRX5D2i1OXVU6,2021-11-12 13:10:15,2021-11-16 19:00:00,cad,623.28,18.38,604.9,charge,PhoenixLiquidation: Order #3355 (info@deneigementst-pierre.ca)
+txn_3JvpwnIpajvZRX5D1r5qHUSB,2021-11-14 16:09:12,2021-11-17 19:00:00,cad,210.13,6.39,203.74,charge,PhoenixLiquidation: Order #3358 (haque.meera@gmail.com)
+txn_3JvpwnIpajvZRX5D1vxge3VS,2021-11-15 13:50:38,2021-11-17 19:00:00,cad,-210.13,0,-210.13,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3358 (haque.meera@gmail.com))
+txn_3JwfCUIpajvZRX5D1rli9VOU,2021-11-16 22:52:49,2021-11-21 19:00:00,cad,58.82,2.01,56.81,charge,PhoenixLiquidation: Order #3362 (deannawww@shaw.ca)
+txn_3JxxsnIpajvZRX5D1Jd8R0oV,2021-11-20 13:01:52,2021-11-24 19:00:00,cad,15.26,0.83,14.43,charge,PhoenixLiquidation: Order #3366 (todd.christman@aol.com)
+txn_1JyvMgIpajvZRX5DgS3lSQhu,2021-11-23 04:32:38,2021-11-23 04:32:38,cad,-0.03,0,-0.03,fee,Radar (2021-11-20): Radar for Fraud Teams
+txn_3Jz5qbIpajvZRX5D2NKXb2W0,2021-11-23 15:44:17,2021-11-25 19:00:00,cad,78.04,3.03,75.01,charge,PhoenixLiquidation: Order #3368 (aadumes@gmail.com)
+txn_3Jz7LRIpajvZRX5D17keT843,2021-11-23 17:20:13,2021-11-25 19:00:00,cad,49.98,2.05,47.93,charge,PhoenixLiquidation: Order #3369 (Notroubleplease@gmail.com)
+txn_1Jzi40IpajvZRX5DXwz5JnYw,2021-11-25 08:32:35,2021-11-25 08:32:35,cad,-0.06,0,-0.06,fee,Radar (2021-11-23): Radar for Fraud Teams
+txn_3Jzs0oIpajvZRX5D26njtLqL,2021-11-25 19:10:01,2021-11-30 19:00:00,cad,22.7,1.09,21.61,charge,PhoenixLiquidation: Order #3371 (Scanlon88@yahoo.com)
+txn_1K0lceIpajvZRX5DbMmVesFS,2021-11-28 06:32:44,2021-11-28 06:32:44,cad,-0.03,0,-0.03,fee,Radar (2021-11-26): Radar for Fraud Teams
+txn_3K1MK9IpajvZRX5D02BgrmfV,2021-11-29 21:44:09,2021-12-02 19:00:00,cad,61.93,2.1,59.83,charge,PhoenixLiquidation: Order #3373 (nathalie26turmel@hotmail.com)
+txn_1K2R3hIpajvZRX5D4cMCMhTp,2021-12-02 20:59:32,2021-12-02 20:59:32,cad,-0.03,0,-0.03,fee,Radar (2021-11-30): Radar for Fraud Teams
+txn_3K4cfyIpajvZRX5D26Gz92Jp,2021-12-08 21:48:09,2021-12-13 19:00:00,cad,25.9,1.21,24.69,charge,PhoenixLiquidation: Order #3377 (thealobo@hotmail.com)
+txn_1K5jkCIpajvZRX5DKoVqN5ti,2021-12-11 23:33:04,2021-12-11 23:33:04,cad,-0.03,0,-0.03,fee,Radar (2021-12-09): Radar for Fraud Teams
+txn_3K667FIpajvZRX5D1sdOQYMv,2021-12-12 23:26:24,2021-12-15 19:00:00,cad,123.31,4.62,118.69,charge,PhoenixLiquidation: Order #3380 (Haerankim@hotmail.com)
+txn_3K69aoIpajvZRX5D0eUn31lY,2021-12-13 03:09:09,2021-12-15 19:00:00,cad,63.53,2.14,61.39,charge,PhoenixLiquidation: Order #3381 (vitalij.penner@outlook.com)
+txn_1K73T1IpajvZRX5DQ92ccHWF,2021-12-15 14:48:47,2021-12-15 14:48:47,cad,-0.06,0,-0.06,fee,Radar (2021-12-13): Radar for Fraud Teams
+txn_3KBjSaIpajvZRX5D1u7rn50K,2021-12-28 12:27:43,2022-01-03 19:00:00,cad,22.9,1.1,21.8,charge,PhoenixLiquidation: Order #3389 (stacymichelle084@gmail.com)
+txn_3KBlXwIpajvZRX5D2lfBQikX,2021-12-28 14:41:24,2022-01-03 19:00:00,cad,9.14,0.57,8.57,charge,PhoenixLiquidation: Order #3390 (osikza@yahoo.fr)
+txn_1KCSGuIpajvZRX5DaGFCrKMZ,2021-12-30 12:18:36,2021-12-30 12:18:36,cad,-0.06,0,-0.06,fee,Radar (2021-12-28): Radar for Fraud Teams
+txn_3KCoL4IpajvZRX5D2Fo3c6fI,2021-12-31 11:52:26,2022-01-05 19:00:00,cad,133.31,4.17,129.14,charge,PhoenixLiquidation: Order #3393 (ronaldjg05@gmail.com)
+txn_1KCoWAIpajvZRX5DHnqpbDZP,2021-12-31 12:03:50,2021-12-31 12:03:50,cad,-0.06,0,-0.06,fee,Radar (2021-12-29): Radar for Fraud Teams
+txn_1KDg34IpajvZRX5DzsBhP4zs,2022-01-02 21:13:22,2022-01-02 21:13:22,cad,-0.03,0,-0.03,fee,Radar (2021-12-31): Radar for Fraud Teams
+txn_3KEHjcIpajvZRX5D1ZzihZJf,2022-01-04 13:27:51,2022-01-06 19:00:00,cad,36.08,1.35,34.73,charge,PhoenixLiquidation: Order #3394 (osikza@yahoo.fr)
+txn_1KF8UoIpajvZRX5DRQThG9fz,2022-01-06 21:48:02,2022-01-06 21:48:02,cad,-0.03,0,-0.03,fee,Radar (2022-01-04): Radar for Fraud Teams
+txn_3KFTsGIpajvZRX5D2x7ncS5A,2022-01-07 20:37:43,2022-01-12 19:00:00,cad,88.67,2.87,85.8,charge,PhoenixLiquidation: Order #3396 (lisestl@hotmail.com)
+txn_3KG8oMIpajvZRX5D2vnkj4YQ,2022-01-09 16:20:25,2022-01-12 19:00:00,cad,29.75,1.34,28.41,charge,PhoenixLiquidation: Order #3399 (saintlouisn79@hotmail.com)
+txn_1KGc2fIpajvZRX5DWhkGTMMe,2022-01-10 23:33:05,2022-01-10 23:33:05,cad,-0.06,0,-0.06,fee,Radar (2022-01-08): Radar for Fraud Teams
+txn_3KFTsGIpajvZRX5D2KyaT6ND,2022-01-11 12:55:31,2022-01-12 19:00:00,cad,-88.67,0,-88.67,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3396 (lisestl@hotmail.com))
+txn_1KH0c8IpajvZRX5DrRGdkgAC,2022-01-12 01:47:20,2022-01-12 01:47:20,cad,-0.03,0,-0.03,fee,Radar (2022-01-09): Radar for Fraud Teams
+txn_3KIlUkIpajvZRX5D0Gd1cVuH,2022-01-16 22:03:03,2022-01-19 19:00:00,cad,20.69,0.9,19.79,charge,PhoenixLiquidation: Order #3409 (kemsonedward08@gmail.com)
+txn_1KJU33IpajvZRX5D2QyWZe9k,2022-01-18 21:37:21,2022-01-18 21:37:21,cad,-0.06,0,-0.06,fee,Radar (2022-01-16): Radar for Fraud Teams
+txn_1KJm0zIpajvZRX5DVlCBy1Ij,2022-01-19 16:48:25,2022-01-19 16:48:25,cad,-0.09,0,-0.09,fee,Radar (2022-01-17): Radar for Fraud Teams
+txn_3KJn8EIpajvZRX5D1F6abtfB,2022-01-19 18:00:03,2022-01-23 19:00:00,cad,23.85,1.13,22.72,charge,PhoenixLiquidation: Order #3412 (Backwoodsjoker69@gmail.com)
+txn_3KJu2yIpajvZRX5D2uBmVQco,2022-01-20 01:23:04,2022-01-24 19:00:00,cad,23.91,1.14,22.77,charge,PhoenixLiquidation: Order #3413 (Backwoodsjoker69@gmail.com)
+txn_3KJyiiIpajvZRX5D03kqbWbu,2022-01-20 06:22:34,2022-01-24 19:00:00,cad,28.94,1.31,27.63,charge,PhoenixLiquidation: Order #3414 (bradvario@gmail.com)
+txn_1KKX4vIpajvZRX5DqKdjKQek,2022-01-21 19:03:37,2022-01-21 19:03:37,cad,-0.03,0,-0.03,fee,Radar (2022-01-19): Radar for Fraud Teams
+txn_1KKrDFIpajvZRX5DntazqCJN,2022-01-22 16:33:33,2022-01-22 16:33:33,cad,-0.06,0,-0.06,fee,Radar (2022-01-20): Radar for Fraud Teams
+txn_3KPeQgIpajvZRX5D0AUJaUc5,2022-02-04 21:55:19,2022-02-09 19:00:00,cad,41.62,1.51,40.11,charge,PhoenixLiquidation: Order #3418 (rebelof83@gmail.com)
+txn_3KQDKcIpajvZRX5D2Af7mD5x,2022-02-06 11:11:21,2022-02-09 19:00:00,cad,22.56,1.09,21.47,charge,PhoenixLiquidation: Order #3419 (mac_cee@sbcglobal.net)
+txn_1KQd87IpajvZRX5DdEoMATSZ,2022-02-07 14:44:07,2022-02-07 14:44:07,cad,-0.09,0,-0.09,fee,Radar (2022-02-05): Radar for Fraud Teams
+txn_1KRBSNIpajvZRX5D4QbHo8iN,2022-02-09 03:23:18,2022-02-09 03:23:18,cad,-0.03,0,-0.03,fee,Radar (2022-02-06): Radar for Fraud Teams
+txn_3KSc6YIpajvZRX5D0V89kFyT,2022-02-13 02:02:46,2022-02-16 19:00:00,cad,118.31,3.73,114.58,charge,PhoenixLiquidation: Order #3421 (denis_beauchamp@videotron.ca)
+txn_3KSc6YIpajvZRX5D05adqr4E,2022-02-13 13:11:46,2022-02-16 19:00:00,cad,-118.31,0,-118.31,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3421 (denis_beauchamp@videotron.ca))
+txn_1KTi0kIpajvZRX5DkU6tFD2V,2022-02-16 02:33:14,2022-02-16 02:33:14,cad,-0.03,0,-0.03,fee,Radar (2022-02-13): Radar for Fraud Teams
+txn_3Kwdd6IpajvZRX5D2TzAD1jj,2022-05-06 22:44:27,2022-05-11 20:00:00,cad,22.83,1.1,21.73,charge,PhoenixLiquidation: Order #3431 (bconrad001@gmail.com)
+txn_1KxcU0IpajvZRX5DC1bf4RzJ,2022-05-09 15:43:03,2022-05-09 15:43:03,cad,-0.03,0,-0.03,fee,Radar (2022-05-07): Radar for Fraud Teams
+txn_1L15rYIpajvZRX5DaoDGMdAe,2022-05-19 05:41:44,2022-05-19 05:41:44,cad,-0.03,0,-0.03,fee,Radar (2022-05-15): Radar for Fraud Teams
+txn_3L9zg9IpajvZRX5D2bhtQRBh,2022-06-12 18:54:48,2022-06-15 20:00:00,cad,96.37,3.67,92.7,charge,PhoenixLiquidation: Order #3440 (cristina.eve.brown@gmail.com)
+txn_1LAXuYIpajvZRX5DL1DpcQQP,2022-06-14 07:27:54,2022-06-14 07:27:54,cad,-0.03,0,-0.03,fee,Radar (2022-06-12): Radar for Fraud Teams
+txn_3L9zg9IpajvZRX5D2x4pzvc8,2022-06-14 15:56:58,2022-06-15 20:00:00,cad,-97.64,0,-97.64,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3440 (cristina.eve.brown@gmail.com))
+txn_3LDvTgIpajvZRX5D1Ft9wa5v,2022-06-23 15:14:11,2022-06-27 20:00:00,cad,56.92,2.29,54.63,charge,PhoenixLiquidation: Order #3447 (ivanov.scand@gmail.com)
+txn_1LEZdNIpajvZRX5DZrc3DChZ,2022-06-25 10:06:48,2022-06-25 10:06:48,cad,-0.03,0,-0.03,fee,Radar (2022-06-23): Radar for Fraud Teams
+txn_3LPZUpIpajvZRX5D0ghYf60J,2022-07-25 18:11:30,2022-07-27 20:00:00,cad,35.65,1.33,34.32,charge,PhoenixLiquidation: Order #3455 (phil.roberto@icloud.com)
+txn_1LQGKeIpajvZRX5D9zhQV1zT,2022-07-27 15:55:48,2022-07-27 15:55:48,cad,-0.03,0,-0.03,fee,Radar (2022-07-25): Radar for Fraud Teams
+txn_3LRe0TIpajvZRX5D0SbBTKZQ,2022-07-31 11:24:44,2022-08-03 20:00:00,cad,45.43,1.89,43.54,charge,PhoenixLiquidation: Order #3458 (iain.nafe@gmail.com)
+txn_1LSoDQIpajvZRX5D4Q8s6120,2022-08-03 16:30:50,2022-08-03 16:30:50,cad,-0.03,0,-0.03,fee,Radar (2022-07-31): Radar for Fraud Teams
+txn_3LTn2yIpajvZRX5D2yctmNKY,2022-08-06 09:28:11,2022-08-10 20:00:00,cad,381.77,13.66,368.11,charge,PhoenixLiquidation: Order #3463 (steph@addisonwolfe.com)
+txn_1LUZGWIpajvZRX5DO9gs4S2d,2022-08-08 12:57:20,2022-08-08 12:57:20,cad,-0.03,0,-0.03,fee,Radar (2022-08-06): Radar for Fraud Teams
+txn_3LfvfzIpajvZRX5D2qxhFsNM,2022-09-08 21:06:38,2022-09-13 20:00:00,cad,55.02,1.9,53.12,charge,PhoenixLiquidation: Order #3493 (daviescassie@hotmail.com)
+txn_3LgK8uIpajvZRX5D2XwodkZg,2022-09-09 23:14:08,2022-09-14 20:00:00,cad,26.61,1.23,25.38,charge,PhoenixLiquidation: Order #3499 (rshockley453@gmail.com)
+txn_1LgvQLIpajvZRX5DK8vGXtYq,2022-09-11 15:02:33,2022-09-11 15:02:33,cad,-0.03,0,-0.03,fee,Radar (2022-09-09): Radar for Fraud Teams
+txn_1LhEZaIpajvZRX5DjVSvGOwt,2022-09-12 11:29:22,2022-09-12 11:29:22,cad,-0.03,0,-0.03,fee,Radar (2022-09-10): Radar for Fraud Teams
+txn_3Lk7ayIpajvZRX5D28KKXahB,2022-09-20 10:38:47,2022-09-22 20:00:00,cad,126.41,3.97,122.44,charge,PhoenixLiquidation: Order #3530 (jeanfrenaud@hotmail.com)
+txn_1LknnvIpajvZRX5DziFJRMdO,2022-09-22 07:42:55,2022-09-22 07:42:55,cad,-0.03,0,-0.03,fee,Radar (2022-09-20): Radar for Fraud Teams
+txn_3LmAGBIpajvZRX5D1iRfYQRL,2022-09-26 01:53:46,2022-09-28 20:00:00,cad,26.57,1.07,25.5,charge,PhoenixLiquidation: Order #3535 (nickrosebush@gmail.com)
+txn_1LmxtNIpajvZRX5DzblRkvXd,2022-09-28 06:53:29,2022-09-28 06:53:29,cad,-0.03,0,-0.03,fee,Radar (2022-09-26): Radar for Fraud Teams
+txn_1LnKsgIpajvZRX5Dim99TYzX,2022-09-29 07:26:18,2022-09-29 07:26:18,cad,-0.06,0,-0.06,fee,Radar (2022-09-27): Radar for Fraud Teams
+txn_3LoTD2IpajvZRX5D2AwrOLw9,2022-10-02 10:32:03,2022-10-05 20:00:00,cad,39.99,1.7,38.29,charge,PhoenixLiquidation: Order #3554 (hannah.kory@yahoo.com)
+txn_1Lp79ZIpajvZRX5DhUn0P12U,2022-10-04 05:11:05,2022-10-04 05:11:05,cad,-0.03,0,-0.03,fee,Radar (2022-10-02): Radar for Fraud Teams
+txn_3LoTD2IpajvZRX5D28WjXUI7,2022-10-11 16:05:34,2022-10-11 16:05:34,cad,-39.87,0,-39.87,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3554 (hannah.kory@yahoo.com))
+txn_3LtEHlIpajvZRX5D1mPtgna2,2022-10-15 13:36:36,2022-10-19 20:00:00,cad,89.26,2.89,86.37,charge,PhoenixLiquidation: Order #3605 (ostafichuk@mech.ubc.ca)
+txn_1LttgVIpajvZRX5DaPf0q3lS,2022-10-17 09:48:51,2022-10-17 09:48:51,cad,-0.03,0,-0.03,fee,Radar (2022-10-15): Radar for Fraud Teams
+txn_1LuHopIpajvZRX5DdKDH2fSA,2022-10-18 11:35:03,2022-10-18 11:35:03,cad,-0.06,0,-0.06,fee,Radar (2022-10-16): Radar for Fraud Teams
+txn_3M5sGiIpajvZRX5D0EnZGOPd,2022-11-19 09:43:48,2022-11-23 19:00:00,cad,105.6,3.36,102.24,charge,PhoenixLiquidation: Order #3643 (dybvig.heather@gmail.com)
+txn_1M6VJkIpajvZRX5D2dnE5utE,2022-11-21 03:25:28,2022-11-21 03:25:28,cad,-0.03,0,-0.03,fee,Radar (2022-11-19): Radar for Fraud Teams
+txn_3M9rn3IpajvZRX5D0GiAO3jK,2022-11-30 10:01:40,2022-12-04 19:00:00,cad,135.74,4.24,131.5,charge,PhoenixLiquidation: Order #3652 (crystal_welch@icloud.com)
+txn_1MAgG6IpajvZRX5DJBUeYcTh,2022-12-02 15:54:58,2022-12-02 15:54:58,cad,-0.03,0,-0.03,fee,Radar (2022-11-30): Radar for Fraud Teams
+txn_3MAjorIpajvZRX5D1VuUUpXc,2022-12-02 19:43:09,2022-12-07 19:00:00,cad,54.79,2.22,52.57,charge,PhoenixLiquidation: Order #3657 (tom.j.stegeman@gmail.com)
+txn_1MBbAIIpajvZRX5DM1Wpzm1I,2022-12-05 04:40:46,2022-12-05 04:40:46,cad,-0.03,0,-0.03,fee,Radar (2022-12-03): Radar for Fraud Teams
+txn_3ME3BsIpajvZRX5D1wMllh50,2022-12-11 23:00:35,2022-12-14 19:00:00,cad,22.15,1.08,21.07,charge,PhoenixLiquidation: Order #3661 (melodychsu@hotmail.com)
+txn_3ME3BsIpajvZRX5D1wSTGKIe,2022-12-13 10:44:22,2022-12-14 19:00:00,cad,-22.09,0,-22.09,refund,REFUND FOR CHARGE (PhoenixLiquidation: Order #3661 (melodychsu@hotmail.com))
+txn_1MEwNUIpajvZRX5DbNFtR1Mo,2022-12-14 09:56:12,2022-12-14 09:56:12,cad,-0.03,0,-0.03,fee,Radar (2022-12-12): Radar for Fraud Teams
+txn_3MGUxuIpajvZRX5D2xfDPoPk,2022-12-18 17:04:16,2022-12-21 19:00:00,cad,53.25,1.84,51.41,charge,PhoenixLiquidation: Order #3662 (Celine522@outlook.com)
+txn_1MHApKIpajvZRX5D9jqTLEY1,2022-12-20 13:46:10,2022-12-20 13:46:10,cad,-0.03,0,-0.03,fee,Radar (2022-12-18): Radar for Fraud Teams

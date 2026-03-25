@@ -1,0 +1,221 @@
+<div class="table-responsive">
+  <table class="table table-bordered table-hover">
+    <thead class="table-light">
+      <tr>
+        <td style="width: 1px;" class="text-center"><input type="checkbox" onclick="$('input[name*=\'selected[]\']').prop('checked', this.checked);" /></td>
+        <td class="text-center">
+          {% if sort == 'card_raw_id' %}
+            <a href="{{ sort_card_raw_id }}" class="text-decoration-none fw-bold">{{ column_card_raw_id }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_card_raw_id }}" class="text-decoration-none">{{ column_card_raw_id }}</a>
+          {% endif %}
+        </td>
+        <td class="text-start">
+          {% if sort == 'title' %}
+            <a href="{{ sort_title }}" class="text-decoration-none fw-bold">{{ column_title }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_title }}" class="text-decoration-none">{{ column_title }}</a>
+          {% endif %}
+        </td>
+        <td class="text-start">
+          {% if sort == 'category' %}
+            <a href="{{ sort_category }}" class="text-decoration-none fw-bold">{{ column_category }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_category }}" class="text-decoration-none">{{ column_category }}</a>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          {% if sort == 'year' %}
+            <a href="{{ sort_year }}" class="text-decoration-none fw-bold">{{ column_year }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_year }}" class="text-decoration-none">{{ column_year }}</a>
+          {% endif %}
+        </td>
+        <td class="text-start">
+          {% if sort == 'brand' %}
+            <a href="{{ sort_brand }}" class="text-decoration-none fw-bold">{{ column_brand }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_brand }}" class="text-decoration-none">{{ column_brand }}</a>
+          {% endif %}
+        </td>
+        <td class="text-start">
+          {% if sort == 'set_name' %}
+            <a href="{{ sort_set_name }}" class="text-decoration-none fw-bold">{{ column_set }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_set_name }}" class="text-decoration-none">{{ column_set }}</a>
+          {% endif %}
+        </td>
+        <td class="text-start">
+          {% if sort == 'player' %}
+            <a href="{{ sort_player }}" class="text-decoration-none fw-bold">{{ column_player }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_player }}" class="text-decoration-none">{{ column_player }}</a>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          {% if sort == 'card_number' %}
+            <a href="{{ sort_card_number }}" class="text-decoration-none fw-bold">{{ column_card_number }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_card_number }}" class="text-decoration-none">{{ column_card_number }}</a>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          {% if sort == 'ungraded' %}
+            <a href="{{ sort_ungraded }}" class="text-decoration-none fw-bold">{{ column_ungraded }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_ungraded }}" class="text-decoration-none">{{ column_ungraded }}</a>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          {% if sort == 'grade_9' %}
+            <a href="{{ sort_grade_9 }}" class="text-decoration-none fw-bold">{{ column_grade_9 }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_grade_9 }}" class="text-decoration-none">{{ column_grade_9 }}</a>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          {% if sort == 'grade_10' %}
+            <a href="{{ sort_grade_10 }}" class="text-decoration-none fw-bold">{{ column_grade_10 }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_grade_10 }}" class="text-decoration-none">{{ column_grade_10 }}</a>
+          {% endif %}
+        </td>
+        <td class="text-end">{{ column_ebay_sold_raw }}</td>
+        <td class="text-end">{{ column_ebay_sold_graded }}</td>
+        <td class="text-end">{{ column_ebay_list_raw }}</td>
+        <td class="text-end">{{ column_ebay_list_graded }}</td>
+        <td class="text-center">{{ column_ebay_checked_at }}</td>
+        <td class="text-start">{{ column_ebay_sales }}</td>
+        <td class="text-center">{{ column_actions }}</td>
+        <td class="text-center">{{ column_front_image }}</td>
+        <td class="text-center">
+          {% if sort == 'date_added' %}
+            <a href="{{ sort_date_added }}" class="text-decoration-none fw-bold">{{ column_date_added }} <i class="fa-solid fa-sort-{{ order|lower }}"></i></a>
+          {% else %}
+            <a href="{{ sort_date_added }}" class="text-decoration-none">{{ column_date_added }}</a>
+          {% endif %}
+        </td>
+      </tr>
+    </thead>
+    <tbody>
+      {% if cards %}
+        {% for card in cards %}
+          {% set u   = card.ungraded|default(0) %}
+          {% set g9  = card.grade_9|default(0) %}
+          {% set g10 = card.grade_10|default(0) %}
+          {% set max_price = max(u, g9, g10) %}
+          {% if max_price >= 50 %}{% set row_class = 'table-warning' %}
+          {% elseif max_price >= 20 %}{% set row_class = 'table-info' %}
+          {% elseif max_price >= 5  %}{% set row_class = 'table-active' %}
+          {% else %}{% set row_class = '' %}{% endif %}
+          {% set keyword = card.title ?: ((card.set_name ?: '') ~ ' ' ~ (card.player ?: '') ~ ' #' ~ (card.card_number ?: '')) %}
+          {% set sold_graded_manual = 'https://www.ebay.ca/sch/i.html?_nkw=' ~ keyword|url_encode ~ '&_sacat=261328&LH_Sold=1&Graded=Yes&_sop=3&_udlo=35' %}
+          <tr class="{{ row_class }}" data-card-raw-id="{{ card.card_raw_id }}" data-market-keyword="{{ keyword|e('html_attr') }}">
+            <td class="text-center"><input type="checkbox" name="selected[]" value="{{ card.card_raw_id }}" /></td>
+            <td class="text-center">{{ card.card_raw_id }}</td>
+            <td class="text-start">{{ card.title }}</td>
+            <td class="text-start">{{ card.category }}</td>
+            <td class="text-center">{{ card.year }}</td>
+            <td class="text-start">{{ card.brand }}</td>
+            <td class="text-start">{{ card.set_name }}</td>
+            <td class="text-start">{{ card.player }}</td>
+            <td class="text-center">{{ card.card_number }}</td>
+            <td class="text-end">{{ card.ungraded|number_format(2) }}</td>
+            <td class="text-end">{{ card.grade_9|number_format(2) }}</td>
+            <td class="text-end">{{ card.grade_10|number_format(2) }}</td>
+            <td class="text-end market-sold-raw">
+              {% if card.ebay_price_sold_raw is not null and card.ebay_price_sold_raw != '' %}
+                {% set raw_sold_color = card.ebay_price_sold_raw <= card.ungraded ? '#dc3545' : '#28a745' %}
+                {% set raw_sold_badge = '<span style="font-weight:700;color:#fff;background:' ~ raw_sold_color ~ ';padding:2px 6px;border-radius:4px;display:inline-block;">$' ~ card.ebay_price_sold_raw|number_format(2, '.', '') ~ '</span>' %}
+                {% if card.ebay_price_sold_raw_url %}
+                  <a href="{{ card.ebay_price_sold_raw_url }}" target="ebay_market_preview" style="text-decoration:none;">{{ raw_sold_badge|raw }}</a>
+                {% else %}
+                  {{ raw_sold_badge|raw }}
+                {% endif %}
+                {% if card.ebay_price_sold_raw_bids is not null and card.ebay_price_sold_raw_bids != '' %}
+                  <div style="font-size:11px;color:#666;line-height:1.1;">{{ card.ebay_price_sold_raw_bids }} {{ card.ebay_price_sold_raw_bids == 1 ? text_bid_singular : text_bid_plural }}</div>
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="text-end market-sold-graded">
+              {% if card.ebay_price_sold_graded is not null and card.ebay_price_sold_graded != '' %}
+                {% set sold_graded_color = card.ebay_price_sold_graded <= card.ungraded ? '#dc3545' : '#28a745' %}
+                {% set sold_graded_badge = '<span style="font-weight:700;color:#fff;background:' ~ sold_graded_color ~ ';padding:2px 6px;border-radius:4px;display:inline-block;">$' ~ card.ebay_price_sold_graded|number_format(2, '.', '') ~ '</span>' %}
+                {% if card.ebay_price_sold_graded_url %}
+                  <a href="{{ card.ebay_price_sold_graded_url }}" target="ebay_market_preview" style="text-decoration:none;">{{ sold_graded_badge|raw }}</a>
+                {% else %}
+                  {{ sold_graded_badge|raw }}
+                {% endif %}
+                {% if card.ebay_price_sold_graded_grade %}
+                  <div style="font-size:11px;color:#555;line-height:1.1;">{{ card.ebay_price_sold_graded_grade }}</div>
+                {% endif %}
+                {% if card.ebay_price_sold_graded_bids is not null and card.ebay_price_sold_graded_bids != '' %}
+                  <div style="font-size:11px;color:#666;line-height:1.1;">{{ card.ebay_price_sold_graded_bids }} {{ card.ebay_price_sold_graded_bids == 1 ? text_bid_singular : text_bid_plural }}</div>
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="text-end market-list-raw">
+              {% if card.ebay_price_list_raw is not null and card.ebay_price_list_raw != '' %}
+                {% set list_raw_color = card.ebay_price_list_raw <= card.ungraded ? '#dc3545' : '#28a745' %}
+                {% set list_raw_badge = '<span style="font-weight:700;color:#fff;background:' ~ list_raw_color ~ ';padding:2px 6px;border-radius:4px;display:inline-block;">$' ~ card.ebay_price_list_raw|number_format(2, '.', '') ~ '</span>' %}
+                {% if card.ebay_price_list_raw_url %}
+                  <a href="{{ card.ebay_price_list_raw_url }}" target="ebay_market_preview" style="text-decoration:none;">{{ list_raw_badge|raw }}</a>
+                {% else %}
+                  {{ list_raw_badge|raw }}
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="text-end market-list-graded">
+              {% if card.ebay_price_list_graded is not null and card.ebay_price_list_graded != '' %}
+                {% set list_graded_color = card.ebay_price_list_graded <= card.ungraded ? '#dc3545' : '#28a745' %}
+                {% set list_graded_badge = '<span style="font-weight:700;color:#fff;background:' ~ list_graded_color ~ ';padding:2px 6px;border-radius:4px;display:inline-block;">$' ~ card.ebay_price_list_graded|number_format(2, '.', '') ~ '</span>' %}
+                {% if card.ebay_price_list_graded_url %}
+                  <a href="{{ card.ebay_price_list_graded_url }}" target="ebay_market_preview" style="text-decoration:none;">{{ list_graded_badge|raw }}</a>
+                {% else %}
+                  {{ list_graded_badge|raw }}
+                {% endif %}
+                {% if card.ebay_price_list_graded_grade %}
+                  <div style="font-size:11px;color:#555;line-height:1.1;">{{ card.ebay_price_list_graded_grade }}</div>
+                {% endif %}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="text-center market-checked-at">{{ card.ebay_market_checked_at ?: '—' }}</td>
+            <td class="text-start">{{ card.ebay_sales_rendered|default('—')|raw }}</td>
+            <td class="text-center">
+              <button type="button" class="btn btn-sm btn-outline-primary btn-fetch-market-row" data-card-raw-id="{{ card.card_raw_id }}" title="{{ button_fetch_ebay }}">
+                <i class="fa-solid fa-tags"></i>
+              </button>
+              <a class="btn btn-sm btn-dark btn-market-sold" target="ebay_market_preview" href="{{ card.ebay_price_sold_graded_url ?: sold_graded_manual }}" title="{{ button_sold_graded }}">
+                <i class="fa-solid fa-gavel"></i>
+              </a>
+            </td>
+            <td class="text-center">
+              {% if card.front_image %}
+                <img src="{{ card.front_image }}" style="max-height: 36px; max-width: 54px;" onerror="this.style.display='none'"/>
+              {% else %}
+                &mdash;
+              {% endif %}
+            </td>
+            <td class="text-center">{{ card.date_added }}</td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td class="text-center" colspan="21">{{ text_no_records }}</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+<div class="row">
+  <div class="col-sm-6 text-start">{{ results }}</div>
+  <div class="col-sm-6 text-end">{{ pagination }}</div>
+</div>

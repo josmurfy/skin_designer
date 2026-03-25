@@ -1,0 +1,327 @@
+{# Category Mismatch Tab with Pagination and Ordering #}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    {{ text_mismatch_found|replace({'%s': '<strong>' ~ category_mismatch_total ~ '</strong> ' ~ text_category|lower})|raw }}
+  </div>
+  <div class="btn-group">
+    <button class="btn btn-sm btn-info sync-selected-to-ebay" type="button" disabled>
+      <i class="fa-solid fa-cloud-arrow-up"></i> {{ text_sync_to_ebay }}
+    </button>
+    <button class="btn btn-sm btn-info sync-selected-from-ebay" type="button" disabled>
+      <i class="fa-solid fa-cloud-arrow-down"></i> {{ text_sync_from_ebay }}
+    </button>
+  </div>
+</div>
+
+{% if category_mismatch|length > 0 %}
+  <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+    <table class="table table-bordered table-hover" style="white-space: nowrap; font-size: 11px;">
+      <thead>
+        <tr>
+          <th style="width: 40px;">
+            <input type="checkbox" id="select-all-category" />
+          </th>
+          <th style="width: 80px;">
+            <a href="#" class="sort-category-mismatch" data-sort="product_id" data-order="{{ category_mismatch_sort == 'product_id' and category_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product_id }}
+              {% if category_mismatch_sort == 'product_id' %}
+                <i class="fa-solid fa-sort-{{ category_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="max-width: 200px;">
+            <a href="#" class="sort-category-mismatch" data-sort="name" data-order="{{ category_mismatch_sort == 'name' and category_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product }}
+              {% if category_mismatch_sort == 'name' %}
+                <i class="fa-solid fa-sort-{{ category_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="width: 120px;">{{ column_ebay_id }}</th>
+          <th style="width: 200px;">{{ column_category }}</th>
+          <th style="width: 100px;">{{ column_location }}</th>
+          <th class="text-center" style="width: 80px;">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in category_mismatch %}
+          <tr>
+            <td class="text-center">
+              <input type="checkbox" class="category-checkbox" data-product-id="{{ product.product_id }}" />
+            </td>
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ product.name }}">{{ product.name }}</td>
+            <td><a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary"><i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}</a></td>
+            <td>
+              {% if product.leaf != 1 %}
+                {# No leaf category - red border #}
+                <div style="border: 2px solid #dc3545; padding: 8px; border-radius: 4px; background-color: #f8d7da;">
+                  <div style="line-height: 1.4;">
+                    <div class="text-danger fw-bold mb-2" style="font-size: 11px;">
+                      <i class="fa-solid fa-exclamation-triangle"></i> {{ text_no_leaf_category }}
+                    </div>
+                    <small class="text-muted d-block">
+                      {{ text_local }}: {{ product.local_category_id ?? 'N/A' }}
+                      {% if product.local_category_name %}
+                        - {{ product.local_category_name }}
+                      {% endif %}
+                    </small>
+                    <small class="text-muted d-block">
+                      {{ text_ebay }}: {{ product.ebay_category_id ?? 'N/A' }}
+                      {% if product.ebay_category_name %}
+                        - {{ product.ebay_category_name }}
+                      {% endif %}
+                    </small>
+                  </div>
+                </div>
+              {% else %}
+                {# Leaf category exists but values differ - orange/warning border #}
+                <div style="border: 2px solid #ffc107; padding: 8px; border-radius: 4px; background-color: #fff3cd;">
+                  <div style="line-height: 1.4;">
+                    <div class="text-warning fw-bold mb-2" style="font-size: 11px;">
+                      <i class="fa-solid fa-exclamation-circle"></i> {{ text_category_values_differ }}
+                    </div>
+                    <small class="text-muted d-block">
+                      {{ text_local }}: {{ product.local_category_id ?? 'N/A' }}
+                      {% if product.local_category_name %}
+                        - {{ product.local_category_name }}
+                      {% endif %}
+                    </small>
+                    <small class="text-muted d-block">
+                      {{ text_ebay }}: {{ product.ebay_category_id ?? 'N/A' }}
+                      {% if product.ebay_category_name %}
+                        - {{ product.ebay_category_name }}
+                      {% endif %}
+                    </small>
+                  </div>
+                </div>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-secondary">{{ product.location }}</span></td>
+            <td class="text-center">
+              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  {# Pagination #}
+  {% if category_mismatch_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div>
+        Showing {{ category_mismatch_start }} to {{ category_mismatch_end }} of {{ category_mismatch_total }}
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% for page_num in 1..category_mismatch_num_pages %}
+            <li class="page-item {{ page_num == category_mismatch_page ? 'active' : '' }}">
+              <a class="page-link page-category-mismatch" href="#" data-page="{{ page_num }}">{{ page_num }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ text_no_mismatch_found|replace({'%s': text_category|lower}) }}</div>
+{% endif %}
+
+<script>
+$(document).ready(function() {
+  // Select all checkbox
+  $('#select-all-category').on('change', function() {
+    $('.category-checkbox').prop('checked', $(this).prop('checked'));
+    updateSyncButtons();
+  });
+  
+  // Individual checkbox
+  $('.category-checkbox').on('change', function() {
+    updateSyncButtons();
+    var allChecked = $('.category-checkbox:checked').length === $('.category-checkbox').length;
+    $('#select-all-category').prop('checked', allChecked);
+  });
+  
+  function updateSyncButtons() {
+    var selectedCount = $('.category-checkbox:checked').length;
+    $('.sync-selected-to-ebay, .sync-selected-from-ebay').prop('disabled', selectedCount === 0);
+    if (selectedCount > 0) {
+      $('.sync-selected-to-ebay').html('<i class="fa-solid fa-cloud-arrow-up"></i> {{ text_sync_to_ebay }} (' + selectedCount + ')');
+      $('.sync-selected-from-ebay').html('<i class="fa-solid fa-cloud-arrow-down"></i> {{ text_sync_from_ebay }} (' + selectedCount + ')');
+    } else {
+      $('.sync-selected-to-ebay').html('<i class="fa-solid fa-cloud-arrow-up"></i> {{ text_sync_to_ebay }}');
+      $('.sync-selected-from-ebay').html('<i class="fa-solid fa-cloud-arrow-down"></i> {{ text_sync_from_ebay }}');
+    }
+  }
+  
+  // Bulk sync to eBay
+  $('.sync-selected-to-ebay').on('click', function() {
+    var productIds = [];
+    $('.category-checkbox:checked').each(function() {
+      productIds.push($(this).data('product-id'));
+    });
+    
+    if (productIds.length === 0) return;
+    
+    if (!confirm('Export ' + productIds.length + ' product(s) to eBay?')) return;
+    
+    bulkSyncCategory(productIds, 'to_ebay');
+  });
+  
+  // Bulk sync from eBay
+  $('.sync-selected-from-ebay').on('click', function() {
+    var productIds = [];
+    $('.category-checkbox:checked').each(function() {
+      productIds.push($(this).data('product-id'));
+    });
+    
+    if (productIds.length === 0) return;
+    
+    if (!confirm('Import ' + productIds.length + ' product(s) from eBay?')) return;
+    
+    bulkSyncCategory(productIds, 'from_ebay');
+  });
+  
+  function bulkSyncCategory(productIds, direction) {
+    var route = direction === 'to_ebay' ? 'syncCategoryBulkToEbay' : 'syncCategoryBulkFromEbay';
+    var btn = direction === 'to_ebay' ? $('.sync-selected-to-ebay') : $('.sync-selected-from-ebay');
+    
+    console.log('=== BULK SYNC START ===');
+    console.log('Direction:', direction);
+    console.log('Route:', route);
+    console.log('Product IDs:', productIds);
+    console.log('URL:', 'index.php?route=shopmanager/inventory/sync.' + route + '&user_token={{ user_token }}');
+    
+    $.ajax({
+      url: 'index.php?route=shopmanager/inventory/sync.' + route + '&user_token={{ user_token }}',
+      type: 'POST',
+      data: {product_ids: productIds},
+      dataType: 'json',
+      beforeSend: function() {
+        console.log('Sending request...');
+        btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Processing...');
+      },
+      success: function(json) {
+        console.log('Response received:', json);
+        btn.prop('disabled', false);
+        if (json.success) {
+          console.log('SUCCESS:', json.success);
+          if (json.details) console.log('Details:', json.details);
+          alert('Success: ' + json.success + (json.details ? '\n\nDetails:\n' + json.details : ''));
+          loadCategoryMismatchTab({{ category_mismatch_page }}, '{{ category_mismatch_sort }}', '{{ category_mismatch_order }}');
+        } else if (json.error) {
+          console.error('ERROR:', json.error);
+          if (json.details) console.error('Details:', json.details);
+          alert('Error: ' + json.error + (json.details ? '\n\nDetails:\n' + json.details : ''));
+          updateSyncButtons();
+        }
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.error('=== AJAX ERROR ===');
+        console.error('Status:', xhr.status);
+        console.error('Response:', xhr.responseText);
+        console.error('Error:', thrownError);
+        btn.prop('disabled', false);
+        alert('Error: ' + thrownError + '\n\nCheck console for details');
+        updateSyncButtons();
+      }
+    });
+  }
+  
+  // Refresh category mismatch data
+  $('.refresh-category-mismatch').on('click', function() {
+    loadCategoryMismatchTab({{ category_mismatch_page }}, '{{ category_mismatch_sort }}', '{{ category_mismatch_order }}');
+  });
+  
+  // Sorting
+  $('.sort-category-mismatch').on('click', function(e) {
+    e.preventDefault();
+    var sort = $(this).data('sort');
+    var order = $(this).data('order');
+    loadCategoryMismatchTab(1, sort, order);
+  });
+  
+  // Pagination
+  $('.page-category-mismatch').on('click', function(e) {
+    e.preventDefault();
+    var page = $(this).data('page');
+    loadCategoryMismatchTab(page, '{{ category_mismatch_sort }}', '{{ category_mismatch_order }}');
+  });
+  
+  function loadCategoryMismatchTab(page, sort, order) {
+    $.ajax({
+      url: 'index.php?route=shopmanager/inventory/sync.getCategoryMismatchTab&user_token={{ user_token }}',
+      type: 'GET',
+      data: {
+        page: page,
+        sort: sort,
+        order: order
+      },
+      dataType: 'html',
+      beforeSend: function() {
+        $('#category-mismatch').html('<div class="text-center p-5"><i class="fa-solid fa-spinner fa-spin fa-3x"></i></div>');
+      },
+      success: function(html) {
+        $('#category-mismatch').html(html);
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.error(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+      }
+    });
+  }
+  
+  // Sync category buttons
+  $('.sync-category-btn').on('click', function() {
+    var btn = $(this);
+    var productId = btn.data('product-id');
+    var direction = btn.data('direction');
+    
+    console.log('Sync category clicked:', {productId: productId, direction: direction});
+    
+    var route = direction === 'to_ebay' ? 'syncCategoryToEbay' : 'syncCategoryFromEbay';
+    var confirmMsg = direction === 'to_ebay' ? 
+      'Export local category to eBay?' : 
+      'Import eBay category to local?';
+    
+    if (!confirm(confirmMsg)) {
+      return;
+    }
+    
+    $.ajax({
+      url: 'index.php?route=shopmanager/inventory/sync.' + route + '&user_token={{ user_token }}',
+      type: 'POST',
+      data: {product_id: productId},
+      dataType: 'json',
+      beforeSend: function() {
+        console.log('Sending request to:', route);
+        btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+      },
+      success: function(json) {
+        console.log('Response received:', json);
+        btn.prop('disabled', false);
+        if (json.success) {
+          btn.html('<i class="fa-solid fa-check"></i>');
+          alert(json.success);
+          loadCategoryMismatchTab({{ category_mismatch_page }}, '{{ category_mismatch_sort }}', '{{ category_mismatch_order }}');
+        } else if (json.error) {
+          btn.html('<i class="fa-solid fa-' + (direction === 'to_ebay' ? 'upload' : 'download') + '"></i>');
+          alert('Error: ' + json.error);
+        }
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.error('AJAX Error:', {
+          status: xhr.status,
+          statusText: xhr.statusText,
+          responseText: xhr.responseText,
+          thrownError: thrownError
+        });
+        btn.prop('disabled', false).html('<i class="fa-solid fa-' + (direction === 'to_ebay' ? 'upload' : 'download') + '"></i>');
+        alert('Error: ' + thrownError + '\nCheck console for details');
+      }
+    });
+  });
+});
+</script>

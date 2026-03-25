@@ -1,0 +1,266 @@
+<?php echo $header ?><?php echo $column_left ?>
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+                <a href="<?php echo $cancel ?>" data-toggle="tooltip" title="<?php echo $button_cancel ?>" class="btn btn-default"><i class="fa fa-reply"></i></a>
+            </div>
+            <h1><?php echo $heading_title ?></h1>
+            <ul class="breadcrumb">
+                <?php foreach ($breadcrumbs as $breadcrumb) { ?>
+                <li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+                <?php } ?>
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">
+        <form action="<?php echo $action ?>" method="post" enctype="multipart/form-data" id="form-openbay" class="form-horizontal">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="#tab-update" data-toggle="tab"><?php echo $tab_update ?></a></li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane active" id="tab-update">
+                    <input type="hidden" name="entegrasyon_version" value="<?php echo $entegrasyon_version ?>" />
+
+                    <div class="container-fluid">
+                        <h4><?php echo heading_title ?></h4>
+                        <p><?php echo $text_update_description ?></p>
+                        <div class="well">
+                            <div class="alert alert-danger" id="update-error" style="display:none;"></div>
+                            <div id="update-v2-box">
+                                <div class="form-group hidden">
+                                    <label class="col-sm-3 control-label" for="update-v2-beta"><span data-toggle="tooltip" title="<?php echo $help_beta ?>"><?php echo $entry_beta ?></span></label>
+                                    <div class="col-sm-8">
+                                        <select id="update-v2-beta" class="form-control">
+                                            <option value="1"><?php echo $text_yes ?></option>
+                                            <option value="0" selected="selected"><?php echo $text_no ?></option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label" for="update-v2"><span data-toggle="tooltip" title="<?php echo $text_install_info ?>"><?php echo $text_one_click ?></span></label>
+                                    <div class="col-sm-8">
+                                        <button class="btn btn-primary" id="update-v2"><?php echo button_install ?></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="update-v2-progress" style="display:none;">
+                                <div class="progress" style="height:50px;">
+                                    <div class="progress-bar progress-bar-striped active progress-bar-info" role="progressbar" aria-valuenow="1" aria-valuemin="0" aria-valuemax="100" style="width: 0%;" id="loading-bar"></div>
+                                </div>
+                                <h4 class="text-center" id="update-text"></h4>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                </div>
+        </form>
+    </div>
+</div>
+
+<script type="text/javascript"><!--
+
+
+    $('#update-v2').bind('click', function(e) {
+        e.preventDefault();
+
+        var text_confirm = confirm('<?php echo $text_confirm_backup ?>');
+
+        if (text_confirm == true) {
+            $('#update-error').hide();
+            $('#update-v2-box').hide();
+            $('#update-v2-progress').fadeIn();
+            $('#update-text').text('<?php echo $text_check_server ?>');
+            $('#loading-bar').css('width', '5%');
+
+            var beta = $('#update-v2-beta :selected').val();
+
+            updateCheckServer(beta);
+        }
+    });
+
+    function updateCheckServer(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=check_server&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+
+
+                if (json.error == 1) {
+                    updateError(json.response);
+                } else {
+                    $('#update-text').text(json.status_message);
+                    $('#loading-bar').css('width', json.percent_complete + '%');
+                    updateCheckVersion(beta);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updateCheckVersion(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=check_version&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+                if (json.error == 1) {
+                    $('#update-error').removeClass('alert-danger').addClass('alert-info').html('<i class="fa fa-check"></i> ' + json.response).show();
+                    $('#update-v2-progress').hide();
+                    $('#update-v2-box').fadeIn();
+                } else {
+                    $('#update-text').text(json.status_message);
+                    $('#loading-bar').css('width', json.percent_complete + '%');
+                    updateDownload(beta);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updateDownload(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=download&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+                if (json.error == 1) {
+                    updateError(json.response);
+                } else {
+                    $('#update-text').text(json.status_message);
+                    $('#loading-bar').css('width', json.percent_complete + '%');
+                    updateExtract(beta);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updateExtract(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=extract&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+                if (json.error == 1) {
+                    updateError(json.response);
+                } else {
+                    $('#update-text').text(json.status_message);
+                    $('#loading-bar').css('width', json.percent_complete + '%');
+                    updateRemove(beta);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updateRemove(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=remove&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+                if (json.error == 1) {
+                    $('#update-v2-progress').prepend('<div class="alert alert-warning">' + json.response + '</div>');
+                }
+
+                $('#update-text').text(json.status_message);
+                $('#loading-bar').css('width', json.percent_complete + '%');
+                updatePatch(beta);
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updatePatch(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=run_patch&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+                if (json.error == 1) {
+                    updateError(json.response);
+                } else {
+                    $('#update-text').text(json.status_message);
+                    $('#loading-bar').css('width', json.percent_complete + '%');
+                    updateVersion(beta);
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updateVersion(beta) {
+        $.ajax({
+            url: 'index.php?route=extension/module/easyconnectiveinstaller/update&stage=update_version&<?php echo $token_link ?>&beta=' + beta,
+            type: 'post',
+            dataType: 'json',
+            beforeSend: function() { },
+            success: function(json) {
+                if (json.error == 1) {
+                    updateError(json.response);
+                } else {
+                    $('#update-text').text(json.status_message);
+                    $('#text-version').text(json.response);
+                    $('#loading-bar').css('width', json.percent_complete + '%').removeClass('progress-bar-info').addClass('progress-bar-success');
+                    $('#update-v2-progress').hide();
+                    $('#update-v2-box').fadeIn();
+
+                    window.location.href='index.php?route=extension/module/easyconnectiveinstaller/install_module&<?php echo $token_link ?>';
+                    window.location.replace('index.php?route=extension/module/easyconnectiveinstaller/install_module&<?php echo $token_link ?>');
+
+                }
+            },
+            error: function (xhr, ajaxOptions, thrownError) {
+                if (xhr.status != 0) {
+                    alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+                }
+            }
+        });
+    }
+
+    function updateError(errors) {
+        $('#update-error').text(errors).show();
+
+        $('#update-v2-progress').hide();
+        $('#update-v2-box').fadeIn();
+    }
+
+    function validateForm() {
+        $('#form-openbay').submit();
+    }
+    //--></script>
+<?php echo $footer ?>
