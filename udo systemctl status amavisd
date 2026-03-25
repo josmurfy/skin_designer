@@ -1,0 +1,17 @@
+[0;1;32m●[0m spamassassin.service - Spamassassin daemon
+   Loaded: loaded (/usr/lib/systemd/system/spamassassin.service; enabled; vendor preset: disabled)
+   Active: [0;1;32mactive (running)[0m since Thu 2025-12-11 01:56:12 PST; 8h ago
+ Main PID: 1201339 (spamd)
+   CGroup: /system.slice/spamassassin.service
+           ├─1201339 /usr/bin/perl -T -w /usr/bin/spamd -c -m5 -H --razor-home-dir=/var/lib/razor/ --razor-log-file=sys-syslog
+           ├─1201354 spamd child
+           └─1201355 spamd child
+
+Dec 11 01:56:12 vps114737.inmotionhosting.com systemd[1]: Started Spamassassin daemon.
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: [0;1;39m[0;1;31m[0;1;39mrazor2: razor2 check failed: No such file or directory razor2: Can't read: /var/lib/razor/ at /usr/share/perl5/vendor_perl/Mail/SpamAssassin/Plugin/Razor2.pm line 331.[0m
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: spamd: server started on IO::Socket::IP [127.0.0.1]:783 (running version 3.4.6)
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: spamd: server pid: 1201339
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: spamd: server successfully spawned child process, pid 1201354
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: spamd: server successfully spawned child process, pid 1201355
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: prefork: child states: IS
+Dec 11 01:56:13 vps114737.inmotionhosting.com spamd[1201339]: prefork: child states: II

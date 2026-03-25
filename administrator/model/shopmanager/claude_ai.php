@@ -292,7 +292,7 @@ class claude_ai extends \Opencart\System\Engine\Model {
             unset($product_specific_info[$key]['specific_info'], $data_value['specific_info']);
     
             // **Traduction du champ 'Name'**
-            $translated_term = $this->model_shopmanager_product_specific->findtranslated_term($data_value['Name'] ?? '');
+            $translated_term = $this->model_shopmanager_catalog_product_specific->findtranslated_term($data_value['Name'] ?? '');
             $product_specific_info[$key]['Name'] = $translated_term ?? $this->model_shopmanager_translate->translate($data_value['Name'], $language['code']);
     
             //$execution_times[($n++).'_Chargement line:'. __LINE__] = round(microtime(true) - $start_time, 2);

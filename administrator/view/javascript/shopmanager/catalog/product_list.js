@@ -4,10 +4,18 @@
 // UPDATE LIST/FEED/END BUTTONS BASED ON SELECTION STATE
 // ============================================
 function updateListFeedButton() {
-    var listFeedBtn = document.getElementById('button-list-feed');
-    var endBtn      = document.getElementById('button-end-selected');
+    var feedBtn    = document.getElementById('button-feed-selected');
+    var listBtn    = document.getElementById('button-list-selected');
+    var endBtn     = document.getElementById('button-end-selected');
+    var updateBtn  = document.getElementById('button-update-selected');
+    var syncQtyBtn = document.getElementById('button-sync-qty-all');
 
-    if (!listFeedBtn) return;
+    // Masquer tous les boutons dynamiques
+    if (feedBtn)    feedBtn.classList.add('d-none');
+    if (listBtn)    listBtn.classList.add('d-none');
+    if (endBtn)     endBtn.classList.add('d-none');
+    if (updateBtn)  updateBtn.classList.add('d-none');
+    if (syncQtyBtn) syncQtyBtn.classList.add('d-none');
 
     // Récupérer les IDs des produits sélectionnés
     var selectedIds = [];
@@ -15,19 +23,23 @@ function updateListFeedButton() {
         if (cb.value) selectedIds.push(cb.value);
     });
 
-    // Masquer tous les boutons dynamiques
-    listFeedBtn.classList.add('d-none');
-    if (endBtn) endBtn.classList.add('d-none');
-
     if (selectedIds.length === 0) return;
 
-    var allListed  = true;   // tous les sélectionnés ont icône verte
-    var noneListed = true;   // aucun sélectionné n'a icône verte
-    var anyFed     = false;  // au moins 1 a btn-success RSS (has_sources == 1)
-    var allFed     = true;   // tous ont btn-success RSS
+    var allEnabled  = true;   // tous status=1 (aucun opacity-50)
+    var allListed   = true;   // tous ont icône verte
+    var allFed      = true;   // tous ont btn-sources-fed
+    var allNotListed = true;  // aucun n'est listé
+    var allHasStock = true;   // tous ont qty+unalloc > 0
 
     selectedIds.forEach(function(pid) {
-        // Vérifier "listed" : span marketplace-account-id-{pid}-* avec img _green-
+        var row = document.querySelector('tr[data-product-id="' + pid + '"]');
+
+        // Status : opacity-50 = disabled
+        if (!row || row.classList.contains('opacity-50')) {
+            allEnabled = false;
+        }
+
+        // Listed : span marketplace-account-id-{pid}-* avec img _green-
         var listed = false;
         document.querySelectorAll('[id^="marketplace-account-id-' + pid + '-"]').forEach(function(span) {
             var img = span.querySelector('img');
@@ -36,46 +48,38 @@ function updateListFeedButton() {
             }
         });
         if (!listed) allListed = false;
-        if (listed)  noneListed = false;
+        else         allNotListed = false;
 
-        // Vérifier "fed" : has_sources_flag==1 → fa-check dans btn-success (disabled)
-        // has_sources_flag==0 → fa-rss dans btn-warning (non fed)
-        var row = document.querySelector('tr[data-product-id="' + pid + '"]');
-        var isFed = false;
-        if (row) {
-            var checkIcon = row.querySelector('.fa-check');
-            if (checkIcon && checkIcon.closest('button') && checkIcon.closest('button').classList.contains('btn-success')) {
-                isFed = true;
-            }
+        // Fed : bouton avec classe btn-sources-fed
+        if (!row || !row.querySelector('.btn-sources-fed')) {
+            allFed = false;
         }
-        if (isFed) anyFed = true;
-        else allFed = false;
+
+        // Stock : qty + unallocated > 0
+        var qtyEl     = document.getElementById('quantity-' + pid);
+        var unallocEl = document.getElementById('unallocated-quantity-' + pid);
+        var qty       = qtyEl     ? parseInt(qtyEl.getAttribute('rel1')     || 0) : 0;
+        var unalloc   = unallocEl ? parseInt(unallocEl.getAttribute('rel1') || 0) : 0;
+        if (qty + unalloc <= 0) allHasStock = false;
     });
 
-    // Cas 1 & 3 : tous listed sans feed  OU  aucun listed sans feed → Feed Selected
-    if ((allListed && !anyFed) || (noneListed && !anyFed)) {
-        listFeedBtn.innerHTML = '<i class="fa-solid fa-rss"></i> ' + (window.TEXT_FEED_ALL_PRODUCTS || 'Feed Selected');
-        listFeedBtn.onclick = function() { handleFeedList(); };
-        listFeedBtn.className = 'btn btn-warning';
-        listFeedBtn.classList.remove('d-none');
-        return;
+    // Règle 1 : au moins 1 disabled → rien
+    if (!allEnabled) return;
+
+    // Règle 2 : tous enabled → Feed toujours visible
+    if (feedBtn) feedBtn.classList.remove('d-none');
+
+    // Règle 3 : tous feedés + tous non listés + tous ont stock → List
+    if (allFed && allNotListed && allHasStock) {
+        if (listBtn) listBtn.classList.remove('d-none');
     }
 
-    // Cas 2 : tous listed + au moins 1 fed → End Selected
-    if (allListed && anyFed) {
-        if (endBtn) endBtn.classList.remove('d-none');
-        return;
+    // Règle 4 : tous listés → End + Update + SyncQty
+    if (allListed) {
+        if (endBtn)     endBtn.classList.remove('d-none');
+        if (updateBtn)  updateBtn.classList.remove('d-none');
+        if (syncQtyBtn) syncQtyBtn.classList.remove('d-none');
     }
-
-    // Cas 4 : pas tous listed + tous fed → List Selected
-    if (!allListed && allFed) {
-        listFeedBtn.innerHTML = '<i class="fa-solid fa-list"></i> ' + (window.TEXT_LIST_ALL_PRODUCTS || 'List Selected');
-        listFeedBtn.onclick = function() { handleAddList(); };
-        listFeedBtn.className = 'btn btn-primary';
-        listFeedBtn.classList.remove('d-none');
-        return;
-    }
-    // Cas mixte → rien d'affiché
 }
 
 // ============================================
@@ -1095,7 +1099,7 @@ function handleEnable(productId) {
 
     if (confirm(TEXT_CONFIRM_DELETE)) {
         var form = document.getElementById('form-product');
-        form.action = enableUrl;
+        form.setAttribute('action', enableUrl);
         form.submit();
     }
 }
@@ -1107,7 +1111,7 @@ function handleDisable(productId) {
 
     if (confirm(TEXT_CONFIRM_DELETE)) {
         var form = document.getElementById('form-product');
-        form.action = disableUrl;
+        form.setAttribute('action', disableUrl);
         form.submit();
     }
 }
@@ -1119,7 +1123,7 @@ function handleCopy(productId) {
 
     if (confirm(TEXT_CONFIRM_DELETE)) {
         var form = document.getElementById('form-product');
-        form.action = copyUrl;
+        form.setAttribute('action', copyUrl);
         form.submit();
     }
 }
@@ -1237,8 +1241,15 @@ function addToMarketplace(product_id, marketplace_account_id, marketplace_id, is
     
     var user_token = document.querySelector('input[name="user_token"]').value;
 
-    //  var quantity = document.querySelector('input[name="quantity"]').value;
-    //  var unallocated_quantity = document.querySelector('input[name="unallocated_quantity"]').value;
+    // Vérifier qty + unallocated_qty > 0 avant de lister
+    var qtyEl = document.getElementById('quantity-' + product_id);
+    var unallocEl = document.getElementById('unallocated-quantity-' + product_id);
+    var qty = qtyEl ? parseInt(qtyEl.getAttribute('rel1') || 0) : 0;
+    var unalloc = unallocEl ? parseInt(unallocEl.getAttribute('rel1') || 0) : 0;
+    if (qty + unalloc <= 0) {
+        alert('Produit #' + product_id + ' : quantité = 0, impossible de lister.');
+        return;
+    }
     $.ajax({
         url: `index.php?route=shopmanager/marketplace.addToMarketplace&user_token=${user_token}`,
         type: 'POST',
@@ -1403,7 +1414,7 @@ function setMarketplaceListingState(productId, marketplaceAccountId, state, mark
     spanElement.innerHTML = html;
 }
 
-function updateSelectedMarketplaceListings() {
+function handleUpdateList() {
     var tokenElement = document.querySelector("input[name='user_token']");
     var user_token = tokenElement ? tokenElement.value : '';
 
@@ -1528,6 +1539,19 @@ function handleAddList() {
         // Vérifier si l'image est déjà verte (listée)
         if (img && img.src.includes("_green-25x25.png")) {
             return; // Passer cet élément
+        }
+
+        // Vérifier qty + unallocated_qty > 0
+        var row = element.closest('tr[data-product-id]');
+        if (row) {
+            var pid = row.getAttribute('data-product-id');
+            var qtyEl = document.getElementById('quantity-' + pid);
+            var unallocEl = document.getElementById('unallocated-quantity-' + pid);
+            var qty = qtyEl ? parseInt(qtyEl.getAttribute('rel1') || 0) : 0;
+            var unalloc = unallocEl ? parseInt(unallocEl.getAttribute('rel1') || 0) : 0;
+            if (qty + unalloc <= 0) {
+                return; // Ignorer ce produit
+            }
         }
 
         element.click(); // Simule le clic sur le lien
@@ -1722,78 +1746,69 @@ function handleFeedList(productId) {
 
 
 
-function editQuantityToMarketplaceBulk() {
-    showModal('#loadingModal');
-    var elements = document.querySelectorAll('[id^="marketplace-account-id-"]');
+function handleSyncQtyAll() {
+    var tokenElement = document.querySelector("input[name='user_token']");
+    var user_token = tokenElement ? tokenElement.value : '';
 
-    if (elements.length === 0) {
-        console.warn("Aucun produit à updater.");
-        hideModal('#loadingModal');
+    if (!user_token) {
+        alert(lang.error_token_not_found);
         return;
     }
 
-    let processIndex = 0;
-    let successCount = 0;
-    let failureCount = 0;
-    let report = [];
+    // Opérer uniquement sur les produits sélectionnés
+    var selectedProducts = [];
+    document.querySelectorAll("input[name^='selected']:checked").forEach(function(checkbox) {
+        if (checkbox.value) selectedProducts.push(checkbox.value);
+    });
+
+    if (selectedProducts.length === 0) {
+        alert(TEXT_UPDATE_MARKETPLACE_NO_SELECTION || 'Please select at least one product');
+        return;
+    }
+
+    showLoadingPopup('Sync quantities to eBay');
+
+    var currentIndex = 0;
 
     function processNext() {
-        if (processIndex >= elements.length) {
-            hideModal('#loadingModal');
-
-            let reportMessage = `Mise à jour terminée :\nSuccès : ${successCount}\nÉchecs : ${failureCount}\n\nDétails:\n` + report.join("\n");
-            alert(reportMessage);
+        if (currentIndex >= selectedProducts.length) {
+            finishLoadingPopup(TEXT_UPDATE_MARKETPLACE_DONE || 'Done');
             return;
         }
 
-        let element = elements[processIndex];
-        let idParts = element.id.match(/marketplace_account_id_(\d+)_(\d+)/);
-        let productId = idParts ? idParts[1] : null;
-        let marketplaceAccountId = idParts ? idParts[2] : "1";
-        let tokenElement = document.querySelector("input[name='user_token']");
-        let user_token = tokenElement ? tokenElement.value : "";
+        var productId = selectedProducts[currentIndex];
 
-        // Ne traiter que les produits avec marketplaceAccountId = 1
-        if (marketplaceAccountId !== "1") {
-            processIndex++;
+        // Trouver le span marketplace pour account_id=1 (id: marketplace-account-id-{pid}-1)
+        var spanEl = document.getElementById('marketplace-account-id-' + productId + '-1');
+        if (!spanEl) {
+            appendLoadingMessage('Product ' + productId + ': no marketplace span found', 'warning');
+            currentIndex++;
             processNext();
             return;
         }
 
-
-        if (!productId || !marketplaceAccountId || !user_token) {
-            console.warn("Données manquantes pour le produit", { productId, marketplaceAccountId, user_token });
-            processIndex++;
-            processNext();
-            return;
-        }
-
+        appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_PROCESSING, productId), 'info');
 
         $.ajax({
-            url: "index.php?route=shopmanager/marketplace.editQuantityToMarketplace&user_token=" + user_token,
-            type: "POST",
+            url: 'index.php?route=shopmanager/marketplace.editQuantityToMarketplace&user_token=' + user_token,
+            type: 'POST',
             data: {
                 product_id: productId,
-                marketplace_account_id: marketplaceAccountId
+                marketplace_account_id: '1'
             },
-            dataType: "json",
-            success: function (data) {
+            dataType: 'json',
+            success: function(data) {
                 if (data.success) {
-                    successCount++;
-                    report.push(`Produit ${productId}: Succès`);
+                    appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_SUCCESS, productId), 'success');
                 } else {
-                    console.error("Échec de la mise à jour pour le produit", productId, data.message);
-                    failureCount++;
-                    report.push(`Produit ${productId}: Échec - ${data.message}`);
+                    appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_ERROR, productId, data.message || data.error || 'Error'), 'error');
                 }
-                processIndex++;
+                currentIndex++;
                 processNext();
             },
-            error: function (error) {
-                console.error("Erreur lors de la requête pour le produit", productId, error);
-                failureCount++;
-                report.push(`Produit ${productId}: Erreur de requête`);
-                processIndex++;
+            error: function(xhr, ajaxOptions, thrownError) {
+                appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_ERROR, productId, thrownError || 'Request error'), 'error');
+                currentIndex++;
                 processNext();
             }
         });

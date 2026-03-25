@@ -131,24 +131,19 @@ class Shipping extends \Opencart\System\Engine\Model {
 						|| $product_info['category_id']=='175718') {
 
 
-				 $product_info['service'] = '<Service>Media Mail</Service>';
+				 $product_info['service'] = ['mailClass' => 'MEDIA_MAIL', 'priceType' => 'RETAIL'];
 				 $product_info['carrier'] = 'USPS Media Mail';
 			} else {
-				 $product_info['service'] = '<Service>Priority Commercial</Service>';
+				 $product_info['service'] = ['mailClass' => 'PRIORITY_MAIL', 'priceType' => 'COMMERCIAL'];
 				 $product_info['carrier'] = 'USPS Priority Commercial';
 			}
-       //     $product_info['service'] = '<Service>Media Mail</Service>';
-      //  if (!$product_info['shipping_cost']) {
-     //       unset($product_info['description']);
             $shipping_info['UPS_com'] = is_numeric($this->get_ups_rate($product_info))?$this->get_ups_rate($product_info):9999;
             $shipping_info['USPS'] = is_numeric($this->get_usps_rate($product_info))?$this->get_usps_rate($product_info):9999;
-           $product_info['service'] = '<Service>GROUND ADVANTAGE COMMERCIAL</Service>';
+           $product_info['service'] = ['mailClass' => 'GROUND_ADVANTAGE', 'priceType' => 'COMMERCIAL'];
             $product_info['carrier'] = 'USPS GROUND ADVANTAGE';
           
             $shipping_info['USPS_com'] = is_numeric($this->get_usps_rate($product_info))? $this->get_usps_rate($product_info):9999;
           
-      //  } 
-     
         $rates = $this->determine_best_rate($shipping_info);
         return $rates;
     }
@@ -311,7 +306,7 @@ try {
             error_log('UPS Request: ' . $client->__getLastRequest());
             error_log('UPS Response: ' . $client->__getLastResponse());
             return 9999;
-        } catch (Exception $ex) {
+        } catch (\Exception $ex) {
             error_log('UPS Error: ' . $ex->getMessage());
             return 9999;
         }
@@ -319,21 +314,91 @@ try {
     
     
 
+    // -------------------------------------------------------------------------
+    // NOUVELLE FONCTION - USPS REST API v3 (OAuth2) - migration du 2026-01-25
+    // L'ancienne Web Tools API (RateV4/XML) a été retirée par USPS.
+    // -------------------------------------------------------------------------
     private function get_usps_rate($product_info, $zipdestination = 12919) {
+
+        $product_info['weight'] = $product_info['weight'] ?? 0.1;
+        $product_info['height'] = $product_info['height'] ?? 1;
+        $product_info['length'] = $product_info['length'] ?? 1;
+        $product_info['width']  = $product_info['width']  ?? 1;
+
+        $weight    = max(0.1, (float)$product_info['weight']);
+        $mailClass = $product_info['service']['mailClass'] ?? 'GROUND_ADVANTAGE';
+        $priceType = $product_info['service']['priceType'] ?? 'RETAIL';
+
+        $accessToken = $this->getAccessToken();
+
+        $url = 'https://api.usps.com/prices/v3/base-rates/search';
+
+        $payload = [
+            'originZIPCode'                => '12919',
+            'destinationZIPCode'           => (string)$zipdestination,
+            'weight'                       => $weight,
+            'length'                       => max(1, (int)$product_info['length']),
+            'width'                        => max(1, (int)$product_info['width']),
+            'height'                       => max(1, (int)$product_info['height']),
+            'mailClass'                    => $mailClass,
+            'processingCategory'           => 'MACHINABLE',
+            'destinationEntryFacilityType' => 'NONE',
+            'rateIndicator'                => 'DR',
+            'priceType'                    => $priceType,
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json',
+            'Accept: application/json',
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        $json = json_decode($response, true);
+
+        if ($httpCode !== 200) {
+            $this->log->write('USPS ' . $mailClass . ' Error (HTTP ' . $httpCode . '): ' . $response);
+            return 9999;
+        }
+
+        $this->log->write('USPS ' . $mailClass . ' Response: ' . print_r($json, true));
+
+        // L'API retourne un tableau rates[] avec le prix dans rates[n]['price']
+        if (!empty($json['rates'])) {
+            foreach ($json['rates'] as $rate) {
+                if (!empty($rate['price'])) {
+                    return (float)$rate['price'];
+                }
+            }
+        }
+
+        $this->log->write('USPS ' . $mailClass . ': aucun tarif trouvé dans la réponse.');
+        return 9999;
+    }
+
+    // -------------------------------------------------------------------------
+    // ANCIENNE FONCTION - USPS Web Tools API (RateV4/XML) - RETIRÉE 2026-01-25
+    // Conservée comme référence. NE PAS UTILISER.
+    // -------------------------------------------------------------------------
+    private function get_usps_rate_OLD($product_info, $zipdestination = 12919) {
 
         $product_info['weight']=$product_info['weight']??0.1;
         $product_info['height']=$product_info['height']??1;
         $product_info['length']=$product_info['length']??1;
         $product_info['width']=$product_info['width']??1;
 
-
-
         $weight = ($product_info['weight'] < 0.1 ? 0.1 : $product_info['weight']);
         $pounds = floor($weight);
         $ounces = round(16 * ($weight - $pounds), 2);
         $userId = '209PHOEN3821';
         $url='https://secure.shippingapis.com/ShippingApi.dll?';
-       
 
         $xml = '<RateV4Request USERID="' . $userId . '">';
         $xml .= '    <Package ID="1">';
@@ -350,26 +415,25 @@ try {
         $xml .= '        <Machinable>false</Machinable>';
         $xml .= '    </Package>';
         $xml .= '</RateV4Request>';
-       
+
         $request = 'API=RateV4&XML=' . urlencode($xml);
-      //print("<pre>".print_r ($request,true )."</pre>");
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url . $request);
         curl_setopt($curl, CURLOPT_HEADER, 0);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $result = curl_exec($curl);
         curl_close($curl);
-     
-            $response = simplexml_load_string($result);
-            $result = json_encode($response);
-			$json = json_decode($result, true);
-     
-            if($product_info['service'] == '<Service>Media Mail</Service>'){
-                return  $json["Package"]["Postage"]["Rate"];
-            }else{
-                return  (isset($json["Package"]["Postage"]["CommercialRate"]))? $json["Package"]["Postage"]["CommercialRate"] : null;
-            }
-    
+
+        $response = simplexml_load_string($result);
+        $result = json_encode($response);
+        $json = json_decode($result, true);
+
+        if ($product_info['service'] == '<Service>Media Mail</Service>') {
+            $this->log->write('USPS Media Mail Response: ' . print_r($json, true));
+            return $json["Package"]["Postage"]["Rate"];
+        } else {
+            return (isset($json["Package"]["Postage"]["CommercialRate"])) ? $json["Package"]["Postage"]["CommercialRate"] : null;
+        }
     }
     
     

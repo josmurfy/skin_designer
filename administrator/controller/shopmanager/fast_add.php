@@ -2048,7 +2048,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 					foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 						//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 						// Vérifier si la clé existe dans la base de données
-						$replacement_term = $this->model_shopmanager_product_specific->getSpecificKey($specific_key_name, $category_id);
+						$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $category_id);
 
 					//	//print("<pre>" . print_r($replacement_term, true) . "</pre>");
 					//	$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true);
@@ -2072,11 +2072,11 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 								$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
 							//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 								if(isset($suggest_replacement_term)){
-									$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
+									$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
 									unset($category_specifics[$suggest_replacement_term]);
 									$key_set=2;
 								}else{
-									$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $category_id, '');
+									$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, '');
 									$key_set=0;
 								}
 							}else{

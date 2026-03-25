@@ -1,0 +1,35 @@
+{
+    "remotePath": "/",
+    "host": "ftp.phoenixdepot.com",
+    "username": "ftpuser@phoenixliquidation.ca",
+    "password": "Jnthngrvs01$$1972@@",
+    "port": 21,
+    "secure": false,
+    "protocol": "ftp",
+    "uploadOnSave": true,
+    "syncMode": "full",
+    "syncLocalDelete": true,
+    "passive": false,
+    "debug": true,
+    "privateKeyPath": null,
+    "passphrase": null,
+    "connTimeout": 20000,
+    "pasvTimeout": 20000,
+    "keepalive": 20000,
+    "agent": null,
+    "allow": [],
+    "ignore": [
+        "\\.vscode",
+        "\\.git",
+        "\\.DS_Store",
+        "\\well-known",
+        "\\image",
+        "\\system"
+    ],
+    "generatedFiles": {
+        "extensionsToInclude": [
+            ".php, .js, .css, .html, .tpl, .twig"
+        ],
+        "path": ""
+    }
+}

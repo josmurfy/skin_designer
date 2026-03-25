@@ -120,7 +120,7 @@ class Product extends \Opencart\System\Engine\Model {
 				$data = $this->model_shopmanager_catalog_product->generateDescription($data);
 		//$data = $this->model_shopmanager_catalog_product->generateMetaTag($data);
 		foreach ($data['product_description'] as $language_id => $value) {
-			$this->model_shopmanager_catalog_product->addDescription($product_id, $language_id, $value);
+			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $value);
 		}
 
 		// Code
@@ -331,7 +331,7 @@ class Product extends \Opencart\System\Engine\Model {
 	//print("<pre>".print_r ($data['product_description'],true )."</pre>");
 
 		foreach ($data['product_description'] as $language_id => $value) {
-			$this->model_shopmanager_catalog_product->addDescription($product_id, $language_id, $value);
+			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $value);
 		}
 
 		// Code

@@ -1,0 +1,52 @@
+{
+  /* ===============================
+     GitHub Copilot (STABLE)
+     =============================== */
+  "github.copilot.chat.enabled": true,
+  "github.copilot.chat.edits.temporalContext.enabled": false,
+  "github.copilot.chat.workspaceContext.enabled": false,
+  "github.copilot.chat.context": "selection",
+
+  /* ===============================
+     VS Code File Watchers
+     =============================== */
+  "files.useExperimentalFileWatcher": false,
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true
+  },
+
+  "search.exclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true
+  },
+
+  /* ===============================
+     TypeScript / TSX
+     =============================== */
+  "typescript.disableAutomaticTypeAcquisition": true,
+
+  /* ===============================
+     Performance & Stability
+     =============================== */
+  "editor.largeFileOptimizations": true,
+"editor.semanticHighlighting.enabled": false,
+"suitecloud.developerAssistant.disableWelcomeNotification": true,
+
+  /* ===============================
+     PHP
+     =============================== */
+  "php.executablePath": "/usr/local/bin/php",
+  "php.validate.executablePath": "/usr/local/bin/php",
+
+  /* ===============================
+     Java
+     =============================== */
+  "java.home": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.482.b08-1.el8.x86_64/jre"
+}

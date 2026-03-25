@@ -16,7 +16,7 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $this->load->model('shopmanager/catalog/product_specific');
 
             // Modifier la clé spécifique
-            $this->model_shopmanager_product_specific->editSpecificKey($specific_key, $category_id, $replacement_term);
+            $this->model_shopmanager_catalog_product_specific->editSpecificKey($specific_key, $category_id, $replacement_term);
 
             $json['success'] = 'Specific key updated successfully';
         } else {
@@ -41,7 +41,7 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $this->load->model('shopmanager/catalog/product_specific');
 
             // Supprimer la clé spécifique
-            $this->model_shopmanager_product_specific->deleteSpecificKey($specific_key, $category_id);
+            $this->model_shopmanager_catalog_product_specific->deleteSpecificKey($specific_key, $category_id);
 
             $json['success'] = 'Specific key deleted successfully';
         } else {
@@ -67,7 +67,7 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $this->load->model('shopmanager/catalog/product_specific');
 
             // Ajouter la nouvelle clé spécifique
-            $specific_id = $this->model_shopmanager_product_specific->addSpecificKey($specific_key, $category_id, $replacement_term);
+            $specific_id = $this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key, $category_id, $replacement_term);
 
             $json['success'] = 'Specific key added successfully';
             $json['specific_id'] = $specific_id;
@@ -93,7 +93,7 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $this->load->model('shopmanager/catalog/product_specific');
 
             // Récupérer la clé spécifique
-            $replacement_term = $this->model_shopmanager_product_specific->getSpecificKey($specific_key, $category_id);
+            $replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key, $category_id);
 
             if ($replacement_term != 'not_set') {
                 $json['exists'] = true;

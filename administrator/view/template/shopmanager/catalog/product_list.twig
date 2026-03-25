@@ -5,7 +5,7 @@
     <table class="table table-bordered table-hover">
       <thead>
         <tr>
-          <th class="text-center" style="width: 1px;"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', $(this).prop('checked'));" class="form-check-input"/></th>
+          <th class="text-center" style="width: 1px;"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', $(this).prop('checked')); if(typeof window.updateListFeedButton==='function') window.updateListFeedButton();" class="form-check-input"/></th>
           <th class="text-center"><a href="{{ sort_product_id }}"{% if sort == 'p.product_id' %} class="{{ order|lower }}"{% endif %}>{{ column_product_id }}</a></th>
           <th class="text-center"><a href="{{ sort_name }}" {% if sort == 'pd.name' %} class="{{ order|lower }}"{% endif %}>{{ column_name }}</a></th> 
           <th class="text-center"><a href="{{ sort_condition_id }}"{% if sort == 'p.condition_id' %} class="{{ order|lower }}"{% endif %}>{{ column_condition_id }}</a></th>
@@ -183,7 +183,7 @@
                {% set has_sources_flag = product.has_sources_flag|default(0) %}
                {% set has_specifics_flag = product.has_specifics_flag|default(0) %}
                {% if has_sources_flag == 1 %}
-                  <button type="button" data-toggle="tooltip" title="{{ text_sources_set }}" class="btn btn-success btn-sm" style="padding:2px 4px; font-size:10px;"disabled>
+                  <button type="button" data-toggle="tooltip" title="{{ text_sources_set }}" class="btn btn-success btn-sources-fed btn-sm" style="padding:2px 4px; font-size:10px;"disabled>
                     <i class="fa-solid fa-check"></i>
                   </button>
                 {% elseif has_sources_flag == 2 %}

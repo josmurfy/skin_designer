@@ -437,7 +437,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 	//print("<pre>" . print_r($data, true) . "</pre>");
 		// 4. Récupérer ou rafraîchir les informations sur le produit en fonction de l'UPC 
 		if(isset($upc) && is_numeric($upc)){
-		$product_info_source = $this->model_shopmanager_product_search->manageProductInfoSources($upc);
+		$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($upc);
 		// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 		
 		
@@ -520,7 +520,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 //echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
 
-//$data['images'] = !empty($google_search) ? $this->model_shopmanager_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+//$data['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 // Ajout des informations Algopix et eBay
 
@@ -599,20 +599,20 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['images']  = $this->model_shopmanager_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 		//print("<pre>" . print_r('3638:product.php', true) . "</pre>");
 		//print("<pre>" . print_r($data['images'], true) . "</pre>");
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['titles']  = $this->model_shopmanager_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['manufacturers'] = $this->model_shopmanager_product_search->getAllManufacturers($data);
+			$data['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($data);
 				//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
 
 
@@ -812,7 +812,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 			$mergeArrayForSpecifics['category_name'] = $data['category_name'];
 			$mergeArrayForSpecifics['category_id']= $data['category_id'];
-			$mergeArrayForSpecificsResult = $this->model_shopmanager_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+			$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
 		
 			unset($mergeArrayForSpecificsResult['error']);
 			unset($mergeArrayForSpecificsResult['category_name']);
@@ -855,7 +855,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 				//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 				// Vérifier si la clé existe dans la base de données
-				$replacement_term = $this->model_shopmanager_product_specific->getSpecificKey($specific_key_name, $category_id);
+				$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $category_id);
 
 			//	//print("<pre>" . print_r($replacement_term, true) . "</pre>");
 			//	//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); //echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
@@ -879,11 +879,11 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 						$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
 					//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 						if(isset($suggest_replacement_term)){
-							$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
+							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
 							unset($category_specifics[$suggest_replacement_term]);
 							$key_set=2;
 						}else{
-							$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $category_id, '');
+							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, '');
 							$key_set=0;
 						}
 					}else{
@@ -1682,11 +1682,11 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		$this->load->model('shopmanager/ebay');
 		if (isset($data['upc']) && is_numeric($data['upc'])) { 
-			$ProductInfoSources=$this->model_shopmanager_product_search->manageProductInfoSources($data['upc']);
+			$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageProductInfoSources($data['upc']);
 			//$data['ebay_info']=$this->model_shopmanager_ebay->get($data['upc'],null,'sold',null,100,$data['marketplace_item_id']);
 			$data['ebay_info']=json_decode($ProductInfoSources['ebay_search'],true);
 		}elseif(isset($data['product_id'])){
-			$ProductInfoSources=$this->model_shopmanager_product_search->manageProductInfoSources(null,null,$data['product_id']);
+			$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageProductInfoSources(null,null,$data['product_id']);
 			$data['ebay_info']=json_decode($ProductInfoSources['ebay_search'],true);
 		//print("<pre>".print_r ($data['ebay_info'],true )."</pre>"); 
 		}   
@@ -2160,7 +2160,7 @@ error_reporting(E_ALL);
 
 		}
 //		//print("<pre>" . print_r($this->request->post, true) . "</pre>");
-	   $this->request->post=$this->model_shopmanager_product_search->processProductSearchData($this->request->post);
+	   $this->request->post=$this->model_shopmanager_catalog_product_search->processProductSearchData($this->request->post);
 	//print("<pre>" . print_r('1981:product', true) . "</pre>");
 	//print("<pre>" . print_r($this->request->post, true) . "</pre>");
 					   
@@ -2176,7 +2176,7 @@ error_reporting(E_ALL);
 			//print("<pre>" . print_r($manageProductInfoSources, true) . "</pre>");
 			if(!isset($manageProductInfoSources)){
 				
-				$manageProductInfoSources=$this->model_shopmanager_product_search->manageProductInfoSources(null, $manageProductInfoSources,$product_id );
+				$manageProductInfoSources=$this->model_shopmanager_catalog_product_search->manageProductInfoSources(null, $manageProductInfoSources,$product_id );
 				//print("<pre>" . print_r('4039:product', true) . "</pre>");
 				//print("<pre>" . print_r($manageProductInfoSources, true) . "</pre>");
 
@@ -2359,7 +2359,7 @@ if (!empty($product_ids))  {
 			
 			
 if(isset($product_info['upc']) && is_numeric($product_info['upc'])){
-	$this->model_shopmanager_product_search->manageProductInfoSources($product_info['upc']);
+	$this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
 	//$product_info_source = 
 }
 
@@ -2422,10 +2422,10 @@ public function product_source_info_feed_from_search() {
 			
 		if($product_id){
 			$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
-			$search_data['product_info_source'] = $this->model_shopmanager_product_search->manageProductInfoSources($product_info['upc']);
+			$search_data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
 		}elseif(isset($data['search']) && is_numeric($data['search']) ){
 			
-			$search_data['product_info_source'] = $this->model_shopmanager_product_search->manageProductInfoSources($data['search']);
+			$search_data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($data['search']);
 			
 			$search_data['product_info_source']['upc'] =$data['search']??''; 
 
@@ -2489,7 +2489,7 @@ public function product_source_info_feed_from_search() {
 			$search_data['responseItem'] =$responseItem;   
 	//		//print("<pre>" . print_r($search_data['responseItem'],true) . "</pre>");
 			// Appeler la gestion des informations du produit
-			$search_data['product_info_source'] = $this->model_shopmanager_product_search->manageProductInfoSources(null, $responseItem)??'';  
+			$search_data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources(null, $responseItem)??'';  
 			if (isset($responseItem) && is_array($responseItem)) {
 			//print("<pre>" . print_r($responseItem,true) . "</pre>");
 				$search_data['product_info_source']['manageProductInfoSources'] = $responseItem;
@@ -2623,7 +2623,7 @@ public function product_source_info_fast_feed() {
 						return null;
 			}
 
-			$data['product_info_source'] = $this->model_shopmanager_product_search->manageProductInfoSources($data['upc']);
+			$data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($data['upc']);
 		
 		
 			//print("<pre>" . print_r(json_decode($json['data_source']['ebay_search'],true),true) . "</pre>");
@@ -3025,7 +3025,7 @@ public function process_search_field_fast_list($data) {
     
     $url = '';
     $category_leaf=1;
-		//$product_info_source = $this->model_shopmanager_product_search->manageProductInfoSources($upc);
+		//$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($upc);
 		// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 		
 		
@@ -3093,7 +3093,7 @@ public function process_search_field_fast_list($data) {
 
 
 
-//$data['images'] = !empty($google_search) ? $this->model_shopmanager_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+//$data['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 // Ajout des informations Algopix et eBay
 
@@ -3179,13 +3179,13 @@ public function process_search_field_fast_list($data) {
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['images']  = $this->model_shopmanager_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 //print("<pre>" . print_r('3638:product.php', true) . "</pre>");
 //	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['titles']  = $this->model_shopmanager_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 			if(isset($data['title_search'])){
 				$data['titles'] []=$data['title_search'];
 			}
@@ -3198,7 +3198,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		$data['product_info']['manufacturer']=$data['manufacturer']??'';
 
 }else{
-	$data['manufacturers'] = $this->model_shopmanager_product_search->getAllManufacturers($data)??null;
+	$data['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($data)??null;
 	if(isset($data['manufacturers'])){
 		if(count($data['manufacturers'])==1){
 		//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -3388,7 +3388,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 
 			$mergeArrayForSpecifics['category_name'] = $data['category_name'];
 			$mergeArrayForSpecifics['category_id']= $data['category_id'];
-			$mergeArrayForSpecificsResult = $this->model_shopmanager_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+			$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
 		
 			unset($mergeArrayForSpecificsResult['error']);
 			unset($mergeArrayForSpecificsResult['category_name']);
@@ -3428,7 +3428,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 				//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 				// Vérifier si la clé existe dans la base de données
-				$replacement_term = $this->model_shopmanager_product_specific->getSpecificKey($specific_key_name, $category_id);
+				$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $category_id);
 
 						// Si la clé existe déjà dans la base de données
 				if ($replacement_term != 'not_set') {
@@ -3450,11 +3450,11 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 						$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
 					//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 						if(isset($suggest_replacement_term)){
-							$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
+							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
 							unset($category_specifics[$suggest_replacement_term]);
 							$key_set=2;
 						}else{
-							$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $category_id, '');
+							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, '');
 							$key_set=0;
 						}
 					}else{
@@ -3852,7 +3852,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
     
     $url = '';
     $category_leaf=1;
-		//$product_info_source = $this->model_shopmanager_product_search->manageProductInfoSources($upc);
+		//$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($upc);
 		// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 		
 		
@@ -3904,7 +3904,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 
 
 
-//$data['images'] = !empty($google_search) ? $this->model_shopmanager_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+//$data['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 // Ajout des informations Algopix et eBay
 
@@ -3988,13 +3988,13 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['images']  = $this->model_shopmanager_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 //print("<pre>" . print_r('3638:product.php', true) . "</pre>");
 //	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['titles']  = $this->model_shopmanager_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 			if(isset($data['title_search'])){
 				$data['titles'] []=$data['title_search'];
 			}
@@ -4008,7 +4008,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		$data['product_info']['manufacturer']=$data['manufacturer']??'';
 
 }else{
-	$data['manufacturers'] = $this->model_shopmanager_product_search->getAllManufacturers($data)??null;
+	$data['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($data)??null;
 	if(isset($data['manufacturers'])){
 		if(count($data['manufacturers'])==1){
 		//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -4201,7 +4201,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 
 			$mergeArrayForSpecifics['category_name'] = $data['category_name'];
 			$mergeArrayForSpecifics['category_id']= $data['category_id'];
-			$mergeArrayForSpecificsResult = $this->model_shopmanager_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+			$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
 		
 			unset($mergeArrayForSpecificsResult['error']);
 			unset($mergeArrayForSpecificsResult['category_name']);
@@ -4241,7 +4241,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 				//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 				// Vérifier si la clé existe dans la base de données
-				$replacement_term = $this->model_shopmanager_product_specific->getSpecificKey($specific_key_name, $data['category_id']);
+				$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $data['category_id']);
 
 				// Si la clé existe déjà dans la base de données
 				if ($replacement_term != 'not_set') {
@@ -4263,11 +4263,11 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 						$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
 					//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 						if(isset($suggest_replacement_term)){
-							$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $data['category_id'], $suggest_replacement_term);
+							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $data['category_id'], $suggest_replacement_term);
 							unset($category_specifics[$suggest_replacement_term]);
 							$key_set=2;
 						}else{
-							$this->model_shopmanager_product_specific->addSpecificKey($specific_key_name, $data['category_id'], '');
+							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $data['category_id'], '');
 							$key_set=0;
 						}
 					}else{
@@ -4454,13 +4454,13 @@ public function getSearchData() {
 		
 
         // Obtenir les données de recherche du produit
-        $data['product_search_data'] = $this->model_shopmanager_product_search->getSearchData(
+        $data['product_search_data'] = $this->model_shopmanager_catalog_product_search->getSearchData(
             $product_info['upc'] ?? '',
             $product_info['product_id']
         );
 
         // Fusionner les nouvelles données avec celles du produit
-        $data_json = $this->model_shopmanager_product_search->feedInfoWithSearchData(json_encode($data));
+        $data_json = $this->model_shopmanager_catalog_product_search->feedInfoWithSearchData(json_encode($data));
         $data_received = json_decode($data_json, true);
 
 		// Protéger le price existant: ne l'écraser que si le produit n'a pas encore de prix

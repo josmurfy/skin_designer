@@ -61,8 +61,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                                     : ($product_search_data ['ebay_pricevariant'] ?? null);
     	
 		$data['ebay_info']=$product_search_data ['ebay_search']?? null;
-		$data['ebay_pricevariant']=$product_search_data ['ebay_pricevariant'];
-
+			$data['ebay_pricevariant']=$product_search_data ['ebay_pricevariant'];
         $data['ebay_category'] = (!empty($data['ebay_category'])) 
                                 ? $data['ebay_category'] 
                                 : ($product_search_data ['ebay_category'] ?? null);
@@ -589,7 +588,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
    // $specifics=$this->getSpecifics($product_search['product_id']??null,$product_search, $category_info[1],$product_search['specifics_source']??null,json_decode(html_entity_decode($product_search['epid_sources_json']),true));
     //print("<pre>".print_r ('jo1117',true )."</pre>");
    //print("<pre>".print_r ($specifics,true )."</pre>");
-        $specifics=$this->model_shopmanager_product_search->getSpecifics($product_search['product_id']??null,$product_search, $category_info[1],$product_search['specifics_source']??null,json_decode(html_entity_decode($product_search['epid_sources_json']??''),true));
+        $specifics=$this->getSpecifics($product_search['product_id']??null,$product_search, $category_info[1],$product_search['specifics_source']??null,json_decode(html_entity_decode($product_search['epid_sources_json']??''),true));
         //$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
     //print("<pre>".print_r ('jo1117',true )."</pre>");
    //print("<pre>".print_r ($specifics,true )."</pre>");
@@ -2155,7 +2154,7 @@ public function getInfoSourcesPrice($upc = null, $product_id = null){
         $data['epid'] = $ebay_search['epid'] ?? null;
 
         // Mettre à jour les informations de la table `product_info_sources` avec les nouvelles données eBay
-        $this->model_shopmanager_product_search->editInfoSources($upc, [
+        $this->editInfoSources($upc, [
             'ebay_search' => $ebay_search,
             'algopix_search' => $algopix_search,
             'upc_tmp_search' => $upc_tmp_search,
@@ -2752,18 +2751,18 @@ private function processCategorySpecifics($source_value, $category_specific_info
         $data['conditions'] = $this->model_shopmanager_condition->getConditionDetails($category_id);
     
         // 4. Gestion des images et titres
-        $data['images'] = $this->model_shopmanager_product_search->getAllImageUrls(
+        $data['images'] = $this->getAllImageUrls(
             $data['upc_tmp_search'], $data['google_search'], $data['ebay_search'], 
             $data['algopix_search'], $data['algopix_search_fr'], $data['epid_details']
         );
       
-        $data['titles'] = $this->model_shopmanager_product_search->getAllTitles(
+        $data['titles'] = $this->getAllTitles(
             $data['upc_tmp_search'], $data['google_search'], $data['ebay_search'], 
             $data['algopix_search'], $data['algopix_search_fr'], $data['epid_details']
         );
       
 // 5. Récupération des fabricants et marques
-        $manufacturers = $this->model_shopmanager_product_search->getAllManufacturers($data);
+        $manufacturers = $this->getAllManufacturers($data);
 
         if (!empty($manufacturers)) {
             if (is_string($manufacturers)) {
@@ -2771,7 +2770,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
             }
 
             // Appel de `getManufacturer()` pour obtenir le bon fabricant
-            $manufacturer_data = $this->model_shopmanager_product_search->getManufacturer($manufacturers);
+            $manufacturer_data = $this->getManufacturer($manufacturers);
 
             // Mise à jour des informations du fabricant dans $data
             $data['manufacturer'] = $manufacturer_data['name'] ?? null;
@@ -2864,7 +2863,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
         //print_r("<pre>" . print_r($mergeArrayForSpecifics, true) . "</pre>");
         
         
-        $specifics_result = $this->model_shopmanager_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+        $specifics_result = $this->filterArrayForSpecifics($mergeArrayForSpecifics);
         //$data['product_data']=$specifics_result;
      
         
