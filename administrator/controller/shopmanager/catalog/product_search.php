@@ -910,6 +910,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			//print("<pre>".print_r ($execution_times ,true )."</pre>");
 			$total_execution_time = array_sum($execution_times);
 
+			$data['ebay_pricevariant_table'] = $this->getEbayPricevariantTable($data);
 			
 		if(isset($this->request->get['type'])){
 			$json['html']= $this->load->view('shopmanager/catalog/product_search_'.$this->request->get['type'], $data);;
@@ -3483,6 +3484,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			$data['total_execution_time'] = array_sum($execution_times);
             
 		//	//echo "Temps total d'exécution : " . $total_execution_time . " secondes\n";
+		$data['ebay_pricevariant_table'] = $this->getEbayPricevariantTable($data);
 		if (isset($data['manageProductInfoSources']) && is_array($data['manageProductInfoSources']) && count($data['manageProductInfoSources']) > 0) {
 			if(isset($data['view'])){
 				if(!isset($data['condition_marketplace_item_id'] )){
@@ -4296,6 +4298,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			$data['total_execution_time'] = array_sum($execution_times);
             
 		//	//echo "Temps total d'exécution : " . $total_execution_time . " secondes\n";
+		$data['ebay_pricevariant_table'] = $this->getEbayPricevariantTable($data);
 		if (isset($data['manageProductInfoSources']) && is_array($data['manageProductInfoSources']) && count($data['manageProductInfoSources']) > 0) {
 			if(isset($data['view'])){
 				if(!isset($data['condition_marketplace_item_id'] )){
@@ -4320,6 +4323,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
         
 }
 $data['total_execution_time'] = array_sum($execution_times);
+$data['ebay_pricevariant_table'] = $this->getEbayPricevariantTable($data);
 return $this->load->view('shopmanager/catalog/product_search_form', $data);
 }
 
@@ -4542,5 +4546,62 @@ public function getSearchData() {
 
 		// Retourner les produits mis à jour en JSON
 		$this->response->setOutput(json_encode($json, JSON_PRETTY_PRINT));
+	}
+
+	protected function getEbayPricevariantTable(array $data): string {
+		return $this->load->view('shopmanager/catalog/partials/ebay_pricevariant_table', $data);
+	}
+
+	public function ebayPricevariantTable(): string {
+		$this->load->model('shopmanager/catalog/product_search');
+		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('shopmanager/condition');
+		$lang = $this->load->language('shopmanager/catalog/product_search');
+
+		$product_id = (int)($this->request->get['product_id'] ?? ($this->request->post['product_id'] ?? 0));
+		$upc        = $this->request->get['upc'] ?? ($this->request->post['upc'] ?? null);
+
+		if (!$upc && !$product_id) {
+			return '';
+		}
+
+		// Resolve upc from product if not in request — manageInfoSources only calculates
+		// ebay_pricevariant properly in the $upc branch (calculateMissingPrices)
+		if (!$upc && $product_id) {
+			$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+			$upc = $product_info['upc'] ?? null;
+		}
+
+		if ($upc && is_numeric($upc)) {
+			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources($upc);
+		} else {
+			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources(null, null, $product_id);
+		}
+
+		$data = [];
+		$data['ebay_pricevariant'] = isset($product_info_source['ebay_pricevariant'])
+			? json_decode($product_info_source['ebay_pricevariant'], true)
+			: null;
+		$data['ebay_info'] = isset($product_info_source['ebay_search'])
+			? json_decode($product_info_source['ebay_search'], true)
+			: null;
+
+		$product_info         = $product_id ? $this->model_shopmanager_catalog_product->getProduct($product_id) : [];
+		$data['upc']          = $upc ?? ($product_info['upc'] ?? null);
+		$data['condition_id'] = $product_info['condition_id'] ?? null;
+
+		$category_id = $product_info['category_id'] ?? null;
+		$site_id     = (int)($product_info['site_id'] ?? 0);
+
+		if ($data['condition_id'] && $category_id) {
+			$data['conditions'] = $this->model_shopmanager_condition->getConditionDetails($category_id, $data['condition_id'], null, $site_id);
+		}
+
+		$data['text_condition_name']    = $lang['text_condition_name']    ?? '';
+		$data['text_price']             = $lang['text_price']             ?? '';
+		$data['text_url']               = $lang['text_url']               ?? '';
+		$data['text_view_website_sold'] = $lang['text_view_website_sold'] ?? '';
+
+		return $this->load->view('shopmanager/catalog/partials/ebay_pricevariant_table', $data);
 	}
 }

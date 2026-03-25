@@ -2226,6 +2226,8 @@ class Product extends \Opencart\System\Engine\Controller {
 	$data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 	$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
 
+	$data['ebay_pricevariant_table'] = $this->load->controller('shopmanager/catalog/product_search.ebayPricevariantTable');
+
 	$this->response->setOutput($this->load->view('shopmanager/catalog/product_form', $data));
 }
 

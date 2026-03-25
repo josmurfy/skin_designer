@@ -255,7 +255,7 @@
                         <input type="text" name="discount" value="0" id="input-discount" class="form-control" onchange="updatePrice();">
                       </div>
                     </div>
-                    {% include 'administrator/view/template/shopmanager/catalog/partials/ebay_pricevariant_table.twig' %}
+                    {{ ebay_pricevariant_table }}
                   </fieldset>
   {# Quantity + Location + Unallocated #}
                   <div class="row g-2 mb-2">
