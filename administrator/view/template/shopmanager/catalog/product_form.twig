@@ -186,9 +186,9 @@
                   <div class="row mb-2">
                     <label class="col-sm-3 col-form-label fw-bold fs-6">{{ entry_model }}</label>
                     <div class="col-sm-5">
-                      <div class="input-group input-group-sm">
+                      <div class="input-group">
                         <input type="text" name="model" value="{{ model }}" placeholder="{{ entry_model }}" id="input-model" class="form-control">
-                        <button type="button" class="btn btn-warning btn-sm" title="{{ button_uppercase }}" onclick="(function(f){var t=f.value;if(t===t.toUpperCase())t=t.toLowerCase();f.value=t.replace(/\b([a-zA-Z\u00C0-\u00ff][a-zA-Z\u00C0-\u00ff']*)\b/g,function(m,w){return w.charAt(0).toUpperCase()+w.slice(1);});})(document.getElementById('input-model'));"><i class="fa fa-text-height"></i></button>
+                        <button type="button" class="btn btn-warning" title="{{ button_uppercase }}" onclick="(function(f){var t=f.value;if(t===t.toUpperCase())t=t.toLowerCase();f.value=t.replace(/\b([a-zA-Z\u00C0-\u00ff][a-zA-Z\u00C0-\u00ff']*)\b/g,function(m,w){return w.charAt(0).toUpperCase()+w.slice(1);});})(document.getElementById('input-model'));"><i class="fa fa-text-height"></i></button>
                       </div>
                     </div>
                     <div class="col-sm-4">
@@ -204,7 +204,7 @@
                     <label class="col-sm-3 col-form-label fw-bold fs-6">{{ entry_made_in_country }}</label>
                     <div class="col-sm-9" id="check-made-in-country-id" {% if made_in_country_id == '0' or made_in_country_id is null %}style="background-color:RED"{% endif %}>
                    
-                      <select name="made_in_country_id" id="input-made-in-country-id" class="form-select form-select-sm" onchange="editMadeInCountry({{ product_id }})">
+                      <select name="made_in_country_id" id="input-made-in-country-id" class="form-select" onchange="editMadeInCountry({{ product_id }})">
                         {% for country in countries %}
                           <option value="{{ country.country_id }}"{% if country.country_id == made_in_country_id %} selected="selected"{% endif %}>{{ country.name }}</option>
                         {% endfor %}

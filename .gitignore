@@ -34,6 +34,16 @@ image/temp/
 # Backup avant upgrade (garder séparé)
 phoenixliquidation_backup_avant_upgrade/
 
+# Backup images (7.2GB — jamais sur GitHub)
+image_backup/
+
+# Backup système v2 (230MB — archives historiques)
+system_v2_backup/
+
+# Vieilles vues non utilisées
+administrator/view_NOTUSED/
+administrator/old/
+
 # Storage externe
 storage_phoenixliquidation/
 

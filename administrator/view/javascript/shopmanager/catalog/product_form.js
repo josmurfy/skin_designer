@@ -790,6 +790,11 @@ function updateSpecificsTable(data, specifics_row_received) {
     // Met à jour la variable globale après traitement
     window.specifics_row = specifics_row;
     //generateInfo();
+
+    // Déclencher la synchro COO maintenant que les specifics sont dans le DOM
+    if (typeof syncCountryFields === 'function') {
+        setTimeout(syncCountryFields, 0);
+    }
 }
 
 
@@ -3462,15 +3467,22 @@ function openPrintLabel(sku = '', upc = '', quantity = 1, location = '', force =
     }
 }
 
+// Helper: vérifie si un field name correspond à un champ "pays d'origine" (noms variés selon catégorie eBay)
+const COUNTRY_SPECIFIC_KEYWORDS = ['Country/Region of Manufacture', 'Country of Origin', 'Country of Origin/Region of Manufacture'];
+function isCountrySpecificsField(fieldName) {
+    return COUNTRY_SPECIFIC_KEYWORDS.some(function(kw) { return fieldName.includes(kw); });
+}
+
 // Synchroniser le select made_in_country_id avec le champ Country/Region of Manufacture
 function syncCountryFields() {
     const countrySelect = document.getElementById('input-made-in-country-id');
     
     // Chercher le champ specifics (select OU input) de manière robuste
+    // Couvre les noms eBay variés selon la catégorie: "Country/Region of Manufacture", "Country of Origin", etc.
     let countrySpecificsField = null;
     const allSpecificFields = document.querySelectorAll('select, input[type="text"], textarea');
     for (let field of allSpecificFields) {
-        if (field.name && (field.name.includes('Country/Region of Manufacture') || field.name === 'product_description[1][specifics][Country/Region of Manufacture][Value]')) {
+        if (field.name && field.name.includes('product_description[1][specifics]') && isCountrySpecificsField(field.name)) {
             countrySpecificsField = field;
             break;
         }
@@ -3514,7 +3526,7 @@ function syncCountryFields() {
         // Chercher tous les selects Country/Region pour les autres langues
         const allCountryFields = document.querySelectorAll('select, input[type="text"], textarea');
         for (let field of allCountryFields) {
-            if (field.name && field.name.includes('Country/Region of Manufacture') && field !== countrySpecificsField) {
+            if (field.name && isCountrySpecificsField(field.name) && field !== countrySpecificsField) {
                 field.value = selectedCountryName;
                 field.dispatchEvent(new Event('change', { bubbles: true }));
             }
@@ -3612,7 +3624,7 @@ function syncCountryFields() {
                 // Traduire pour les autres langues
                 const allCountryFields = document.querySelectorAll('select, input[type="text"], textarea');
                 for (let field of allCountryFields) {
-                    if (field.name && field.name.includes('Country/Region of Manufacture') && field !== countrySpecificsField) {
+                    if (field.name && isCountrySpecificsField(field.name) && field !== countrySpecificsField) {
                         field.value = selectedCountryName;
                         field.dispatchEvent(new Event('change', { bubbles: true }));
                     }
@@ -3644,7 +3656,7 @@ function syncCountryFields() {
                     // Traduire pour les autres langues avec la valeur de specifics
                     const allCountryFields = document.querySelectorAll('select, input[type="text"], textarea');
                     for (let field of allCountryFields) {
-                        if (field.name && field.name.includes('Country/Region of Manufacture') && field !== countrySpecificsField) {
+                        if (field.name && isCountrySpecificsField(field.name) && field !== countrySpecificsField) {
                             field.value = specificsValue;
                             field.dispatchEvent(new Event('change', { bubbles: true }));
                         }
@@ -3732,7 +3744,7 @@ function openCountryBothEmptyPicker(countrySelect, countrySpecificsField) {
 
         const allCountryFields = document.querySelectorAll('select, input[type="text"], textarea');
         for (let field of allCountryFields) {
-            if (field.name && field.name.includes('Country/Region of Manufacture') && field !== countrySpecificsField) {
+            if (field.name && isCountrySpecificsField(field.name) && field !== countrySpecificsField) {
                 field.value = selectedText;
                 field.dispatchEvent(new Event('change', { bubbles: true }));
             }
@@ -3753,16 +3765,7 @@ function openCountryBothEmptyPicker(countrySelect, countrySpecificsField) {
     });
 }
 
-// Exécuter au chargement de la page avec un délai pour s'assurer que les selects dynamiques sont créés
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('[COO] DOMContentLoaded -> scheduling syncCountryFields');
-        setTimeout(syncCountryFields, 500);
-    });
-} else {
-    console.log('[COO] document ready -> scheduling syncCountryFields');
-    setTimeout(syncCountryFields, 500);
-}
+// syncCountryFields est appelé directement depuis updateSpecificsTable après rendu des champs
 
 // Function to manually trigger translation for all languages
 function translateAllContent() {

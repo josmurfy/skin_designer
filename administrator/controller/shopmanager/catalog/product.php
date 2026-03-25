@@ -759,10 +759,10 @@ class Product extends \Opencart\System\Engine\Controller {
 			if ($result['price']<0 && count($results)==1) {
 				$this->load->model('shopmanager/catalog/product_search');
 				if (isset($result['upc']) && is_numeric($result['upc'])) {
-					$ProductInfoSources = $this->model_shopmanager_product_search->manageInfoSources($result['upc']);
+					$ProductInfoSources = $this->model_shopmanager_catalog_product_search->manageInfoSources($result['upc']);
 					$data['ebay_pricevariant']=json_decode($ProductInfoSources['ebay_pricevariant']?? '[]', true) ?? [];
 				} elseif (isset($result['product_id'])) {
-					$ProductInfoSources = $this->model_shopmanager_product_search->manageInfoSources(null,null,$result['product_id']);
+					$ProductInfoSources = $this->model_shopmanager_catalog_product_search->manageInfoSources(null,null,$result['product_id']);
 					$data['ebay_pricevariant']=json_decode($ProductInfoSources['ebay_pricevariant']?? '[]', true) ?? [];
 				}
 				if (isset($data['ebay_pricevariant'][$result['condition_id']]['price']) && ($data['ebay_pricevariant'][$result['condition_id']]['price']>0 && !empty($data['ebay_pricevariant'][$result['condition_id']]['price']))) {
@@ -1496,11 +1496,11 @@ class Product extends \Opencart\System\Engine\Controller {
 		if ($data['price']<0 ) {
 			$this->load->model('shopmanager/catalog/product_search');
 			if (isset($data['upc']) && is_numeric($data['upc'])) {
-				$ProductInfoSources=$this->model_shopmanager_product_search->manageInfoSources($data['upc']);
+				$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageInfoSources($data['upc']);
 
 				$data['ebay_pricevariant']=json_decode($ProductInfoSources['ebay_pricevariant']?? '[]', true) ?? [];
 			} elseif (isset($data['product_id'])) {
-				$ProductInfoSources=$this->model_shopmanager_product_search->manageInfoSources(null,null,$data['product_id']);
+				$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageInfoSources(null,null,$data['product_id']);
 
 				$data['ebay_pricevariant']=json_decode($ProductInfoSources['ebay_pricevariant']?? '[]', true) ?? [];
 			}
@@ -1686,12 +1686,12 @@ class Product extends \Opencart\System\Engine\Controller {
 		$this->load->model('shopmanager/catalog/product_search');
 
 		if (isset($data['upc']) && is_numeric($data['upc'])) {
-			$ProductInfoSources=$this->model_shopmanager_product_search->manageInfoSources($data['upc']);
+			$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageInfoSources($data['upc']);
 
 			$data['ebay_info']=json_decode($ProductInfoSources['ebay_search']?? '[]', true) ?? [];
 			$data['ebay_pricevariant']=json_decode($ProductInfoSources['ebay_pricevariant']?? '[]', true) ?? [];
 		} elseif (isset($data['product_id'])) {
-			$ProductInfoSources=$this->model_shopmanager_product_search->manageInfoSources(null,null,$data['product_id']);
+			$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageInfoSources(null,null,$data['product_id']);
 
 			$data['ebay_info']=json_decode($ProductInfoSources['ebay_search']?? '[]', true) ?? [];
 			$data['ebay_pricevariant']=json_decode($ProductInfoSources['ebay_pricevariant']?? '[]', true) ?? [];
@@ -2093,8 +2093,8 @@ class Product extends \Opencart\System\Engine\Controller {
 		}
 		if (isset($this->request->get['product_search'])) {
 			$this->load->model('shopmanager/catalog/product_search');
-			$data['product_search_data'] = $this->model_shopmanager_product_search->getSearchData($product_info['upc']??'',$product_info['product_id']);
-			$data_json=$this->model_shopmanager_product_search->feedInfoWithSearchData(json_encode($data));
+			$data['product_search_data'] = $this->model_shopmanager_catalog_product_search->getSearchData($product_info['upc']??'',$product_info['product_id']);
+			$data_json=$this->model_shopmanager_catalog_product_search->feedInfoWithSearchData(json_encode($data));
 			$data= json_decode($data_json,true);
 			unset($data['product_search_data']['specifics_result']);
 		} else {

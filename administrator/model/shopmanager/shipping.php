@@ -131,15 +131,15 @@ class Shipping extends \Opencart\System\Engine\Model {
 						|| $product_info['category_id']=='175718') {
 
 
-				 $product_info['service'] = ['mailClass' => 'MEDIA_MAIL', 'priceType' => 'RETAIL'];
+				 $product_info['service'] = ['mailClass' => 'MEDIA_MAIL', 'priceType' => 'RETAIL', 'processingCategory' => 'NON_MACHINABLE', 'rateIndicator' => 'SP'];
 				 $product_info['carrier'] = 'USPS Media Mail';
 			} else {
-				 $product_info['service'] = ['mailClass' => 'PRIORITY_MAIL', 'priceType' => 'COMMERCIAL'];
+				 $product_info['service'] = ['mailClass' => 'PRIORITY_MAIL', 'priceType' => 'COMMERCIAL', 'processingCategory' => 'MACHINABLE', 'rateIndicator' => 'DR'];
 				 $product_info['carrier'] = 'USPS Priority Commercial';
 			}
             $shipping_info['UPS_com'] = is_numeric($this->get_ups_rate($product_info))?$this->get_ups_rate($product_info):9999;
             $shipping_info['USPS'] = is_numeric($this->get_usps_rate($product_info))?$this->get_usps_rate($product_info):9999;
-           $product_info['service'] = ['mailClass' => 'GROUND_ADVANTAGE', 'priceType' => 'COMMERCIAL'];
+           $product_info['service'] = ['mailClass' => 'USPS_GROUND_ADVANTAGE', 'priceType' => 'COMMERCIAL', 'processingCategory' => 'MACHINABLE', 'rateIndicator' => 'DR'];
             $product_info['carrier'] = 'USPS GROUND ADVANTAGE';
           
             $shipping_info['USPS_com'] = is_numeric($this->get_usps_rate($product_info))? $this->get_usps_rate($product_info):9999;
@@ -326,8 +326,10 @@ try {
         $product_info['width']  = $product_info['width']  ?? 1;
 
         $weight    = max(0.1, (float)$product_info['weight']);
-        $mailClass = $product_info['service']['mailClass'] ?? 'GROUND_ADVANTAGE';
-        $priceType = $product_info['service']['priceType'] ?? 'RETAIL';
+        $mailClass          = $product_info['service']['mailClass']          ?? 'USPS_GROUND_ADVANTAGE';
+        $priceType          = $product_info['service']['priceType']          ?? 'RETAIL';
+        $processingCategory = $product_info['service']['processingCategory'] ?? 'MACHINABLE';
+        $rateIndicator      = $product_info['service']['rateIndicator']      ?? 'SP';
 
         $accessToken = $this->getAccessToken();
 
@@ -341,9 +343,9 @@ try {
             'width'                        => max(1, (int)$product_info['width']),
             'height'                       => max(1, (int)$product_info['height']),
             'mailClass'                    => $mailClass,
-            'processingCategory'           => 'MACHINABLE',
+            'processingCategory'           => $processingCategory,
             'destinationEntryFacilityType' => 'NONE',
-            'rateIndicator'                => 'DR',
+            'rateIndicator'                => $rateIndicator,
             'priceType'                    => $priceType,
         ];
 

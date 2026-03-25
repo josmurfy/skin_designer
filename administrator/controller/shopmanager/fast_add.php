@@ -1570,7 +1570,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 				
 				
 	if(isset($product_info['upc']) && is_numeric($product_info['upc'])){
-		$product_info_source = $this->model_shopmanager_product_search->manageProductInfoSources($product_info['upc']);
+		$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
 	}
 
 			// Afficher les temps d'exécution pour le débogage
@@ -1586,7 +1586,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 	$start_time = microtime(true);
 
 
-	//$product_info['images'] = !empty($google_search) ? $this->model_shopmanager_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+	//$product_info['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 	// Ajout des informations Algopix et eBay
 
@@ -1749,7 +1749,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 						}
 					//	//print("<pre>" . print_r($product_info['product_categories'], true) . "</pre>");
 				
-				$product_info_source = $this->model_shopmanager_product_search->manageProductInfoSources($product_info['upc']);
+				$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
 				// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 			//	//print("<pre>" . print_r('3501:product.php', true) . "</pre>");
 			// 	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
@@ -1829,7 +1829,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 		$start_time = microtime(true);
 
 
-		//$product_info['images'] = !empty($google_search) ? $this->model_shopmanager_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+		//$product_info['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 		// Ajout des informations Algopix et eBay
 
@@ -1889,17 +1889,17 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 					$start_time = microtime(true);
 
-					$product_info['images']  = $this->model_shopmanager_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+					$product_info['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 					$start_time = microtime(true);
 
-					$product_info['titles']  = $this->model_shopmanager_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$epid_details??null);
+					$product_info['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$epid_details??null);
 
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 					$start_time = microtime(true);
 
-					$product_info['manufacturers'] = $this->model_shopmanager_product_search->getAllManufacturers($product_info);
+					$product_info['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($product_info);
 						//print("<pre>" . print_r($product_info['manufacturers'], true) . "</pre>");
 
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
@@ -2008,7 +2008,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 
 					$mergeArrayForSpecifics['category_name'] = $product_info['category_name'];
 					$mergeArrayForSpecifics['category_id']= $product_info['category_id'];
-					$mergeArrayForSpecificsResult = $this->model_shopmanager_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+					$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
 				
 					unset($mergeArrayForSpecificsResult['error']);
 					unset($mergeArrayForSpecificsResult['category_name']);
@@ -2148,8 +2148,8 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 					// Appeler la méthode updateProductSpecifics pour mettre à jour les "specifics"
 					$this->model_shopmanager_catalog_product->updateProductSpecifics($specifics_checkbox, $specifics_select, $this->request->post['category_id']);
 				}*/
-		//   $this->request->post=$this->model_shopmanager_product_search->feedPostArray($this->model_shopmanager_product_search->cleanArray($this->request->post));
-			$this->request->post=$this->model_shopmanager_product_search->processProductSearchData($this->request->post);
+		//   $this->request->post=$this->model_shopmanager_catalog_product_search->feedPostArray($this->model_shopmanager_catalog_product_search->cleanArray($this->request->post));
+			$this->request->post=$this->model_shopmanager_catalog_product_search->processProductSearchData($this->request->post);
 		//	//print("<pre>" . print_r($this->request->post, true) . "</pre>");
 				// Traitez les données sélectionnées ici (par exemple, en les enregistrant dans la base de données)
 				// Exemple simplifié d'enregistrement des données
