@@ -76,6 +76,15 @@ class Shipping extends \Opencart\System\Engine\Controller {
             }
                         // Calcul des tarifs d'expédition
                     $shippingRates = $this->model_shopmanager_shipping->calculateShippingRates($product_info);
+
+                    // Conversion USD → CAD
+                    if ($shippingRates['shipping_cost'] < 9999) {
+                        $shippingRates['shipping_cost'] = number_format(
+                            (float)$this->currency->convert($shippingRates['shipping_cost'], 'USD', 'CAD'),
+                            2, '.', ''
+                        );
+                    }
+
                     $product_info['shipping_cost'] =  $shippingRates['shipping_cost'];
                     $product_info['shipping_carrier'] = $shippingRates['shipping_carrier'];
                     // Mise à jour des tarifs dans la base de données
