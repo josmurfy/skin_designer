@@ -48,5 +48,5 @@
   /* ===============================
      Java
      =============================== */
-  "java.home": "/usr/lib/jvm/java-1.8.0-openjdk-1.8.0.482.b08-1.el8.x86_64/jre"
+  "java.home": "/usr/lib/jvm/java-17-openjdk-17.0.18.0.8-1.el8.x86_64"
 }

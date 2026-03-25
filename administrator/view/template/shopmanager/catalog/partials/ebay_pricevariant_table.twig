@@ -1,0 +1,101 @@
+{% if ebay_pricevariant is not empty %}
+  {% set condition_marketplace_item_id = conditions[1][condition_id].condition_marketplace_item_id ?? null %}
+  {% set price_check = ebay_info.our_price|default(price_with_shipping|default(0)) %}
+
+  <div class="card border-0 shadow-sm mt-2 mb-2">
+    <div class="card-header py-1 px-2 d-flex align-items-center justify-content-between" style="background:#e9ecef;">
+      <span class="fw-semibold" style="font-size:0.78em; letter-spacing:.03em;">
+        <i class="fa-brands fa-ebay text-primary me-1"></i> eBay Sold Prices
+      </span>
+      {% if upc is defined and upc %}
+        <a href="https://www.ebay.com/sch/i.html?_nkw={{ upc }}&amp;_ipg=100&amp;rt=nc&amp;LH_Sold=1&amp;LH_Complete=1"
+           target="sold" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size:0.72em;">
+          <i class="fa-solid fa-magnifying-glass-dollar me-1"></i>All Sold
+        </a>
+      {% endif %}
+    </div>
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0" style="font-size:0.78em;">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center" style="width:30px;"></th>
+            <th>{{ text_condition_name }}</th>
+            <th class="text-end">{{ text_price }}</th>
+            <th class="text-center">{{ text_url }}</th>
+            {% if upc is defined and upc %}
+              <th class="text-center">Sold</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for key, ebayinfo in ebay_pricevariant %}
+            {% set is_active = (condition_marketplace_item_id is not null and key == condition_marketplace_item_id) %}
+            {% set row_class = '' %}
+            {% set badge_class = 'secondary' %}
+            {% set badge_icon = '' %}
+            {% if is_active %}
+              {% if ebayinfo.price is empty and ebay_info.our_price is defined %}
+                {% set row_class = 'table-success' %}
+                {% set badge_class = 'success' %}
+                {% set badge_icon = 'fa-check' %}
+              {% elseif price_check < ebayinfo.price %}
+                {% set row_class = 'table-warning' %}
+                {% set badge_class = 'warning' %}
+                {% set badge_icon = 'fa-arrow-trend-up' %}
+              {% elseif price_check > ebayinfo.price %}
+                {% set row_class = 'table-danger' %}
+                {% set badge_class = 'danger' %}
+                {% set badge_icon = 'fa-arrow-trend-down' %}
+              {% else %}
+                {% set row_class = 'table-success' %}
+                {% set badge_class = 'success' %}
+                {% set badge_icon = 'fa-equals' %}
+              {% endif %}
+            {% endif %}
+            <tr class="{{ row_class }}">
+              <td class="text-center align-middle">
+                <input type="radio" class="form-check-input save-data-radio radioreadonly"
+                       name="price_ebay[{{ key }}]"
+                       value="{{ ebayinfo.price|default('') }}"
+                       {% if loop.first %}checked{% endif %}>
+              </td>
+              <td class="align-middle">
+                <span class="fw-medium">{{ ebayinfo.condition_name }}</span>
+                {% if is_active %}
+                  <span class="badge bg-{{ badge_class }} ms-1 py-0 px-1" style="font-size:0.7em;">
+                    {% if badge_icon %}<i class="fa-solid {{ badge_icon }}"></i>{% endif %}
+                    {% if ebay_info.our_price is defined %} ${{ ebay_info.our_price }}{% endif %}
+                  </span>
+                {% endif %}
+              </td>
+              <td class="text-end align-middle fw-semibold">
+                {% if ebayinfo.price %}
+                  <span class="text-success">${{ ebayinfo.price }}</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td class="text-center align-middle">
+                {% if ebayinfo.url %}
+                  <a href="{{ ebayinfo.url }}" target="ebay"
+                     class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:0.72em;">
+                    <i class="fa-solid fa-up-right-from-square"></i>
+                  </a>
+                {% endif %}
+              </td>
+              {% if upc is defined and upc %}
+                <td class="text-center align-middle">
+                  <a href="https://www.ebay.com/sch/i.html?_nkw={{ upc }}&amp;_ipg=100&amp;rt=nc&amp;LH_Sold=1&amp;LH_Complete=1&amp;LH_ItemCondition={{ key }}"
+                     target="sold" class="btn btn-outline-primary btn-sm py-0 px-1" style="font-size:0.72em;"
+                     title="{{ text_view_website_sold }}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                  </a>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}

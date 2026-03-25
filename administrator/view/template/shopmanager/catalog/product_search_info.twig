@@ -244,60 +244,7 @@
     <div class="form-group">
         <label class="col-sm-2 control-label" for="input-price"></label>
         <div class="col-sm-5">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover">
-                    <thead>
-                        <tr>
-                            <th style="width: 75px;"></th>
-                            <th><?php echo $text_condition_name; ?>:</th>
-                            <th><?php echo $text_condition_id; ?>:</th>
-                            <th><?php echo $text_price; ?>:</th>
-                            <th><?php echo $text_url; ?>:</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($ebay_pricevariant)) { ?>
-                            <?php foreach ($ebay_pricevariant as $key => $ebayinfo) { ?>
-                                <tr>
-                                    <td>
-                                        <input type="radio" class="save-data-radio radioreadonly" 
-                                            id="condition-marketplace-item-id<?php echo $key; ?>" 
-                                            name="price_ebay[<?php echo $key; ?>]" 
-                                            value="<?php echo !empty($ebayinfo['price']) ? $ebayinfo['price'] : ''; ?>" 
-                                            <?php echo $key === 0 ? 'checked' : ''; ?>>
-                                    </td>
-                                    <td><?php echo $ebayinfo['condition_name']; ?></td>
-                                    <td><?php echo $key; ?></td>
-
-                                    <td>
-                                        <?php if (empty($ebayinfo['price'])) { ?>
-                                            <input type="text" 
-                                                class="price-input" 
-                                                id="price-input-<?php echo $key; ?>" 
-                                                data-key="<?php echo $key; ?>" 
-                                                placeholder="{{ placeholder_price }}" 
-                                                onchange="updatePriceCondition(this)">
-                                        <?php } else { ?>
-                                            <span id="price<?php echo $key; ?>" 
-                                                class="pedit-price" 
-                                                rel="<?php echo $ebayinfo['price']; ?>" 
-                                                rel1="<?php echo $ebayinfo['price']; ?>">
-                                                $<?php echo $ebayinfo['price']; ?>
-                                            </span>
-                                        <?php } ?>
-                                    </td>
-
-                                    <td>
-                                        <a href="<?php echo $ebayinfo['url']; ?>" target="_blank">View Website</a>
-                                    </td>
-                                </tr>
-                            <?php } ?>
-                        <?php } else { ?>
-                            <p><?php echo $text_no_data; ?></p>
-                        <?php } ?>
-                    </tbody>
-                </table>
-            </div>
+            {% include 'administrator/view/template/shopmanager/catalog/partials/ebay_pricevariant_table.twig' %}
         </div>
     </div>
 
