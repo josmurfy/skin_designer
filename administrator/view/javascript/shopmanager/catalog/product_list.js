@@ -1086,10 +1086,57 @@ function confirmQuantity(productId, finalQuantity, unallocatedQuantity) {
 
 
 function handleDelete(productId) {
-    checkProduct(productId);
-    if (confirm(TEXT_CONFIRM_DELETE)) {
-        $('#form-product' + productId).submit();
-    }
+    if (!confirm(TEXT_CONFIRM_DELETE)) return;
+
+    var user_token = document.querySelector('input[name="user_token"]').value;
+    var postData = {};
+    postData['selected[' + productId + ']'] = productId;
+
+    $.ajax({
+        url: 'index.php?route=shopmanager/catalog/product.delete&user_token=' + user_token,
+        type: 'POST',
+        data: postData,
+        dataType: 'json',
+        success: function(json) {
+            if (json.success) {
+                location.reload();
+            } else if (json.error) {
+                alert(json.error);
+            }
+        },
+        error: function() {
+            alert(TEXT_ERROR_UPDATE || 'Error deleting product.');
+        }
+    });
+}
+
+function handleDeleteSelected() {
+    if (!confirm(TEXT_CONFIRM_DELETE)) return;
+
+    var user_token = document.querySelector('input[name="user_token"]').value;
+    var postData = {};
+    document.querySelectorAll("input[name^='selected']:checked").forEach(function(cb) {
+        postData[cb.name] = cb.value;
+    });
+
+    if (Object.keys(postData).length === 0) return;
+
+    $.ajax({
+        url: 'index.php?route=shopmanager/catalog/product.delete&user_token=' + user_token,
+        type: 'POST',
+        data: postData,
+        dataType: 'json',
+        success: function(json) {
+            if (json.success) {
+                location.reload();
+            } else if (json.error) {
+                alert(json.error);
+            }
+        },
+        error: function() {
+            alert(TEXT_ERROR_UPDATE || 'Error deleting product.');
+        }
+    });
 }
 
 function handleEnable(productId) {

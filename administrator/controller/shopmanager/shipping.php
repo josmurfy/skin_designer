@@ -49,7 +49,7 @@ class Shipping extends \Opencart\System\Engine\Controller {
                 $product_info['height']=$data['height'];
                 // Categories
 		  
-                $categories = $this->model_shopmanager_catalog_product->getProductCategories($data['product_id']);
+                $categories = $this->model_shopmanager_catalog_product->getCategories($data['product_id']);
 
                 foreach ($categories as $category_id) {
                     $category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
