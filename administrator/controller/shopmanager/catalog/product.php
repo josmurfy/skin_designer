@@ -81,7 +81,7 @@ class Product extends \Opencart\System\Engine\Controller {
 		if (isset($this->request->get['filter_status'])) {
 			$filter_status = $this->request->get['filter_status'];
 		} else {
-			$filter_status = '';
+			$filter_status = '1';
 		}
 		if (isset($this->request->get['filter_sku'])) {
 			$filter_sku = $this->request->get['filter_sku'];
@@ -449,7 +449,7 @@ class Product extends \Opencart\System\Engine\Controller {
 		if (isset($this->request->get['filter_status'])) {
 			$filter_status = $this->request->get['filter_status'];
 		} else {
-			$filter_status = '';
+			$filter_status = '1';
 		}
 
 		if (isset($this->request->get['filter_sku'])) {
