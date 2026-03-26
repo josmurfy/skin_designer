@@ -317,7 +317,7 @@ async function verifySpecific(row, finish = 'false') {
         ? `What is the most accurate and confirmed value for the eBay aspect "${specificName}" for the product titled "${productName}" in the "${category}" category?${availableOptions}\nUse only information from reliable sources.`
         : `Is "${specificValue}" the correct and confirmed value for the "${specificName}" aspect of the product titled "${productName}" in the "${category}" category?\nDescription: ${description}${availableOptions}\nReply with ONLY 'TRUE' if accurate or 'FALSE' if not. Do not include any explanation.`;
 
-    let system_prompt = "ONLY return the answer without anything, Do not include any additional text or explanations.";
+    let system_prompt = "ONLY return plain text. Do NOT wrap your answer in JSON or any object. Do not include any additional text or explanations.";
     if (specificValueElem.tagName.toLowerCase() === 'select' && specificValueElem.multiple) {
         system_prompt += " If the answer includes multiple details, separate them with a semicolon.";
     } else {
@@ -366,7 +366,13 @@ async function verifySpecific(row, finish = 'false') {
                 .map(item => typeof item === 'object' ? JSON.stringify(item) : String(item))
                 .join(', ');
         } else if (typeof data_response.success === 'object' && data_response.success !== null) {
-            rawMessage = JSON.stringify(data_response.success);
+            // L'IA retourne parfois {"result":"TRUE"} ou {"answer":"TRUE"} peu importe la clé
+            const keys = Object.keys(data_response.success);
+            if (keys.length === 1) {
+                rawMessage = String(data_response.success[keys[0]] || '');
+            } else {
+                rawMessage = JSON.stringify(data_response.success);
+            }
         } else {
             rawMessage = String(data_response.success || '');
         }
