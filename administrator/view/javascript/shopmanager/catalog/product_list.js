@@ -2103,14 +2103,25 @@ function updateRelativeTimes() {
             e.stopImmediatePropagation();
             
             
-            // Extraire product_id de l'URL
+            // Extraire product_id de l'URL (fallback sur data-product-id si absent)
             const urlParams = new URLSearchParams(action.split('?')[1]);
-            const productId = urlParams.get('product_id');
+            let productId = urlParams.get('product_id');
             const userToken = urlParams.get('user_token');
             
             if (!productId) {
-                console.error('❌ No product_id found in action URL');
+                productId = submitter.getAttribute('data-product-id');
+            }
+            
+            if (!productId) {
+                console.error('❌ No product_id found in action URL or data-product-id');
                 return;
+            }
+            
+            // S'assurer que product_id est dans l'URL (nécessaire pour le controller en GET)
+            let fetchAction = action;
+            if (!urlParams.has('product_id') || !urlParams.get('product_id')) {
+                const sep = action.includes('?') ? '&' : '?';
+                fetchAction = action + sep + 'product_id=' + encodeURIComponent(productId);
             }
             
             
@@ -2136,7 +2147,7 @@ function updateRelativeTimes() {
             
             
             // Envoyer la requête AJAX
-            fetch(action, {
+            fetch(fetchAction, {
                 method: 'POST',
                 body: formData,
                 headers: {
