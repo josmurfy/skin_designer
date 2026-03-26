@@ -2102,49 +2102,52 @@ function updateRelativeTimes() {
             e.preventDefault();
             e.stopImmediatePropagation();
             
-            
-            // Extraire product_id de l'URL (fallback sur data-product-id si absent)
+            // Extraire product_id de l'URL ou data-product-id (bouton per-row)
             const urlParams = new URLSearchParams(action.split('?')[1]);
             let productId = urlParams.get('product_id');
-            const userToken = urlParams.get('user_token');
-            
             if (!productId) {
                 productId = submitter.getAttribute('data-product-id');
             }
             
-            if (!productId) {
-                console.error('❌ No product_id found in action URL or data-product-id');
-                return;
-            }
-            
-            // S'assurer que product_id est dans l'URL (nécessaire pour le controller en GET)
-            let fetchAction = action;
-            if (!urlParams.has('product_id') || !urlParams.get('product_id')) {
-                const sep = action.includes('?') ? '&' : '?';
-                fetchAction = action + sep + 'product_id=' + encodeURIComponent(productId);
-            }
-            
-            
-            // Construire les données minimales
             const formData = new FormData();
-            formData.append('product_id', productId);
+            let fetchAction = action;
             
-            // Ajouter made_in_country si présent
-            const madeInField = form.querySelector('[name="made_in_country_id_' + productId + '"]');
-            if (madeInField) {
-                formData.append('made_in_country_id_' + productId, madeInField.value);
+            if (productId) {
+                // --- Mode single (bouton per-row dans product_list.twig) ---
+                // S'assurer que product_id est dans l'URL pour le controller (GET)
+                if (!urlParams.get('product_id')) {
+                    const sep = action.includes('?') ? '&' : '?';
+                    fetchAction = action + sep + 'product_id=' + encodeURIComponent(productId);
+                }
+                formData.append('product_id', productId);
+                
+                // Ajouter made_in_country si présent
+                const madeInField = form.querySelector('[name="made_in_country_id_' + productId + '"]');
+                if (madeInField) {
+                    formData.append('made_in_country_id_' + productId, madeInField.value);
+                }
+                // Ajouter les URLs marketplace si présentes
+                form.querySelectorAll('[name^="url_product_' + productId + '_"]').forEach(function(field) {
+                    formData.append(field.name, field.value);
+                });
+                form.querySelectorAll('[name^="marketplace_name_' + productId + '_"]').forEach(function(field) {
+                    formData.append(field.name, field.value);
+                });
+            } else {
+                // --- Mode bulk (boutons en haut dans product.twig, utilisent les checkboxes selected[]) ---
+                const checkedBoxes = form.querySelectorAll('input[name^="selected["]');
+                let hasSelected = false;
+                checkedBoxes.forEach(function(cb) {
+                    if (cb.checked) {
+                        formData.append('selected[]', cb.value);
+                        hasSelected = true;
+                    }
+                });
+                if (!hasSelected) {
+                    alert(typeof TEXT_UPDATE_MARKETPLACE_NO_SELECTION !== 'undefined' ? TEXT_UPDATE_MARKETPLACE_NO_SELECTION : 'Please select at least one product.');
+                    return;
+                }
             }
-            
-            // Ajouter les URLs marketplace si présentes
-            form.querySelectorAll('[name^="url_product_' + productId + '_"]').forEach(function(field) {
-                formData.append(field.name, field.value);
-            });
-            
-            // Ajouter marketplace names si présents
-            form.querySelectorAll('[name^="marketplace_name_' + productId + '_"]').forEach(function(field) {
-                formData.append(field.name, field.value);
-            });
-            
             
             // Envoyer la requête AJAX
             fetch(fetchAction, {
