@@ -424,6 +424,13 @@
                                 class="btn btn-primary btn-sm">
                           <i class="fa-solid fa-robot"></i><i class="fa-solid fa-question"></i>
                         </button>
+                        <button type="button"
+                                onclick="convertTextToList('product-description-{{ language.language_id }}-{{ specifics_row }}');"
+                                data-bs-toggle="tooltip"
+                                title="Convertir virgules en liste"
+                                class="btn btn-secondary btn-sm">
+                          <i class="fa-solid fa-list"></i>
+                        </button>
                       </div>
                     </div>
 {% set specifics_row = specifics_row + 1 %}
@@ -443,6 +450,13 @@
                                 title="{{ button_ai_accessories }}"
                                 class="btn btn-primary btn-sm">
                           <i class="fa-solid fa-robot"></i><i class="fa-solid fa-question"></i>
+                        </button>
+                        <button type="button"
+                                onclick="convertTextToList('product-description-{{ language.language_id }}-{{ specifics_row }}');"
+                                data-bs-toggle="tooltip"
+                                title="Convertir virgules en liste"
+                                class="btn btn-secondary btn-sm">
+                          <i class="fa-solid fa-list"></i>
                         </button>
                       </div>
                     </div>

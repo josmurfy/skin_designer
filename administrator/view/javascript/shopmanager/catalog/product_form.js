@@ -789,7 +789,11 @@ function updateSpecificsTable(data, specifics_row_received) {
     
     // Met à jour la variable globale après traitement
     window.specifics_row = specifics_row;
-    //generateInfo();
+
+    // Appeler generateInfo après chargement initial des specifics (page load)
+    if (typeof generateInfo === 'function') {
+        generateInfo();
+    }
 
     // Déclencher la synchro COO maintenant que les specifics sont dans le DOM
     if (typeof syncCountryFields === 'function') {
@@ -813,6 +817,24 @@ function getRowID() {
 
 var isGeneratingInfo = false; // Flag pour éviter appels multiples
 var generateInfoTimeout = null; // Timeout pour retarder generateInfo
+
+/**
+ * Convertit le texte du Summernote ciblé : phrases séparées par virgules → <li>
+ */
+function convertTextToList(textareaId) {
+    var $ta = $('#' + textareaId);
+    if (!$ta.length) return;
+    var html = $ta.summernote('code') || '';
+    // Extraire le texte brut
+    var tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    var text = (tempDiv.textContent || tempDiv.innerText || '').trim();
+    if (!text) return;
+    var items = text.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+    if (items.length <= 1) return; // Rien à convertir
+    var formatted = '<ul>' + items.map(function(s) { return '<li>' + s + '</li>'; }).join('') + '</ul>';
+    $ta.summernote('code', formatted);
+}
 
 function generateInfo(){
     if (isGeneratingInfo) {
@@ -1668,10 +1690,26 @@ window.addEventListener('load', function() {
        
         if (element.tagName.toLowerCase() === 'textarea' && element.classList.contains('summernote')) {
             $(element).on('summernote.blur', function() {
+                // Guard contre la ré-entrance (summernote('code','') peut re-déclencher blur)
+                if ($(element).data('sn-cleaning')) return;
                 isFormModified = true;
-                // Appeler generateInfo() UNIQUEMENT pour le champ name (ID se termine par -0)
+                // Nettoyer le contenu si vide (évite <br>, <div><br></div>, <p><br></p>, etc.)
+                var html = $(element).summernote('code');
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html || '';
+                if ((tempDiv.textContent || tempDiv.innerText || '').trim() === '') {
+                    $(element).data('sn-cleaning', true);
+                    $(element).summernote('code', '');
+                    $(element).data('sn-cleaning', false);
+                }
+                // Appeler generateInfo() pour le champ name (-0), condition_supp, included_accessories
                 var elementId = element.id;
-                if (elementId && elementId.match(/product-description-\d+-0$/)) {
+                var elementName = element.name || '';
+                if (
+                    (elementId && elementId.match(/product-description-\d+-0$/)) ||
+                    elementName.match(/product_description\[\d+\]\[condition_supp\]/) ||
+                    elementName.match(/product_description\[\d+\]\[included_accessories\]/)
+                ) {
                     if (typeof generateInfo === 'function') {
                         generateInfo();
                     }
