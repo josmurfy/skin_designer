@@ -4457,7 +4457,13 @@ public function getSearchData() {
 		
 		
 
-        // Obtenir les données de recherche du produit
+        // Supprimer la ligne en DB pour forcer un re-fetch eBay avec les vrais prix USD
+        $upc_to_feed = $product_info['upc'] ?? '';
+        if ($upc_to_feed) {
+            $this->model_shopmanager_catalog_product_search->deleteInfoSources($upc_to_feed);
+        }
+
+        // Obtenir les données de recherche du produit (re-fetch depuis eBay)
         $data['product_search_data'] = $this->model_shopmanager_catalog_product_search->getSearchData(
             $product_info['upc'] ?? '',
             $product_info['product_id']
@@ -4520,7 +4526,7 @@ public function getSearchData() {
 				'name' => $result['name'],
 				'model' => $result['model'],
 				'price' => round($result['price'], 2),
-			'price_auto_set' => $price_auto_set,
+				'price_auto_set' => $price_auto_set,
 				'quantity' => $result['quantity'],
 				'unallocated_quantity' => $result['unallocated_quantity'],
 				'location' => $result['location'],  
@@ -4549,7 +4555,27 @@ public function getSearchData() {
 	}
 
 	protected function getEbayPricevariantTable(array $data): string {
-		return $this->load->view('shopmanager/catalog/partials/ebay_pricevariant_table', $data);
+		if (!empty($data['ebay_pricevariant']) && is_array($data['ebay_pricevariant'])) {
+			$data['ebay_pricevariant'] = $this->convertEbayPricesUsdToCad($data['ebay_pricevariant']);
+		}
+		return $this->load->view('shopmanager/catalog/product_search_price_variant', $data);
+	}
+
+	/**
+	 * Get fresh USD→CAD rate from live API (open.er-api.com, free, no key).
+	 * Falls back to OC DB rate if API unreachable.
+	 * Rate is cached per request in a static var.
+	 */
+	private function convertEbayPricesUsdToCad(array $ebay_pricevariant): array {
+		foreach ($ebay_pricevariant as $key => $variant) {
+			if (!empty($variant['price']) && is_numeric($variant['price'])) {
+				$currency = !empty($variant['currency']) ? strtoupper((string)$variant['currency']) : 'USD';
+				$ebay_pricevariant[$key]['price_cad'] = round((float)$this->currency->convert((float)$variant['price'], $currency, 'CAD'), 2);
+			} else {
+				$ebay_pricevariant[$key]['price_cad'] = null;
+			}
+		}
+		return $ebay_pricevariant;
 	}
 
 	public function ebayPricevariantTable(): string {
@@ -4602,6 +4628,10 @@ public function getSearchData() {
 		$data['text_url']               = $lang['text_url']               ?? '';
 		$data['text_view_website_sold'] = $lang['text_view_website_sold'] ?? '';
 
-		return $this->load->view('shopmanager/catalog/partials/ebay_pricevariant_table', $data);
+		if (!empty($data['ebay_pricevariant']) && is_array($data['ebay_pricevariant'])) {
+			$data['ebay_pricevariant'] = $this->convertEbayPricesUsdToCad($data['ebay_pricevariant']);
+		}
+
+		return $this->load->view('shopmanager/catalog/product_search_price_variant', $data);
 	}
 }

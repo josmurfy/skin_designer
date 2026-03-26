@@ -6258,31 +6258,23 @@ if(!isset($item['conditionId'])){
 }
    
     if ($condition_id === 'none') {
-        $this->load->model('localisation/currency');
-        $currency_info = $this->model_localisation_currency->getCurrencyByCode($item['price']['currency']);
-        
-        $value = $currency_info['value'];
-        
         // Utiliser le prix actuel (déjà réduit si marketingPrice existe)
-        $priceValue = $item['price']['value'];
-        
-        // Calcul du total en tenant compte du taux de conversion
-        $totalPrice = ($priceValue * $value) + 
-                      (isset($item['shippingOptions']['shippingCost']['value']) 
-                          ? ($item['shippingOptions']['shippingCost']['value'] * $value) 
-                          : 0);
-       // $originalRetailPrice_with_shipping = isset($item['discountPriceInfo']['originalRetailPrice']) ? $item['discountPriceInfo']['originalRetailPrice'] + (isset($item['shippingInfo']['shippingServiceCost']) ? $item['shippingInfo']['shippingServiceCost'] : 0) : 0;
-       
-       /* $totalPrice = $item['sellingStatus']['convertedCurrentPrice'] + 
-                      (isset($item['shippingInfo']['shippingServiceCost']) ? $item['shippingInfo']['shippingServiceCost'] : 0);*/
+        $priceValue = (float)$item['price']['value'];
+        $shippingCost = isset($item['shippingOptions']['shippingCost']['value'])
+            ? (float)$item['shippingOptions']['shippingCost']['value']
+            : 0;
 
-        if ($totalPrice >= 5.64) {
+        // Store raw price in the item's original currency (USD from eBay Browse API)
+        $totalPrice = $priceValue + $shippingCost;
+
+        if ($totalPrice >= 1.00) {
             $pricevariant[] = [
                 'price' => number_format($totalPrice, 2, '.', ''),
+                'currency' => $item['price']['currency'] ?? 'USD',
                 'marketplace_item_id' => $item['itemId'],
                 'title' => $item['title'],
                 'url' => "https://www.ebay.com/itm/" . $item['itemId'],
-                'condition_name' => $item['condition'] ??''
+                'condition_name' => $item['condition'] ?? ''
             ];
         }
 
@@ -6297,24 +6289,22 @@ if(!isset($item['conditionId'])){
     // Sinon, logique existante pour trouver le plus petit prix
     if (isset($pricevariant[$condition_id]) && isset($item['price']['currency'])) {
         $condition_name = $item['condition'] ?? $item['condition_name'];
-       
-        $this->load->model('localisation/currency');
-        $currency_info = $this->model_localisation_currency->getCurrencyByCode($item['price']['currency']);
 
-        $value = $currency_info['value'];
-        
         // Utiliser le prix actuel (déjà réduit si marketingPrice existe)
-        $priceValue = $item['price']['value'];
+        $priceValue = (float)$item['price']['value'];
       
         // Récupérer le coût d'expédition (0 si non disponible)
         $shippingCost = isset($item['shippingOptions'][0]['shippingCost']['value']) 
-            ? $item['shippingOptions'][0]['shippingCost']['value'] 
+            ? (float)$item['shippingOptions'][0]['shippingCost']['value'] 
             : 0;
-        
-        $totalPrice = ($priceValue * $value) + ($shippingCost * $value);
 
-        if ($pricevariant[$condition_id]['price'] > $totalPrice && $totalPrice >= 5.64) {
+        // Store raw price in the item's original currency (USD from eBay Browse API)
+        // Do NOT multiply by OC currency value here — conversion to CAD happens at display time via currency->convert()
+        $totalPrice = $priceValue + $shippingCost;
+
+        if ($pricevariant[$condition_id]['price'] > $totalPrice && $totalPrice >= 1.00) {
             $pricevariant[$condition_id]['price'] = number_format($totalPrice, 2, '.', '');
+            $pricevariant[$condition_id]['currency'] = $item['price']['currency'] ?? 'USD';
             $pricevariant[$condition_id]['marketplace_item_id'] = $item['itemId'] ?? '';
             $pricevariant[$condition_id]['title'] = $item['title'] ?? '';
             $pricevariant[$condition_id]['url'] = isset($item['itemId']) ? "https://www.ebay.com/itm/" . $item['itemId'] : '';

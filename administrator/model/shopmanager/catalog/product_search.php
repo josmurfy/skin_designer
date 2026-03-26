@@ -2101,6 +2101,18 @@ public function editInfoSources($data) {
     ");
 }
 
+public function deleteInfoSources(string $upc): void {
+    // Supprime la ligne pour forcer un re-fetch complet depuis eBay au prochain manageInfoSources()
+    $this->db->query("DELETE FROM `" . DB_PREFIX . "product_info_sources` WHERE upc = '" . $this->db->escape($upc) . "'");
+    // Invalider le cache static pour cette clé
+    if (isset(self::$cache_info_sources[$upc])) {
+        unset(self::$cache_info_sources[$upc]);
+    }
+    if (isset(self::$cache_search_data[$upc])) {
+        unset(self::$cache_search_data[$upc]);
+    }
+}
+
 public function getInfoSourcesPrice($upc = null, $product_id = null){
     $this->load->model('shopmanager/ebay');
 	$this->load->model('shopmanager/ai');
