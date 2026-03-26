@@ -3,50 +3,65 @@
 // ============================================
 
 // ============================================
-// API REQUEST QUEUE (PREVENT CONCURRENT REQUESTS)
+// API REQUEST QUEUE (3 CONCURRENT, RETRY ON 429)
 // ============================================
 const apiQueue = {
     queue: [],
     running: 0,
-    maxConcurrent: 1, // Limit to 1 concurrent request to avoid 429 errors
-    minDelay: 5000, // Minimum 5 seconds between requests (reduce token usage rate)
+    maxConcurrent: 3,  // 3 requêtes en parallèle
+    minDelay: 800,     // 800ms entre chaque démarrage
     lastRequestTime: 0,
-    
+
     async add(requestFunc) {
         return new Promise((resolve, reject) => {
             this.queue.push({ requestFunc, resolve, reject });
             this.processNext();
         });
     },
-    
+
     async processNext() {
-        if (this.running >= this.maxConcurrent || this.queue.length === 0) {
-            return;
-        }
-        
-        // Calculate time to wait before next request
+        if (this.running >= this.maxConcurrent || this.queue.length === 0) return;
+
         const now = Date.now();
-        const timeSinceLastRequest = now - this.lastRequestTime;
-        const waitTime = Math.max(0, this.minDelay - timeSinceLastRequest);
-        
+        const waitTime = Math.max(0, this.minDelay - (now - this.lastRequestTime));
         if (waitTime > 0) {
-            // Wait before processing next request
             setTimeout(() => this.processNext(), waitTime);
             return;
         }
-        
+
         this.running++;
         this.lastRequestTime = Date.now();
         const { requestFunc, resolve, reject } = this.queue.shift();
-        
+
+        // Lance le prochain slot immédiatement (parallélisme)
+        setTimeout(() => this.processNext(), this.minDelay);
+
         try {
-            const result = await requestFunc();
+            const result = await this._withRetry(requestFunc);
             resolve(result);
         } catch (error) {
             reject(error);
         } finally {
             this.running--;
             this.processNext();
+        }
+    },
+
+    // Retry automatique sur 429 avec backoff exponentiel
+    async _withRetry(requestFunc, maxRetries = 3) {
+        let delay = 2000;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const result = await requestFunc();
+            // Si c'est une Response HTTP, vérifier le statut 429
+            if (result && typeof result.status === 'number' && result.status === 429) {
+                if (attempt < maxRetries) {
+                    appendLoadingMessage(`[ATTENTE] Limite OpenAI atteinte, retry dans ${delay/1000}s...`, 'warning');
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                    continue;
+                }
+            }
+            return result;
         }
     }
 };
@@ -221,23 +236,25 @@ function getProductSpecificMARDE(aspectName, callback) {
 
 async function verifyAllSpecifics() {
     showLoadingPopup('Vérification des aspects avec l\'IA en cours...');
-    
-    var rows = document.querySelectorAll('[id^="specifics-1-"]');
-    
-    // Use for...of with await to process sequentially (prevent 429 errors)
-    for (const row of rows) {
-        // Extraire l'ID de la ligne en supprimant le préfixe "specifics1-row"
-        var rowId = row.id.replace('specifics-1-', '');
 
-        // Sélectionner l'élément VerifiedSource correspondant
-        var verifiedSourceElement = document.getElementById(`verified-source-1-${rowId}`);
+    const rows = Array.from(document.querySelectorAll('[id^="specifics-1-"]'));
 
-        // Si l'élément existe et que sa valeur n'est pas "yes", appeler la fonction verifySpecific
-        if (verifiedSourceElement && verifiedSourceElement.value.toLowerCase() !== 'yes') {
-            await verifySpecific(rowId, 'false');
-        }
+    // Filtrer seulement les lignes non encore vérifiées
+    const toVerify = rows.filter(row => {
+        const rowId = row.id.replace('specifics-1-', '');
+        const verifiedSourceElement = document.getElementById(`verified-source-1-${rowId}`);
+        return verifiedSourceElement && verifiedSourceElement.value.toLowerCase() !== 'yes';
+    }).map(row => row.id.replace('specifics-1-', ''));
+
+    appendLoadingMessage(`[INFO] ${toVerify.length} aspect(s) à vérifier (3 en parallèle)`, 'info');
+
+    // Traiter par batches de 3 en parallèle
+    const batchSize = 3;
+    for (let i = 0; i < toVerify.length; i += batchSize) {
+        const batch = toVerify.slice(i, i + batchSize);
+        await Promise.allSettled(batch.map(rowId => verifySpecific(rowId, 'false')));
     }
-    
+
     finishLoadingPopup();
 }
 async function verifySpecific(row, finish = 'false') {
@@ -340,20 +357,41 @@ async function verifySpecific(row, finish = 'false') {
 
     appendLoadingMessage(`[IA] Vérification de '${specificName}'...`, 'info');
 
-    try {
-        // Use apiQueue to serialize requests and prevent 429 errors
-        const response = await apiQueue.add(async () => {
-            return await fetch('index.php?route=shopmanager/ai.prompt_ai&user_token=' + user_token, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+    // Retry loop pour absorber les 429 rate-limit d'OpenAI
+    let data_response = null;
+    let retryDelay = 3000;
+    const maxRetries = 3;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await apiQueue.add(async () => {
+                return await fetch('index.php?route=shopmanager/ai.prompt_ai&user_token=' + user_token, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
             });
-        });
-        
-        const text = await response.text();
-        const data_response = JSON.parse(text);
-        
-        if (data_response.error) {
+            const text = await response.text();
+            data_response = JSON.parse(text);
+        } catch (e) {
+            appendLoadingMessage(`[ERREUR RÉSEAU] ${e.message}`, 'danger', true);
+            if (finish === 'true') { finishLoadingPopup(); }
+            return JSON.stringify({ success: false, error: e.message, row });
+        }
+
+        // Si erreur 429 / rate_limit → on attend puis on retry
+        const errStr = (data_response.error || '').toLowerCase();
+        if (errStr.includes('429') || errStr.includes('rate_limit') || errStr.includes('rate limit')) {
+            if (attempt < maxRetries) {
+                appendLoadingMessage(`[ATTENTE] Rate limit OpenAI, retry dans ${retryDelay/1000}s... (${attempt+1}/${maxRetries})`, 'warning');
+                await new Promise(r => setTimeout(r, retryDelay));
+                retryDelay *= 2;
+                continue;
+            }
+        }
+        break; // Pas de 429, on sort de la boucle
+    }
+
+    if (data_response.error) {
             appendLoadingMessage(`[ERREUR] ${data_response.error}`, 'danger', true);
             if( finish === 'true') { finishLoadingPopup(); }
             return JSON.stringify({ success: false, error: data_response.error, row });
@@ -436,12 +474,6 @@ async function verifySpecific(row, finish = 'false') {
             if( finish === 'true') { finishLoadingPopup(); }
             return JSON.stringify({ success: false, message: rawMessage, row });
         }
-    } catch (e) {
-        const fullError = e && e.stack ? `${e.message}\n${e.stack}` : e.message || 'Unknown error';
-        appendLoadingMessage(`[ERREUR] ${fullError}`, 'danger', true);
-        if( finish === 'true') { finishLoadingPopup(); }
-        return JSON.stringify({ success: false, error: fullError, row });
-    }
 }
 function verifySpecificOLD(row, finish = 'false') {
     showLoadingPopup('Vérification des aspects avec l’IA en cours...');
