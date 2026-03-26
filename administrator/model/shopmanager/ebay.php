@@ -924,11 +924,7 @@ public function calculateMissingPrices($ebay_pricevariant) {
     $last_valid_price = null;
     foreach ($keys as $key) {
         $price = isset($ebay_pricevariant[$key]['price']) ? floatval($ebay_pricevariant[$key]['price']) : null;
-
-        if ($price === null || $price === 0.0) {
-            continue;
-        }
-
+        if ($price === null || $price === 0.0) continue;
         if ($last_valid_price === null) {
             $last_valid_price = $price;
         } elseif ($price <= $last_valid_price) {
@@ -944,47 +940,64 @@ public function calculateMissingPrices($ebay_pricevariant) {
         }
     }
 
-    // Étape 2: trouver le point de départ en partant du bas
-    $reversed_keys = array_reverse($keys);
-    $base_index = null;
-    $base_price = null;
-
-    foreach ($reversed_keys as $index) {
-        if (!empty($ebay_pricevariant[$index]['price'])) {
-            $base_index = $index;
-            $base_price = floatval($ebay_pricevariant[$index]['price']);
-            break;
+    // Étape 2: Collecter les positions des anchors (vrais prix connus)
+    $anchor_positions = [];
+    foreach ($keys as $pos => $key) {
+        if (!empty($ebay_pricevariant[$key]['price'])) {
+            $anchor_positions[] = $pos;
         }
     }
 
-    if ($base_index === null) {
-        //print("<pre>Aucun prix valide trouvé. Rien à faire.</pre>");
+    if (empty($anchor_positions)) {
         return $ebay_pricevariant;
     }
 
-    //print("<pre>🟢 Base trouvée : $base_index = $base_price</pre>");
+    // Étape 3: Interpoler linéairement entre chaque paire d'anchors consécutifs
+    // Ex: Brand New=$16 et Very Good=$12.99 → Like New/Excellent interpolés entre les deux
+    for ($a = 0; $a < count($anchor_positions) - 1; $a++) {
+        $left_pos   = $anchor_positions[$a];
+        $right_pos  = $anchor_positions[$a + 1];
+        $left_price  = floatval($ebay_pricevariant[$keys[$left_pos]]['price']);
+        $right_price = floatval($ebay_pricevariant[$keys[$right_pos]]['price']);
+        $left_currency = $ebay_pricevariant[$keys[$left_pos]]['currency'] ?? 'USD';
+        $steps = $right_pos - $left_pos;
 
-    // Étape 3: Remonter (plus neuf) avec augmentation
-    $current_price = $base_price;
-    for ($i = array_search($base_index, $keys) - 1; $i >= 0; $i--) {
-        $key = $keys[$i];
-        if (empty($ebay_pricevariant[$key]['price'])) {
-            $current_price /= $last_reduction_factor;
-            $ebay_pricevariant[$key]['price'] = round($current_price, 2);
-            $ebay_pricevariant[$key]['is_calculated'] = true; // Prix estimé
-            //print("<pre>↑ Calcul prix pour [$key] : {$ebay_pricevariant[$key]['price']}</pre>");
+        for ($i = $left_pos + 1; $i < $right_pos; $i++) {
+            $key = $keys[$i];
+            if (empty($ebay_pricevariant[$key]['price'])) {
+                $t = ($i - $left_pos) / $steps;
+                $ebay_pricevariant[$key]['price']         = round($left_price + ($right_price - $left_price) * $t, 2);
+                $ebay_pricevariant[$key]['currency']      = $left_currency;
+                $ebay_pricevariant[$key]['is_calculated'] = true;
+            }
         }
     }
 
-    // Étape 4: Descendre (plus usé) avec réduction
-    $current_price = $base_price;
-    for ($i = array_search($base_index, $keys) + 1; $i < count($keys); $i++) {
+    // Étape 4: Extrapoler vers le haut (plus neuf que le premier anchor connu)
+    $first_pos     = $anchor_positions[0];
+    $current_price = floatval($ebay_pricevariant[$keys[$first_pos]]['price']);
+    $first_currency = $ebay_pricevariant[$keys[$first_pos]]['currency'] ?? 'USD';
+    for ($i = $first_pos - 1; $i >= 0; $i--) {
+        $key = $keys[$i];
+        if (empty($ebay_pricevariant[$key]['price'])) {
+            $current_price /= $last_reduction_factor;
+            $ebay_pricevariant[$key]['price']         = round($current_price, 2);
+            $ebay_pricevariant[$key]['currency']      = $first_currency;
+            $ebay_pricevariant[$key]['is_calculated'] = true;
+        }
+    }
+
+    // Étape 5: Extrapoler vers le bas (plus usé que le dernier anchor connu)
+    $last_pos      = $anchor_positions[count($anchor_positions) - 1];
+    $current_price = floatval($ebay_pricevariant[$keys[$last_pos]]['price']);
+    $last_currency = $ebay_pricevariant[$keys[$last_pos]]['currency'] ?? 'USD';
+    for ($i = $last_pos + 1; $i < count($keys); $i++) {
         $key = $keys[$i];
         if (empty($ebay_pricevariant[$key]['price'])) {
             $current_price *= $last_reduction_factor;
-            $ebay_pricevariant[$key]['price'] = round($current_price, 2);
-            $ebay_pricevariant[$key]['is_calculated'] = true; // Prix estimé
-            //print("<pre>↓ Calcul prix pour [$key] : {$ebay_pricevariant[$key]['price']}</pre>");
+            $ebay_pricevariant[$key]['price']         = round($current_price, 2);
+            $ebay_pricevariant[$key]['currency']      = $last_currency;
+            $ebay_pricevariant[$key]['is_calculated'] = true;
         }
     }
 
@@ -2298,12 +2311,13 @@ public function get($gtin = null, $keyword = null, $sold = null, $order = null, 
         $queryParams['q'] = implode(' ', $keywords);
     }
     if (isset($gtin)) {
-        if($limit==1){
+        // limit=1 → gtin= pour match exact (usage spécifique)
+        // sinon → q= car gtin= retourne beaucoup moins de résultats (les listings non tagués GTIN sont exclus)
+        if ($limit == 1) {
             $queryParams['gtin'] = $gtin;
-        }else{
+        } else {
             $queryParams['q'] = $gtin;
         }
-        
     }
     $queryParams['limit'] = 50; // Max 50 par page selon eBay API
     $queryParams['offset'] = 0;
@@ -2312,12 +2326,15 @@ public function get($gtin = null, $keyword = null, $sold = null, $order = null, 
     $connectionapi = $this->getApiCredentials($marketplace_account_id);
     $bearerToken = $connectionapi['bearer_token'];
 
-    // Préparer les headers
+    // Préparer les headers — EBAY_CA uniquement pour les recherches UPC/EAN (gtin numérique)
     $headers = [
         "Authorization: Bearer " . $bearerToken,
         "Content-Type: application/json",
-        "Accept: application/json"
+        "Accept: application/json",
     ];
+    if (isset($gtin) && is_numeric($gtin)) {
+        $headers[] = "X-EBAY-C-MARKETPLACE-ID: EBAY_CA";
+    }
 
     // Récupérer TOUS les items par pagination
     $allItemSummaries = [];

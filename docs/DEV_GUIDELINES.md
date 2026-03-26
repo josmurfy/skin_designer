@@ -59,6 +59,13 @@ Exemples:
 
 3. Appliquer TOUTES les règles de ces fichiers
 4. **RÈGLE ABSOLUE: BACKUP OBLIGATOIRE AVANT TOUTE MODIFICATION**
+5. **RÈGLE ABSOLUE #2 — NE JAMAIS SUPPRIMER DU CODE EXISTANT SANS ORDRE EXPLICITE**
+   - ❌ INTERDIT: Supprimer une fonction, un bloc, un listener, un badge, un appel sous prétexte de "simplifier" ou "nettoyer"
+   - ❌ INTERDIT: Remplacer une fonction par une version "simplifiée" qui enlève des comportements existants
+   - ✅ AUTORISÉ: Modifier/étendre du code existant en conservant tous les comportements déjà implémentés
+   - ✅ AUTORISÉ: Supprimer UNIQUEMENT si l'utilisateur dit explicitement "enlève X" ou "supprime X"
+   - **Si tu dois réécrire une fonction** → vérifier ligne par ligne ce qui existait et tout conserver
+   - **Raison:** L'IA ne connaît pas toutes les interactions — supprimer du code "inutilisé" casse des features silencieusement
 5. **STYLE STAR WARS:** Utiliser vocabulaire/références Star Wars quand approprié pour rendre la session plus agréable:
    - "Que la Force soit avec ton code!"
    - "Ton backup créé, Padawan!"

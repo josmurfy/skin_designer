@@ -2,6 +2,18 @@
 
 > **eCommerce liquidation platform built on OpenCart 4.x with custom ShopManager module for eBay integration & AI-powered automation**
 
+## 🚨 RÈGLES ABSOLUES — VIOLATIONS INTERDITES
+
+1. **NE JAMAIS SUPPRIMER DU CODE EXISTANT** sans ordre explicite de l'utilisateur.
+   - Réécrire une fonction = conserver TOUS les comportements existants, ligne par ligne
+   - "Simplifier" ou "nettoyer" ne justifie JAMAIS la suppression d'un bloc fonctionnel
+   - Seul `"enlève X"` ou `"supprime X"` autorise une suppression
+   - Raison : l'IA ignore les interactions indirectes — supprimer du code "inutilisé" casse des features silencieusement
+
+2. **BACKUP via Git** — `git checkout --` pour restaurer, jamais de `.backup` manuellement
+
+---
+
 ## Project Architecture
 
 ### Core Framework: OpenCart 4.x (MVC-L Pattern)

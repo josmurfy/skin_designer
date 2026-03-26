@@ -1283,43 +1283,37 @@ function updateShippingCost() {
     }
 }
 
-// Fonction pour mettre à jour le prix de base en fonction du prix avec expédition
+// Simulateur de rabais — n'affecte AUCUN champ, pas d'AJAX.
+// Appelée aussi quand price_with_shipping change → affiche le price implicite.
 function updatePrice() {
-    var marketplaceItemInputs = document.querySelectorAll('[id^="marketplace-items-"]');
+    var price            = parseFloat((document.getElementById('input-price') || {}).value) || 0;
+    var shippingCost     = parseFloat((document.getElementById('input-shipping-cost') || {}).value) || 0;
+    var priceWithShip    = parseFloat((document.getElementById('input-price-with-shipping') || {}).value) || 0;
+    var discPct          = parseFloat((document.getElementById('input-discount') || {}).value) || 0;
 
-    var priceWithShippingInput = document.getElementById('input-price-with-shipping');
-    var shippingCostInput = document.getElementById('input-shipping-cost');
-    var discountInput = document.getElementById('input-discount');
-
-    var priceWithShipping = parseFloat(priceWithShippingInput.value) || 0;
-    var shippingCost = parseFloat(shippingCostInput.value) || 0;
-
-    var computedPrice = (priceWithShipping - shippingCost).toFixed(2);
-
-    if (discountInput && discountInput.value > 0) {
-        var discount = parseFloat(1 - (discountInput.value / 100)) || 0;
-        computedPrice = (parseFloat(computedPrice) / discount).toFixed(2);
-        updatePriceWithShipping();
+    // Badge discount : price × (1 - disc%) + shipping
+    var badge = document.getElementById('discount-simulated-display');
+    if (badge) {
+        if (discPct > 0) {
+            var simTotal = (price * (1 - discPct / 100) + shippingCost).toFixed(2);
+            badge.textContent = '→ CA$' + simTotal;
+            badge.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+        }
     }
 
-    // Afficher le prix calculé à côté du champ — ne jamais écrire dans input-price
+    // Badge price-computed : price implicite depuis price_with_shipping - shipping
+    var computedPrice = (priceWithShip - shippingCost).toFixed(2);
     var priceDisplay = document.getElementById('price-computed-display');
     if (priceDisplay) {
-        priceDisplay.textContent = '→ $' + computedPrice;
-        priceDisplay.style.display = 'inline-block';
-    }
-
-    marketplaceItemInputs.forEach(function(input) {
-        var encodedJson = input.value.trim();
-        var decodedJson = decodeHtmlEntities(encodedJson);
-        var jsonObject = JSON.parse(decodedJson);
-        var marketplace_item_id = jsonObject.marketplace_item_id;
-        if (marketplace_item_id) {
-            editEbayPrice(marketplace_item_id, computedPrice);
+        if (computedPrice !== price.toFixed(2) && priceWithShip > 0) {
+            priceDisplay.textContent = '→ $' + computedPrice;
+            priceDisplay.style.display = 'inline-block';
         } else {
-            console.warn('Valeur non valide pour marketplace_item_id:', marketplace_item_id);
+            priceDisplay.style.display = 'none';
         }
-    });
+    }
 }
 
 

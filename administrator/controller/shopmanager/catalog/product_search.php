@@ -4578,10 +4578,26 @@ public function getSearchData() {
 		return $ebay_pricevariant;
 	}
 
+	/**
+	 * Pour load->controller() dans product.php — retourne le HTML pour rendu inline.
+	 */
 	public function ebayPricevariantTable(): string {
+		return $this->buildEbayPricevariantTable();
+	}
+
+	/**
+	 * Route HTTP/AJAX — void pour OC4, utilisée par le champ discount (simulateur).
+	 */
+	public function ebayPricevariantTableAjax(): void {
+		$this->response->setOutput($this->buildEbayPricevariantTable());
+	}
+
+	/**
+	 * Logique partagée — retourne le HTML du tableau pricevariant.
+	 */
+	protected function buildEbayPricevariantTable(): string {
 		$this->load->model('shopmanager/catalog/product_search');
 		$this->load->model('shopmanager/catalog/product');
-		$this->load->model('shopmanager/condition');
 		$lang = $this->load->language('shopmanager/catalog/product_search');
 
 		$product_id = (int)($this->request->get['product_id'] ?? ($this->request->post['product_id'] ?? 0));
@@ -4591,37 +4607,56 @@ public function getSearchData() {
 			return '';
 		}
 
-		// Resolve upc from product if not in request — manageInfoSources only calculates
-		// ebay_pricevariant properly in the $upc branch (calculateMissingPrices)
-		if (!$upc && $product_id) {
-			$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+		// Charger product_info en une seule fois
+		$product_info = $product_id ? $this->model_shopmanager_catalog_product->getProduct($product_id) : [];
+		if (!$upc) {
 			$upc = $product_info['upc'] ?? null;
 		}
 
+		$data['upc']                 = $upc ?? ($product_info['upc'] ?? null);
+		$data['condition_id']        = $product_info['condition_id'] ?? null;
+		$data['price']               = round((float)($product_info['price'] ?? 0), 2);
+		$data['shipping_cost']       = round((float)($product_info['shipping_cost'] ?? 0), 2);
+
+		// Si un price_with_shipping simulé (depuis le champ discount) est passé, on l'utilise pour la comparaison
+		$simulated = $this->request->get['simulated_price_with_shipping'] ?? null;
+		$data['price_with_shipping'] = $simulated !== null
+			? round((float)$simulated, 2)
+			: round((float)($product_info['price_with_shipping'] ?? 0), 2);
+
+		$category_id                 = $product_info['category_id'] ?? null;
+		$site_id                     = (int)($product_info['site_id'] ?? 0);
+
+		// Récupérer le vrai itemId eBay de notre listing (pas le code condition eBay)
+		$own_marketplace_item_id = $product_id
+			? $this->model_shopmanager_catalog_product_search->getProductMarketplaceItemId($product_id)
+			: null;
+
 		if ($upc && is_numeric($upc)) {
-			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources($upc);
+			// Si le pricevariant en cache contient notre propre listing, on invalide pour forcer un re-fetch propre
+			if ($own_marketplace_item_id) {
+				$cached_raw = $this->model_shopmanager_catalog_product_search->getInfoSources($upc);
+				$cached_pv  = isset($cached_raw['ebay_pricevariant']) ? json_decode($cached_raw['ebay_pricevariant'], true) : [];
+				$contaminated = false;
+				foreach ((array)$cached_pv as $variant) {
+					if (($variant['marketplace_item_id'] ?? '') == $own_marketplace_item_id) {
+						$contaminated = true;
+						break;
+					}
+				}
+				if ($contaminated) {
+					$this->model_shopmanager_catalog_product_search->deleteInfoSources($upc);
+				}
+			}
+			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources($upc, null, null, $own_marketplace_item_id);
 		} else {
 			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources(null, null, $product_id);
 		}
 
-		$data = [];
-		$data['ebay_pricevariant'] = isset($product_info_source['ebay_pricevariant'])
-			? json_decode($product_info_source['ebay_pricevariant'], true)
-			: null;
-		$data['ebay_info'] = isset($product_info_source['ebay_search'])
-			? json_decode($product_info_source['ebay_search'], true)
-			: null;
-
-		$product_info         = $product_id ? $this->model_shopmanager_catalog_product->getProduct($product_id) : [];
-		$data['upc']          = $upc ?? ($product_info['upc'] ?? null);
-		$data['condition_id'] = $product_info['condition_id'] ?? null;
-
-		$category_id = $product_info['category_id'] ?? null;
-		$site_id     = (int)($product_info['site_id'] ?? 0);
-
-		if ($data['condition_id'] && $category_id) {
-			$data['conditions'] = $this->model_shopmanager_condition->getConditionDetails($category_id, $data['condition_id'], null, $site_id);
-		}
+		$data = array_merge($data, [
+			'ebay_pricevariant' => isset($product_info_source['ebay_pricevariant']) ? json_decode($product_info_source['ebay_pricevariant'], true) : null,
+			'ebay_info'         => isset($product_info_source['ebay_search'])       ? json_decode($product_info_source['ebay_search'], true)       : null,
+		]);
 
 		$data['text_condition_name']    = $lang['text_condition_name']    ?? '';
 		$data['text_price']             = $lang['text_price']             ?? '';
@@ -4629,6 +4664,17 @@ public function getSearchData() {
 		$data['text_view_website_sold'] = $lang['text_view_website_sold'] ?? '';
 
 		if (!empty($data['ebay_pricevariant']) && is_array($data['ebay_pricevariant'])) {
+			// Retirer notre propre listing du tableau — il ne doit pas servir de référence de prix
+			if ($own_marketplace_item_id) {
+				foreach ($data['ebay_pricevariant'] as $key => $variant) {
+					if (($variant['marketplace_item_id'] ?? '') == $own_marketplace_item_id) {
+						$data['ebay_pricevariant'][$key]['price']               = null;
+						$data['ebay_pricevariant'][$key]['marketplace_item_id'] = '';
+						$data['ebay_pricevariant'][$key]['url']                 = '';
+						$data['ebay_pricevariant'][$key]['is_calculated']       = true;
+					}
+				}
+			}
 			$data['ebay_pricevariant'] = $this->convertEbayPricesUsdToCad($data['ebay_pricevariant']);
 		}
 

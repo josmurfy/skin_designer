@@ -253,9 +253,10 @@
                       <div class="col-sm-3">
                         <label class="form-label small text-muted">{{ entry_rabate }} (%)</label>
                         <input type="text" name="discount" value="0" id="input-discount" class="form-control" onchange="updatePrice();">
+                        <span id="discount-simulated-display" class="badge bg-warning text-dark mt-1" style="display:none;font-size:0.85em;"></span>
                       </div>
                     </div>
-                    {{ ebay_pricevariant_table }}
+                    <div id="ebay-pricevariant-container">{{ ebay_pricevariant_table }}</div>
                   </fieldset>
   {# Quantity + Location + Unallocated #}
                   <div class="row g-2 mb-2">

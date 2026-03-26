@@ -2113,7 +2113,24 @@ public function deleteInfoSources(string $upc): void {
     }
 }
 
-public function getInfoSourcesPrice($upc = null, $product_id = null){
+/**
+ * Retourne l'itemId eBay actif (marketplace_item_id) d'un product_id.
+ * Utilisé pour exclure notre propre listing du tableau de comparaison de prix.
+ */
+public function getProductMarketplaceItemId(int $product_id): ?string {
+    if (!$product_id) return null;
+    $query = $this->db->query(
+        "SELECT marketplace_item_id FROM `" . DB_PREFIX . "product_marketplace`
+         WHERE product_id = '" . $product_id . "'
+           AND marketplace_item_id IS NOT NULL
+           AND marketplace_item_id != ''
+         LIMIT 1"
+    );
+    $val = $query->num_rows ? ($query->row['marketplace_item_id'] ?? null) : null;
+    return ($val && $val !== '0') ? (string)$val : null;
+}
+
+public function getInfoSourcesPrice($upc = null, $product_id = null, $marketplace_item_id = null){
     $this->load->model('shopmanager/ebay');
 	$this->load->model('shopmanager/ai');
 	$this->load->model('shopmanager/algopix');
@@ -2134,7 +2151,7 @@ public function getInfoSourcesPrice($upc = null, $product_id = null){
             
             // Vérifier si les données doivent être rafraîchies
             if (($current_time - $date_modified) > $threshold || $product_info['ebay_search'] == null) {
-                $product_info = $this->getInfoFromSources($upc);
+                $product_info = $this->getInfoFromSources($upc, $marketplace_item_id);
                 if ($product_info) {
                     $this->editInfoSources($product_info);
                 } else {
@@ -2145,7 +2162,7 @@ public function getInfoSourcesPrice($upc = null, $product_id = null){
                 return $product_info;
             }
         }else{
-           $product_info = $this->getInfoFromSources($upc);
+           $product_info = $this->getInfoFromSources($upc, $marketplace_item_id);
             if ($product_info) {
                 $this->addInfoSources($product_info);
             } else {
@@ -2178,7 +2195,7 @@ public function getInfoSourcesPrice($upc = null, $product_id = null){
     return $product_info;
 }
 
-private function getInfoFromSources($upc = null){
+private function getInfoFromSources($upc = null, $marketplace_item_id = null){
     $this->load->model('shopmanager/ebay');
 	$this->load->model('shopmanager/ai');
 	$this->load->model('shopmanager/algopix');
@@ -2186,7 +2203,9 @@ private function getInfoFromSources($upc = null){
 	$this->load->model('shopmanager/google');
     $this->load->model('shopmanager/tools');
 
-    $ebay_search=$this->model_shopmanager_ebay->get($upc);
+    $own_ids = $marketplace_item_id ? [$marketplace_item_id] : null;
+
+    $ebay_search = $this->model_shopmanager_ebay->get($upc, null, null, null, 50, $own_ids);
         if (isset($ebay_search['items'][0])) {
             $product_info['ebay_search'] = json_encode($ebay_search['items']);
         } elseif (isset($ebay_search['items'])) {
@@ -3027,7 +3046,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
     }
  
    
-public function manageInfoSources($upc = null, $source_value_items = null, $product_id = null) {
+public function manageInfoSources($upc = null, $source_value_items = null, $product_id = null, $marketplace_item_id = null) {
     // ⚡ CACHE: Éviter requêtes eBay/Algopix multiples
     $cache_key = $upc ?? $product_id;
     if ($cache_key && isset(self::$cache_info_sources[$cache_key])) {
@@ -3069,7 +3088,7 @@ public function manageInfoSources($upc = null, $source_value_items = null, $prod
             $product_info['ebay_pricevariant'] = $product_info['ebay_pricevariant']?json_encode($this->model_shopmanager_ebay->calculateMissingPrices(json_decode($product_info['ebay_pricevariant'],true))):null;
 
         } else {
-            $product_info = $this->refreshInfo($upc);
+            $product_info = $this->refreshInfo($upc, $marketplace_item_id);
             $this->addInfoSources($product_info);
         } 
     } elseif ($source_value_items) {
@@ -3092,7 +3111,7 @@ public function manageInfoSources($upc = null, $source_value_items = null, $prod
     return $product_info;
 }
 
-private function refreshInfo($upc) {
+private function refreshInfo($upc, $marketplace_item_id = null) {
 
 
   
@@ -3126,7 +3145,8 @@ private function refreshInfo($upc) {
     }
 
 
-    $ebay_search = $this->model_shopmanager_ebay->get($upc, null, null, null, 10, null, null, 1, $product_name);
+    $own_ids = $marketplace_item_id ? [$marketplace_item_id] : null;
+    $ebay_search = $this->model_shopmanager_ebay->get($upc, null, null, null, 10, $own_ids, null, 1, $product_name);
     // Traitements intermédiaires pour clarifier les variables
     $ebay_items = null;
     if (isset($ebay_search['items'][0])) {
