@@ -927,21 +927,8 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/marketplace');
         $this->load->model('tool/image');
 
-        // Fetch all products with mismatch + les deux compteurs pour savoir la direction
-        $sql = "SELECT product_id, oc_image_count, ebay_count FROM (
-            SELECT p.product_id,
-                (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
-                 + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)) AS oc_image_count,
-                pm.ebay_image_count AS ebay_count
-            FROM " . DB_PREFIX . "product p
-            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
-            WHERE pm.marketplace_id = 1
-              AND pm.is_com = 0
-              AND pm.ebay_image_count > 0
-            HAVING oc_image_count != ebay_count
-        ) AS mismatch_list";
-
-        $rows = $this->db->query($sql)->rows;
+        $this->load->model('shopmanager/maintenance_image');
+        $rows = $this->model_shopmanager_maintenance_image->getImageMismatchList();
 
         if (empty($rows)) {
             $json['success'] = true;
@@ -969,12 +956,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
                     $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
                     $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
                     $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
-                    $this->db->query(
-                        "UPDATE " . DB_PREFIX . "product_marketplace
-                         SET ebay_image_count = 0, to_update = 1
-                         WHERE product_id = '" . $product_id . "'
-                           AND marketplace_id = 1"
-                    );
+                    $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
                     $success_count++;
                     $result = ['success' => true, 'skipped' => false,
                                'image_count' => $oc_count,
@@ -987,13 +969,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
             } else {
                 // eBay a plus que OC → importer les images eBay dans OC
                 $result = $this->importEbayImagesForProduct($product_id, $lang);
-
-                $this->db->query(
-                    "UPDATE " . DB_PREFIX . "product_marketplace
-                     SET ebay_image_count = 0, to_update = 1
-                     WHERE product_id = '" . $product_id . "'
-                       AND marketplace_id = 1"
-                );
+                $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
 
                 if (!empty($result['success'])) {
                     $success_count++;
@@ -1058,48 +1034,25 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/marketplace');
         $this->load->model('tool/image');
 
-        // Déterminer la direction du mismatch pour ce produit
-        $direction_row = $this->db->query("
-            SELECT
-                (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
-                 + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)) AS oc_count,
-                pm.ebay_image_count AS ebay_count
-            FROM " . DB_PREFIX . "product p
-            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
-            WHERE p.product_id = '" . $product_id . "'
-              AND pm.marketplace_id = 1
-            LIMIT 1
-        ")->row;
-
-        $oc_count   = (int)($direction_row['oc_count']   ?? 0);
-        $ebay_count = (int)($direction_row['ebay_count'] ?? 0);
+        // Direction via models uniquement — aucun SQL dans le controller
+        $product    = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $sec_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+        $oc_count   = ((!empty($product['image']) && $product['image'] !== 'no_image.png') ? 1 : 0)
+                    + count($sec_images);
+        $ebay_count = $this->model_shopmanager_marketplace->getEbayImageCount($product_id);
 
         if ($oc_count > $ebay_count) {
             // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
-            $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
             $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
             $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
-            $this->db->query(
-                "UPDATE " . DB_PREFIX . "product_marketplace
-                 SET ebay_image_count = 0, to_update = 1
-                 WHERE product_id = '" . $product_id . "'
-                   AND marketplace_id = 1"
-            );
+            $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
             $json = ['success' => true, 'image_count' => $oc_count,
                      'direction' => 'oc_to_ebay',
                      'message' => 'Images OC poussées vers eBay via ReviseItem'];
         } else {
             // eBay a plus (ou égal) → importer les images eBay dans OC
             $result = $this->importEbayImagesForProduct($product_id, $lang);
-
-            // Reset ebay_image_count to 0 to force re-fetch on next eBay import
-            $this->db->query(
-                "UPDATE " . DB_PREFIX . "product_marketplace
-                 SET ebay_image_count = 0, to_update = 1
-                 WHERE product_id = '" . $product_id . "'
-                   AND marketplace_id = 1"
-            );
-
+            $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
             $json = $result;
             $json['direction'] = 'ebay_to_oc';
         }

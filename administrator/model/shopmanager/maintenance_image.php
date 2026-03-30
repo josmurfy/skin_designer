@@ -319,4 +319,27 @@ class MaintenanceImage extends \Opencart\System\Engine\Model {
     public function invalidateMaintenanceCache(int $product_id): void {
         $this->db->query("UPDATE `" . DB_PREFIX . "product` SET maintenance_data = NULL WHERE product_id = " . (int)$product_id);
     }
+
+    /**
+     * Returns all products with an OC vs eBay image count mismatch.
+     * Each row: product_id, oc_image_count, ebay_count
+     */
+    public function getImageMismatchList(): array {
+        $result = $this->db->query("
+            SELECT product_id, oc_image_count, ebay_count
+            FROM (
+                SELECT p.product_id,
+                    (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                     + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)) AS oc_image_count,
+                    pm.ebay_image_count AS ebay_count
+                FROM " . DB_PREFIX . "product p
+                INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
+                WHERE pm.marketplace_id = 1
+                  AND pm.is_com = 0
+                  AND pm.ebay_image_count > 0
+                HAVING oc_image_count != ebay_count
+            ) AS mismatch_list"
+        );
+        return $result->rows;
+    }
 }

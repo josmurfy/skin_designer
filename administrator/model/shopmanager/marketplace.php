@@ -1137,6 +1137,32 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
+	 * Reset ebay_image_count to 0 (forces re-fetch on next eBay import) and set to_update = 1
+	 */
+	public function resetEbayImageCount(int $product_id, int $marketplace_id = 1): void {
+		$this->db->query("
+			UPDATE " . DB_PREFIX . "product_marketplace
+			SET ebay_image_count = 0, to_update = 1
+			WHERE product_id = '" . $product_id . "'
+			  AND marketplace_id = '" . $marketplace_id . "'"
+		);
+	}
+
+	/**
+	 * Get ebay_image_count stored in product_marketplace for a product
+	 */
+	public function getEbayImageCount(int $product_id, int $marketplace_id = 1): int {
+		$query = $this->db->query("
+			SELECT ebay_image_count
+			FROM " . DB_PREFIX . "product_marketplace
+			WHERE product_id = '" . $product_id . "'
+			  AND marketplace_id = '" . $marketplace_id . "'
+			LIMIT 1"
+		);
+		return (int)($query->row['ebay_image_count'] ?? 0);
+	}
+
+	/**
 	 * Get product for refresh (with quantities)
 	 */
 	public function getProductForRefresh($product_id) {
