@@ -237,7 +237,7 @@
               </span>
             </td>
             <td class="text-center">
-              <span class="badge bg-warning text-dark">{{ product.image_backup_count }}</span>
+              <span class="badge bg-warning text-dark" id="backup-count-{{ product.product_id }}">{{ product.image_backup_count }}</span>
             </td>
             <td class="text-center">
               <span class="badge bg-success">+{{ product.backup_extra }}</span>
@@ -385,7 +385,8 @@
 
   var TEXT_CONFIRM_BULK_FIX = '{{ text_bulk_fix_confirm|escape('js') }}';
 
-  var currentBackupProductId = null;
+  var currentBackupProductId  = null;
+  var currentPopupBackupCount  = null; // updated after each reloadPopup
   var MIN_RES_GOOD = 800, MIN_RES_OK = 500;
 
   function resQuality(w, h) {
@@ -651,6 +652,7 @@
         if (json.error) { $('#backup-modal-body').html('<div class="alert alert-danger">' + json.error + '</div>'); return; }
         var ocCnt  = (json.oc_images     || []).length;
         var bckCnt = (json.backup_images || []).length;
+        currentPopupBackupCount = bckCnt;
         var html = '<h6 class="fw-bold mb-2 text-primary"><i class="fa-brands fa-opencart me-1"></i>Images OpenCart <span class="badge bg-primary">' + ocCnt + '</span></h6>';
         html += renderOcSection(json.oc_images, productId);
         html += '<hr class="my-3">';
@@ -664,6 +666,23 @@
       }
     });
   }
+
+  // ─── Modal close: sync badge in table ─────────────────────────────────────
+  document.getElementById('backup-images-modal').addEventListener('hidden.bs.modal', function() {
+    if (!currentBackupProductId || currentPopupBackupCount === null) return;
+    var pid   = currentBackupProductId;
+    var count = currentPopupBackupCount;
+    var $badge = $('#backup-count-' + pid);
+    if (!$badge.length) return;
+    $badge.text(count);
+    // Dim row if backup is now empty
+    if (count === 0) {
+      $('#backup-row-' + pid).css('opacity', '0.4').find('button').prop('disabled', true);
+    } else {
+      $('#backup-row-' + pid).css('opacity', '');
+    }
+    currentPopupBackupCount = null;
+  });
 
   // ─── Open Backup Popup ────────────────────────────────────────────────────
   $(document).off('click.openBackupPopup', '.btn-open-backup-popup')
