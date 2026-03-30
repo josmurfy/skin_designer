@@ -927,9 +927,8 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/marketplace');
         $this->load->model('tool/image');
 
-        // Fetch all product_ids that currently have a mismatch between
-        // OC image count and the stored ebay_image_count.
-        $sql = "SELECT product_id FROM (
+        // Fetch all products with mismatch + les deux compteurs pour savoir la direction
+        $sql = "SELECT product_id, oc_image_count, ebay_count FROM (
             SELECT p.product_id,
                 (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
                  + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)) AS oc_image_count,
@@ -943,9 +942,8 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         ) AS mismatch_list";
 
         $rows = $this->db->query($sql)->rows;
-        $product_ids = array_column($rows, 'product_id');
 
-        if (empty($product_ids)) {
+        if (empty($rows)) {
             $json['success'] = true;
             $json['total'] = 0;
             $json['message'] = 'No image mismatch products to process.';
@@ -954,31 +952,56 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $total         = count($product_ids);
+        $total         = count($rows);
         $success_count = 0;
         $skipped_count = 0;
         $error_count   = 0;
         $results       = [];
 
-        foreach ($product_ids as $product_id) {
-            $product_id = (int)$product_id;
-            $result = $this->importEbayImagesForProduct($product_id, $lang);
+        foreach ($rows as $row) {
+            $product_id = (int)$row['product_id'];
+            $oc_count   = (int)$row['oc_image_count'];
+            $ebay_count = (int)$row['ebay_count'];
 
-            // Reset ebay_image_count to 0 so the next eBay import re-fetches
-            // the true image count (forces GetItem to run again).
-            $this->db->query(
-                "UPDATE " . DB_PREFIX . "product_marketplace
-                 SET ebay_image_count = 0, to_update = 1
-                 WHERE product_id = '" . $product_id . "'
-                   AND marketplace_id = 1"
-            );
-
-            if (!empty($result['success'])) {
-                $success_count++;
-            } elseif (!empty($result['skipped'])) {
-                $skipped_count++;
+            if ($oc_count > $ebay_count) {
+                // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
+                try {
+                    $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                    $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+                    $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
+                    $this->db->query(
+                        "UPDATE " . DB_PREFIX . "product_marketplace
+                         SET ebay_image_count = 0, to_update = 1
+                         WHERE product_id = '" . $product_id . "'
+                           AND marketplace_id = 1"
+                    );
+                    $success_count++;
+                    $result = ['success' => true, 'skipped' => false,
+                               'image_count' => $oc_count,
+                               'message' => 'OC→eBay: images poussées via ReviseItem'];
+                } catch (\Exception $e) {
+                    $error_count++;
+                    $result = ['success' => false, 'skipped' => false,
+                               'image_count' => 0, 'message' => $e->getMessage()];
+                }
             } else {
-                $error_count++;
+                // eBay a plus que OC → importer les images eBay dans OC
+                $result = $this->importEbayImagesForProduct($product_id, $lang);
+
+                $this->db->query(
+                    "UPDATE " . DB_PREFIX . "product_marketplace
+                     SET ebay_image_count = 0, to_update = 1
+                     WHERE product_id = '" . $product_id . "'
+                       AND marketplace_id = 1"
+                );
+
+                if (!empty($result['success'])) {
+                    $success_count++;
+                } elseif (!empty($result['skipped'])) {
+                    $skipped_count++;
+                } else {
+                    $error_count++;
+                }
             }
 
             $results[] = [
@@ -1035,17 +1058,51 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/marketplace');
         $this->load->model('tool/image');
 
-        $result = $this->importEbayImagesForProduct($product_id, $lang);
+        // Déterminer la direction du mismatch pour ce produit
+        $direction_row = $this->db->query("
+            SELECT
+                (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                 + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)) AS oc_count,
+                pm.ebay_image_count AS ebay_count
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
+            WHERE p.product_id = '" . $product_id . "'
+              AND pm.marketplace_id = 1
+            LIMIT 1
+        ")->row;
 
-        // Reset ebay_image_count = 0 to force re-fetch on next eBay import
-        $this->db->query(
-            "UPDATE " . DB_PREFIX . "product_marketplace
-             SET ebay_image_count = 0, to_update = 1
-             WHERE product_id = '" . $product_id . "'
-               AND marketplace_id = 1"
-        );
+        $oc_count   = (int)($direction_row['oc_count']   ?? 0);
+        $ebay_count = (int)($direction_row['ebay_count'] ?? 0);
 
-        $json = $result;
+        if ($oc_count > $ebay_count) {
+            // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
+            $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+            $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+            $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
+            $this->db->query(
+                "UPDATE " . DB_PREFIX . "product_marketplace
+                 SET ebay_image_count = 0, to_update = 1
+                 WHERE product_id = '" . $product_id . "'
+                   AND marketplace_id = 1"
+            );
+            $json = ['success' => true, 'image_count' => $oc_count,
+                     'direction' => 'oc_to_ebay',
+                     'message' => 'Images OC poussées vers eBay via ReviseItem'];
+        } else {
+            // eBay a plus (ou égal) → importer les images eBay dans OC
+            $result = $this->importEbayImagesForProduct($product_id, $lang);
+
+            // Reset ebay_image_count to 0 to force re-fetch on next eBay import
+            $this->db->query(
+                "UPDATE " . DB_PREFIX . "product_marketplace
+                 SET ebay_image_count = 0, to_update = 1
+                 WHERE product_id = '" . $product_id . "'
+                   AND marketplace_id = 1"
+            );
+
+            $json = $result;
+            $json['direction'] = 'ebay_to_oc';
+        }
         $json['ebay_image_count_reset'] = true;
 
         $this->response->addHeader('Content-Type: application/json');
