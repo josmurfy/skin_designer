@@ -2184,6 +2184,43 @@ class Sync extends \Opencart\System\Engine\Controller {
                 @unlink($src); // Already exists in OC — just remove from backup
             }
 
+            // Convert to WebP if not already
+            $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+            if ($ext !== 'webp' && file_exists($dst)) {
+                $webp_filename = substr($filename, 0, -strlen($ext)) . 'webp';
+                $webp_dst      = $dest_dir . $webp_filename;
+                set_error_handler(function() { return true; });
+                $img = null;
+                switch ($ext) {
+                    case 'jpg': case 'jpeg': $img = imagecreatefromjpeg($dst); break;
+                    case 'png':
+                        $img = imagecreatefrompng($dst);
+                        if ($img) {
+                            // Preserve transparency (white bg for WebP)
+                            $bg = imagecreatetruecolor(imagesx($img), imagesy($img));
+                            imagefill($bg, 0, 0, imagecolorallocate($bg, 255, 255, 255));
+                            imagecopy($bg, $img, 0, 0, 0, 0, imagesx($img), imagesy($img));
+                            imagedestroy($img);
+                            $img = $bg;
+                        }
+                        break;
+                    case 'gif': $img = imagecreatefromgif($dst); break;
+                    case 'bmp': $img = imagecreatefrombmp($dst); break;
+                }
+                restore_error_handler();
+                if ($img) {
+                    if (imagewebp($img, $webp_dst, 85)) {
+                        imagedestroy($img);
+                        @unlink($dst); // Supprimer l'original non-webp
+                        $filename = $webp_filename;
+                        $dst      = $webp_dst;
+                        $oc_path  = $dest_rel . $webp_filename;
+                    } else {
+                        imagedestroy($img); // Conversion échouée — garder l'original
+                    }
+                }
+            }
+
             if ($role === 'primary') {
                 $cur = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
                 $old = $cur->row['image'] ?? '';
