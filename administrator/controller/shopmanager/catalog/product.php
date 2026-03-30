@@ -1518,26 +1518,14 @@ class Product extends \Opencart\System\Engine\Controller {
 		}
 
 		if (!empty($product_info)) {
-
-			if ($product_info['shipping_cost']==0 || !isset($product_info['shipping_cost'])) {
-
-				$this->load->model('shopmanager/shipping');
-				$result=$this->model_shopmanager_shipping->calculateShippingRates($product_info);
-				$data['shipping_cost']=$result['shipping_cost'];
-				$data['shipping_carrier']=$result['shipping_carrier'];
-				$data['price_with_shipping']=$data['price']+$result['shipping_cost'];
-
-			} else{
-				$data['shipping_cost'] = round($product_info['shipping_cost'],2);
-			}
+			$data['shipping_cost'] = round($product_info['shipping_cost'] ?? 0, 2);
+			$data['shipping_carrier'] = $product_info['shipping_carrier'] ?? '';
+			// Si shipping_cost non calculé, le chargement AJAX le mettra à jour (product_form.js)
+			$data['shipping_needs_calculation'] = ($data['shipping_cost'] == 0) ? 1 : 0;
 		} else {
 			$data['shipping_cost'] = 0;
-		}
-
-		if (!empty($product_info)) {
-			$data['shipping_carrier'] = $product_info['shipping_carrier'];
-		} else {
 			$data['shipping_carrier'] = '';
+			$data['shipping_needs_calculation'] = 0;
 		}
 
 		
@@ -2948,6 +2936,47 @@ public function editMadeInCountry()
 	$this->response->addHeader('Content-Type: application/json');
 	$this->response->setOutput(json_encode($json));
 }
+public function calculateShipping(): void {
+	$json = [];
+
+	$product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
+
+	if (!$product_id) {
+		$json['error'] = 'product_id manquant';
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+		return;
+	}
+
+	$this->load->model('shopmanager/catalog/product');
+	$this->load->model('shopmanager/shipping');
+
+	$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+
+	if (!$product_info) {
+		$json['error'] = 'Produit introuvable';
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+		return;
+	}
+
+	$result = $this->model_shopmanager_shipping->calculateShippingRates($product_info);
+
+	// Sauvegarder en base pour ne plus recalculer
+	if ($result['shipping_cost'] > 0 && $result['shipping_cost'] < 9999) {
+		$this->model_shopmanager_catalog_product->editShipping($product_id, $result['shipping_cost'], $result['shipping_carrier']);
+	}
+
+	$json['success'] = [
+		'shipping_cost'     => round($result['shipping_cost'], 2),
+		'shipping_carrier'  => $result['shipping_carrier'],
+		'price_with_shipping' => round(($product_info['price'] ?? 0) + $result['shipping_cost'], 2),
+	];
+
+	$this->response->addHeader('Content-Type: application/json');
+	$this->response->setOutput(json_encode($json));
+}
+
 public function enable() {
 
 	$json = [];

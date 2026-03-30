@@ -3678,6 +3678,13 @@ public function editProductError($product_id, $json_error) {
 		WHERE product_id = '" . (int)$product_id . "'");
 	}
 
+	public function editShipping(int $product_id, float $shipping_cost, string $shipping_carrier): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET
+			`shipping_cost` = '" . (float)$shipping_cost . "',
+			`shipping_carrier` = '" . $this->db->escape($shipping_carrier) . "'
+			WHERE `product_id` = '" . $product_id . "'");
+	}
+
 	public function editPriceWithShipping($product_id, $price_with_shipping) {
 		$product_id = (int)$product_id;
 		$price_with_shipping = (float)$price_with_shipping;

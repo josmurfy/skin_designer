@@ -437,6 +437,7 @@ public function addProductMarketplace($data) {
 			`to_update` = '" . (isset($data['to_update']) ? (int)$data['to_update'] : 1) . "',
 			`quantity_listed` = '" . (isset($data['quantity_listed']) ? (int)$data['quantity_listed'] : 0) . "',
 			`quantity_sold` = '" . (isset($data['quantity_sold']) ? (int)$data['quantity_sold'] : 0) . "',
+			`ebay_image_count` = '" . (isset($data['ebay_image_count']) ? (int)$data['ebay_image_count'] : 0) . "',
 			`date_added` = NOW(),
 			`date_modified` = NOW()
         ON DUPLICATE KEY UPDATE 
@@ -519,6 +520,7 @@ public function editProductMarketplace($data = []) {
                 pm.date_ended = " . (isset($data['date_ended']) && !empty($data['date_ended']) ? "'" . $this->db->escape($data['date_ended']) . "'" : (isset($existingEntry['date_ended']) ? "'" . $this->db->escape($existingEntry['date_ended']) . "'" : "NULL")) . ",
                 pm.date_modified = NOW(),
                 pm.error = '" . (isset($data['error']) ? $this->db->escape($data['error']) : $this->db->escape($existingEntry['error'])) . "',
+                pm.ebay_image_count = " . (isset($data['ebay_image_count']) ? (int)$data['ebay_image_count'] : "ebay_image_count") . ",
                 pm.to_update = '2' 
             
            WHERE product_id = '" . (isset($data['product_id']) ? (int)$data['product_id'] : (int)$existingEntry['product_id']) . "'
@@ -763,6 +765,16 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				$specifics=json_encode($specifics);
 			
 
+			// Compter les images eBay (PictureURL peut être string ou array)
+			$ebay_picture_urls = $result['PictureDetails']['PictureURL'] ?? [];
+			if (is_string($ebay_picture_urls) && !empty($ebay_picture_urls)) {
+				$ebay_image_count = 1;
+			} elseif (is_array($ebay_picture_urls)) {
+				$ebay_image_count = count($ebay_picture_urls);
+			} else {
+				$ebay_image_count = 0;
+			}
+
 			$marketplace_item = array (
 				'marketplace_item_id' => $item['marketplace_item_id'],
 				'marketplace_account_id' => $item['marketplace_account_id'],
@@ -776,6 +788,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				'date_added' => date('Y-m-d H:i:s', strtotime($result['ListingDetails']['StartTime'])), // Conversion ici
 				'date_ended' => isset($result['ListingDetails']['EndingReason'])?date('Y-m-d H:i:s', strtotime($result['ListingDetails']['EndTime'])):'NULL', // Conversion ici
 				'error' => '',
+				'ebay_image_count' => $ebay_image_count,
 				'product_id' => $item['product_id'],
 				'marketplace_id' => $item['marketplace_id']
 
@@ -916,20 +929,17 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	public function getMarketplaceExistingData($product_id, $marketplace_id = 1, $db_connection = null) {
 		if ($db_connection) {
 			// phoenixsupplies
-			$sql = "SELECT category_id, condition_id, specifics FROM oc_product_marketplace 
-					WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_id . " LIMIT 1";
-			$result = mysqli_query($db_connection, $sql);
-			if ($result && mysqli_num_rows($result) > 0) {
-				return mysqli_fetch_assoc($result);
-			}
+				$sql = "SELECT category_id, condition_id, specifics, ebay_image_count FROM oc_product_marketplace
+								WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_id . " LIMIT 1";
+				$result = mysqli_query($db_connection, $sql);
+				if ($result && mysqli_num_rows($result) > 0) {
+						return mysqli_fetch_assoc($result);
+				}
 		} else {
-			// phoenixliquidation
-			$query = $this->db->query("SELECT category_id, condition_id, specifics 
-									   FROM " . DB_PREFIX . "product_marketplace 
-									   WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_id . " LIMIT 1");
-			if ($query->num_rows) {
-				return $query->row;
-			}
+				// phoenixliquidation
+				$query = $this->db->query("SELECT category_id, condition_id, specifics, ebay_image_count
+					FROM " . DB_PREFIX . "product_marketplace
+					WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_id . " LIMIT 1");
 		}
 		return null;
 	}
@@ -947,7 +957,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 			$sql = "
 				INSERT INTO oc_product_marketplace 
 				(product_id, customer_id, marketplace_id, marketplace_account_id, marketplace_item_id, 
-				 category_id, condition_id, currency, price, price_usd, quantity_listed, quantity_sold, specifics, status, is_com, date_added, date_ended, last_import)
+				 category_id, condition_id, currency, price, price_usd, quantity_listed, quantity_sold, specifics, status, is_com, ebay_image_count, date_added, date_ended, last_import)
 				VALUES 
 				(" . (int)$marketplace_data['product_id'] . ", 
 				 " . (int)$marketplace_data['customer_id'] . ",
@@ -964,6 +974,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				 " . $specifics_escaped . ",
 				 " . (int)$marketplace_data['status'] . ",
 				 " . (int)$marketplace_data['is_com'] . ",
+				 " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				 " . ($marketplace_data['date_added'] ? "'" . mysqli_real_escape_string($db_connection, $marketplace_data['date_added']) . "'" : "NULL") . ",
 				 " . ($marketplace_data['date_ended'] ? "'" . mysqli_real_escape_string($db_connection, $marketplace_data['date_ended']) . "'" : "NULL") . ",
 				 '" . mysqli_real_escape_string($db_connection, $marketplace_data['last_import_time']) . "')
@@ -979,6 +990,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				specifics = IFNULL(" . $specifics_escaped . ", specifics),
 				status = " . (int)$marketplace_data['status'] . ",
 				is_com = " . (int)$marketplace_data['is_com'] . ",
+				ebay_image_count = " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				last_import = '" . mysqli_real_escape_string($db_connection, $marketplace_data['last_import_time']) . "'
 			";
 			return mysqli_query($db_connection, $sql);
@@ -994,7 +1006,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 			$this->db->query("
 				INSERT INTO " . DB_PREFIX . "product_marketplace 
 				(product_id, customer_id, marketplace_id, marketplace_account_id, marketplace_item_id, 
-				 category_id, condition_id, currency, price, price_usd, quantity_listed, quantity_sold, specifics, status, is_com, date_added, date_ended, last_import)
+				 category_id, condition_id, currency, price, price_usd, quantity_listed, quantity_sold, specifics, status, is_com, ebay_image_count, date_added, date_ended, last_import)
 				VALUES 
 				(" . (int)$marketplace_data['product_id'] . ", 
 				 " . (int)$marketplace_data['customer_id'] . ",
@@ -1011,6 +1023,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				 " . $specifics_sql . ",
 				 " . (int)$marketplace_data['status'] . ",
 				 " . (int)$marketplace_data['is_com'] . ",
+				 " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				 " . $date_added_sql . ",
 				 " . $date_ended_sql . ",
 				 " . $last_import_sql . ")
@@ -1026,6 +1039,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				specifics = IFNULL(" . $specifics_sql . ", specifics),
 				status = " . (int)$marketplace_data['status'] . ",
 				is_com = " . (int)$marketplace_data['is_com'] . ",
+				ebay_image_count = " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				last_import = " . $last_import_sql . "
 			");
 			return true;

@@ -361,7 +361,6 @@ try {
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
 
         $json = json_decode($response, true);
 
@@ -370,7 +369,7 @@ try {
             return 9999;
         }
 
-        $this->log->write('USPS ' . $mailClass . ' Response: ' . print_r($json, true));
+        //$this->log->write('USPS ' . $mailClass . ' Response: ' . print_r($json, true));
 
         // L'API retourne un tableau rates[] avec le prix dans rates[n]['price']
         if (!empty($json['rates'])) {
@@ -424,14 +423,13 @@ try {
         curl_setopt($curl, CURLOPT_HEADER, 0);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         $result = curl_exec($curl);
-        curl_close($curl);
 
         $response = simplexml_load_string($result);
         $result = json_encode($response);
         $json = json_decode($result, true);
 
         if ($product_info['service'] == '<Service>Media Mail</Service>') {
-            $this->log->write('USPS Media Mail Response: ' . print_r($json, true));
+            //$this->log->write('USPS Media Mail Response: ' . print_r($json, true));
             return $json["Package"]["Postage"]["Rate"];
         } else {
             return (isset($json["Package"]["Postage"]["CommercialRate"])) ? $json["Package"]["Postage"]["CommercialRate"] : null;

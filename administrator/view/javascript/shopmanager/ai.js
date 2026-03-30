@@ -258,6 +258,11 @@ async function verifyAllSpecifics() {
     finishLoadingPopup();
 }
 async function verifySpecific(row, finish = 'false') {
+    // Ouvrir le popup quand appelé directement depuis un bouton individuel
+    if (finish === 'true') {
+        showLoadingPopup('Vérification de l\'aspect #' + row + ' avec l\'IA...');
+    }
+
     const user_token = document.querySelector('input[name="user_token"]').value;
     const Actual_value = document.getElementById('hidden-original-value-1-' + row).value;
     const specificRowElem = document.getElementById('specifics-1-' + row);
@@ -301,6 +306,51 @@ async function verifySpecific(row, finish = 'false') {
         return JSON.stringify({ success: false, message: `Clé ignorée: ${specificName}`, row: row });
     }
 
+    // === BRAND: chercher la valeur depuis un autre specific "Brand" ou fallback fabricant ===
+    // NB: exactement "brand" seulement — "Compatible Brand" doit passer normalement
+    if (specificName.toLowerCase() === 'brand') {
+        let brandValue = '';
+
+        // 1) Chercher un autre specific row dont le Name == "Brand" (case-insensitive)
+        const allSpecificRows = document.querySelectorAll('[id^="specifics-1-"]');
+        for (const otherRow of allSpecificRows) {
+            const otherRowId = otherRow.id.replace('specifics-1-', '');
+            if (otherRowId === String(row)) continue; // skip soi-même
+            const otherNameElem = otherRow.querySelector('input[name*="[Name]"]');
+            const otherValueElem = otherRow.querySelector('input[name*="[Value]"], select[name*="[Value][]"], select[name*="[Value]"]');
+            if (otherNameElem && otherNameElem.value.trim().toLowerCase() === 'brand' && otherValueElem) {
+                const otherVal = otherValueElem.tagName.toLowerCase() === 'select'
+                    ? Array.from(otherValueElem.selectedOptions).map(o => o.value).join(', ')
+                    : otherValueElem.value.trim();
+                if (otherVal) { brandValue = otherVal; break; }
+            }
+        }
+
+        // 2) Fallback: champ fabricant
+        if (!brandValue) {
+            const manufacturerInput = document.getElementById('input-manufacturer');
+            brandValue = manufacturerInput ? manufacturerInput.value.trim() : '';
+        }
+
+        if (brandValue) {
+            if (specificValue.toLowerCase() === brandValue.toLowerCase()) {
+                // Valeur déjà correcte → vert (pas d'injection, juste confirmation)
+                updateTargetElement(row, brandValue, 'green', 'no');
+                appendLoadingMessage(`[BRAND] '${specificName}' déjà correct: ${brandValue}`, 'success');
+            } else {
+                // Valeur différente → orange = injection réelle dans le champ
+                document.getElementById('original-value-' + language_id + '-' + row).textContent = specificValue;
+                document.getElementById('hidden-original-value-' + language_id + '-' + row).value = specificValue;
+                updateTargetElement(row, brandValue, 'orange');
+                $('#btUndo-' + language_id + '-' + row).show();
+                appendLoadingMessage(`[BRAND] '${specificName}' mis à jour: ${brandValue}`, 'warning');
+            }
+            if (finish === 'true') { finishLoadingPopup(); }
+            return JSON.stringify({ success: true, message: 'Brand auto-rempli.', row: row, value: brandValue });
+        }
+        // Si aucune source disponible, on continue vers l'IA normalement
+    }
+
     const productName = document.querySelector('input[name="product_description[' + language_id + '][name]"]')?.value || '';
     const descriptionFull = document.querySelector('input[name="product_description[' + language_id + '][hidden_description]"]')?.value || '';
     const description = descriptionFull.substring(0, 500); // Limit to 500 chars to prevent 429 token errors
@@ -316,45 +366,138 @@ async function verifySpecific(row, finish = 'false') {
         return JSON.stringify({ success: false, error: `Response element not found`, row: row });
     }
 
-    // Get available options if it's a select (eBay specifics have restricted values)
-    let availableOptions = '';
-    if (specificValueElem.tagName.toLowerCase() === 'select') {
-        const options = Array.from(specificValueElem.options)
-            .map(opt => opt.value)
-            .filter(val => val && val.trim() !== '')
-            .slice(0, 10); // Limit to first 10 options to reduce token usage
-        if (options.length > 0) {
-            const moreCount = specificValueElem.options.length - options.length;
-            const moreText = moreCount > 0 ? ` (${moreCount} more available)` : '';
-            availableOptions = `\nYou MUST choose from available options like: ${options.join(', ')}${moreText}`;
+    // === COMPATIBLE* : lire uniquement Included Accessories ===
+    // S'applique à: Compatible Model, Compatible With, Compatible Product, Compatible Product Line,
+    //               Compatible Series, Compatible Vehicle Make, Compatible Vehicle Model
+    const isCompatibleFreeText = /compatible (model|with|product(?: line)?|series|vehicle (?:make|model))/i.test(specificName);
+    let compatibleContext = '';
+    if (isCompatibleFreeText) {
+        let accessoriesText = '';
+
+        // Helper: strip HTML en respectant les séparateurs de blocs
+        function stripHtmlWithSeparators(html) {
+            // Remplacer les balises bloc/br par \n avant de stripper
+            return html
+                .replace(/<br\s*\/?>/gi, '\n')
+                .replace(/<\/(p|div|li|tr|td|h[1-6])>/gi, '\n')
+                .replace(/<[^>]+>/g, '')
+                .replace(/&nbsp;/gi, ' ')
+                .replace(/&amp;/gi, '&')
+                .replace(/&lt;/gi, '<')
+                .replace(/&gt;/gi, '>')
+                .replace(/[ \t]+/g, ' ')       // espaces multiples → 1 espace
+                .replace(/\n[ \t]+/g, '\n')    // trim chaque ligne
+                .replace(/[ \t]+\n/g, '\n')
+                .replace(/\n{3,}/g, '\n\n')    // max 2 sauts de ligne
+                .trim();
+        }
+
+        // 1) Textarea (valeur sauvegardée)
+        const taAccessories = document.querySelector('textarea[name="product_description[' + language_id + '][included_accessories]"]');
+        if (taAccessories && taAccessories.value.trim()) {
+            accessoriesText = stripHtmlWithSeparators(taAccessories.value);
+        }
+
+        // 2) Fallback: lire le .note-editable associé au textarea included_accessories
+        if (!accessoriesText) {
+            if (taAccessories) {
+                const wrapper = taAccessories.closest('.col-sm-8, .col-sm-10, div');
+                if (wrapper) {
+                    const editable = wrapper.querySelector('.note-editable');
+                    if (editable) {
+                        accessoriesText = (editable.innerText || editable.textContent || '').replace(/[ \t]+/g, ' ').trim();
+                    }
+                }
+            }
+        }
+
+        console.log(`[COMPATIBLE MODEL] included_accessories text:`, accessoriesText.substring(0, 300));
+        if (accessoriesText) {
+            compatibleContext = accessoriesText;
         }
     }
 
-    const prompt = (!specificValue.trim())
-        ? `What is the most accurate and confirmed value for the eBay aspect "${specificName}" for the product titled "${productName}" in the "${category}" category?${availableOptions}\nUse only information from reliable sources.`
-        : `Is "${specificValue}" the correct and confirmed value for the "${specificName}" aspect of the product titled "${productName}" in the "${category}" category?\nDescription: ${description}${availableOptions}\nReply with ONLY 'TRUE' if accurate or 'FALSE' if not. Do not include any explanation.`;
+    // === CONDITION: extraire le nom de condition du produit ===
+    let conditionContext = '';
+    if (/condition/i.test(specificName)) {
+        const conditionLabel = document.getElementById('condition-name-' + language_id);
+        if (conditionLabel) {
+            const conditionText = conditionLabel.textContent.trim();
+            if (conditionText) {
+                conditionContext = '\nProduct condition: ' + conditionText;
+            }
+        }
+    }
+
+    // Get available options if it's a select (eBay specifics have restricted values)
+    let availableOptions = '';
+    const isMultiSelect = specificValueElem.tagName.toLowerCase() === 'select' && specificValueElem.multiple;
+
+    // isCompatibleModel = type "Compatible*"
+    // isCompatibleExtract = Compatible* ET aucune valeur sélectionnée → on fait l'extraction
+    // Si des valeurs sont déjà là → on fait la vérif normale TRUE/FALSE
+    const isCompatibleModel = isCompatibleFreeText;
+    const isCompatibleExtract = isCompatibleFreeText && !specificValue.trim();
+
+    if (specificValueElem.tagName.toLowerCase() === 'select') {
+        const maxOpts = isCompatibleModel ? 9999 : 10;
+        const options = Array.from(specificValueElem.options)
+            .map(opt => opt.value)
+            .filter(val => val && val.trim() !== '')
+            .slice(0, maxOpts);
+        if (options.length > 0) {
+            const moreCount = specificValueElem.options.length - 1 - options.length;
+            const moreText = (!isCompatibleModel && moreCount > 0) ? ` (${moreCount} more available)` : '';
+            availableOptions = isCompatibleModel
+                ? `\nAvailable eBay options (choose ALL that apply, return exact values):\n${options.join('\n')}`
+                : `\nYou MUST choose from available options: ${options.join(', ')}${moreText}`;
+        }
+    }
+
+    let prompt;
+    if (isCompatibleExtract) {
+        // Champ vide → extraction complète depuis included_accessories
+        const accessoriesInfo = compatibleContext
+            ? `\n\nCompatible models text from product description:\n${compatibleContext}`
+            : '';
+        const listSection = availableOptions
+            ? `\n\nExisting options (use these exact values if they match, but you can also return values NOT in this list if they appear in the compatible models text):\n${availableOptions.replace(/^.*?:\n/, '')}`
+            : '';
+        prompt = `For the eBay listing "${productName}" (category: ${category}), extract ALL compatible model numbers/names.${accessoriesInfo}${listSection}\n\nInstructions:\n- Extract every compatible model explicitly mentioned in the "Compatible models text" above.\n- Also include any matching options from the existing options list if they apply.\n- Return the values separated by semicolons.\n- Format: prefix each model with "For [Brand]" (e.g. "For Brother DCP-9040CN", "For HP OfficeJet 8600"). Detect the brand from context (product title, description, or model prefix). If multiple brands, each model gets its own "For [Brand]" prefix.\n- If an existing option already has the correct "For [Brand] Model" format, use its exact text.\n- If no compatible models are found anywhere, return an empty string.`;
+    } else if (isCompatibleModel && specificValue.trim()) {
+        // Champ déjà rempli → vérification normale des valeurs existantes
+        prompt = `Based on the product title "${productName}"${category ? ' (category: ' + category + ')' : ''}, are the following values correct for the eBay aspect "${specificName}"?\nCurrent values: ${specificValue}\nDescription: ${description}${conditionContext}\nConsider the product title as primary evidence. Reply with ONLY 'TRUE' if all values are accurate, or 'FALSE' if any are incorrect. Do not include any explanation.`;
+    } else {
+        prompt = (!specificValue.trim())
+            // OLD PROMPT (backup):
+            // ? `What is the most accurate and confirmed value for the eBay aspect "${specificName}" for the product titled "${productName}" in the "${category}" category?${availableOptions}${compatibleContext}${conditionContext}\nUse only information from reliable sources.`
+            // : `Is "${specificValue}" the correct and confirmed value for the "${specificName}" aspect of the product titled "${productName}" in the "${category}" category?\nDescription: ${description}${availableOptions}${compatibleContext}${conditionContext}\nReply with ONLY 'TRUE' if accurate or 'FALSE' if not. Do not include any explanation.`
+            ? `What is the most accurate value for the eBay aspect "${specificName}" for the product "${productName}"${category ? ' in category "' + category + '"' : ''}?${availableOptions}${compatibleContext}${conditionContext}\nBase your answer on the product title and your knowledge. Use only information from reliable sources.`
+            : `Based on the product title "${productName}"${category ? ' (category: ' + category + ')' : ''} and the description below, is "${specificValue}" a correct and accurate value for the eBay aspect "${specificName}"?\nDescription: ${description}${availableOptions}${compatibleContext}${conditionContext}\nConsider the product title as primary evidence. Reply with ONLY 'TRUE' if correct or 'FALSE' if not. Do not include any explanation.`;
+    }
 
     let system_prompt = "ONLY return plain text. Do NOT wrap your answer in JSON or any object. Do not include any additional text or explanations.";
-    if (specificValueElem.tagName.toLowerCase() === 'select' && specificValueElem.multiple) {
-        system_prompt += " If the answer includes multiple details, separate them with a semicolon.";
+    if (isCompatibleExtract) {
+        system_prompt += " Return compatible model values separated by semicolons. Each value MUST be prefixed with \"For [Brand]\" (e.g. \"For Brother DCP-9040CN\"). Use exact option list values when they match (they may already include the brand prefix); otherwise format as \"For [Brand] [Model]\" using the brand detected from context. If nothing found, return an empty string.";
+    } else if (isMultiSelect) {
+        system_prompt += " Separate multiple values with a semicolon. Return ONLY values from the provided list, matching exactly (case-sensitive).";
     } else {
         system_prompt += " Limit your response to a SHORT answer.";
     }
-    if (availableOptions) {
+    if (availableOptions && !isCompatibleModel) {
         system_prompt += " You must ONLY return values from the provided list, matching exactly.";
     }
 
-    const extra_system_prompt = ((!specificValue.trim()) && specificName.includes("compatible")) 
-        ? ` Must include before \"For \" the correct ${specificName.includes("model") ? "'BRAND NAME' 'MODEL NAME'" : "brand name"}.`
-        : "";
+    const extra_system_prompt = "";
 
     const data = {
         prompt,
         system_prompt: system_prompt + extra_system_prompt,
-        max_tokens: 50,
+        max_tokens: isCompatibleExtract ? 600 : 50,
         temperature: 0
     };
 
+    console.log(`[AI INPUT] row=${row} specific="${specificName}"`, data);
     appendLoadingMessage(`[IA] Vérification de '${specificName}'...`, 'info');
 
     // Retry loop pour absorber les 429 rate-limit d'OpenAI
@@ -372,6 +515,7 @@ async function verifySpecific(row, finish = 'false') {
             });
             const text = await response.text();
             data_response = JSON.parse(text);
+            console.log(`[AI OUTPUT] row=${row} specific="${specificName}"`, data_response);
         } catch (e) {
             appendLoadingMessage(`[ERREUR RÉSEAU] ${e.message}`, 'danger', true);
             if (finish === 'true') { finishLoadingPopup(); }
@@ -404,10 +548,12 @@ async function verifySpecific(row, finish = 'false') {
                 .map(item => typeof item === 'object' ? JSON.stringify(item) : String(item))
                 .join(', ');
         } else if (typeof data_response.success === 'object' && data_response.success !== null) {
-            // L'IA retourne parfois {"result":"TRUE"} ou {"answer":"TRUE"} peu importe la clé
+            // L'IA retourne parfois {"result":"TRUE"} ou {"answer":"TRUE"} ou {"value": false}
             const keys = Object.keys(data_response.success);
             if (keys.length === 1) {
-                rawMessage = String(data_response.success[keys[0]] || '');
+                const val = data_response.success[keys[0]];
+                // Ne pas utiliser `|| ''` car false (boolean) est falsy et serait converti en ''
+                rawMessage = (val === null || val === undefined) ? '' : String(val);
             } else {
                 rawMessage = JSON.stringify(data_response.success);
             }
@@ -422,6 +568,45 @@ async function verifySpecific(row, finish = 'false') {
             extractedValue = extractedValue.substring(0, 70);
         }
 
+        // === COMPATIBLE MODEL: handler dédié (seulement si extraction, pas vérif) ===
+        if (isCompatibleExtract) {
+            if (!rawMessage || rawMessage.toLowerCase() === 'none' || rawMessage.trim() === '') {
+                appendLoadingMessage(`[COMPATIBLE MODEL] Aucun modèle trouvé par l'IA`, 'warning');
+                if (finish === 'true') { finishLoadingPopup(); }
+                return JSON.stringify({ success: false, message: 'No compatible models found', row });
+            }
+
+            // Séparer par ; ou , ou newline
+            const returnedModels = rawMessage.split(/[;\n]+/).map(v => v.trim()).filter(v => v && v.toLowerCase() !== 'none');
+            const selectElem = specificValueElem;
+            const normalizedValues = [];
+
+            for (const model of returnedModels) {
+                // Chercher option existante (insensible à la casse)
+                let existingOption = null;
+                Array.from(selectElem.options).forEach(opt => {
+                    if (opt.value.toLowerCase() === model.toLowerCase()) existingOption = opt;
+                });
+                if (existingOption) {
+                    normalizedValues.push(existingOption.value);
+                } else {
+                    // Ajouter la nouvelle option dans le select
+                    const safeModel = model.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    $(selectElem).append('<option value="' + safeModel + '">' + safeModel + '</option>');
+                    normalizedValues.push(model);
+                }
+            }
+
+            document.getElementById('original-value-' + language_id + '-' + row).textContent = '';
+            document.getElementById('hidden-original-value-' + language_id + '-' + row).value = '';
+            updateTargetElement(row, normalizedValues.join(','), 'orange');
+            $('#btUndo-' + language_id + '-' + row).show();
+            appendLoadingMessage(`[COMPATIBLE MODEL] ${normalizedValues.length} modèle(s): ${normalizedValues.join(', ')}`, 'success');
+            console.log(`[COMPATIBLE MODEL] injected:`, normalizedValues);
+            if (finish === 'true') { finishLoadingPopup(); }
+            return JSON.stringify({ success: true, message: 'Compatible models injected.', row, value: normalizedValues.join(',') });
+        }
+
         if ((messageLower === 'true' || messageLower.includes(specificValue.toLowerCase())) && specificValue.trim() !== "") {
             updateTargetElement(row, specificValue, 'green', 'no');
             appendLoadingMessage(`[OK] '${specificName}' vérifié comme valide.`, 'success');
@@ -432,6 +617,7 @@ async function verifySpecific(row, finish = 'false') {
             document.getElementById('original-value-' + language_id + '-' + row).textContent = specificValueElem.value;
             document.getElementById('hidden-original-value-' + language_id + '-' + row).value = specificValueElem.value;
 
+            // Préserver la casse du AI output — ne pas modifier extractedValue
             specificValue = extractedValue.replace(/;/g, ',');
             updateTargetElement(row, specificValue, 'orange');
             $('#btUndo' + row).show();

@@ -9,10 +9,18 @@
   <input type="hidden" id="user_token" value="{{ user_token }}" />
   <input type="hidden" id="url_get_data" value="{{ url_get_data }}" />
   <input type="hidden" id="url_sync_marketplace" value="index.php?route=shopmanager/inventory/sync.importMarketplace&user_token={{ user_token }}" />
+  <input type="hidden" id="url_force_refresh_marketplace" value="index.php?route=shopmanager/inventory/sync.importMarketplace&force_refresh=1&user_token={{ user_token }}" />
+  <input type="hidden" id="url_scan_image_backup" value="index.php?route=shopmanager/inventory/sync.scanImageBackupCounts&user_token={{ user_token }}" />
 
   <div class="page-header">
     <div class="container-fluid">
       <div class="float-end">
+        <button type="button" id="button-scan-backup" data-bs-toggle="tooltip" title="{{ tooltip_scan_image_backup }}" class="btn btn-info me-2">
+          <i class="fa-solid fa-folder-magnifying-glass"></i> {{ button_scan_image_backup }}
+        </button>
+        <button type="button" id="button-force-refresh" data-bs-toggle="tooltip" title="{{ tooltip_force_refresh }}" class="btn btn-danger me-2">
+          <i class="fa-solid fa-rotate"></i> {{ button_force_refresh }}
+        </button>
         <button type="button" id="button-sync-marketplace" data-bs-toggle="tooltip" title="{{ tooltip_import_from_ebay }}" class="btn btn-warning">
           <i class="fa-solid fa-download"></i> {{ button_import_from_ebay }}
         </button>
@@ -108,9 +116,9 @@
       </div>
     </div>
 
-    {# Row 2: Condition, Category #}
+    {# Row 2: Condition, Category, Image #}
     <div class="row mb-3">
-      <div class="col-md-6">
+      <div class="col-md-4">
         <div class="card border-success stat-card" data-tab="condition-mismatch" style="cursor: pointer;" onclick="document.getElementById('condition-mismatch-tab').click();">
           <div class="card-body text-center">
             <h2 class="text-success stat-number">{{ analytics_data.condition_mismatch_count }}</h2>
@@ -118,11 +126,19 @@
           </div>
         </div>
       </div>
-      <div class="col-md-6">
+      <div class="col-md-4">
         <div class="card border-danger stat-card" data-tab="category-mismatch" style="cursor: pointer;" onclick="document.getElementById('category-mismatch-tab').click();">
           <div class="card-body text-center">
             <h2 class="text-danger stat-number">{{ analytics_data.category_mismatch_count }}</h2>
             <p class="text-muted mb-0"><i class="fa-solid fa-tags"></i> {{ tab_category_mismatch }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card border-warning stat-card" data-tab="image-mismatch" style="cursor: pointer;" onclick="document.getElementById('image-mismatch-tab').click();">
+          <div class="card-body text-center">
+            <h2 class="text-warning stat-number">{{ analytics_data.image_mismatch_count }}</h2>
+            <p class="text-muted mb-0"><i class="fa-solid fa-images"></i> {{ tab_image_mismatch }}</p>
           </div>
         </div>
       </div>
@@ -177,6 +193,11 @@
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="category-mismatch-tab" data-bs-toggle="tab" data-bs-target="#category-mismatch" type="button" role="tab">
                   <i class="fa-solid fa-tags text-danger"></i> {{ tab_category_mismatch }}
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="image-mismatch-tab" data-bs-toggle="tab" data-bs-target="#image-mismatch" type="button" role="tab">
+                  <i class="fa-solid fa-images text-warning"></i> {{ tab_image_mismatch }}
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -522,6 +543,11 @@
                 {{ category_mismatch_content }}
               </div>
 
+              {# Image Count Mismatch — OC vs eBay #}
+              <div class="tab-pane fade" id="image-mismatch" role="tabpanel">
+                {{ image_mismatch_content }}
+              </div>
+
               {# Slow Moving Products #}
               <div class="tab-pane fade" id="slow-moving" role="tabpanel">
                 {% if analytics_data.bottom_products|length > 0 %}
@@ -582,6 +608,8 @@ var TEXT_CONFIRM_SYNC_ALL     = '{{ text_confirm_sync_all|escape('js') }}';
 var TEXT_ERROR_SYNC_URL       = '{{ text_error_sync_url|escape('js') }}';
 var TEXT_CONFIRM_SYNC_PRODUCT = '{{ text_confirm_sync_product|escape('js') }}';
 var TEXT_CONFIRM_REFRESH_ALL  = '{{ text_confirm_refresh_all|escape('js') }}';
+var TEXT_CONFIRM_FORCE_REFRESH = '{{ text_confirm_force_refresh|escape('js') }}';
+var TEXT_CONFIRM_SCAN_BACKUP   = '{{ text_scan_backup_confirm|escape('js') }}';
 </script>
 
 {{ footer }}

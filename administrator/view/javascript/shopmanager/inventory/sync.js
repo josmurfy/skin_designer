@@ -76,20 +76,82 @@
         
         button.on('click', function() {
             if (confirm(TEXT_CONFIRM_SYNC_ALL)) {
-                startMarketplaceSync();
+                startMarketplaceSync(false);
             }
         });
+
+        // Force full refresh button
+        $('#button-force-refresh').on('click', function() {
+            if (confirm(TEXT_CONFIRM_FORCE_REFRESH)) {
+                startMarketplaceSync(true);
+            }
+        });
+
+        // Scan image_backup button
+        $('#button-scan-backup').on('click', function() {
+            if (!confirm(TEXT_CONFIRM_SCAN_BACKUP)) return;
+            var $btn = $(this);
+            $btn.prop('disabled', true).html(
+                '<i class="fa-solid fa-spinner fa-spin"></i> Scanning…'
+            );
+            $.ajax({
+                url: $('#url_scan_image_backup').val(),
+                type: 'GET',
+                dataType: 'json',
+                success: function(json) {
+                    $btn.prop('disabled', false).html(
+                        '<i class="fa-solid fa-folder-magnifying-glass"></i> ' + $btn.data('label')
+                    );
+                    if (json.error) {
+                        alert('Error: ' + json.error);
+                        return;
+                    }
+                    // Refresh the image mismatch tab if visible
+                    if ($('#image-mismatch').length) {
+                        $('#image-mismatch').html(
+                            '<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>'
+                        );
+                        setTimeout(function() {
+                            $.ajax({
+                                url: 'index.php?route=shopmanager/inventory/sync.getImageMismatchTab&user_token=' + $('#user_token').val(),
+                                type: 'GET',
+                                dataType: 'html',
+                                success: function(html) { $('#image-mismatch').html(html); }
+                            });
+                        }, 300);
+                    }
+                    alert(
+                        'Scan terminé ✓\n' +
+                        '• Produits scannés : ' + json.scanned + '\n' +
+                        '• Avec images backup : ' + json.with_images + '\n' +
+                        '• Répertoires vides : ' + json.empty + '\n' +
+                        '• Non trouvés : ' + json.not_found
+                    );
+                },
+                error: function(xhr) {
+                    $btn.prop('disabled', false).html(
+                        '<i class="fa-solid fa-folder-magnifying-glass"></i> ' + $btn.data('label')
+                    );
+                    alert('AJAX error: ' + xhr.statusText);
+                }
+            });
+        });
+        // Store label for restore after spinner
+        $('#button-scan-backup').data('label', $('#button-scan-backup').text().trim());
     }
 
     /**
      * Démarre la synchronisation marketplace page par page
      */
-    function startMarketplaceSync() {
-        const url = $('#url_sync_marketplace').val();
+    function startMarketplaceSync(forceRefresh) {
+        forceRefresh = forceRefresh || false;
+        const urlInput = forceRefresh ? '#url_force_refresh_marketplace' : '#url_sync_marketplace';
+        const url = $(urlInput).val();
         const userToken = $('#user_token').val();
         let currentPage = 1;
         let totalPages = 1;
         let totalProcessed = 0;
+        let currentOffset = 0; // sous-batch offset dans une page eBay
         let isSyncing = true;
 
 
@@ -101,7 +163,7 @@
 
         // Show progress container
         $('#sync-progress-container').removeClass('d-none');
-        $('#button-sync-marketplace').prop('disabled', true);
+        $('#button-sync-marketplace, #button-force-refresh').prop('disabled', true);
         $('#sync-progress-bar').css('width', '0%').text('0%')
             .removeClass('bg-danger bg-success').addClass('progress-bar-animated');
 
@@ -112,7 +174,7 @@
 
 
             $.ajax({
-                url: url + '&page=' + currentPage + '&account_id=1',
+                url: url + '&page=' + currentPage + '&offset=' + currentOffset + '&account_id=1',
                 type: 'GET',
                 dataType: 'json',
                 beforeSend: function() {
@@ -139,13 +201,13 @@
                         $('#sync-message').text(messageText);
 
                         if (response.completed) {
-                            // Sync complete
+                            // Sync complet (dernière page, dernier batch)
                             $('#sync-progress-bar').removeClass('progress-bar-animated')
                                 .addClass('bg-success')
                                 .css('width', '100%')
                                 .text('100%');
                             $('#sync-message').text(`Synchronization complete! Total: ${totalProcessed} products updated`);
-                            $('#button-sync-marketplace').prop('disabled', false);
+                            $('#button-sync-marketplace, #button-force-refresh').prop('disabled', false);
                             showSuccessMessage(`eBay sync completed: ${totalProcessed} products updated`);
                             
                             // Refresh analytics data after 2 seconds
@@ -157,17 +219,22 @@
                             }, 2000);
                             
                             isSyncing = false;
-                        } else {
-                            // Continue with next page
+                        } else if (response.page_complete) {
+                            // Page eBay terminée → passer à la page suivante
                             currentPage++;
-                            setTimeout(syncPage, 500); // Wait 0.5 seconds between pages
+                            currentOffset = 0;
+                            setTimeout(syncPage, 500);
+                        } else {
+                            // Batch partiel → continuer sur la même page avec le prochain offset
+                            currentOffset = response.next_offset || (currentOffset + 20);
+                            setTimeout(syncPage, 300);
                         }
                     } else {
                         // Error
                         $('#sync-progress-bar').removeClass('progress-bar-animated')
                             .addClass('bg-danger');
                         $('#sync-message').text('Error: ' + (response.error || 'Unknown error'));
-                        $('#button-sync-marketplace').prop('disabled', false);
+                        $('#button-sync-marketplace, #button-force-refresh').prop('disabled', false);
                         showErrorMessage(response.error || 'Sync failed');
                         isSyncing = false;
                     }
@@ -178,7 +245,7 @@
                     $('#sync-progress-bar').removeClass('progress-bar-animated')
                         .addClass('bg-danger');
                     $('#sync-message').text('Network error occurred');
-                    $('#button-sync-marketplace').prop('disabled', false);
+                    $('#button-sync-marketplace, #button-force-refresh').prop('disabled', false);
                     showErrorMessage('Failed to sync with marketplace. Check console for details.');
                     isSyncing = false;
                 }

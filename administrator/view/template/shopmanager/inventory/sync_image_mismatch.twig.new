@@ -1,0 +1,708 @@
+{# Image Count Mismatch Tab — Section 1: OC vs eBay  |  Section 2: OC vs Backup #}
+
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+{# SECTION 1 — OC vs eBay                                                     #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <strong>{{ image_mismatch_total }}</strong> produit(s) avec un écart d'images entre OpenCart et eBay
+    <span class="ms-2 text-muted" data-bs-toggle="tooltip" title="{{ text_image_mismatch_info }}">
+      <i class="fa-solid fa-circle-info"></i>
+    </span>
+  </div>
+  <div class="d-flex gap-2">
+    {% if image_mismatch_total > 0 %}
+    <button class="btn btn-sm btn-warning" id="btn-bulk-fix-images"
+            data-bs-toggle="tooltip" title="{{ text_bulk_fix_tooltip }}">
+      <i class="fa-solid fa-images me-1"></i>{{ button_bulk_fix_images }}
+      <span class="badge bg-dark ms-1">{{ image_mismatch_total }}</span>
+    </button>
+    {% endif %}
+    <button class="btn btn-sm btn-secondary refresh-image-mismatch">
+      <i class="fa-solid fa-rotate-right"></i> {{ button_refresh }}
+    </button>
+  </div>
+</div>
+
+{% if image_mismatch|length > 0 %}
+  <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+    <table class="table table-bordered table-hover" style="white-space: nowrap; font-size: 11px;">
+      <thead>
+        <tr>
+          <th style="width: 80px;">
+            <a href="#" class="sort-image-mismatch" data-sort="product_id"
+               data-order="{{ image_mismatch_sort == 'product_id' and image_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product_id }}
+              {% if image_mismatch_sort == 'product_id' %}
+                <i class="fa-solid fa-sort-{{ image_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="max-width: 220px;">
+            <a href="#" class="sort-image-mismatch" data-sort="name"
+               data-order="{{ image_mismatch_sort == 'name' and image_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product }}
+              {% if image_mismatch_sort == 'name' %}
+                <i class="fa-solid fa-sort-{{ image_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="width: 130px;">{{ column_ebay_id }}</th>
+          <th style="width: 100px;">{{ column_location }}</th>
+          <th class="text-center" style="width: 90px;">
+            <a href="#" class="sort-image-mismatch" data-sort="oc_image_count"
+               data-order="{{ image_mismatch_sort == 'oc_image_count' and image_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              <i class="fa-brands fa-opencart"></i> {{ column_oc_images }}
+              {% if image_mismatch_sort == 'oc_image_count' %}
+                <i class="fa-solid fa-sort-{{ image_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center" style="width: 90px;">
+            <a href="#" class="sort-image-mismatch" data-sort="ebay_image_count"
+               data-order="{{ image_mismatch_sort == 'ebay_image_count' and image_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              <i class="fa-brands fa-ebay"></i> {{ column_ebay_images }}
+              {% if image_mismatch_sort == 'ebay_image_count' %}
+                <i class="fa-solid fa-sort-{{ image_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center" style="width: 70px;">
+            <a href="#" class="sort-image-mismatch" data-sort="image_diff"
+               data-order="{{ image_mismatch_sort == 'image_diff' and image_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_diff }}
+              {% if image_mismatch_sort == 'image_diff' %}
+                <i class="fa-solid fa-sort-{{ image_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center" style="width: 90px;">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in image_mismatch %}
+          <tr id="mismatch-row-{{ product.product_id }}">
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                title="{{ product.name }}">{{ product.name }}</td>
+            <td>
+              <a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary">
+                <i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}
+              </a>
+            </td>
+            <td><span class="badge bg-secondary">{{ product.location }}</span></td>
+            <td class="text-center">
+              <span class="badge {{ product.oc_image_count == 0 ? 'bg-danger' : 'bg-primary' }}">
+                {{ product.oc_image_count }}
+              </span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-info text-dark">{{ product.ebay_image_count }}</span>
+            </td>
+            <td class="text-center">
+              {% set diff = product.image_diff %}
+              {% if diff > 0 %}
+                <span class="badge bg-success">+{{ diff }}</span>
+              {% elseif diff < 0 %}
+                <span class="badge bg-danger">{{ diff }}</span>
+              {% else %}
+                <span class="badge bg-secondary">0</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <button type="button"
+                      class="btn btn-sm btn-warning btn-fix-single-image me-1"
+                      data-product-id="{{ product.product_id }}"
+                      title="{{ button_fix_single_image }}">
+                <i class="fa-solid fa-images"></i>
+              </button>
+              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}"
+                 class="btn btn-sm btn-primary" title="{{ column_actions }}">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination — eBay mismatch #}
+  {% if image_mismatch_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div class="text-muted" style="font-size: 12px;">
+        {{ image_mismatch_start }} – {{ image_mismatch_end }} / {{ image_mismatch_total }}
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% for page_num in 1..image_mismatch_num_pages %}
+            <li class="page-item {{ page_num == image_mismatch_page ? 'active' : '' }}">
+              <a class="page-link page-image-mismatch" href="#" data-page="{{ page_num }}">{{ page_num }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="alert alert-success">
+    <i class="fa-solid fa-check-circle"></i>
+    Aucun écart de nombre d'images détecté entre OpenCart et eBay.
+    <small class="d-block text-muted mt-1">{{ text_image_mismatch_info }}</small>
+  </div>
+{% endif %}
+
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+{# SECTION 2 — OC vs Backup                                                   #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<hr class="my-4">
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <div>
+    <h6 class="mb-0 fw-bold">
+      <i class="fa-solid fa-folder-open text-warning me-1"></i>
+      {{ text_backup_table_title }}
+    </h6>
+    <small class="text-muted">{{ text_backup_table_info }}</small>
+  </div>
+  <div>
+    <strong>{{ backup_mismatch_total }}</strong>
+  </div>
+</div>
+
+{% if backup_mismatch|length > 0 %}
+  <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+    <table class="table table-bordered table-hover" style="white-space: nowrap; font-size: 11px;">
+      <thead class="table-warning">
+        <tr>
+          <th style="width: 80px;">
+            <a href="#" class="sort-backup-mismatch" data-sort="product_id"
+               data-order="{{ backup_mismatch_sort == 'product_id' and backup_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product_id }}
+              {% if backup_mismatch_sort == 'product_id' %}
+                <i class="fa-solid fa-sort-{{ backup_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="max-width: 220px;">
+            <a href="#" class="sort-backup-mismatch" data-sort="name"
+               data-order="{{ backup_mismatch_sort == 'name' and backup_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product }}
+              {% if backup_mismatch_sort == 'name' %}
+                <i class="fa-solid fa-sort-{{ backup_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="width: 100px;">{{ column_location }}</th>
+          <th class="text-center" style="width: 90px;">
+            <a href="#" class="sort-backup-mismatch" data-sort="oc_image_count"
+               data-order="{{ backup_mismatch_sort == 'oc_image_count' and backup_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              <i class="fa-brands fa-opencart"></i> {{ column_oc_images }}
+              {% if backup_mismatch_sort == 'oc_image_count' %}
+                <i class="fa-solid fa-sort-{{ backup_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center" style="width: 90px;">
+            <a href="#" class="sort-backup-mismatch" data-sort="image_backup_count"
+               data-order="{{ backup_mismatch_sort == 'image_backup_count' and backup_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              <i class="fa-solid fa-folder-open"></i> {{ column_backup_images }}
+              {% if backup_mismatch_sort == 'image_backup_count' %}
+                <i class="fa-solid fa-sort-{{ backup_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center" style="width: 80px;">
+            <a href="#" class="sort-backup-mismatch" data-sort="backup_extra"
+               data-order="{{ backup_mismatch_sort == 'backup_extra' and backup_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_backup_extra }}
+              {% if backup_mismatch_sort == 'backup_extra' %}
+                <i class="fa-solid fa-sort-{{ backup_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center" style="width: 100px;">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in backup_mismatch %}
+          <tr id="backup-row-{{ product.product_id }}">
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+                title="{{ product.name }}">{{ product.name }}</td>
+            <td><span class="badge bg-secondary">{{ product.location }}</span></td>
+            <td class="text-center">
+              <span class="badge {{ product.oc_image_count == 0 ? 'bg-danger' : 'bg-primary' }}">
+                {{ product.oc_image_count }}
+              </span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-warning text-dark">{{ product.image_backup_count }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-success">+{{ product.backup_extra }}</span>
+            </td>
+            <td class="text-center">
+              <button type="button"
+                      class="btn btn-sm btn-warning btn-open-backup-popup"
+                      data-product-id="{{ product.product_id }}"
+                      data-product-name="{{ product.name|escape('html_attr') }}"
+                      title="{{ button_open_backup_popup }}">
+                <i class="fa-solid fa-folder-open me-1"></i>{{ button_open_backup_popup }}
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination — backup mismatch #}
+  {% if backup_mismatch_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div class="text-muted" style="font-size: 12px;">
+        {{ backup_mismatch_start }} – {{ backup_mismatch_end }} / {{ backup_mismatch_total }}
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% for page_num in 1..backup_mismatch_num_pages %}
+            <li class="page-item {{ page_num == backup_mismatch_page ? 'active' : '' }}">
+              <a class="page-link page-backup-mismatch" href="#" data-page="{{ page_num }}">{{ page_num }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="alert alert-success">
+    <i class="fa-solid fa-check-circle"></i>
+    Aucun produit avec plus d'images en backup qu'en OC.
+  </div>
+{% endif %}
+
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+{# MODAL — Bulk Fix eBay                                                       #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="bulk-fix-images-modal" tabindex="-1" aria-hidden="true"
+     data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fa-solid fa-images me-2 text-warning"></i>{{ text_bulk_fix_modal_title }}
+        </h5>
+      </div>
+      <div class="modal-body">
+        <div id="bulk-fix-progress-area">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div class="spinner-border text-warning" role="status"></div>
+            <span id="bulk-fix-status-text">{{ text_bulk_fix_processing }}</span>
+          </div>
+          <div class="progress mb-2">
+            <div class="progress-bar bg-warning progress-bar-striped progress-bar-animated"
+                 id="bulk-fix-progress-bar" role="progressbar" style="width: 100%"></div>
+          </div>
+        </div>
+        <div id="bulk-fix-results-area" style="display:none;">
+          <div class="row text-center mb-3">
+            <div class="col-4">
+              <div class="fw-bold text-success fs-4" id="bulk-fix-count-success">0</div>
+              <div class="text-muted small">{{ text_bulk_fix_imported }}</div>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold text-secondary fs-4" id="bulk-fix-count-skipped">0</div>
+              <div class="text-muted small">{{ text_bulk_fix_skipped }}</div>
+            </div>
+            <div class="col-4">
+              <div class="fw-bold text-danger fs-4" id="bulk-fix-count-errors">0</div>
+              <div class="text-muted small">{{ text_bulk_fix_errors }}</div>
+            </div>
+          </div>
+          <div class="alert alert-info small">
+            <i class="fa-solid fa-circle-info me-1"></i>{{ text_bulk_fix_reset_info }}
+          </div>
+          <div id="bulk-fix-error-details" style="display:none;">
+            <h6 class="text-danger">{{ text_bulk_fix_error_details }}</h6>
+            <ul class="small text-danger" id="bulk-fix-error-list"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="bulk-fix-modal-footer" style="display:none;">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_close }}</button>
+        <button type="button" class="btn btn-primary refresh-image-mismatch" data-bs-dismiss="modal">
+          <i class="fa-solid fa-rotate-right me-1"></i>{{ button_refresh }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+{# MODAL — Backup Images Popup                                                 #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<div class="modal fade" id="backup-images-modal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="backup-modal-title">
+          <i class="fa-solid fa-folder-open me-2 text-warning"></i>
+          <span id="backup-modal-title-text">{{ text_popup_backup_title }}</span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="backup-modal-body">
+        <div class="text-center p-5">
+          <i class="fa-solid fa-spinner fa-spin fa-3x text-muted"></i>
+        </div>
+      </div>
+      <div class="modal-footer" id="backup-modal-footer">
+        <div class="d-flex justify-content-between w-100 align-items-center">
+          <div>
+            <button type="button" class="btn btn-success" id="btn-backup-transfer" disabled>
+              <i class="fa-solid fa-arrow-right me-1"></i>{{ button_transfer_to_oc }}
+            </button>
+            <button type="button" class="btn btn-danger ms-2" id="btn-backup-delete" disabled>
+              <i class="fa-solid fa-trash me-1"></i>{{ button_delete_from_backup }}
+            </button>
+          </div>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_close }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+
+  var URL_BULK_FIX      = 'index.php?route=shopmanager/maintenance_image.bulkImportMismatchImages&user_token={{ user_token }}';
+  var URL_FIX_SINGLE    = 'index.php?route=shopmanager/maintenance_image.importEbayImagesForProductAjax&user_token={{ user_token }}';
+  var URL_BACKUP_LIST   = 'index.php?route=shopmanager/inventory/sync.getBackupImagesList&user_token={{ user_token }}';
+  var URL_BACKUP_XFER   = 'index.php?route=shopmanager/inventory/sync.transferBackupImages&user_token={{ user_token }}';
+  var URL_BACKUP_DELETE = 'index.php?route=shopmanager/inventory/sync.deleteBackupImages&user_token={{ user_token }}';
+
+  var TEXT_CONFIRM_BULK_FIX      = '{{ text_bulk_fix_confirm|escape('js') }}';
+  var TEXT_CONFIRM_DELETE_BACKUP = '{{ text_backup_confirm_delete|escape('js') }}';
+  var TEXT_TRANSFERRED           = '{{ text_backup_transferred|escape('js') }}';
+  var TEXT_DELETED               = '{{ text_backup_deleted|escape('js') }}';
+  var TEXT_ALREADY_IN_OC         = '{{ text_backup_already_in_oc|escape('js') }}';
+  var TEXT_TYPE_PRIMARY          = '{{ text_backup_type_primary|escape('js') }}';
+  var TEXT_TYPE_SECONDARY        = '{{ text_backup_type_secondary|escape('js') }}';
+  var TEXT_SELECT_ALL            = '{{ text_backup_select_all|escape('js') }}';
+  var TEXT_NO_FILES              = '{{ text_backup_no_files|escape('js') }}';
+
+  var currentBackupProductId = null;
+
+  // ─── Reload entire tab ────────────────────────────────────────────────────
+  function loadImageMismatchTab(page, sort, order, bpage, bsort, border) {
+    $.ajax({
+      url: 'index.php?route=shopmanager/inventory/sync.getImageMismatchTab&user_token={{ user_token }}',
+      type: 'GET',
+      data: { page: page, sort: sort, order: order, bpage: bpage || 1, bsort: bsort || 'product_id', border: border || 'ASC' },
+      dataType: 'html',
+      beforeSend: function() {
+        $('#image-mismatch').html('<div class="text-center p-5"><i class="fa-solid fa-spinner fa-spin fa-3x"></i></div>');
+      },
+      success: function(html) {
+        $('#image-mismatch').html(html);
+      },
+      error: function(xhr) {
+        console.error(xhr.statusText + '\r\n' + xhr.responseText);
+      }
+    });
+  }
+
+  // ─── eBay Bulk Fix ────────────────────────────────────────────────────────
+  $(document).off('click.bulkFixImages', '#btn-bulk-fix-images')
+             .on('click.bulkFixImages', '#btn-bulk-fix-images', function() {
+    if (!confirm(TEXT_CONFIRM_BULK_FIX)) return;
+
+    $('#bulk-fix-progress-area').show();
+    $('#bulk-fix-results-area').hide();
+    $('#bulk-fix-modal-footer').hide();
+    $('#bulk-fix-error-details').hide();
+    $('#bulk-fix-error-list').html('');
+    var $modal = new bootstrap.Modal(document.getElementById('bulk-fix-images-modal'));
+    $modal.show();
+
+    $.ajax({
+      url: URL_BULK_FIX,
+      type: 'POST',
+      dataType: 'json',
+      success: function(json) {
+        $('#bulk-fix-progress-area').hide();
+        $('#bulk-fix-results-area').show();
+        $('#bulk-fix-modal-footer').show();
+
+        if (json.error) {
+          $('#bulk-fix-results-area').html('<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>' + json.error + '</div>');
+          return;
+        }
+
+        $('#bulk-fix-count-success').text(json.success_count || 0);
+        $('#bulk-fix-count-skipped').text(json.skipped_count || 0);
+        $('#bulk-fix-count-errors').text(json.error_count || 0);
+
+        if (json.error_count > 0 && json.results) {
+          var errorHtml = '';
+          $.each(json.results, function(i, r) {
+            if (!r.success && !r.skipped) {
+              errorHtml += '<li>#' + r.product_id + ' — ' + (r.message || 'Unknown error') + '</li>';
+            }
+          });
+          if (errorHtml) {
+            $('#bulk-fix-error-list').html(errorHtml);
+            $('#bulk-fix-error-details').show();
+          }
+        }
+      },
+      error: function(xhr) {
+        $('#bulk-fix-progress-area').hide();
+        $('#bulk-fix-results-area').show();
+        $('#bulk-fix-modal-footer').show();
+        $('#bulk-fix-results-area').html('<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>AJAX error: ' + xhr.statusText + '</div>');
+      }
+    });
+  });
+
+  // ─── eBay Fix Single ──────────────────────────────────────────────────────
+  $(document).off('click.fixSingleImage', '.btn-fix-single-image')
+             .on('click.fixSingleImage', '.btn-fix-single-image', function() {
+    var $btn = $(this);
+    var productId = $btn.data('product-id');
+    $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+
+    $.ajax({
+      url: URL_FIX_SINGLE,
+      type: 'POST',
+      data: { product_id: productId },
+      dataType: 'json',
+      success: function(json) {
+        if (json.error) {
+          $btn.prop('disabled', false).html('<i class="fa-solid fa-images"></i>');
+          alert('Error: ' + json.error);
+          return;
+        }
+        if (json.success) {
+          $btn.closest('tr').css('opacity', '0.5');
+          $btn.html('<i class="fa-solid fa-check text-success"></i>').prop('disabled', true);
+        } else {
+          $btn.prop('disabled', false).html('<i class="fa-solid fa-images"></i>');
+          $btn.attr('title', json.message || 'Skipped');
+        }
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-images"></i>');
+        alert('AJAX error: ' + xhr.statusText);
+      }
+    });
+  });
+
+  // ─── Refresh ──────────────────────────────────────────────────────────────
+  $(document).off('click.refreshMismatch', '.refresh-image-mismatch')
+             .on('click.refreshMismatch', '.refresh-image-mismatch', function() {
+    loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                          {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+  });
+
+  // ─── Sort — eBay table ────────────────────────────────────────────────────
+  $(document).off('click.sortMismatch', '.sort-image-mismatch')
+             .on('click.sortMismatch', '.sort-image-mismatch', function(e) {
+    e.preventDefault();
+    loadImageMismatchTab(1, $(this).data('sort'), $(this).data('order'),
+                          {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+  });
+
+  // ─── Pagination — eBay table ──────────────────────────────────────────────
+  $(document).off('click.pageMismatch', '.page-image-mismatch')
+             .on('click.pageMismatch', '.page-image-mismatch', function(e) {
+    e.preventDefault();
+    loadImageMismatchTab($(this).data('page'), '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                          {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+  });
+
+  // ─── Sort — Backup table ──────────────────────────────────────────────────
+  $(document).off('click.sortBackup', '.sort-backup-mismatch')
+             .on('click.sortBackup', '.sort-backup-mismatch', function(e) {
+    e.preventDefault();
+    loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                          1, $(this).data('sort'), $(this).data('order'));
+  });
+
+  // ─── Pagination — Backup table ────────────────────────────────────────────
+  $(document).off('click.pageBackup', '.page-backup-mismatch')
+             .on('click.pageBackup', '.page-backup-mismatch', function(e) {
+    e.preventDefault();
+    loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                          $(this).data('page'), '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+  });
+
+  // ─── Open Backup Popup ────────────────────────────────────────────────────
+  $(document).off('click.openBackupPopup', '.btn-open-backup-popup')
+             .on('click.openBackupPopup', '.btn-open-backup-popup', function() {
+    var productId   = $(this).data('product-id');
+    var productName = $(this).data('product-name');
+    currentBackupProductId = productId;
+
+    $('#backup-modal-title-text').text(productName + ' (#' + productId + ')');
+    $('#backup-modal-body').html('<div class="text-center p-5"><i class="fa-solid fa-spinner fa-spin fa-3x text-muted"></i></div>');
+    $('#btn-backup-transfer').prop('disabled', true);
+    $('#btn-backup-delete').prop('disabled', true);
+
+    var $modal = new bootstrap.Modal(document.getElementById('backup-images-modal'));
+    $modal.show();
+
+    $.ajax({
+      url: URL_BACKUP_LIST,
+      type: 'GET',
+      data: { product_id: productId },
+      dataType: 'json',
+      success: function(json) {
+        if (json.error) {
+          $('#backup-modal-body').html('<div class="alert alert-danger">' + json.error + '</div>');
+          return;
+        }
+
+        var files = json.files || [];
+        if (files.length === 0) {
+          $('#backup-modal-body').html('<div class="alert alert-info">' + TEXT_NO_FILES + '</div>');
+          return;
+        }
+
+        var html = '<div class="mb-2">';
+        html += '<label class="form-check-label fw-bold me-2">';
+        html += '<input type="checkbox" id="backup-select-all" class="form-check-input me-1"> ' + TEXT_SELECT_ALL;
+        html += '</label>';
+        html += '</div>';
+        html += '<div class="row g-2" id="backup-images-grid">';
+
+        $.each(files, function(i, f) {
+          var badgeClass  = f.type === 'primary' ? 'bg-danger' : 'bg-secondary';
+          var typeLabel   = f.type === 'primary' ? TEXT_TYPE_PRIMARY : TEXT_TYPE_SECONDARY;
+          var alreadyInOC = f.oc_exists ? true : false;
+          var cardClass   = alreadyInOC ? 'border-success' : 'border-warning';
+          var checkDisabled = alreadyInOC ? 'disabled' : '';
+
+          html += '<div class="col-6 col-md-4 col-lg-3">';
+          html += '<div class="card h-100 ' + cardClass + '">';
+          html += '<div class="card-img-top position-relative" style="height:130px;overflow:hidden;background:#f8f9fa;">';
+          html += '<img src="' + f.backup_url + '" class="w-100 h-100" style="object-fit:contain;" loading="lazy" onerror="this.src=\'data:image/svg+xml,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'100\\\' height=\\\'100\\\'><text y=\\\'50\\\' font-size=\\\'40\\\'>⚠</text></svg>\'">';
+          html += '<span class="position-absolute top-0 start-0 badge ' + badgeClass + ' m-1" style="font-size:9px;">' + typeLabel + '</span>';
+          if (alreadyInOC) {
+            html += '<span class="position-absolute top-0 end-0 badge bg-success m-1" style="font-size:9px;"><i class="fa-solid fa-check"></i> ' + TEXT_ALREADY_IN_OC + '</span>';
+          }
+          html += '</div>';
+          html += '<div class="card-body p-1 d-flex align-items-center">';
+          html += '<input type="checkbox" class="form-check-input backup-file-check me-2 flex-shrink-0" data-filename="' + f.filename + '" ' + checkDisabled + '>';
+          html += '<small class="text-truncate text-muted" title="' + f.filename + '" style="font-size:10px;">' + f.filename + '</small>';
+          html += '</div>';
+          html += '</div>';
+          html += '</div>';
+        });
+
+        html += '</div>';
+
+        $('#backup-modal-body').html(html);
+
+        // Select-all handler
+        $('#backup-select-all').off('change').on('change', function() {
+          var checked = $(this).is(':checked');
+          $('.backup-file-check:not(:disabled)').prop('checked', checked);
+          updateBackupButtons();
+        });
+
+        // Individual check
+        $(document).off('change.backupCheck', '.backup-file-check')
+                   .on('change.backupCheck', '.backup-file-check', function() {
+          updateBackupButtons();
+        });
+
+        updateBackupButtons();
+      },
+      error: function(xhr) {
+        $('#backup-modal-body').html('<div class="alert alert-danger">AJAX error: ' + xhr.statusText + '</div>');
+      }
+    });
+  });
+
+  function updateBackupButtons() {
+    var anyChecked = $('.backup-file-check:not(:disabled):checked').length > 0;
+    $('#btn-backup-transfer').prop('disabled', !anyChecked);
+    $('#btn-backup-delete').prop('disabled', !anyChecked);
+  }
+
+  function getCheckedFilenames() {
+    var names = [];
+    $('.backup-file-check:not(:disabled):checked').each(function() {
+      names.push($(this).data('filename'));
+    });
+    return names;
+  }
+
+  // ─── Transfer Backup → OC ─────────────────────────────────────────────────
+  $(document).off('click.backupTransfer', '#btn-backup-transfer')
+             .on('click.backupTransfer', '#btn-backup-transfer', function() {
+    var filenames = getCheckedFilenames();
+    if (!filenames.length) return;
+
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>{{ button_transfer_to_oc|escape('js') }}');
+
+    $.ajax({
+      url: URL_BACKUP_XFER,
+      type: 'POST',
+      data: { product_id: currentBackupProductId, 'filenames[]': filenames },
+      dataType: 'json',
+      success: function(json) {
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right me-1"></i>{{ button_transfer_to_oc|escape('js') }}');
+        if (json.error) { alert(json.error); return; }
+        var count = json.transferred || 0;
+        alert(TEXT_TRANSFERRED.replace('%d', count));
+        // Reload popup content
+        var $row = $('#backup-row-' + currentBackupProductId);
+        $row.length && $row.css('opacity', '0.5');
+        bootstrap.Modal.getInstance(document.getElementById('backup-images-modal')).hide();
+        loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                              {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right me-1"></i>{{ button_transfer_to_oc|escape('js') }}');
+        alert('AJAX error: ' + xhr.statusText);
+      }
+    });
+  });
+
+  // ─── Delete from Backup ───────────────────────────────────────────────────
+  $(document).off('click.backupDelete', '#btn-backup-delete')
+             .on('click.backupDelete', '#btn-backup-delete', function() {
+    if (!confirm(TEXT_CONFIRM_DELETE_BACKUP)) return;
+    var filenames = getCheckedFilenames();
+    if (!filenames.length) return;
+
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>{{ button_delete_from_backup|escape('js') }}');
+
+    $.ajax({
+      url: URL_BACKUP_DELETE,
+      type: 'POST',
+      data: { product_id: currentBackupProductId, 'filenames[]': filenames },
+      dataType: 'json',
+      success: function(json) {
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>{{ button_delete_from_backup|escape('js') }}');
+        if (json.error) { alert(json.error); return; }
+        var count = json.deleted || 0;
+        alert(TEXT_DELETED.replace('%d', count));
+        bootstrap.Modal.getInstance(document.getElementById('backup-images-modal')).hide();
+        loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                              {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+      },
+      error: function(xhr) {
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>{{ button_delete_from_backup|escape('js') }}');
+        alert('AJAX error: ' + xhr.statusText);
+      }
+    });
+  });
+
+})();
+</script>
+

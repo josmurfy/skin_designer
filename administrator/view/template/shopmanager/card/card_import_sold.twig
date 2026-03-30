@@ -1,0 +1,386 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <h1><i class="fa-solid fa-receipt me-2"></i>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <style>
+    #upload-zone { border: 2px dashed #adb5bd; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; transition: border-color .2s; }
+    #upload-zone:hover, #upload-zone.dragover { border-color: #0d6efd; background: #f0f4ff; }
+    #upload-zone input[type=file] { display: none; }
+    #preview-container { display: none; }
+    .stat-badge { display: inline-block; padding: 8px 16px; border-radius: 6px; margin: 4px; font-weight: 600; }
+    .preview-thumb-img { cursor: zoom-in; }
+    #img-popup { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.75); z-index:9999; align-items:center; justify-content:center; cursor:zoom-out; }
+    #img-popup img { max-width:90vw; max-height:90vh; border-radius:6px; box-shadow:0 4px 32px #000; }
+    .missing-badge { background: #dc3545; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+  </style>
+
+  <div class="container-fluid">
+
+    <!-- UPLOAD CARD -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <i class="fa-solid fa-file-arrow-up me-2"></i>{{ heading_title }}
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-2">{{ text_upload_instructions }}</p>
+        <small class="text-muted d-block mb-3">{{ text_csv_format }}</small>
+        <form id="form-upload" method="post" enctype="multipart/form-data">
+          <div id="upload-zone" onclick="document.getElementById('input-file').click()">
+            <i class="fa-solid fa-cloud-arrow-up fa-3x text-muted mb-2"></i>
+            <p class="mb-1 text-muted">Click or drag &amp; drop your CSV here</p>
+            <span id="file-name-display" class="text-secondary small"></span>
+            <input type="file" id="input-file" name="file" accept=".csv,.txt">
+          </div>
+          <div class="mt-3 d-flex align-items-center gap-2">
+            <button type="submit" id="button-upload" class="btn btn-primary">
+              <i class="fa-solid fa-upload me-1"></i>{{ button_upload }}
+            </button>
+            <span id="upload-spinner" class="text-muted" style="display:none;">
+              <i class="fa-solid fa-spinner fa-spin"></i> {{ text_uploading }}
+            </span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PREVIEW CARD (shown after upload) -->
+    <div class="card mb-3" id="preview-container">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+          <i class="fa-solid fa-eye me-2"></i>{{ text_preview_title }}
+          <span id="preview-count-badge" class="badge bg-primary ms-2" style="display:none;"></span>
+          <span id="preview-missing-badge" class="missing-badge ms-2" style="display:none;"></span>
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <button type="button" id="button-save-to-db" class="btn btn-success" style="display:none;">
+            <i class="fa-solid fa-database me-1"></i>{{ button_save_to_db }}
+            <span id="save-spinner" style="display:none;"><i class="fa-solid fa-spinner fa-spin ms-1"></i></span>
+          </button>
+        </div>
+      </div>
+      <div class="alert alert-warning rounded-0 border-0 mb-0 px-3 py-2" style="display:none;" id="preview-warning-missing">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        <strong>{{ text_missing_card_number }}:</strong> Some rows are highlighted in <span class="badge bg-danger">red</span> — they are missing a card number. You can edit the field before saving.
+      </div>
+      <div class="card-body p-2" id="preview-content"></div>
+    </div>
+
+    <!-- 2-COL: list + filter sidebar -->
+    <div class="row">
+
+      <!-- Filter sidebar -->
+      <div class="col-lg-3 col-md-12 order-lg-last mb-3">
+        <div class="card">
+          <div class="card-header">
+            <i class="fa-solid fa-filter me-1"></i> {{ button_filter }}
+          </div>
+          <div class="card-body">
+
+            <div class="mb-3 position-relative">
+              <label class="form-label">{{ text_filter_title }}</label>
+              <input type="text" id="filter-title" value="{{ filters.filter_title }}" class="form-control form-control-sm" autocomplete="off">
+              <ul id="autocomplete-title" class="dropdown-menu"></ul>
+            </div>
+
+            <div class="mb-3 position-relative">
+              <label class="form-label">{{ text_filter_category }}</label>
+              <input type="text" id="filter-category" value="{{ filters.filter_category }}" class="form-control form-control-sm" autocomplete="off">
+              <ul id="autocomplete-category" class="dropdown-menu"></ul>
+            </div>
+
+            <div class="mb-3 position-relative">
+              <label class="form-label">{{ text_filter_year }}</label>
+              <input type="text" id="filter-year" value="{{ filters.filter_year }}" class="form-control form-control-sm" autocomplete="off">
+              <ul id="autocomplete-year" class="dropdown-menu"></ul>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{{ text_filter_brand }}</label>
+              <select id="filter-brand" class="form-select form-select-sm">
+                <option value="">&mdash;</option>
+                {% for brand in brands %}
+                <option value="{{ brand }}" {% if filters.filter_brand == brand %}selected{% endif %}>{{ brand }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="mb-3 position-relative">
+              <label class="form-label">{{ text_filter_set }}</label>
+              <input type="text" id="filter-set" value="{{ filters.filter_set }}" class="form-control form-control-sm" autocomplete="off">
+              <ul id="autocomplete-set" class="dropdown-menu"></ul>
+            </div>
+
+            <div class="mb-3 position-relative">
+              <label class="form-label">{{ text_filter_player }}</label>
+              <input type="text" id="filter-player" value="{{ filters.filter_player }}" class="form-control form-control-sm" autocomplete="off">
+              <ul id="autocomplete-player" class="dropdown-menu"></ul>
+            </div>
+
+            <div class="mb-3 position-relative">
+              <label class="form-label">{{ text_filter_card_number }}</label>
+              <input type="text" id="filter-card-number" value="{{ filters.filter_card_number }}" class="form-control form-control-sm" autocomplete="off">
+              <ul id="autocomplete-card-number" class="dropdown-menu"></ul>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{{ text_filter_grader }}</label>
+              <select id="filter-grader" class="form-select form-select-sm">
+                <option value="">&mdash;</option>
+                {% for grader in graders %}
+                <option value="{{ grader }}" {% if filters.filter_grader == grader %}selected{% endif %}>{{ grader }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col">
+                <label class="form-label">{{ text_filter_min_price }}</label>
+                <input type="number" id="filter-min-price" value="{{ filters.filter_min_price }}" class="form-control form-control-sm" min="0" step="0.01">
+              </div>
+              <div class="col">
+                <label class="form-label">{{ text_filter_max_price }}</label>
+                <input type="number" id="filter-max-price" value="{{ filters.filter_max_price }}" class="form-control form-control-sm" min="0" step="0.01">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input type="checkbox" id="filter-missing-card-number" class="form-check-input" value="1" {% if filters.filter_missing_card_number %}checked{% endif %}>
+                <label class="form-check-label" for="filter-missing-card-number">{{ text_filter_missing_card_number }}</label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">{{ text_limit }}</label>
+              <select id="input-limit" class="form-select form-select-sm">
+                <option value="25"  {% if limit == 25  %}selected{% endif %}>25</option>
+                <option value="50"  {% if limit == 50  %}selected{% endif %}>50</option>
+                <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                <option value="250" {% if limit == 250 %}selected{% endif %}>250</option>
+              </select>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+              <button type="button" id="button-reset-filter" class="btn btn-outline-secondary btn-sm">
+                <i class="fa-solid fa-redo me-1"></i>{{ button_reset_filter }}
+              </button>
+              <button type="button" id="button-filter" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-magnifying-glass me-1"></i>{{ button_filter }}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div><!-- /filter -->
+
+      <!-- Records list -->
+      <div class="col col-lg-9 col-md-12">
+        <div class="card mb-3">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span><i class="fa-solid fa-list me-2"></i>{{ text_records_list }}</span>
+            <div class="d-flex gap-2">
+              <button type="button" id="button-delete-selected" class="btn btn-sm btn-danger">
+                <i class="fa-regular fa-trash-can me-1"></i>{{ button_delete_selected }}
+              </button>
+              <button type="button" id="button-truncate" class="btn btn-sm btn-outline-danger">
+                <i class="fa-solid fa-bomb me-1"></i>{{ button_truncate }}
+              </button>
+            </div>
+          </div>
+          <div id="sold-list" class="card-body p-0">
+            {{ list }}
+          </div>
+        </div>
+      </div><!-- /list -->
+
+    </div><!-- /.row -->
+
+  </div><!-- /.container-fluid -->
+</div><!-- /#content -->
+
+<!-- IMAGE POPUP -->
+<div id="img-popup" onclick="this.style.display='none';">
+  <img id="img-popup-img" src="" alt="">
+</div>
+
+<!-- IMPORT RESULTS MODAL -->
+<div class="modal fade" id="importResultsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-circle-check me-2"></i>{{ text_import_results }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>{{ text_import_summary }}</p>
+        <div class="row text-center g-2 mt-1">
+          <div class="col-6"><div class="stat-badge bg-primary text-white w-100"><div class="fw-bold fs-4" id="stat-total-file">&mdash;</div><small>{{ text_total_in_file }}</small></div></div>
+          <div class="col-6"><div class="stat-badge bg-success text-white w-100"><div class="fw-bold fs-4" id="stat-inserted">&mdash;</div><small>{{ text_inserted }}</small></div></div>
+          <div class="col-6"><div class="stat-badge bg-warning text-dark w-100"><div class="fw-bold fs-4" id="stat-skipped">&mdash;</div><small>{{ text_skipped }}</small></div></div>
+          <div class="col-6"><div class="stat-badge bg-info text-white w-100"><div class="fw-bold fs-4" id="stat-in-db">&mdash;</div><small>{{ text_in_database }}</small></div></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_close }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALERT MODAL -->
+<div class="modal fade" id="alertModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="alert-modal-title">{{ text_error }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="alert-modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_ok }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirm-modal-title">Confirm</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="confirm-modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" id="confirm-modal-ok">{{ button_yes }}</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_no }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+
+    // Dynamic list reload on sort/pagination
+    $('#sold-list').on('click', 'thead a, .pagination a', function(e) {
+        e.preventDefault();
+        loadList(this.href.split('?')[1] ? '?' + this.href.split('?')[1] : '');
+    });
+
+    function buildFilterUrl() {
+        var p = '';
+        var v;
+        v = $('#filter-title').val();        if (v) p += '&filter_title='       + encodeURIComponent(v);
+        v = $('#filter-category').val();     if (v) p += '&filter_category='    + encodeURIComponent(v);
+        v = $('#filter-year').val();         if (v) p += '&filter_year='        + encodeURIComponent(v);
+        v = $('#filter-brand').val();        if (v) p += '&filter_brand='       + encodeURIComponent(v);
+        v = $('#filter-set').val();          if (v) p += '&filter_set='         + encodeURIComponent(v);
+        v = $('#filter-player').val();       if (v) p += '&filter_player='      + encodeURIComponent(v);
+        v = $('#filter-card-number').val();  if (v) p += '&filter_card_number=' + encodeURIComponent(v);
+        v = $('#filter-grader').val();       if (v) p += '&filter_grader='      + encodeURIComponent(v);
+        v = $('#filter-min-price').val();    if (v) p += '&filter_min_price='   + encodeURIComponent(v);
+        v = $('#filter-max-price').val();    if (v) p += '&filter_max_price='   + encodeURIComponent(v);
+        if ($('#filter-missing-card-number').is(':checked')) p += '&filter_missing_card_number=1';
+        v = $('#input-limit').val();         if (v && v != '25') p += '&limit=' + encodeURIComponent(v);
+        return p;
+    }
+
+    function loadList(extraParams) {
+        $('#sold-list').html('<div class="text-center p-4"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-muted"></i></div>');
+        $.ajax({
+            url: 'index.php?route=shopmanager/card/card_import_sold.list&user_token={{ user_token }}' + (extraParams || buildFilterUrl()),
+            type: 'GET',
+            success: function(html) {
+                $('#sold-list').html(html);
+                $('html, body').animate({ scrollTop: $('#sold-list').offset().top - 80 }, 200);
+            },
+            error: function(xhr) {
+                $('#sold-list').html('<div class="alert alert-danger m-3">Erreur ' + xhr.status + '</div>');
+            }
+        });
+    }
+
+    $('#button-filter').on('click', function() {
+        window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_import_sold&user_token={{ user_token }}' + buildFilterUrl());
+        loadList('');
+    });
+
+    $('#button-reset-filter').on('click', function() {
+        $('#filter-title, #filter-category, #filter-year, #filter-set, #filter-player, #filter-card-number, #filter-min-price, #filter-max-price').val('');
+        $('#filter-brand, #filter-grader').val('');
+        $('#filter-missing-card-number').prop('checked', false);
+        $('#input-limit').val('25');
+        window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_import_sold&user_token={{ user_token }}');
+        loadList('');
+    });
+
+    $('#input-limit, #filter-brand, #filter-grader').on('change', function() { $('#button-filter').trigger('click'); });
+    $('#filter-missing-card-number').on('change', function() { $('#button-filter').trigger('click'); });
+
+    $(document).on('change', '#check-all', function() {
+        $('#sold-list input[name="selected[]"]').prop('checked', $(this).prop('checked'));
+    });
+
+    // Autocomplete
+    function setupAutocomplete(inputId, ulId, field) {
+        $('#' + inputId).on('input', function() {
+            var term = $(this).val();
+            if (term.length < 1) { $('#' + ulId).removeClass('show').empty(); return; }
+            $.getJSON('index.php?route=shopmanager/card/card_import_sold.autocomplete&user_token={{ user_token }}&field=' + field + '&term=' + encodeURIComponent(term), function(values) {
+                var ul = $('#' + ulId);
+                ul.empty();
+                values.forEach(function(v) {
+                    ul.append('<li><a class="dropdown-item" href="#">' + v + '</a></li>');
+                });
+                if (values.length) ul.addClass('show').css({ position: 'absolute', zIndex: 1055, minWidth: '100%' });
+                else ul.removeClass('show');
+                ul.find('a').on('click', function(e) { e.preventDefault(); $('#' + inputId).val($(this).text()); ul.removeClass('show').empty(); });
+            });
+        });
+        $(document).on('click', function(e) { if (!$(e.target).closest('#' + inputId + ',#' + ulId).length) $('#' + ulId).removeClass('show').empty(); });
+    }
+    setupAutocomplete('filter-title',       'autocomplete-title',       'title');
+    setupAutocomplete('filter-category',    'autocomplete-category',    'category');
+    setupAutocomplete('filter-year',        'autocomplete-year',        'year');
+    setupAutocomplete('filter-set',         'autocomplete-set',         'set_name');
+    setupAutocomplete('filter-player',      'autocomplete-player',      'player');
+    setupAutocomplete('filter-card-number', 'autocomplete-card-number', 'card_number');
+
+    // Image popup
+    $(document).on('click', '.preview-thumb-img', function() {
+        var src = $(this).data('fullsrc') || $(this).attr('src');
+        document.getElementById('img-popup-img').src = src;
+        document.getElementById('img-popup').style.display = 'flex';
+    });
+
+    // JS URLs / Texts for external JS
+    var URL_UPLOAD          = '{{ upload|raw }}';
+    var URL_SAVE            = '{{ save|raw }}';
+    var URL_DELETE          = '{{ delete|raw }}';
+    var URL_TRUNCATE        = '{{ truncate|raw }}';
+    var USER_TOKEN          = '{{ user_token|default("") }}';
+
+    var TEXT_UPLOAD_SUCCESS   = '{{ text_import_summary|escape("js") }}';
+    var TEXT_IMPORT_RESULTS   = '{{ text_import_results|escape("js") }}';
+    var TEXT_TRUNCATE_CONFIRM = '{{ text_truncate_confirm|escape("js") }}';
+    var TEXT_DELETE_CONFIRM   = '{{ text_delete_confirm|escape("js") }}';
+    var TEXT_NO_RECORDS       = '{{ text_no_records|escape("js") }}';
+    var TEXT_ERROR            = '{{ text_error|escape("js") }}';
+    var TEXT_NO_DATA          = '{{ error_no_data|escape("js") }}';
+    var TEXT_AJAX_ERROR       = '{{ error_ajax|escape("js") }}';
+    var TEXT_MISSING_CARD_NR  = '{{ text_missing_card_number|escape("js") }}';
+
+</script>
+<script src="view/javascript/shopmanager/card/card_import_sold.js?v=20260330a"></script>
+
+{{ footer }}

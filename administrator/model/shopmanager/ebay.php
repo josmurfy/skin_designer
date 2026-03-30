@@ -1484,7 +1484,6 @@ private function createInventoryItemGroup($template_data, $headers, $site_settin
             curl_setopt($ch2, CURLOPT_RETURNTRANSFER, true);
             $response2  = curl_exec($ch2);
             $httpCode2  = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
-            curl_close($ch2);
 
             if ($httpCode2 >= 200 && $httpCode2 < 300) {
                 //$this->log->write('[createInventoryItemGroup] Retry success after stale-group cleanup: ' . $groupKey . ' HTTP=' . $httpCode2);
@@ -3052,7 +3051,14 @@ public function getImages($marketplace_item_id) {
         return [
             'category_id' => $item['PrimaryCategory']['CategoryID'] ?? null,
             'condition_id' => $item['ConditionID'] ?? null,
-            'item_specifics' => $item['ItemSpecifics']['NameValueList'] ?? null
+            'item_specifics' => $item['ItemSpecifics']['NameValueList'] ?? null,
+            'image_count' => (function($item) {
+                $urls = $item['PictureDetails']['PictureURL'] ?? null;
+                if (is_array($urls)) return count($urls);
+                if (is_string($urls) && !empty($urls)) return 1;
+                if (!empty($item['PictureDetails']['GalleryURL'])) return 1;
+                return 0;
+            })($item),
         ];
     }
 

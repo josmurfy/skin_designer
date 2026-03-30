@@ -35,6 +35,7 @@
   /* ===============================
      Performance & Stability
      =============================== */
+  "diffEditor.maxComputationTime": 0,
   "editor.largeFileOptimizations": true,
 "editor.semanticHighlighting.enabled": false,
 "suitecloud.developerAssistant.disableWelcomeNotification": true,
