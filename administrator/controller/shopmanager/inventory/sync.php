@@ -884,6 +884,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncSingleProduct(): void {
+        $this->load->model('shopmanager/marketplace');
         $json = [];
 
         try {
@@ -1108,6 +1109,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncQuantityToEbay(): void {
+        $this->load->model('shopmanager/marketplace');
         $json = [];
         $product_id = (int)($this->request->post['product_id'] ?? 0);
 
