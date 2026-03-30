@@ -1768,12 +1768,14 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Returns JSON array of file info for the backup popup.
      */
     public function getBackupImagesList(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
         $json = [];
+        try {
         $product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
 
         if (!$product_id) {
             $json['error'] = 'Missing product_id';
-            $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
             return;
         }
@@ -1806,13 +1808,16 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $type = 'secondary';
             }
 
+            $img_info = (is_readable($backup_dir . $file)) ? @getimagesize($backup_dir . $file) : false;
             $files[] = [
                 'filename'   => $file,
                 'type'       => $type,
                 'oc_exists'  => $oc_exists,
                 'oc_path'    => $oc_rel_path,
-                'backup_url' => 'image_backup/data/product/' . $product_id . '/' . rawurlencode($file),
+                'backup_url' => HTTP_CATALOG . 'image_backup/data/product/' . $product_id . '/' . rawurlencode($file),
                 'size'       => filesize($backup_dir . $file),
+                'width'      => $img_info ? $img_info[0] : 0,
+                'height'     => $img_info ? $img_info[1] : 0,
             ];
         }
 
@@ -1825,7 +1830,9 @@ class Sync extends \Opencart\System\Engine\Controller {
         $json['success'] = true;
         $json['product_id'] = $product_id;
         $json['files'] = $files;
-        $this->response->addHeader('Content-Type: application/json');
+        } catch (\Exception $e) {
+            $json['error'] = 'getBackupImagesList: ' . $e->getMessage();
+        }
         $this->response->setOutput(json_encode($json));
     }
 
@@ -1834,15 +1841,16 @@ class Sync extends \Opencart\System\Engine\Controller {
      * POST: product_id, filenames[] (array)
      */
     public function transferBackupImages(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
         $this->load->model('shopmanager/inventory/sync');
         $json = [];
-
+        try {
         $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
         $filenames  = isset($this->request->post['filenames']) ? (array)$this->request->post['filenames'] : [];
 
         if (!$product_id || empty($filenames)) {
             $json['error'] = 'Missing product_id or filenames';
-            $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
             return;
         }
@@ -1926,8 +1934,9 @@ class Sync extends \Opencart\System\Engine\Controller {
         $json['skipped']     = $skipped;
         $json['errors']      = $errors;
         $json['message']     = "$transferred image(s) transférée(s) dans OC.";
-
-        $this->response->addHeader('Content-Type: application/json');
+        } catch (\Exception $e) {
+            $json['error'] = 'transferBackupImages: ' . $e->getMessage();
+        }
         $this->response->setOutput(json_encode($json));
     }
 
@@ -1936,14 +1945,15 @@ class Sync extends \Opencart\System\Engine\Controller {
      * POST: product_id, filenames[] (array)
      */
     public function deleteBackupImages(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
         $json = [];
-
+        try {
         $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
         $filenames  = isset($this->request->post['filenames']) ? (array)$this->request->post['filenames'] : [];
 
         if (!$product_id || empty($filenames)) {
             $json['error'] = 'Missing product_id or filenames';
-            $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
             return;
         }
@@ -1979,8 +1989,179 @@ class Sync extends \Opencart\System\Engine\Controller {
         $json['deleted']  = $deleted;
         $json['errors']   = $errors;
         $json['message']  = "$deleted image(s) supprimée(s) du backup.";
+        } catch (\Exception $e) {
+            $json['error'] = 'deleteBackupImages: ' . $e->getMessage();
+        }
+        $this->response->setOutput(json_encode($json));
+    }
 
+    /**
+     * Returns both OC images and backup images for a product, with dimensions.
+     * GET: product_id
+     */
+    public function getProductImagesFull(): void {
+        ini_set('display_errors', '0');
         $this->response->addHeader('Content-Type: application/json');
+        $json = [];
+        try {
+            $product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
+            if (!$product_id) { $json['error'] = 'Missing product_id'; $this->response->setOutput(json_encode($json)); return; }
+
+            // ── OC images ─────────────────────────────────────────────────
+            $oc_images = [];
+            $prod = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
+            $main_path = $prod->row['image'] ?? '';
+            if ($main_path && $main_path !== 'no_image.png' && $main_path !== '') {
+                $abs  = DIR_IMAGE . $main_path;
+                $info = is_readable($abs) ? @getimagesize($abs) : false;
+                $oc_images[] = ['role' => 'primary', 'image' => $main_path, 'url' => HTTP_CATALOG . 'image/' . $main_path, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
+            }
+            $secs = $this->db->query("SELECT image, sort_order FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' ORDER BY sort_order ASC");
+            foreach ($secs->rows as $row) {
+                $abs  = DIR_IMAGE . $row['image'];
+                $info = is_readable($abs) ? @getimagesize($abs) : false;
+                $oc_images[] = ['role' => 'secondary', 'image' => $row['image'], 'url' => HTTP_CATALOG . 'image/' . $row['image'], 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0, 'sort_order' => (int)$row['sort_order']];
+            }
+
+            // ── Backup images ──────────────────────────────────────────────
+            $backup_dir    = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+            $backup_images = [];
+            if (is_dir($backup_dir)) {
+                $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+                foreach (scandir($backup_dir) as $file) {
+                    if ($file === '.' || $file === '..') continue;
+                    if (!in_array(strtolower(pathinfo($file, PATHINFO_EXTENSION)), $allowed_ext)) continue;
+                    $subfolder = substr((string)$product_id, 0, 2);
+                    $oc_rel    = 'catalog/product/' . $subfolder . '/' . $product_id . '/' . $file;
+                    $full_path = $backup_dir . $file;
+                    $info      = is_readable($full_path) ? @getimagesize($full_path) : false;
+                    $basename  = pathinfo($file, PATHINFO_FILENAME);
+                    $type = 'unknown';
+                    if (preg_match('/^' . preg_quote((string)$product_id) . 'pri\d+/', $basename)) $type = 'primary';
+                    elseif (preg_match('/^' . preg_quote((string)$product_id) . 'sec\d+/', $basename)) $type = 'secondary';
+                    $backup_images[] = ['filename' => $file, 'type' => $type, 'url' => HTTP_CATALOG . 'image_backup/data/product/' . $product_id . '/' . rawurlencode($file), 'oc_exists' => file_exists(DIR_IMAGE . $oc_rel), 'oc_path' => $oc_rel, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
+                }
+                usort($backup_images, function($a, $b) {
+                    if ($a['type'] === $b['type']) return strcmp($a['filename'], $b['filename']);
+                    return ($a['type'] === 'primary') ? -1 : 1;
+                });
+            }
+
+            $json['success']       = true;
+            $json['product_id']    = $product_id;
+            $json['oc_images']     = $oc_images;
+            $json['backup_images'] = $backup_images;
+        } catch (\Exception $e) {
+            $json['error'] = 'getProductImagesFull: ' . $e->getMessage();
+        }
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Remove an image from OpenCart (primary clears product.image, secondary deletes from product_image).
+     * POST: product_id, image_path, role
+     */
+    public function removeOcImage(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
+        $json = [];
+        try {
+            $product_id = (int)($this->request->post['product_id'] ?? 0);
+            $image_path = $this->request->post['image_path'] ?? '';
+            $role       = $this->request->post['role'] ?? 'secondary';
+            if (!$product_id || !$image_path) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
+            if ($role === 'primary') {
+                $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '' WHERE product_id = '" . $product_id . "'");
+            } else {
+                $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($image_path) . "'");
+            }
+            $json['success'] = true;
+        } catch (\Exception $e) { $json['error'] = 'removeOcImage: ' . $e->getMessage(); }
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Promote an OC secondary image to primary (demotes old primary to secondary).
+     * POST: product_id, image_path
+     */
+    public function setOcImagePrimary(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
+        $json = [];
+        try {
+            $product_id = (int)($this->request->post['product_id'] ?? 0);
+            $image_path = $this->request->post['image_path'] ?? '';
+            if (!$product_id || !$image_path) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
+
+            $cur         = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
+            $old_primary = $cur->row['image'] ?? '';
+
+            if ($old_primary && $old_primary !== $image_path) {
+                $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($old_primary) . "'");
+                if (!$chk->num_rows) {
+                    $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
+                    $next = (int)($sort->row['m'] ?? 0) + 1;
+                    $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($old_primary) . "', sort_order = '" . $next . "'");
+                }
+            }
+            $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($image_path) . "'");
+            $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($image_path) . "' WHERE product_id = '" . $product_id . "'");
+            $json['success'] = true;
+        } catch (\Exception $e) { $json['error'] = 'setOcImagePrimary: ' . $e->getMessage(); }
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Copy one backup image to OC with explicit role (primary|secondary).
+     * POST: product_id, filename, role
+     */
+    public function transferBackupAsRole(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
+        $json = [];
+        try {
+            $product_id = (int)($this->request->post['product_id'] ?? 0);
+            $filename   = basename($this->request->post['filename'] ?? '');
+            $role       = $this->request->post['role'] ?? 'secondary';
+            if (!$product_id || !$filename) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
+
+            $backup_dir = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+            $subfolder  = substr((string)$product_id, 0, 2);
+            $dest_rel   = 'catalog/product/' . $subfolder . '/' . $product_id . '/';
+            $dest_dir   = DIR_IMAGE . $dest_rel;
+            $src        = $backup_dir . $filename;
+
+            if (!file_exists($src)) { $json['error'] = 'Backup file not found: ' . $filename; $this->response->setOutput(json_encode($json)); return; }
+            if (!is_dir($dest_dir)) mkdir($dest_dir, 0755, true);
+
+            $dst     = $dest_dir . $filename;
+            $oc_path = $dest_rel . $filename;
+            if (!file_exists($dst) && !copy($src, $dst)) { $json['error'] = 'Failed to copy file'; $this->response->setOutput(json_encode($json)); return; }
+
+            if ($role === 'primary') {
+                $cur = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
+                $old = $cur->row['image'] ?? '';
+                if ($old && $old !== $oc_path) {
+                    $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($old) . "'");
+                    if (!$chk->num_rows) {
+                        $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
+                        $next = (int)($sort->row['m'] ?? 0) + 1;
+                        $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($old) . "', sort_order = '" . $next . "'");
+                    }
+                }
+                $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($oc_path) . "'");
+                $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($oc_path) . "' WHERE product_id = '" . $product_id . "'");
+            } else {
+                $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($oc_path) . "'");
+                if (!$chk->num_rows) {
+                    $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
+                    $next = (int)($sort->row['m'] ?? 0) + 1;
+                    $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($oc_path) . "', sort_order = '" . $next . "'");
+                }
+            }
+            $json['success'] = true;
+            $json['oc_path'] = $oc_path;
+        } catch (\Exception $e) { $json['error'] = 'transferBackupAsRole: ' . $e->getMessage(); }
         $this->response->setOutput(json_encode($json));
     }
 

@@ -340,35 +340,33 @@
 </div>
 
 {# ═══════════════════════════════════════════════════════════════════════════ #}
-{# MODAL — Backup Images Popup                                                 #}
+{# MODAL — Review Images (OC + Backup)                                         #}
 {# ═══════════════════════════════════════════════════════════════════════════ #}
 <div class="modal fade" id="backup-images-modal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="backup-modal-title">
-          <i class="fa-solid fa-folder-open me-2 text-warning"></i>
-          <span id="backup-modal-title-text">{{ text_popup_backup_title }}</span>
-        </h5>
+      <div class="modal-header py-2">
+        <div>
+          <h6 class="modal-title mb-0" id="backup-modal-title">
+            <i class="fa-solid fa-images me-2 text-warning"></i>
+            <span id="backup-modal-title-text">Review Images</span>
+          </h6>
+          <small class="text-muted" style="font-size:11px;">
+            <span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#198754;vertical-align:middle;"></span> ≥800px &nbsp;
+            <span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#ffc107;vertical-align:middle;"></span> 500–799px &nbsp;
+            <span style="display:inline-block;width:11px;height:11px;border-radius:2px;background:#dc3545;vertical-align:middle;"></span> &lt;500px
+          </small>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-body" id="backup-modal-body">
+      <div class="modal-body" id="backup-modal-body" style="min-height:300px;">
         <div class="text-center p-5">
           <i class="fa-solid fa-spinner fa-spin fa-3x text-muted"></i>
         </div>
       </div>
-      <div class="modal-footer" id="backup-modal-footer">
-        <div class="d-flex justify-content-between w-100 align-items-center">
-          <div>
-            <button type="button" class="btn btn-success" id="btn-backup-transfer" disabled>
-              <i class="fa-solid fa-arrow-right me-1"></i>{{ button_transfer_to_oc }}
-            </button>
-            <button type="button" class="btn btn-danger ms-2" id="btn-backup-delete" disabled>
-              <i class="fa-solid fa-trash me-1"></i>{{ button_delete_from_backup }}
-            </button>
-          </div>
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_close }}</button>
-        </div>
+      <div class="modal-footer py-2">
+        <small class="text-muted me-auto" style="font-size:11px;">Changements appliqués immédiatement.</small>
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">{{ button_close }}</button>
       </div>
     </div>
   </div>
@@ -379,21 +377,26 @@
 
   var URL_BULK_FIX      = 'index.php?route=shopmanager/maintenance_image.bulkImportMismatchImages&user_token={{ user_token }}';
   var URL_FIX_SINGLE    = 'index.php?route=shopmanager/maintenance_image.importEbayImagesForProductAjax&user_token={{ user_token }}';
-  var URL_BACKUP_LIST   = 'index.php?route=shopmanager/inventory/sync.getBackupImagesList&user_token={{ user_token }}';
-  var URL_BACKUP_XFER   = 'index.php?route=shopmanager/inventory/sync.transferBackupImages&user_token={{ user_token }}';
-  var URL_BACKUP_DELETE = 'index.php?route=shopmanager/inventory/sync.deleteBackupImages&user_token={{ user_token }}';
+  var URL_IMAGES_FULL = 'index.php?route=shopmanager/inventory/sync.getProductImagesFull&user_token={{ user_token }}';
+  var URL_REMOVE_OC   = 'index.php?route=shopmanager/inventory/sync.removeOcImage&user_token={{ user_token }}';
+  var URL_SET_PRIMARY = 'index.php?route=shopmanager/inventory/sync.setOcImagePrimary&user_token={{ user_token }}';
+  var URL_XFER_ROLE   = 'index.php?route=shopmanager/inventory/sync.transferBackupAsRole&user_token={{ user_token }}';
+  var URL_DEL_BACKUP  = 'index.php?route=shopmanager/inventory/sync.deleteBackupImages&user_token={{ user_token }}';
 
-  var TEXT_CONFIRM_BULK_FIX      = '{{ text_bulk_fix_confirm|escape('js') }}';
-  var TEXT_CONFIRM_DELETE_BACKUP = '{{ text_backup_confirm_delete|escape('js') }}';
-  var TEXT_TRANSFERRED           = '{{ text_backup_transferred|escape('js') }}';
-  var TEXT_DELETED               = '{{ text_backup_deleted|escape('js') }}';
-  var TEXT_ALREADY_IN_OC         = '{{ text_backup_already_in_oc|escape('js') }}';
-  var TEXT_TYPE_PRIMARY          = '{{ text_backup_type_primary|escape('js') }}';
-  var TEXT_TYPE_SECONDARY        = '{{ text_backup_type_secondary|escape('js') }}';
-  var TEXT_SELECT_ALL            = '{{ text_backup_select_all|escape('js') }}';
-  var TEXT_NO_FILES              = '{{ text_backup_no_files|escape('js') }}';
+  var TEXT_CONFIRM_BULK_FIX = '{{ text_bulk_fix_confirm|escape('js') }}';
 
   var currentBackupProductId = null;
+  var MIN_RES_GOOD = 800, MIN_RES_OK = 500;
+
+  function resQuality(w, h) {
+    var m = Math.min(w || 0, h || 0);
+    if (m <= 0)            return 'danger';
+    if (m >= MIN_RES_GOOD) return 'success';
+    if (m >= MIN_RES_OK)   return 'warning';
+    return 'danger';
+  }
+  function dimLabel(w, h) { return (w && h) ? (w + '×' + h) : '?×?'; }
+  function escAttr(s)     { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
   // ─── Reload entire tab ────────────────────────────────────────────────────
   function loadImageMismatchTab(page, sort, order, bpage, bsort, border) {
@@ -539,167 +542,201 @@
                           $(this).data('page'), '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
   });
 
+  // ─── Render OC images section ─────────────────────────────────────────────
+  function renderOcSection(ocImages, productId) {
+    if (!ocImages || !ocImages.length) {
+      return '<div class="alert alert-warning py-2 mb-0"><i class="fa-solid fa-triangle-exclamation me-1"></i>Aucune image dans OpenCart pour ce produit.</div>';
+    }
+    var html = '<div class="row g-2">';
+    $.each(ocImages, function(i, img) {
+      var qual  = resQuality(img.width, img.height);
+      var dim   = dimLabel(img.width, img.height);
+      var isPri = img.role === 'primary';
+      html += '<div class="col-6 col-md-3 col-lg-2">';
+      html += '<div class="card h-100" style="border:3px solid var(--bs-' + qual + ');">';
+      html += '<div class="position-relative" style="height:130px;background:#f5f5f5;overflow:hidden;">';
+      html += '<img src="' + img.url + '" style="width:100%;height:100%;object-fit:contain;" loading="lazy" onerror="this.style.opacity=0.15;">';
+      html += '<span class="position-absolute top-0 start-0 m-1 badge ' + (isPri ? 'bg-danger' : 'bg-secondary') + '" style="font-size:9px;">' + (isPri ? '&#11088; Principal' : 'Secondaire') + '</span>';
+      html += '<span class="position-absolute bottom-0 end-0 m-1 badge bg-' + qual + '" style="font-size:9px;">' + dim + '</span>';
+      html += '</div>';
+      html += '<div class="card-body p-1 d-flex flex-column gap-1">';
+      if (!isPri) {
+        html += '<button type="button" class="btn btn-sm btn-outline-warning w-100 btn-popup-set-primary"'
+              + ' data-product-id="' + productId + '" data-image="' + encodeURIComponent(img.image) + '"'
+              + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-star me-1"></i>&#8594; Principal</button>';
+      } else {
+        html += '<button type="button" class="btn btn-sm btn-outline-secondary w-100" disabled'
+              + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-star me-1"></i>Principal &#10003;</button>';
+      }
+      html += '<button type="button" class="btn btn-sm btn-outline-danger w-100 btn-popup-remove-oc"'
+            + ' data-product-id="' + productId + '" data-image="' + encodeURIComponent(img.image) + '" data-role="' + img.role + '"'
+            + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-trash me-1"></i>Retirer OC</button>';
+      html += '</div></div></div>';
+    });
+    return html + '</div>';
+  }
+
+  // ─── Render Backup images section ─────────────────────────────────────────
+  function renderBackupSection(backupImages, productId) {
+    if (!backupImages || !backupImages.length) {
+      return '<div class="alert alert-info py-2 mb-0"><i class="fa-solid fa-folder-open me-1"></i>Aucune image backup pour ce produit.</div>';
+    }
+    var html = '<div class="row g-2">';
+    $.each(backupImages, function(i, f) {
+      var qual  = resQuality(f.width, f.height);
+      var dim   = dimLabel(f.width, f.height);
+      var inOC  = f.oc_exists;
+      html += '<div class="col-6 col-md-3 col-lg-2">';
+      html += '<div class="card h-100" style="border:3px solid var(--bs-' + qual + ');">';
+      html += '<div class="position-relative" style="height:130px;background:#f5f5f5;overflow:hidden;">';
+      html += '<img src="' + f.url + '" style="width:100%;height:100%;object-fit:contain;" loading="lazy" onerror="this.style.opacity=0.15;">';
+      if (inOC) {
+        html += '<div class="position-absolute top-0 start-0 w-100 text-center" style="background:rgba(25,135,84,0.85);padding:2px 0;">';
+        html += '<small style="color:#fff;font-size:10px;"><i class="fa-solid fa-check me-1"></i>D&#233;j&#224; dans OC</small>';
+        html += '</div>';
+      }
+      var typeBadge = (f.type === 'primary') ? 'bg-danger' : 'bg-secondary';
+      html += '<span class="position-absolute bottom-0 start-0 m-1 badge ' + typeBadge + '" style="font-size:9px;">' + (f.type === 'primary' ? '&#11088;' : 'Sec.') + '</span>';
+      html += '<span class="position-absolute bottom-0 end-0 m-1 badge bg-' + qual + '" style="font-size:9px;">' + dim + '</span>';
+      html += '</div>';
+      html += '<div class="card-body p-1 d-flex flex-column gap-1">';
+      if (!inOC) {
+        html += '<button type="button" class="btn btn-sm btn-outline-danger w-100 btn-popup-xfer-pri"'
+              + ' data-product-id="' + productId + '" data-filename="' + escAttr(f.filename) + '"'
+              + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-star me-1"></i>&#8594; Principal</button>';
+        html += '<button type="button" class="btn btn-sm btn-outline-primary w-100 btn-popup-xfer-sec"'
+              + ' data-product-id="' + productId + '" data-filename="' + escAttr(f.filename) + '"'
+              + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-plus me-1"></i>&#8594; Secondaire</button>';
+      }
+      html += '<button type="button" class="btn btn-sm btn-outline-danger w-100 btn-popup-del-backup"'
+            + ' data-product-id="' + productId + '" data-filename="' + escAttr(f.filename) + '"'
+            + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-trash me-1"></i>Suppr. backup</button>';
+      html += '</div></div></div>';
+    });
+    return html + '</div>';
+  }
+
+  // ─── Load/Reload popup content ────────────────────────────────────────────
+  function reloadPopup(productId) {
+    $('#backup-modal-body').html('<div class="text-center p-4"><i class="fa-solid fa-spinner fa-spin fa-2x text-muted"></i></div>');
+    $.ajax({
+      url: URL_IMAGES_FULL, type: 'GET', dataType: 'json',
+      data: { product_id: productId },
+      success: function(json) {
+        if (json.error) { $('#backup-modal-body').html('<div class="alert alert-danger">' + json.error + '</div>'); return; }
+        var ocCnt  = (json.oc_images     || []).length;
+        var bckCnt = (json.backup_images || []).length;
+        var html = '<h6 class="fw-bold mb-2 text-primary"><i class="fa-brands fa-opencart me-1"></i>Images OpenCart <span class="badge bg-primary">' + ocCnt + '</span></h6>';
+        html += renderOcSection(json.oc_images, productId);
+        html += '<hr class="my-3">';
+        html += '<h6 class="fw-bold mb-2 text-warning"><i class="fa-solid fa-folder-open me-1"></i>Images Backup <span class="badge bg-warning text-dark">' + bckCnt + '</span></h6>';
+        html += renderBackupSection(json.backup_images, productId);
+        $('#backup-modal-body').html(html);
+      },
+      error: function(xhr) {
+        console.error('getProductImagesFull:', xhr.status, xhr.responseText);
+        $('#backup-modal-body').html('<div class="alert alert-danger">Erreur AJAX (' + xhr.status + ')</div>');
+      }
+    });
+  }
+
   // ─── Open Backup Popup ────────────────────────────────────────────────────
   $(document).off('click.openBackupPopup', '.btn-open-backup-popup')
              .on('click.openBackupPopup', '.btn-open-backup-popup', function() {
     var productId   = $(this).data('product-id');
     var productName = $(this).data('product-name');
     currentBackupProductId = productId;
-
     $('#backup-modal-title-text').text(productName + ' (#' + productId + ')');
-    $('#backup-modal-body').html('<div class="text-center p-5"><i class="fa-solid fa-spinner fa-spin fa-3x text-muted"></i></div>');
-    $('#btn-backup-transfer').prop('disabled', true);
-    $('#btn-backup-delete').prop('disabled', true);
-
     var $modal = new bootstrap.Modal(document.getElementById('backup-images-modal'));
     $modal.show();
+    reloadPopup(productId);
+  });
 
+  // ─── Set OC image as Primary ──────────────────────────────────────────────
+  $(document).off('click.setPrimary', '.btn-popup-set-primary')
+             .on('click.setPrimary', '.btn-popup-set-primary', function() {
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var pid  = $(this).data('product-id');
+    var img  = decodeURIComponent($(this).data('image'));
     $.ajax({
-      url: URL_BACKUP_LIST,
-      type: 'GET',
-      data: { product_id: productId },
-      dataType: 'json',
+      url: URL_SET_PRIMARY, type: 'POST', dataType: 'json',
+      data: { product_id: pid, image_path: img },
       success: function(json) {
-        if (json.error) {
-          $('#backup-modal-body').html('<div class="alert alert-danger">' + json.error + '</div>');
-          return;
-        }
-
-        var files = json.files || [];
-        if (files.length === 0) {
-          $('#backup-modal-body').html('<div class="alert alert-info">' + TEXT_NO_FILES + '</div>');
-          return;
-        }
-
-        var html = '<div class="mb-2">';
-        html += '<label class="form-check-label fw-bold me-2">';
-        html += '<input type="checkbox" id="backup-select-all" class="form-check-input me-1"> ' + TEXT_SELECT_ALL;
-        html += '</label>';
-        html += '</div>';
-        html += '<div class="row g-2" id="backup-images-grid">';
-
-        $.each(files, function(i, f) {
-          var badgeClass  = f.type === 'primary' ? 'bg-danger' : 'bg-secondary';
-          var typeLabel   = f.type === 'primary' ? TEXT_TYPE_PRIMARY : TEXT_TYPE_SECONDARY;
-          var alreadyInOC = f.oc_exists ? true : false;
-          var cardClass   = alreadyInOC ? 'border-success' : 'border-warning';
-          var checkDisabled = alreadyInOC ? 'disabled' : '';
-
-          html += '<div class="col-6 col-md-4 col-lg-3">';
-          html += '<div class="card h-100 ' + cardClass + '">';
-          html += '<div class="card-img-top position-relative" style="height:130px;overflow:hidden;background:#f8f9fa;">';
-          html += '<img src="' + f.backup_url + '" class="w-100 h-100" style="object-fit:contain;" loading="lazy" onerror="this.src=\'data:image/svg+xml,<svg xmlns=\\\'http://www.w3.org/2000/svg\\\' width=\\\'100\\\' height=\\\'100\\\'><text y=\\\'50\\\' font-size=\\\'40\\\'>⚠</text></svg>\'">';
-          html += '<span class="position-absolute top-0 start-0 badge ' + badgeClass + ' m-1" style="font-size:9px;">' + typeLabel + '</span>';
-          if (alreadyInOC) {
-            html += '<span class="position-absolute top-0 end-0 badge bg-success m-1" style="font-size:9px;"><i class="fa-solid fa-check"></i> ' + TEXT_ALREADY_IN_OC + '</span>';
-          }
-          html += '</div>';
-          html += '<div class="card-body p-1 d-flex align-items-center">';
-          html += '<input type="checkbox" class="form-check-input backup-file-check me-2 flex-shrink-0" data-filename="' + f.filename + '" ' + checkDisabled + '>';
-          html += '<small class="text-truncate text-muted" title="' + f.filename + '" style="font-size:10px;">' + f.filename + '</small>';
-          html += '</div>';
-          html += '</div>';
-          html += '</div>';
-        });
-
-        html += '</div>';
-
-        $('#backup-modal-body').html(html);
-
-        // Select-all handler
-        $('#backup-select-all').off('change').on('change', function() {
-          var checked = $(this).is(':checked');
-          $('.backup-file-check:not(:disabled)').prop('checked', checked);
-          updateBackupButtons();
-        });
-
-        // Individual check
-        $(document).off('change.backupCheck', '.backup-file-check')
-                   .on('change.backupCheck', '.backup-file-check', function() {
-          updateBackupButtons();
-        });
-
-        updateBackupButtons();
+        if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-star me-1"></i>&#8594; Principal'); return; }
+        reloadPopup(pid);
       },
-      error: function(xhr) {
-        $('#backup-modal-body').html('<div class="alert alert-danger">AJAX error: ' + xhr.statusText + '</div>');
-      }
+      error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-star me-1"></i>&#8594; Principal'); }
     });
   });
 
-  function updateBackupButtons() {
-    var anyChecked = $('.backup-file-check:not(:disabled):checked').length > 0;
-    $('#btn-backup-transfer').prop('disabled', !anyChecked);
-    $('#btn-backup-delete').prop('disabled', !anyChecked);
-  }
-
-  function getCheckedFilenames() {
-    var names = [];
-    $('.backup-file-check:not(:disabled):checked').each(function() {
-      names.push($(this).data('filename'));
-    });
-    return names;
-  }
-
-  // ─── Transfer Backup → OC ─────────────────────────────────────────────────
-  $(document).off('click.backupTransfer', '#btn-backup-transfer')
-             .on('click.backupTransfer', '#btn-backup-transfer', function() {
-    var filenames = getCheckedFilenames();
-    if (!filenames.length) return;
-
-    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>{{ button_transfer_to_oc|escape('js') }}');
-
+  // ─── Remove OC image ──────────────────────────────────────────────────────
+  $(document).off('click.removeOc', '.btn-popup-remove-oc')
+             .on('click.removeOc', '.btn-popup-remove-oc', function() {
+    if (!confirm('Confirmer la suppression de cette image de OpenCart ?')) return;
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var pid  = $(this).data('product-id');
+    var img  = decodeURIComponent($(this).data('image'));
+    var role = $(this).data('role');
     $.ajax({
-      url: URL_BACKUP_XFER,
-      type: 'POST',
-      data: { product_id: currentBackupProductId, 'filenames[]': filenames },
-      dataType: 'json',
+      url: URL_REMOVE_OC, type: 'POST', dataType: 'json',
+      data: { product_id: pid, image_path: img, role: role },
       success: function(json) {
-        $btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right me-1"></i>{{ button_transfer_to_oc|escape('js') }}');
-        if (json.error) { alert(json.error); return; }
-        var count = json.transferred || 0;
-        alert(TEXT_TRANSFERRED.replace('%d', count));
-        // Reload popup content
-        var $row = $('#backup-row-' + currentBackupProductId);
-        $row.length && $row.css('opacity', '0.5');
-        bootstrap.Modal.getInstance(document.getElementById('backup-images-modal')).hide();
-        loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
-                              {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+        if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Retirer OC'); return; }
+        reloadPopup(pid);
       },
-      error: function(xhr) {
-        $btn.prop('disabled', false).html('<i class="fa-solid fa-arrow-right me-1"></i>{{ button_transfer_to_oc|escape('js') }}');
-        alert('AJAX error: ' + xhr.statusText);
-      }
+      error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Retirer OC'); }
     });
   });
 
-  // ─── Delete from Backup ───────────────────────────────────────────────────
-  $(document).off('click.backupDelete', '#btn-backup-delete')
-             .on('click.backupDelete', '#btn-backup-delete', function() {
-    if (!confirm(TEXT_CONFIRM_DELETE_BACKUP)) return;
-    var filenames = getCheckedFilenames();
-    if (!filenames.length) return;
-
-    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>{{ button_delete_from_backup|escape('js') }}');
-
+  // ─── Transfer Backup → Principal ─────────────────────────────────────────
+  $(document).off('click.xferPri', '.btn-popup-xfer-pri')
+             .on('click.xferPri', '.btn-popup-xfer-pri', function() {
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var pid  = $(this).data('product-id');
+    var fn   = $(this).data('filename');
     $.ajax({
-      url: URL_BACKUP_DELETE,
-      type: 'POST',
-      data: { product_id: currentBackupProductId, 'filenames[]': filenames },
-      dataType: 'json',
+      url: URL_XFER_ROLE, type: 'POST', dataType: 'json',
+      data: { product_id: pid, filename: fn, role: 'primary' },
       success: function(json) {
-        $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>{{ button_delete_from_backup|escape('js') }}');
-        if (json.error) { alert(json.error); return; }
-        var count = json.deleted || 0;
-        alert(TEXT_DELETED.replace('%d', count));
-        bootstrap.Modal.getInstance(document.getElementById('backup-images-modal')).hide();
-        loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
-                              {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+        if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-star me-1"></i>&#8594; Principal'); return; }
+        reloadPopup(pid);
       },
-      error: function(xhr) {
-        $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>{{ button_delete_from_backup|escape('js') }}');
-        alert('AJAX error: ' + xhr.statusText);
-      }
+      error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-star me-1"></i>&#8594; Principal'); }
+    });
+  });
+
+  // ─── Transfer Backup → Secondaire ────────────────────────────────────────
+  $(document).off('click.xferSec', '.btn-popup-xfer-sec')
+             .on('click.xferSec', '.btn-popup-xfer-sec', function() {
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var pid  = $(this).data('product-id');
+    var fn   = $(this).data('filename');
+    $.ajax({
+      url: URL_XFER_ROLE, type: 'POST', dataType: 'json',
+      data: { product_id: pid, filename: fn, role: 'secondary' },
+      success: function(json) {
+        if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-plus me-1"></i>&#8594; Secondaire'); return; }
+        reloadPopup(pid);
+      },
+      error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-plus me-1"></i>&#8594; Secondaire'); }
+    });
+  });
+
+  // ─── Supprimer du Backup ──────────────────────────────────────────────────
+  $(document).off('click.delBackup', '.btn-popup-del-backup')
+             .on('click.delBackup', '.btn-popup-del-backup', function() {
+    if (!confirm('Supprimer d\u00e9finitivement cette image du backup ?')) return;
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var pid  = $(this).data('product-id');
+    var fn   = $(this).data('filename');
+    $.ajax({
+      url: URL_DEL_BACKUP, type: 'POST', dataType: 'json',
+      data: { product_id: pid, 'filenames[]': [fn] },
+      success: function(json) {
+        if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Suppr. backup'); return; }
+        reloadPopup(pid);
+      },
+      error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Suppr. backup'); }
     });
   });
 
