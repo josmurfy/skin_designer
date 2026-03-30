@@ -117,11 +117,10 @@ class Product extends \Opencart\System\Engine\Model {
 
 		
 		// Description
-				$data = $this->model_shopmanager_catalog_product->generateDescription($data);
-		//$data = $this->model_shopmanager_catalog_product->generateMetaTag($data);
 		foreach ($data['product_description'] as $language_id => $value) {
-			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $value);
+			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $data);
 		}
+		$this->model_shopmanager_catalog_product->refreshDescriptions($product_id);
 
 		// Code
 		if (isset($data['product_code'])) {
@@ -325,14 +324,10 @@ class Product extends \Opencart\System\Engine\Model {
 		// Description
 		$this->model_shopmanager_catalog_product->deleteDescriptions($product_id);
 
-		
-		$data = $this->model_shopmanager_catalog_product->generateDescription($data);
-		//$data = $this->model_shopmanager_catalog_product->generateMetaTag($data);
-	//print("<pre>".print_r ($data['product_description'],true )."</pre>");
-
 		foreach ($data['product_description'] as $language_id => $value) {
-			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $value);
+			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $data);
 		}
+		$this->model_shopmanager_catalog_product->refreshDescriptions($product_id);
 
 		// Code
 		$this->model_shopmanager_catalog_product->deleteCodes($product_id);
@@ -1719,15 +1714,19 @@ public function getTotalProducts(array $data = []): int {
 	 * $this->model_shopmanager_catalog_product->addDescription($product_id, $language_id, $product_data);
 	 */
 	public function addDescription(int $product_id, int $language_id, array $data): void {
+		// $data contient le tableau complet du produit (pas seulement la description de cette langue)
+		// On récupère les données de description pour cette langue
+		$desc = isset($data['product_description'][$language_id]) ? $data['product_description'][$language_id] : $data;
 
 
 		//$specifics_value = (!empty($data['specifics'])) ? " '".$this->db->escape(json_encode($data['specifics'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES))."' " : ' NULL';
 		
 		$specifics_slq='';
 		
-		if (isset($data['specifics']) && $data['specifics']!='null'){
+		$specifics_src = $desc['specifics'] ?? $data['specifics'] ?? null;
+		if (isset($specifics_src) && $specifics_src!='null'){
 			$specifics=array();
-			foreach ($data['specifics'] as $key=>$product_specific ){
+			foreach ($specifics_src as $key=>$product_specific ){
 				unset($product_specific['specifics_id']);
 				$specifics[$key]=$product_specific;
 			}
@@ -1738,18 +1737,18 @@ public function getTotalProducts(array $data = []): int {
 		}
 		//$this->db->query("INSERT INTO `" . DB_PREFIX . "product_description` SET `product_id` = '" . (int)$product_id . "', `language_id` = '" . (int)$language_id . "', `name` = '" . $this->db->escape($data['name']) . "', `description` = '" . $this->db->escape($data['description']) . "', `tag` = '" . $this->db->escape($data['tag']) . "', `meta_title` = '" . $this->db->escape($data['meta_title']) . "', `meta_description` = '" . $this->db->escape($data['meta_description']) . "', `meta_keyword` = '" . $this->db->escape($data['meta_keyword']) . "'");
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_description` 
-		SET  `product_id` = '" . (int)$product_id . "', `language_id` = '" . (int)$language_id . "', `name` = '" . $this->db->escape($data['name']) . "', 
-		`description` = '" . $this->db->escape($data['description']) . "', `tag` = '" . $this->db->escape($data['tag']) . "',
-		`meta_title` = '" . $this->db->escape($data['meta_title'] ?? '') . "', `meta_description` = '" . $this->db->escape($data['meta_description'] ?? '') . "', 
-		`meta_keyword` = '" . $this->db->escape($data['meta_keyword'] ?? '') . "' " .$specifics_slq . " , 
-		`color` = '" . $this->db->escape($data['color'] ?? '') . "', 
-		`description_supp` = '" . $this->db->escape($data['description_supp'] ?? '') . "',
-		`condition_supp` = '" . $this->db->escape($data['condition_supp'] ?? '') . "' , 
-		`included_accessories` = '" . $this->db->escape($data['included_accessories'] ?? '') . "'");
+		SET  `product_id` = '" . (int)$product_id . "', `language_id` = '" . (int)$language_id . "', `name` = '" . $this->db->escape($desc['name'] ?? '') . "', 
+		`description` = '', `tag` = '" . $this->db->escape($desc['tag'] ?? '') . "',
+		`meta_title` = '" . $this->db->escape($desc['meta_title'] ?? '') . "', `meta_description` = '" . $this->db->escape($desc['meta_description'] ?? '') . "', 
+		`meta_keyword` = '" . $this->db->escape($desc['meta_keyword'] ?? '') . "' " .$specifics_slq . " , 
+		`color` = '" . $this->db->escape($desc['color'] ?? '') . "', 
+		`description_supp` = '" . $this->db->escape($desc['description_supp'] ?? '') . "',
+		`condition_supp` = '" . $this->db->escape($desc['condition_supp'] ?? '') . "' , 
+		`included_accessories` = '" . $this->db->escape($desc['included_accessories'] ?? '') . "'");
 	
 	// SEO URL - Sauvegarder dans oc_seo_url (OpenCart 4)
-	if (isset($data['keyword']) && $data['keyword']) {
-		$data['keyword'] = str_replace('.', '', $data['keyword']);
+	if (isset($desc['keyword']) && $desc['keyword']) {
+		$seo_keyword = str_replace('.', '', $desc['keyword']);
 		
 		// Supprimer l'ancienne URL pour cette langue/produit
 		$this->db->query("DELETE FROM " . DB_PREFIX . "seo_url WHERE `key` = 'product_id' AND `value` = '" . (int)$product_id . "' AND language_id = '" . (int)$language_id . "'");
@@ -1761,11 +1760,12 @@ public function getTotalProducts(array $data = []): int {
 			    language_id = '" . (int)$language_id . "',
 			    `key` = 'product_id',
 			    `value` = '" . (int)$product_id . "',
-			    keyword = '" . $this->db->escape($data['keyword']) . "',
+			    keyword = '" . $this->db->escape($seo_keyword) . "',
 			    query = 'product_id=" . (int)$product_id . "',
 			    sort_order = 0
 		");
 	}
+
 }
 
 	/**
@@ -1827,15 +1827,22 @@ public function getTotalProducts(array $data = []): int {
 
 		$product_description_data = array();
 
-		$query = $this->db->query("
-			SELECT pd.*, ua.keyword 
-			FROM " . DB_PREFIX . "product_description pd 
-			LEFT JOIN " . DB_PREFIX . "seo_url ua 
-			ON (ua.`key` = 'product_id' AND ua.`value` = '" . (int)$product_id . "' AND ua.language_id = pd.language_id) 
-			WHERE pd.product_id = '" . (int)$product_id . "'");
-		$rows=$query->rows;
-	//print("<pre>".print_r ($rows,true )."</pre>");
-		$condition_name= $this->getCondition($product_id);
+		
+
+		// Auto-générer description/meta si vide pour au moins une langue
+		
+				$this->refreshDescriptions((int)$product_id);
+				// Re-charger après regénération
+				$query = $this->db->query("
+					SELECT pd.*, ua.keyword 
+					FROM " . DB_PREFIX . "product_description pd 
+					LEFT JOIN " . DB_PREFIX . "seo_url ua 
+					ON (ua.`key` = 'product_id' AND ua.`value` = '" . (int)$product_id . "' AND ua.language_id = pd.language_id) 
+					WHERE pd.product_id = '" . (int)$product_id . "'");
+				$rows = $query->rows;
+
+
+		$condition_name = $this->getCondition($product_id);
 		
 		foreach ($rows as $result) {
 	
@@ -1860,18 +1867,36 @@ public function getTotalProducts(array $data = []): int {
 			);
 		
 		}
-	//	//print("<pre>".print_r (893,true )."</pre>");
-	//	//print("<pre>".print_r ($product_description_data[$result['language_id']]['specifics'],true )."</pre>");
 		$product_description_data=$this->model_shopmanager_tools->custom_merge_recursive($product_description_data, $condition_name);
 
 		$specifics=$this->getSpecifics($product_id);
-					
-		//print("<pre>".print_r ($specifics,true )."</pre>");
 
 		$product_description_data=$this->model_shopmanager_tools->custom_merge_recursive($product_description_data, $specifics);
-			//$this->load->model('shopmanager/ai');
 		
 		return $product_description_data;
+	}
+
+	/**
+	 * Refresh Descriptions
+	 *
+	 * Génère ou régénère description HTML et meta tags pour toutes les langues
+	 * d'un produit, en mettant à jour directement oc_product_description.
+	 * Appelle generateDescription() et generateMetaTag() par langue.
+	 *
+	 * @param int $product_id
+	 * @return void
+	 */
+	public function refreshDescriptions(int $product_id): void {
+		// Guard contre la récursion infinie :
+		// getDescriptions() → refreshDescriptions() → generateDescription/generateMetaTag() → getDescriptions() → ...
+		static $in_progress = [];
+		if (isset($in_progress[$product_id])) return;
+		$in_progress[$product_id] = true;
+
+		$this->generateDescription($product_id);
+		$this->generateMetaTag($product_id);
+
+		unset($in_progress[$product_id]);
 	}
 
 	public function getDescriptionsNOT_USED2($product_id) {
@@ -3573,64 +3598,52 @@ public function getTotalProducts(array $data = []): int {
 		return (int)$query->row['total'];
 	}
 
-	public function generateMetaTag($data) {
-		$upc = $data['upc'] ?? '';
-		//print("<pre>" . print_r($data['product_description'], true) . "</pre>");
-		foreach ($data['product_description'] as $language_id => $description) {
-			// Récupération des valeurs
-			
-			$name = trim($description['name'] ?? '');
-			//print("<pre>" . print_r($description['condition'], true) . "</pre>");
-			$conditionname = isset($description['condition']) 
-			? (is_array($description['condition']) 
-				? trim(implode(' ', $description['condition'])) 
-				: trim($description['condition'])
-			) 
-			: '';
-		
+	/**
+	 * Generate Meta Tags
+	 * Génère meta_title, meta_description, meta_keyword, tag pour toutes les langues
+	 * et met à jour directement oc_product_description.
+	 *
+	 * @param int $product_id
+	 */
+	public function generateMetaTag(int $product_id): void {
+		$product = $this->getProduct($product_id);
+		if (empty($product)) return;
 
-		
+		$upc = $product['upc'] ?? '';
+		$descriptions = $this->getDescriptions($product_id);
+		if (empty($descriptions)) return;
+
+		foreach ($descriptions as $language_id => $description) {
+			$name = trim($description['name'] ?? '');
+			$conditionname = isset($description['condition'])
+				? (is_array($description['condition'])
+					? trim(implode(' ', $description['condition']))
+					: trim($description['condition'])
+				)
+				: '';
+
 			$additionalDescriptionHtml = trim($description['description_supp'] ?? '');
-	
-			// Nettoyage du texte supplémentaire (suppression des balises HTML et espaces multiples)
 			$additionalDescriptionText = preg_replace('/<\/?[^>]+(>|$)/', '', $additionalDescriptionHtml);
 			$additionalDescriptionText = str_replace('&nbsp;', ' ', $additionalDescriptionText);
 			$additionalDescriptionText = preg_replace('/\s+/', ' ', $additionalDescriptionText);
-	
-			// Génération des balises meta
+
 			$metaTagTitle = '(' . $conditionname . ') ' . $name . ' UPC: ' . $upc;
 			$metaTagDescription = $additionalDescriptionText;
-	
-			// Génération des mots-clés
+
 			$tagkeywords = trim($conditionname . ' ' . $name . ' ' . $upc);
 			$tagkeywords = preg_replace('/[.,;:\'"\{\}\[\]\(\)@%$&\-]/', '', $tagkeywords);
-			$tagkeywords = implode(',', array_filter(explode(' ', $tagkeywords))); // Séparation en virgules
-	
-			// Vérification et suppression de la dernière virgule si présente
+			$tagkeywords = implode(',', array_filter(explode(' ', $tagkeywords)));
 			if (substr($tagkeywords, -1) === ',') {
 				$tagkeywords = substr($tagkeywords, 0, -1);
 			}
-	
-			// Génération du slug (mots-clés pour l'URL)
-			$keywords = trim($conditionname . ' ' . $name);
-			$keywords = preg_replace('/[.,;:\'"\{\}\[\]\(\)@%$&\-]/', '', $keywords);
-			$keywords = implode('-', array_filter(explode(' ', $keywords))); // Séparation par des tirets
-	
-			// Vérification et suppression du dernier tiret si présent
-			if (substr($keywords, -1) === '-') {
-				$keywords = substr($keywords, 0, -1);
-			}
-	
-			// Mise à jour des valeurs dans $data
-			$data['product_description'][$language_id]['meta_title'] = $metaTagTitle;
-			$data['product_description'][$language_id]['meta_description'] = $metaTagDescription;
-		
-			$data['product_description'][$language_id]['meta_keyword'] = $tagkeywords;
-			$data['product_description'][$language_id]['tag'] = $tagkeywords;
-			$data['product_description'][$language_id]['keyword'] = $keywords;
+
+			$this->db->query("UPDATE `" . DB_PREFIX . "product_description`
+				SET `meta_title` = '" . $this->db->escape($metaTagTitle) . "',
+				    `meta_description` = '" . $this->db->escape($metaTagDescription) . "',
+				    `meta_keyword` = '" . $this->db->escape($tagkeywords) . "',
+				    `tag` = '" . $this->db->escape($tagkeywords) . "'
+				WHERE `product_id` = '" . (int)$product_id . "' AND `language_id` = '" . (int)$language_id . "'");
 		}
-	
-		return $data;
 	}
 
 	public function editProductSpecifics($product_id, $product_specific, $language_id=1) {
@@ -3886,153 +3899,102 @@ public function editProductError($product_id, $json_error) {
 	}
 
 	
-	public function generateDescription($data = []) {
+	/**
+	 * Generate Description
+	 * Génère le HTML de description pour toutes les langues d'un produit
+	 * et met à jour directement oc_product_description.
+	 *
+	 * @param int $product_id
+	 */
+	public function generateDescription(int $product_id): void {
+		$product = $this->getProduct($product_id);
+		if (empty($product)) return;
 
+		$product_images = $this->getImages($product_id);
+		$descriptions   = $this->getDescriptions($product_id);
+		if (empty($descriptions)) return;
 
-		// Charger le modèle de produit et récupérer les informations du produit
+		$category_id = (int)($product['category_id'] ?? 0);
 
-			$test_data=$data;
-			unset($test_data['description']);
-	foreach($data['product_description'] as $language_id=>$product_description){
-			unset($test_data['product_description'][$language_id]['description']);
-			if(!isset($product_description['name'])){
-				//print("<pre>".print_r ('1662:product.php',true )."</pre>");
-				//print("<pre>".print_r ($product_description,true )."</pre>");
-				//die();
-			}elseif(is_array($product_description['name'])){
-				//print("<pre>".print_r ('1666:product.php',true )."</pre>");
-				//print("<pre>".print_r ($product_description,true )."</pre>");
-				//print("<pre>".print_r ($product_description['name'],true )."</pre>");
-				die();
-			}
-		// Récupérer les données de description du produit
-		$name = htmlspecialchars($product_description['name']);
-		$data['product_description'][$language_id]['description'] = '<style>';
-		$data['product_description'][$language_id]['description'] .= '.secondary-list-item { list-style-type: none; padding-left: 3em; text-indent: -1em; }';
-		$data['product_description'][$language_id]['description'] .= '</style>';
-		$data['product_description'][$language_id]['description'] .= '<h1>' . $name . '</h1>';
+		foreach ($descriptions as $language_id => $product_description) {
+			if (!isset($product_description['name']) || is_array($product_description['name'])) continue;
 
-		// Condition du produit
-		$condition = $product_description['condition'] ?? '';
-		if (!in_array($data['category_id'], [73836,20349, 178893, 182066, 123417, 112529, 58540, 33602, 146496, 48619, 20357, 80077, 123422, 96991, 35190, 48677, 182068, 42425])) {
-		
-			$data['product_description'][$language_id]['description'] .= '<h3 style="color: darkblue;"><b>Condition:</b> <b style="color: black;">' . $condition . '</b></h3>';
+			$name = htmlspecialchars($product_description['name']);
+			$description = '<style>';
+			$description .= '.secondary-list-item { list-style-type: none; padding-left: 3em; text-indent: -1em; }';
+			$description .= '</style>';
+			$description .= '<h1>' . $name . '</h1>';
 
-			// Conditions supplémentaires
-			$additionalConditions = trim($product_description['condition_supp'] ?? '');
-			if ($additionalConditions) {
-				$data['product_description'][$language_id]['description'] .= '<h4 style="color: red;"><b>Additional Conditions:</b></h4>';
-				$data['product_description'][$language_id]['description'] .= $additionalConditions;
-			}
-		}
-		// Accessoires inclus
-		$includedAccessories = trim($product_description['included_accessories'] ?? '');
-		if ($includedAccessories) {
-			$data['product_description'][$language_id]['description'] .= '<h3 style="color: darkblue;"><b>Included Accessories:</b></h3>';
-			$data['product_description'][$language_id]['description'] .= $includedAccessories;
-		}
-
-		// Description supplémentaire
-		$additionalDescription = trim($product_description['description_supp'] ?? '');
-		if ($additionalDescription) {
-			$data['product_description'][$language_id]['description'] .= '<h3 style="color: darkblue;"><b>Description:</b></h3>';
-			$data['product_description'][$language_id]['description'] .= htmlspecialchars_decode($additionalDescription);
-		}
-
-		// Caractéristiques spécifiques
-		$data['product_description'][$language_id]['description'] .= '<h3 style="color: darkblue;"><b>Specific Features:</b></h3><ul class="three-columns">';
-		//print("<pre>".print_r ('1276:product.php',true )."</pre>");
-		//print("<pre>".print_r ($data,true )."</pre>");
-		if (!isset($product_description['specifics']) || empty($product_description['specifics'])) {
-			$data['product_description'][$language_id]['description'] .= '<li>No specific features available.</li>';
-		} else {
-		foreach ($product_description['specifics'] as $specific) {
-			$name = trim($specific['Name']); 
-			$values = [];
-		
-			if (isset($specific['Value'])) {
-				if (!is_array($specific['Value'])) {
-					$values[] = $specific['Value'];
-					//print("<pre>".print_r ('1285:product.php',true )."</pre>");
-					//print("<pre>".print_r ($specific['Value'],true )."</pre>");
-				} else {
-					$values = $specific['Value'];
-					//print("<pre>".print_r ('1289:product.php',true )."</pre>");
-					//print("<pre>".print_r ($specific['Value'],true )."</pre>");
+			// Condition du produit
+			$condition = $product_description['condition'] ?? '';
+			if (!in_array($category_id, [73836, 20349, 178893, 182066, 123417, 112529, 58540, 33602, 146496, 48619, 20357, 80077, 123422, 96991, 35190, 48677, 182068, 42425])) {
+				$description .= '<h3 style="color: darkblue;"><b>Condition:</b> <b style="color: black;">' . $condition . '</b></h3>';
+				$additionalConditions = trim($product_description['condition_supp'] ?? '');
+				if ($additionalConditions) {
+					$description .= '<h4 style="color: red;"><b>Additional Conditions:</b></h4>';
+					$description .= $additionalConditions;
 				}
 			}
-		
-			if (!empty($values) && !($values[0] == '' && count($values) == 1)) {
-			// Créer un seul élément <li> pour le nom et toutes les valeurs associées
-			$data['product_description'][$language_id]['description'] .= '<li><b>' . $name . ':</b> ';
-			$valueList = [];
-			
-			foreach ($values as $value) {
-				if (trim($value) != '') {
-					// Ne pas utiliser ucwords() car il manque les caractères Unicode (Ș, ă, etc.)
-					$valueList[] = $value;
-				//print("<pre>".print_r ('1302:product.php',true )."</pre>");
-			//print("<pre>".print_r ($value,true )."</pre>");
-				}
-			}				// Joindre les valeurs avec une virgule pour qu'elles apparaissent ensemble
-				$data['product_description'][$language_id]['description'] .= implode(', ', $valueList);
-				$data['product_description'][$language_id]['description'] .= '</li>';
+
+			// Accessoires inclus
+			$includedAccessories = trim($product_description['included_accessories'] ?? '');
+			if ($includedAccessories) {
+				$description .= '<h3 style="color: darkblue;"><b>Included Accessories:</b></h3>';
+				$description .= $includedAccessories;
 			}
-		}
-	}
-		
-		$data['product_description'][$language_id]['description'] .= '</ul>';
-		
-	//print("<pre>".print_r ('1312:product.php',true )."</pre>");
-		//print("<pre>".print_r ($data['product_description'][$language_id]['description'],true )."</pre>");
 
-		// Modèle, dimensions et poids
-		if ($language_id == 1) {
-			$model = 'Model:';
-			$dimension = 'Package Dimension:';
-			$weight = 'Package Weight:';
-			$lbs = ' Lbs';
-			$inch = ' Inch';
-		} else {
-			$model = 'Modèle: ';
-			$dimension = 'Dimensions du colis: ';
-			$weight = 'Poids du colis: ';
-			$lbs = ' Livres';
-		$inch = ' Pouces';
-	}
-
-	// Ne pas utiliser ucwords() car il manque les caractères Unicode
-	$data['product_description'][$language_id]['description'] .= '<p><b>' . $model . '</b> ' . htmlspecialchars($data['model']) . '</p>';
-	$data['product_description'][$language_id]['description'] .= '<p><b>' . $dimension . '</b> ' . doubleval($data['length']) . 'x' . doubleval($data['width']) . 'x' . doubleval($data['height']) . $inch . '</p>';
-	$data['product_description'][$language_id]['description'] .= '<p><b>' . $weight . '</b> ' . doubleval($data['weight']) . $lbs . '</p>';		// Images du produit
-		$data['product_description'][$language_id]['description'] .= '<h3 style="color: darkblue;"><b>Photos:</b></h3>';
-		$data['product_description'][$language_id]['description'] .= '<table bgcolor="FFFFFF" style="width: 500px;" border="1" cellspacing="1" cellpadding="5" align="center"><tbody>';
-	if(isset($data['image'])){
-			$image_url = HTTP_CATALOG . 'image/'.$data['image'];
-			$data['product_description'][$language_id]['description'] .= '<tr><td style="text-align: center;" align="center" valign="middle"><img src="' . $image_url . '" width="450"></td></tr>';
-		}
-		if (isset($data['product_image'])) {
-			foreach ($data['product_image'] as $image) {
-				// Vérifier si $image est un tableau, sinon le transformer en tableau
-				if (!is_array($image)) {
-					$image = ['image' => $image];
-				}
-		
-				// S'assurer que l'index 'image' est bien défini
-				$image_url = HTTP_CATALOG . 'image/' . (isset($image['image']) ? $image['image'] : '');
-		
-				$data['product_description'][$language_id]['description'] .= '<tr><td style="text-align: center;" align="center" valign="middle"><img src="' . $image_url . '" width="450"></td></tr>';
+			// Description supplémentaire
+			$additionalDescription = trim($product_description['description_supp'] ?? '');
+			if ($additionalDescription) {
+				$description .= '<h3 style="color: darkblue;"><b>Description:</b></h3>';
+				$description .= htmlspecialchars_decode($additionalDescription);
 			}
+
+			// Caractéristiques spécifiques
+			$description .= '<h3 style="color: darkblue;"><b>Specific Features:</b></h3><ul class="three-columns">';
+			if (!isset($product_description['specifics']) || empty($product_description['specifics'])) {
+				$description .= '<li>No specific features available.</li>';
+			} else {
+				foreach ($product_description['specifics'] as $specific) {
+					$spec_name = trim($specific['Name']);
+					$values = [];
+					if (isset($specific['Value'])) {
+						$values = is_array($specific['Value']) ? $specific['Value'] : [$specific['Value']];
+					}
+					if (!empty($values) && !($values[0] == '' && count($values) == 1)) {
+						$valueList = array_filter($values, fn($v) => trim($v) != '');
+						$description .= '<li><b>' . $spec_name . ':</b> ' . implode(', ', $valueList) . '</li>';
+					}
+				}
+			}
+			$description .= '</ul>';
+
+			// Modèle, dimensions et poids
+			if ($language_id == 1) {
+				$model = 'Model:'; $dimension = 'Package Dimension:'; $weight = 'Package Weight:'; $lbs = ' Lbs'; $inch = ' Inch';
+			} else {
+				$model = 'Modèle: '; $dimension = 'Dimensions du colis: '; $weight = 'Poids du colis: '; $lbs = ' Livres'; $inch = ' Pouces';
+			}
+			$description .= '<p><b>' . $model . '</b> ' . htmlspecialchars($product['model'] ?? '') . '</p>';
+			$description .= '<p><b>' . $dimension . '</b> ' . doubleval($product['length'] ?? 0) . 'x' . doubleval($product['width'] ?? 0) . 'x' . doubleval($product['height'] ?? 0) . $inch . '</p>';
+			$description .= '<p><b>' . $weight . '</b> ' . doubleval($product['weight'] ?? 0) . $lbs . '</p>';
+
+			// Images du produit
+			$description .= '<h3 style="color: darkblue;"><b>Photos:</b></h3>';
+			$description .= '<table bgcolor="FFFFFF" style="width: 500px;" border="1" cellspacing="1" cellpadding="5" align="center"><tbody>';
+			if (!empty($product['image'])) {
+				$description .= '<tr><td style="text-align: center;" align="center" valign="middle"><img src="' . HTTP_CATALOG . 'image/' . $product['image'] . '" width="450"></td></tr>';
+			}
+			foreach ($product_images as $image) {
+				if (!is_array($image)) $image = ['image' => $image];
+				$description .= '<tr><td style="text-align: center;" align="center" valign="middle"><img src="' . HTTP_CATALOG . 'image/' . ($image['image'] ?? '') . '" width="450"></td></tr>';
+			}
+			$description .= '</tbody></table>';
+
+			$this->db->query("UPDATE `" . DB_PREFIX . "product_description`
+				SET `description` = '" . $this->db->escape($description) . "'
+				WHERE `product_id` = '" . (int)$product_id . "' AND `language_id` = '" . (int)$language_id . "'");
 		}
-		$data['product_description'][$language_id]['description'] .= '</tbody></table>';
-
-		// Mettre à jour la description 
-
-	
-	}
-		//print("<pre>".print_r ('1923:product.php',true )."</pre>");
-		//print("<pre>".print_r ($data,true )."</pre>");
-		return $data;
 	}
 
 	public function TranslateDescription($productDescription, $language = ['code' => 'Fr', 'language_id' => '2']) {
