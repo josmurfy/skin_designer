@@ -1808,7 +1808,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $type = 'secondary';
             }
 
-            $img_info = (is_readable($backup_dir . $file)) ? @getimagesize($backup_dir . $file) : false;
+            set_error_handler(function() { return true; });
+            $img_info = is_readable($backup_dir . $file) ? getimagesize($backup_dir . $file) : false;
+            restore_error_handler();
             $files[] = [
                 'filename'   => $file,
                 'type'       => $type,
@@ -2013,13 +2015,17 @@ class Sync extends \Opencart\System\Engine\Controller {
             $main_path = $prod->row['image'] ?? '';
             if ($main_path && $main_path !== 'no_image.png' && $main_path !== '') {
                 $abs  = DIR_IMAGE . $main_path;
-                $info = is_readable($abs) ? @getimagesize($abs) : false;
+                set_error_handler(function() { return true; });
+                $info = is_readable($abs) ? getimagesize($abs) : false;
+                restore_error_handler();
                 $oc_images[] = ['role' => 'primary', 'image' => $main_path, 'url' => HTTP_CATALOG . 'image/' . $main_path, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
             }
             $secs = $this->db->query("SELECT image, sort_order FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' ORDER BY sort_order ASC");
             foreach ($secs->rows as $row) {
                 $abs  = DIR_IMAGE . $row['image'];
-                $info = is_readable($abs) ? @getimagesize($abs) : false;
+                set_error_handler(function() { return true; });
+                $info = is_readable($abs) ? getimagesize($abs) : false;
+                restore_error_handler();
                 $oc_images[] = ['role' => 'secondary', 'image' => $row['image'], 'url' => HTTP_CATALOG . 'image/' . $row['image'], 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0, 'sort_order' => (int)$row['sort_order']];
             }
 
@@ -2034,7 +2040,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                     $subfolder = substr((string)$product_id, 0, 2);
                     $oc_rel    = 'catalog/product/' . $subfolder . '/' . $product_id . '/' . $file;
                     $full_path = $backup_dir . $file;
-                    $info      = is_readable($full_path) ? @getimagesize($full_path) : false;
+                    set_error_handler(function() { return true; });
+                    $info = is_readable($full_path) ? getimagesize($full_path) : false;
+                    restore_error_handler();
                     $basename  = pathinfo($file, PATHINFO_FILENAME);
                     $type = 'unknown';
                     if (preg_match('/^' . preg_quote((string)$product_id) . 'pri\d+/', $basename)) $type = 'primary';
