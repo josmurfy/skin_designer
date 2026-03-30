@@ -678,7 +678,21 @@
                 hideLoadingState();
                 if (json.success) {
                     showSuccessMessage(json.success);
-                    loadAnalyticsData(currentPeriod); // Reload data
+                    // Supprimer la ligne visuellement (feedback immédiat)
+                    $('[data-product-id="' + productId + '"].sync-quantity-btn').closest('tr').fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                    // Recharger le tab qty mismatch (produit fixé = disparaît de la liste)
+                    $.ajax({
+                        url: 'index.php?route=shopmanager/inventory/sync.getQtyMismatchTab&user_token=' + userToken,
+                        type: 'GET',
+                        data: { page: 1, sort: 'product_id', order: 'ASC' },
+                        dataType: 'html',
+                        success: function(html) {
+                            $('#qty-mismatch').html(html);
+                        }
+                    });
+                    loadAnalyticsData(currentPeriod); // Reload compteurs analytics
                 } else if (json.error) {
                     showErrorMessage(json.error);
                 }
