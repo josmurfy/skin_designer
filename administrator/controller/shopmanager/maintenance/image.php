@@ -872,14 +872,6 @@ class Image extends \Opencart\System\Engine\Controller {
     }
 
     /**
-     * Import eBay images for a single selected product.
-     * Délègue à importEbayImagesForProductAjax() qui contient la logique bidirectionnelle complète.
-     */
-    public function importEbayImages(): void {
-        $this->importEbayImagesForProductAjax();
-    }
-
-    /**
      * Bulk: import eBay images for ALL products that have an image count mismatch.
      * After importing, resets ebay_image_count = 0 so the next eBay import
      * re-fetches the true count from the API.
@@ -931,9 +923,8 @@ class Image extends \Opencart\System\Engine\Controller {
             if ($oc_count > $ebay_count) {
                 // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
                 try {
-                    $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
-                    $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
-                    $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
+                 
+                    $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
                     $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
                     $success_count++;
                     $result = ['success' => true, 'skipped' => false,
@@ -947,8 +938,9 @@ class Image extends \Opencart\System\Engine\Controller {
             } else {
                 // eBay a plus que OC → importer les images eBay dans OC
                 $result = $this->importEbayImagesForProduct($product_id, $lang);
+                $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
                 $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
-
+               
                 if (!empty($result['success'])) {
                     $success_count++;
                 } elseif (!empty($result['skipped'])) {

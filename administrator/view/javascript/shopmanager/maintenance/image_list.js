@@ -372,7 +372,7 @@ $(document).off('click.maintenanceImageList', '#btn-import-ebay-selected').on('c
         $('#import-ebay-products-list').scrollTop($('#import-ebay-products-list')[0].scrollHeight);
 
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.importEbayImages&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=shopmanager/maintenance/image.importEbayImagesForProductAjax&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: { product_id: productId },
             dataType: 'json',
