@@ -100,6 +100,7 @@ $_['text_cards']               = 'Gestion des Cartes';
 $_['text_card_listings']       = 'Annonces de Cartes';
 $_['text_card_importer']       = 'Importateur de Cartes';
 $_['text_card_import']         = 'Importateur de Prix';
+$_['text_card_import_sold']    = 'Importateur Vendus';
 $_['text_card_market']         = 'Recherche sur les Marchés';
 $_['text_card_manufacturer']   = 'Fabricants de Cartes';
 

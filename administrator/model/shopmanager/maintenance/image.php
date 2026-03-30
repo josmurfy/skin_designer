@@ -1,7 +1,7 @@
 <?php
-namespace Opencart\Admin\Model\Shopmanager;
+namespace Opencart\Admin\Model\Shopmanager\Maintenance;
 
-class MaintenanceImage extends \Opencart\System\Engine\Model {
+class Image extends \Opencart\System\Engine\Model {
     
     /**
      * Get total products count

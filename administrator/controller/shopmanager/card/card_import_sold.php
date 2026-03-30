@@ -32,7 +32,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             'filter_max_price'            => $this->request->get['filter_max_price']           ?? '',
             'filter_missing_card_number'  => $this->request->get['filter_missing_card_number'] ?? '',
         ];
-        $sort  = $this->request->get['sort']  ?? 'sold_id';
+        $sort  = $this->request->get['sort']  ?? 'card_price_sold_id';
         $order = $this->request->get['order'] ?? 'DESC';
         $limit = (int)($this->request->get['limit'] ?? 25);
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
@@ -88,7 +88,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             'filter_max_price'           => $this->request->get['filter_max_price']           ?? '',
             'filter_missing_card_number' => $this->request->get['filter_missing_card_number'] ?? '',
         ];
-        $sort  = $this->request->get['sort']  ?? 'sold_id';
+        $sort  = $this->request->get['sort']  ?? 'card_price_sold_id';
         $order = $this->request->get['order'] ?? 'DESC';
         $limit = (int)($this->request->get['limit'] ?? 25);
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
@@ -297,7 +297,6 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             if ($na === '' && $nb === '') return 0;
             if ($na === '') return 1;
             if ($nb === '') return -1;
-            // natural sort for numbers
             return strnatcasecmp($na, $nb);
         });
 
@@ -305,29 +304,12 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
         $html .= '<table class="table table-bordered table-hover table-sm mb-0" id="preview-table">';
         $html .= '<thead class="table-dark"><tr>';
         $html .= '<th style="width:36px;"><input type="checkbox" id="preview-check-all" class="form-check-input" checked></th>';
-        $html .= '<th>#</th>';
-        $html .= '<th>' . htmlspecialchars($lang['column_front_image'])   . '</th>';
-        $html .= '<th style="min-width:160px;">'  . htmlspecialchars($lang['column_title'])       . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_category'])     . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_year'])         . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_brand'])        . '</th>';
-        $html .= '<th style="min-width:140px;">'  . htmlspecialchars($lang['column_set'])         . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_subset'])       . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_player'])       . '</th>';
-        $html .= '<th style="min-width:80px;"><span class="text-warning">★ ' . htmlspecialchars($lang['column_card_number']) . '</span></th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_attributes'])   . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_team'])         . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_variation'])    . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_grader'])       . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_grade'])        . '</th>';
-        $html .= '<th style="min-width:80px;">'   . htmlspecialchars($lang['column_price'])       . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_currency'])     . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_type_listing']) . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_bids'])         . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_total_sold'])   . '</th>';
-        $html .= '<th>'  . htmlspecialchars($lang['column_ebay_item_id']) . '</th>';
-        $html .= '<th style="min-width:80px;">'   . htmlspecialchars($lang['column_status'])      . '</th>';
-        $html .= '<th style="min-width:110px;">'  . htmlspecialchars($lang['column_date_sold'])   . '</th>';
+        $html .= '<th style="width:28px;">#</th>';
+        $html .= '<th style="width:70px;">' . htmlspecialchars($lang['column_front_image']) . '</th>';
+        $html .= '<th style="min-width:220px;">' . htmlspecialchars($lang['column_title']) . ' / ' . htmlspecialchars($lang['column_player']) . '</th>';
+        $html .= '<th style="min-width:130px;"><span class="text-warning">★ ' . htmlspecialchars($lang['column_card_number']) . '</span> / ' . htmlspecialchars($lang['column_grader']) . '</th>';
+        $html .= '<th style="min-width:150px;">' . htmlspecialchars($lang['column_price']) . ' / ' . htmlspecialchars($lang['column_type_listing']) . '</th>';
+        $html .= '<th style="min-width:130px;">' . htmlspecialchars($lang['column_ebay_item_id']) . ' / ' . htmlspecialchars($lang['column_date_sold']) . '</th>';
         $html .= '<th style="width:36px;"></th>';
         $html .= '</tr></thead><tbody>';
 
@@ -346,7 +328,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
                 $groupLabel = $missingCardNr
                     ? '<span class="text-danger fw-bold">⚠ ' . htmlspecialchars($lang['text_missing_card_number']) . '</span>'
                     : '<span class="badge bg-secondary me-1"># ' . htmlspecialchars($cardNumber) . '</span>';
-                $html .= '<tr class="table-secondary" style="font-size:11px;"><td colspan="26" class="py-1 px-2">'
+                $html .= '<tr class="table-secondary" style="font-size:11px;"><td colspan="8" class="py-1 px-2">'
                        . '<i class="fa-solid fa-layer-group me-1 text-muted"></i>'
                        . htmlspecialchars($lang['text_group']) . ' ' . $groupNum . ' — ' . $groupLabel
                        . '</td></tr>';
@@ -357,13 +339,13 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
 
             $html .= '<tr class="' . $rowClass . '" data-index="' . $idx . '">';
 
-            // Checkbox
+            // Col 1 — Checkbox
             $html .= '<td><input type="checkbox" class="form-check-input preview-row-check" checked></td>';
 
-            // Row number
+            // Col 2 — Row number
             $html .= '<td class="text-center text-muted">' . $rowNum++ . '</td>';
 
-            // Image
+            // Col 3 — Image
             $img = htmlspecialchars((string)($row['front_image'] ?? ''));
             if ($img) {
                 $html .= '<td><img src="' . $img . '" style="max-height:60px;max-width:60px;cursor:zoom-in;" class="preview-thumb-img" data-fullsrc="' . $img . '" onerror="this.style.display=\'none\'"></td>';
@@ -371,85 +353,88 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
                 $html .= '<td class="text-muted text-center">—</td>';
             }
 
-            // Static display fields (non-editable in preview)
-            $html .= '<td>' . htmlspecialchars((string)($row['title']      ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['category']   ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['year']       ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['brand']      ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['set_name']   ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['subset']     ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['player']     ?? '')) . '</td>';
+            // Col 4 — Card identity (title, player, + meta badges)
+            $html .= '<td style="white-space:normal;">';
+            $html .= '<div class="cell-title" style="font-size:12px;font-weight:600;line-height:1.3;">' . htmlspecialchars((string)($row['title'] ?? '')) . '</div>';
+            $html .= '<div class="cell-player" style="font-size:11px;color:#555;margin-top:1px;">' . htmlspecialchars((string)($row['player'] ?? '')) . '</div>';
+            $html .= '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;">';
+            $year    = (string)($row['year']     ?? ''); if ($year    !== '') $html .= '<span class="badge bg-secondary" style="font-size:10px;">' . htmlspecialchars($year)    . '</span>';
+            $brand   = (string)($row['brand']    ?? ''); if ($brand   !== '') $html .= '<span class="badge bg-secondary" style="font-size:10px;">' . htmlspecialchars($brand)   . '</span>';
+            $set     = (string)($row['set_name'] ?? ''); if ($set     !== '') $html .= '<span class="badge bg-dark"      style="font-size:10px;">' . htmlspecialchars($set)     . '</span>';
+            $subset  = (string)($row['subset']   ?? ''); if ($subset  !== '') $html .= '<span class="badge bg-dark"      style="font-size:10px;">' . htmlspecialchars($subset)  . '</span>';
+            $cat     = (string)($row['category'] ?? ''); if ($cat     !== '') $html .= '<span class="badge bg-info text-dark" style="font-size:10px;">' . htmlspecialchars($cat) . '</span>';
+            $team    = (string)($row['team']     ?? ''); if ($team    !== '') $html .= '<span class="badge bg-light text-dark border" style="font-size:10px;">' . htmlspecialchars($team) . '</span>';
+            $attr    = (string)($row['attributes'] ?? ''); if ($attr  !== '') $html .= '<span class="badge bg-light text-dark border" style="font-size:10px;">' . htmlspecialchars($attr) . '</span>';
+            $vari    = (string)($row['variation'] ?? ''); if ($vari   !== '') $html .= '<span class="badge bg-light text-dark border" style="font-size:10px;">' . htmlspecialchars($vari) . '</span>';
+            $html .= '</div>';
+            $html .= '</td>';
 
-            // card_number — editable, red border if empty
+            // Col 5 — Card # (editable) + Grader/Grade (editable)
             $cnBorder = $missingCardNr ? 'border-color:#dc3545;background:#fff3cd;' : '';
-            $html .= '<td><input type="text" class="form-control form-control-sm field-card_number" '
-                   . 'style="min-width:70px;' . $cnBorder . '" '
-                   . 'value="' . htmlspecialchars($cardNumber) . '" '
-                   . 'data-index="' . $idx . '"></td>';
+            $html .= '<td style="white-space:nowrap;">';
+            $html .= '<div style="margin-bottom:4px;">';
+            $html .= '<input type="text" class="form-control form-control-sm field-card_number" '
+                   . 'style="' . $cnBorder . '" placeholder="' . htmlspecialchars($lang['column_card_number']) . '" '
+                   . 'value="' . htmlspecialchars($cardNumber) . '" data-index="' . $idx . '">';
+            $html .= '</div>';
+            $html .= '<div style="display:flex;gap:3px;">';
+            $html .= '<input type="text" class="form-control form-control-sm field-grader" style="min-width:55px;" '
+                   . 'placeholder="' . htmlspecialchars($lang['column_grader']) . '" '
+                   . 'value="' . htmlspecialchars((string)($row['grader'] ?? '')) . '" data-index="' . $idx . '">';
+            $html .= '<input type="text" class="form-control form-control-sm field-grade" style="min-width:45px;" '
+                   . 'placeholder="' . htmlspecialchars($lang['column_grade']) . '" '
+                   . 'value="' . htmlspecialchars((string)($row['grade'] ?? '')) . '" data-index="' . $idx . '">';
+            $html .= '</div>';
+            $html .= '</td>';
 
-            // More static fields
-            $html .= '<td>' . htmlspecialchars((string)($row['attributes'] ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['team']       ?? '')) . '</td>';
-            $html .= '<td>' . htmlspecialchars((string)($row['variation']  ?? '')) . '</td>';
-
-            // Editable: grader
-            $html .= '<td><input type="text" class="form-control form-control-sm field-grader" style="min-width:60px;" '
-                   . 'value="' . htmlspecialchars((string)($row['grader'] ?? '')) . '" data-index="' . $idx . '"></td>';
-
-            // Editable: grade
-            $html .= '<td><input type="text" class="form-control form-control-sm field-grade" style="min-width:50px;" '
-                   . 'value="' . htmlspecialchars((string)($row['grade'] ?? '')) . '" data-index="' . $idx . '"></td>';
-
-            // Editable: price
-            $html .= '<td><input type="number" class="form-control form-control-sm field-price" style="min-width:70px;" '
-                   . 'step="0.01" min="0" '
-                   . 'value="' . htmlspecialchars((string)($row['price'] ?? '0')) . '" data-index="' . $idx . '"></td>';
-
-            // Editable: currency
-            $html .= '<td><select class="form-select form-select-sm field-currency" style="min-width:60px;" data-index="' . $idx . '">';
+            // Col 6 — Price / listing details (editable)
+            $html .= '<td style="white-space:nowrap;">';
+            $html .= '<div style="display:flex;gap:3px;margin-bottom:4px;">';
+            $html .= '<input type="number" class="form-control form-control-sm field-price" style="min-width:65px;" '
+                   . 'step="0.01" min="0" placeholder="' . htmlspecialchars($lang['column_price']) . '" '
+                   . 'value="' . htmlspecialchars((string)($row['price'] ?? '0')) . '" data-index="' . $idx . '">';
+            $html .= '<select class="form-select form-select-sm field-currency" style="min-width:62px;" data-index="' . $idx . '">';
             foreach (['CAD','USD','EUR','GBP'] as $cur) {
                 $sel = ((string)($row['currency'] ?? 'CAD') === $cur) ? ' selected' : '';
                 $html .= '<option value="' . $cur . '"' . $sel . '>' . $cur . '</option>';
             }
-            $html .= '</select></td>';
-
-            // Editable: type_listing
-            $html .= '<td><select class="form-select form-select-sm field-type_listing" style="min-width:90px;" data-index="' . $idx . '">';
+            $html .= '</select>';
+            $html .= '</div>';
+            $html .= '<div style="display:flex;gap:3px;">';
+            $html .= '<select class="form-select form-select-sm field-type_listing" style="min-width:78px;" data-index="' . $idx . '">';
             foreach (['buy_it_now' => 'BIN', 'auction' => 'Auction'] as $val => $label) {
                 $sel = ((string)($row['type_listing'] ?? '') === $val) ? ' selected' : '';
                 $html .= '<option value="' . $val . '"' . $sel . '>' . $label . '</option>';
             }
-            $html .= '</select></td>';
+            $html .= '</select>';
+            $html .= '<input type="number" class="form-control form-control-sm field-bids" style="min-width:45px;" '
+                   . 'min="0" placeholder="' . htmlspecialchars($lang['column_bids']) . '" value="' . (int)($row['bids'] ?? 0) . '" data-index="' . $idx . '">';
+            $html .= '<input type="number" class="form-control form-control-sm field-total_sold" style="min-width:45px;" '
+                   . 'min="0" placeholder="' . htmlspecialchars($lang['column_total_sold']) . '" value="' . (int)($row['total_sold'] ?? 1) . '" data-index="' . $idx . '">';
+            $html .= '</div>';
+            $html .= '</td>';
 
-            // Editable: bids
-            $html .= '<td><input type="number" class="form-control form-control-sm field-bids" style="min-width:50px;" '
-                   . 'min="0" value="' . (int)($row['bids'] ?? 0) . '" data-index="' . $idx . '"></td>';
-
-            // Editable: total_sold
-            $html .= '<td><input type="number" class="form-control form-control-sm field-total_sold" style="min-width:50px;" '
-                   . 'min="0" value="' . (int)($row['total_sold'] ?? 1) . '" data-index="' . $idx . '"></td>';
-
-            // eBay item ID
+            // Col 7 — eBay ID / date + status
             $eid = htmlspecialchars((string)($row['ebay_item_id'] ?? ''));
+            $html .= '<td style="font-size:11px;">';
             if ($eid) {
-                $html .= '<td><a href="https://www.ebay.ca/itm/' . $eid . '" target="_blank" style="font-size:11px;">' . $eid . '</a></td>';
-            } else {
-                $html .= '<td class="text-muted">—</td>';
+                $html .= '<div><a href="https://www.ebay.ca/itm/' . $eid . '" target="_blank" style="font-size:11px;">' . $eid . '</a></div>';
             }
-
-            // Editable: status
-            $html .= '<td><select class="form-select form-select-sm field-status" data-index="' . $idx . '">';
+            $html .= '<div style="margin-top:3px;">';
+            $html .= '<input type="date" class="form-control form-control-sm field-date_sold" '
+                   . 'value="' . htmlspecialchars((string)($row['date_sold'] ?? '')) . '" data-index="' . $idx . '">';
+            $html .= '</div>';
+            $html .= '<div style="margin-top:3px;">';
+            $html .= '<select class="form-select form-select-sm field-status" data-index="' . $idx . '">';
             $s1 = ((string)($row['status'] ?? '1') === '1') ? ' selected' : '';
             $s0 = ((string)($row['status'] ?? '1') === '0') ? ' selected' : '';
             $html .= '<option value="1"' . $s1 . '>' . htmlspecialchars($lang['text_enabled'])  . '</option>';
             $html .= '<option value="0"' . $s0 . '>' . htmlspecialchars($lang['text_disabled']) . '</option>';
-            $html .= '</select></td>';
+            $html .= '</select>';
+            $html .= '</div>';
+            $html .= '</td>';
 
-            // Editable: date_sold
-            $html .= '<td><input type="date" class="form-control form-control-sm field-date_sold" '
-                   . 'value="' . htmlspecialchars((string)($row['date_sold'] ?? '')) . '" data-index="' . $idx . '"></td>';
-
-            // Delete button
+            // Col 8 — Delete button
             $html .= '<td><button type="button" class="btn btn-sm btn-outline-danger btn-preview-delete" title="' . htmlspecialchars($lang['button_remove']) . '"><i class="fa-solid fa-xmark"></i></button></td>';
 
             $html .= '</tr>';
@@ -472,31 +457,40 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
         };
 
         $data = [];
-        foreach (['sold_id','title','category','year','brand','set_name','player','card_number','price','grader','grade','date_sold','date_added'] as $f) {
+        foreach (['card_price_sold_id','title','category','year','brand','set_name','player','card_number','price','grader','grade','date_sold','date_added'] as $f) {
             $data['sort_' . $f] = $buildSortUrl($f);
         }
-        $data['sort']   = $sort;
-        $data['order']  = $order;
+        $data['sort']    = $sort;
+        $data['order']   = $order;
         $data['records'] = $records;
         $data  += $lang;
 
-        // Pagination
-        $this->load->language('shopmanager/card/card_import_sold');
-        $this->load->library('pagination');
-        $pagination = new \Opencart\System\Library\Pagination();
-        $pagination->total = $total;
-        $pagination->page  = $page;
-        $pagination->limit = $limit;
+        // Build filter string for pagination URL (without sort/order/start/limit)
+        $filterParams = array_filter($queryData, fn($v, $k) => !in_array($k, ['sort','order','start','limit']), ARRAY_FILTER_USE_BOTH);
+        $filterUrl = '';
+        foreach ($filterParams as $k => $v) {
+            if ($v !== '') $filterUrl .= '&' . $k . '=' . rawurlencode((string)$v);
+        }
 
-        $paginationParams = array_filter($queryData, fn($v, $k) => !in_array($k, ['start','limit']), ARRAY_FILTER_USE_BOTH);
-        $pagination->url   = 'index.php?route=shopmanager/card/card_import_sold.list&' . $ut . '&' . http_build_query($paginationParams) . '&page={page}';
-        $data['pagination'] = $pagination->render();
+        // OC4 pagination via controller
+        $data['pagination'] = $this->load->controller('common/pagination', [
+            'total' => $total,
+            'page'  => $page,
+            'limit' => $limit,
+            'url'   => $this->url->link(
+                'shopmanager/card/card_import_sold.list',
+                'user_token=' . $this->session->data['user_token'] . $filterUrl . '&sort=' . $sort . '&order=' . $order . '&page={page}',
+                true
+            ),
+        ]);
 
-        $start_row = ($page - 1) * $limit + 1;
-        $end_row   = min($page * $limit, $total);
-        $data['results'] = $total > 0
-            ? sprintf($lang['text_pagination'] ?? 'Showing %d-%d of %d', $start_row, $end_row, $total)
-            : ($lang['text_no_records'] ?? 'No records');
+        $data['results'] = sprintf(
+            $lang['text_pagination'] ?? 'Showing %d-%d of %d (%d pages)',
+            $total ? ($page - 1) * $limit + 1 : 0,
+            ((($page - 1) * $limit) > ($total - $limit)) ? $total : (($page - 1) * $limit + $limit),
+            $total,
+            ceil($total / $limit)
+        );
 
         return $this->load->view('shopmanager/card/card_import_sold_list', $data);
     }

@@ -2363,7 +2363,7 @@ class Product extends \Opencart\System\Engine\Controller {
 				$this->model_shopmanager_catalog_product->editVariants($post_info['product_id'], $post_info);
 				
 				// Invalidate maintenance cache so image changes are visible in maintenance_image page
-				$this->load->model('shopmanager/maintenance_image');
+				$this->load->model('shopmanager/maintenance/image');
 				$this->model_shopmanager_maintenance_image->invalidateMaintenanceCache($post_info['product_id']);
 				
 				// Update eBay listings if product has marketplace items

@@ -111,6 +111,13 @@ class ColumnLeft extends \Opencart\System\Engine\Controller {
 					'children' => []
 				];
 			}
+			if ($this->user->hasPermission('access', 'shopmanager/card/card_import_sold')) {
+				$cards_group[] = [
+					'name'     => $this->language->get('text_card_import_sold'),
+					'href'     => $this->url->link('shopmanager/card/card_import_sold', 'user_token=' . $this->session->data['user_token'], true),
+					'children' => []
+				];
+			}
 			if ($this->user->hasPermission('access', 'shopmanager/card/card_market')) {
 				$cards_group[] = [
 					'name'     => $this->language->get('text_card_market'),
@@ -272,10 +279,10 @@ class ColumnLeft extends \Opencart\System\Engine\Controller {
 			
 // Groupe : Maintenance
 		$maintenance_group = [];
-		if ($this->user->hasPermission('access', 'shopmanager/maintenance_image')) {
+		if ($this->user->hasPermission('access', 'shopmanager/maintenance/image')) {
 			$maintenance_group[] = [
 				'name'     => $this->language->get('text_maintenance_image'),
-				'href'     => $this->url->link('shopmanager/maintenance_image', 'user_token=' . $this->session->data['user_token'], true),
+				'href'     => $this->url->link('shopmanager/maintenance/image', 'user_token=' . $this->session->data['user_token'], true),
 				'children' => []
 			];
 		}

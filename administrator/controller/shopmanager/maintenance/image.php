@@ -1,13 +1,13 @@
 <?php
-namespace Opencart\Admin\Controller\Shopmanager;
+namespace Opencart\Admin\Controller\Shopmanager\Maintenance;
 
-class MaintenanceImage extends \Opencart\System\Engine\Controller {
+class Image extends \Opencart\System\Engine\Controller {
     
     public function index(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $data = $data ?? [];
         $data += $lang;
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         
@@ -108,10 +108,10 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/maintenance_image', 'user_token=' . $this->session->data['user_token'] . $url)
+            'href' => $this->url->link('shopmanager/maintenance/image', 'user_token=' . $this->session->data['user_token'] . $url)
         ];
         
-        $data['list'] = $this->load->controller('shopmanager/maintenance_image.getList');
+        $data['list'] = $this->load->controller('shopmanager/maintenance/image.getList');
         
         $data['filter_product_id'] = $filter_product_id;
         $data['filter_name'] = $filter_name;
@@ -126,23 +126,23 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $data['user_token'] = $this->session->data['user_token'];
         
         // Vérifier si validation est nécessaire
-        $data['check_validation_url'] = $this->url->link('shopmanager/maintenance_image.checkValidationStatus', 'user_token=' . $this->session->data['user_token']);
-        $data['create_table_url'] = $this->url->link('shopmanager/maintenance_image.createValidationTable', 'user_token=' . $this->session->data['user_token']);
-        $data['validate_batch_url'] = $this->url->link('shopmanager/maintenance_image.validateBatch', 'user_token=' . $this->session->data['user_token']);
+        $data['check_validation_url'] = $this->url->link('shopmanager/maintenance/image.checkValidationStatus', 'user_token=' . $this->session->data['user_token']);
+        $data['create_table_url'] = $this->url->link('shopmanager/maintenance/image.createValidationTable', 'user_token=' . $this->session->data['user_token']);
+        $data['validate_batch_url'] = $this->url->link('shopmanager/maintenance/image.validateBatch', 'user_token=' . $this->session->data['user_token']);
         
         
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
         
-        $this->response->setOutput($this->load->view('shopmanager/maintenance_image', $data));
+        $this->response->setOutput($this->load->view('shopmanager/maintenance/image', $data));
     }
     
     /**
      * Check if validation is needed and get validation status
      */
     public function checkValidationStatus(): void {
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         $json = [];
         
         $column_exists = $this->model_shopmanager_maintenance_image->maintenanceColumnExists();
@@ -178,7 +178,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
     public function createValidationTable(): void {
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             try {
@@ -211,10 +211,10 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $old_error_reporting = error_reporting(0);
         ini_set('display_errors', '0');
         
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             $batch_size = 50;
@@ -261,7 +261,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Validate a single product and store results
      */
     private function validateProduct($product_id, $product_data = null): void {
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         
         if (!$product_data) {
             $product_data = $this->model_shopmanager_maintenance_image->getProduct($product_id);
@@ -463,7 +463,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
     }
     
     public function list(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $data = $data ?? [];
         $data += $lang;
         
@@ -471,9 +471,9 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
     }
     
     public function getList(): string {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $this->load->model('tool/image');
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         
         // Filters
         $filter_product_id = $this->request->get['filter_product_id'] ?? '';
@@ -520,7 +520,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         if (isset($this->request->get['sort'])) $url .= '&sort=' . $sort;
         if (isset($this->request->get['order'])) $url .= '&order=' . $order;
         
-        $data['action'] = $this->url->link('shopmanager/maintenance_image.list', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['action'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url);
         $data['user_token'] = $this->session->data['user_token'];
         
         // Build filter data for model
@@ -727,7 +727,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
             'total' => $total_filtered,
             'page'  => $page,
             'limit' => $limit,
-            'url'   => $this->url->link('shopmanager/maintenance_image.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
+            'url'   => $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
         ]);
         
         $data['results'] = sprintf(($lang['text_displaying'] ?? ''), (($page - 1) * $limit) + 1, min($page * $limit, $total_filtered), $total_filtered, ceil($total_filtered / $limit));
@@ -759,9 +759,9 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $data['sort'] = $sort;
         $data['order'] = $order;
         
-        $data['sort_product_id'] = $this->url->link('shopmanager/maintenance_image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.product_id&order=' . ($sort == 'p.product_id' && $order == 'ASC' ? 'DESC' : 'ASC'));
-        $data['sort_model'] = $this->url->link('shopmanager/maintenance_image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.model&order=' . ($sort == 'p.model' && $order == 'ASC' ? 'DESC' : 'ASC'));
-        $data['sort_name'] = $this->url->link('shopmanager/maintenance_image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=pd.name&order=' . ($sort == 'pd.name' && $order == 'ASC' ? 'DESC' : 'ASC'));
+        $data['sort_product_id'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.product_id&order=' . ($sort == 'p.product_id' && $order == 'ASC' ? 'DESC' : 'ASC'));
+        $data['sort_model'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.model&order=' . ($sort == 'p.model' && $order == 'ASC' ? 'DESC' : 'ASC'));
+        $data['sort_name'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=pd.name&order=' . ($sort == 'pd.name' && $order == 'ASC' ? 'DESC' : 'ASC'));
         $data['entry_language'] = ($lang['entry_language'] ?? '');
         $data['button_print'] = ($lang['button_print'] ?? '');
         $data['button_edit'] = ($lang['button_edit'] ?? '');
@@ -791,17 +791,17 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $data['text_check_ebay_notify_more'] = ($lang['text_check_ebay_notify_more'] ?? '');
         $data['text_check_ebay_ok'] = ($lang['text_check_ebay_ok'] ?? '');
         
-        return $this->load->view('shopmanager/maintenance_image_list', $data);
+        return $this->load->view('shopmanager/maintenance/image_list', $data);
     }
 
     /**
      * Compare eBay image count/names vs DB images (main + secondary) for one product.
      */
     public function checkEbayImageComparison(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -825,14 +825,14 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Remove missing images from database
      */
     public function removeMissingImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $data = $data ?? [];
         $data += $lang;
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['images']) && is_array($this->request->post['images'])) {
@@ -876,10 +876,10 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Product must have a valid eBay marketplace_item_id.
      */
     public function importEbayImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -908,10 +908,10 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Called from the Image Mismatch tab in the Inventory/Sync dashboard.
      */
     public function bulkImportMismatchImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = $lang['error_permission'] ?? 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -927,7 +927,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/marketplace');
         $this->load->model('tool/image');
 
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         $rows = $this->model_shopmanager_maintenance_image->getImageMismatchList();
 
         if (empty($rows)) {
@@ -1006,10 +1006,10 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Used for the per-row "Import" button in the Image Mismatch tab.
      */
     public function importEbayImagesForProductAjax(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = $lang['error_permission'] ?? 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1066,18 +1066,18 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Fix image nomenclature and convert to webp
      */
     public function fixImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $data = $data ?? [];
         $data += $lang;
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['product_ids']) && is_array($this->request->post['product_ids'])) {
                 $this->load->model('shopmanager/catalog/product');
-                $this->load->model('shopmanager/maintenance_image');
+                $this->load->model('shopmanager/maintenance/image');
                 
                 $fixed_count = 0;
                 $converted_count = 0;
@@ -1436,7 +1436,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
             }
 
             if ($imported_count > 0) {
-                $this->load->model('shopmanager/maintenance_image');
+                $this->load->model('shopmanager/maintenance/image');
                 $product_fresh = $this->model_shopmanager_maintenance_image->getFreshProduct($product_id);
 
                 if ($product_fresh) {
@@ -1558,13 +1558,13 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Delete remaining files in old directories
      */
     public function deleteRemainingFiles(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $data = $data ?? [];
         $data += $lang;
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['directories']) && is_array($this->request->post['directories'])) {
@@ -1692,14 +1692,14 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
      * Add orphan images to product
      */
     public function addOrphanImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance_image');
+        $lang = $this->load->language('shopmanager/maintenance/image');
         $data = $data ?? [];
         $data += $lang;
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['product_id']) && isset($this->request->post['images']) && is_array($this->request->post['images'])) {
@@ -1750,7 +1750,7 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $orphans = [];
         
         // Get all images linked to this product
-        $this->load->model('shopmanager/maintenance_image');
+        $this->load->model('shopmanager/maintenance/image');
         $linked_images = [];
         $expected_dir = null;
         
