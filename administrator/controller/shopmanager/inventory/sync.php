@@ -893,45 +893,15 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $product_id = (int)$this->request->post['product_id'];
 
-            // Get product info using model
-            $product = $this->model_shopmanager_marketplace->getProductForRefresh($product_id);
+            $response = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id);
 
-            if (!$product) {
-                throw new \Exception('Product not found');
-            }
-
-            // Get marketplace info using model
-            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceForRefresh($product_id);
-
-            if (!$marketplace) {
-                throw new \Exception('Product not listed on eBay');
-            }
-
-            $marketplace_item_id = $marketplace['marketplace_item_id'];
-            $marketplace_account_id = $marketplace['marketplace_account_id'];
-            $new_quantity = (int)$product['quantity'] + (int)$product['unallocated_quantity'];
-
-            // Charger les modèles et récupérer site_settings (même pattern que syncQuantityToEbay)
-            $this->load->model('shopmanager/ebay');
-            $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
-            $site_settings = json_decode($account_info['site_setting'] ?? '{}', true);
-
-            // Call eBay API to update quantity
-            $response = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id, $new_quantity, null, $product_id, $marketplace_account_id, $site_settings);
-
-            // Update last_sync timestamp using model
             $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
 
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
                 $json['success'] = true;
-                $json['message'] = 'Product "' . $product['name'] . '" synced successfully to eBay (Qty: ' . $new_quantity . ')';
+                $json['message'] = 'Product #' . $product_id . ' synced successfully to eBay';
             } else {
-                $error_msg = 'Sync failed';
-                if (isset($response['Errors']['ShortMessage'])) {
-                    $error_msg = $response['Errors']['ShortMessage'];
-                } elseif (isset($response['Errors'][0]['ShortMessage'])) {
-                    $error_msg = $response['Errors'][0]['ShortMessage'];
-                }
+                $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Sync failed';
                 $json['success'] = false;
                 $json['error'] = $error_msg;
             }
@@ -1138,47 +1108,25 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncQuantityToEbay(): void {
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
-        
         $json = [];
-        $product_id = $this->request->post['product_id'] ?? 0;
-        
+        $product_id = (int)($this->request->post['product_id'] ?? 0);
+
         if (!$product_id) {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $product = $this->model_shopmanager_marketplace->getProductQuantities($product_id);
-                if (!$product) {
-                    throw new \Exception("Product not found");
-                }
-                
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
-                if (!$marketplace) {
-                    throw new \Exception("Product not listed on eBay");
-                }
-                
-                $quantity = (int)$product['quantity'] + (int)$product['unallocated_quantity'];
-                $marketplace_item_id = $marketplace['marketplace_item_id'];
-                $marketplace_account_id = $marketplace['marketplace_account_id'];
-                
-                $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
-                $site_settings = json_decode($account_info['site_setting'] ?? '{}', true);
-                
-                $response = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id, $quantity, null, $product_id, $marketplace_account_id, $site_settings);
-                
+                $response = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id);
+
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                    $this->model_shopmanager_marketplace->updateMarketplaceQuantity($product_id, $quantity);
-                    $json['success'] = 'Quantity synced to eBay: ' . $quantity;
+                    $json['success'] = 'Quantity synced to eBay';
                 } else {
-                    $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
-                    $json['error'] = $error_msg;
+                    $json['error'] = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
                 }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
         }
-        
+
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($json));
     }
