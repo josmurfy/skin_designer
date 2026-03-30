@@ -2091,6 +2091,7 @@ class Sync extends \Opencart\System\Engine\Controller {
 
     /**
      * Promote an OC secondary image to primary (demotes old primary to secondary).
+     * Also renames files on disk: priN <-> secN in filename.
      * POST: product_id, image_path
      */
     public function setOcImagePrimary(): void {
@@ -2102,27 +2103,58 @@ class Sync extends \Opencart\System\Engine\Controller {
             $image_path = $this->request->post['image_path'] ?? '';
             if (!$product_id || !$image_path) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
 
+            // ── Helper: rename priN<->secN on disk, returns new relative path
+            $swapRole = function(string $rel, string $from, string $to): string {
+                $abs_dir  = DIR_IMAGE . dirname($rel) . '/';
+                $file     = basename($rel);
+                $ext      = pathinfo($file, PATHINFO_EXTENSION);
+                $base     = pathinfo($file, PATHINFO_FILENAME);
+                if (preg_match('/^(\d+)' . preg_quote($from, '/') . '(\d+)$/i', $base, $m)) {
+                    $newfile = $m[1] . $to . $m[2] . '.' . $ext;
+                    $newrel  = trim(dirname($rel), '/') . '/' . $newfile;
+                    if (file_exists($abs_dir . $file) && !file_exists($abs_dir . $newfile)) {
+                        rename($abs_dir . $file, $abs_dir . $newfile);
+                    }
+                    return file_exists(DIR_IMAGE . $newrel) ? $newrel : $rel;
+                }
+                return $rel;
+            };
+
             $cur         = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
             $old_primary = $cur->row['image'] ?? '';
+            $new_old     = $old_primary;
+            $new_pri     = $image_path;
 
             if ($old_primary && $old_primary !== $image_path) {
-                $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($old_primary) . "'");
+                // Rename files on disk
+                $new_old = $swapRole($old_primary, 'pri', 'sec');
+                $new_pri = $swapRole($image_path,  'sec', 'pri');
+
+                // Remove stale DB path if file was renamed
+                if ($new_old !== $old_primary) {
+                    $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($old_primary) . "'");
+                }
+                // Insert demoted primary as secondary
+                $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($new_old) . "'");
                 if (!$chk->num_rows) {
                     $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
                     $next = (int)($sort->row['m'] ?? 0) + 1;
-                    $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($old_primary) . "', sort_order = '" . $next . "'");
+                    $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($new_old) . "', sort_order = '" . $next . "'");
                 }
             }
-            $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($image_path) . "'");
-            $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($image_path) . "' WHERE product_id = '" . $product_id . "'");
+
+            // Remove new primary from secondary table + set as main
+            $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image IN ('" . $this->db->escape($image_path) . "', '" . $this->db->escape($new_pri) . "')");
+            $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($new_pri) . "' WHERE product_id = '" . $product_id . "'");
             $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
-            $json['success'] = true;
+            $json['success']     = true;
+            $json['new_primary'] = $new_pri;
         } catch (\Exception $e) { $json['error'] = 'setOcImagePrimary: ' . $e->getMessage(); }
         $this->response->setOutput(json_encode($json));
     }
 
     /**
-     * Copy one backup image to OC with explicit role (primary|secondary).
+     * Move (not copy) one backup image to OC with explicit role (primary|secondary).
      * POST: product_id, filename, role
      */
     public function transferBackupAsRole(): void {
@@ -2146,7 +2178,11 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $dst     = $dest_dir . $filename;
             $oc_path = $dest_rel . $filename;
-            if (!file_exists($dst) && !copy($src, $dst)) { $json['error'] = 'Failed to copy file'; $this->response->setOutput(json_encode($json)); return; }
+            if (!file_exists($dst)) {
+                if (!rename($src, $dst)) { $json['error'] = 'Failed to move file'; $this->response->setOutput(json_encode($json)); return; }
+            } elseif (file_exists($src)) {
+                @unlink($src); // Already exists in OC — just remove from backup
+            }
 
             if ($role === 'primary') {
                 $cur = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
