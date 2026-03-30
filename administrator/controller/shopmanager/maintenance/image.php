@@ -923,6 +923,14 @@ class Image extends \Opencart\System\Engine\Controller {
                     $json['direction']             = 'ebay_to_oc';
                     $json['ebay_image_count_reset'] = true;
                 }
+            }
+        }
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
      * Bulk: import eBay images for ALL products that have an image count mismatch.
      * After importing, resets ebay_image_count = 0 so the next eBay import
      * re-fetches the true count from the API.
