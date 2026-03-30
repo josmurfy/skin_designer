@@ -589,14 +589,17 @@
     if (!backupImages || !backupImages.length) {
       return '<div class="alert alert-info py-2 mb-0"><i class="fa-solid fa-folder-open me-1"></i>Aucune image backup pour ce produit.</div>';
     }
-    // Bulk-delete toolbar
-    var html = '<div class="d-flex align-items-center gap-2 mb-2 px-2 py-1 rounded" style="background:#f8f9fa;">';
-    html += '<input type="checkbox" id="backup-bulk-select-all" class="form-check-input" style="width:16px;height:16px;cursor:pointer;">';
-    html += '<label for="backup-bulk-select-all" class="form-check-label small text-muted mb-0">Tout</label>';
+    // Bulk toolbar
+    var html = '<div class="d-flex flex-wrap align-items-center gap-2 mb-2 px-2 py-1 rounded" style="background:#f8f9fa;">';
+    html += '<input type="checkbox" id="backup-bulk-select-all" class="form-check-input" style="width:17px;height:17px;cursor:pointer;accent-color:#0d6efd;">';
+    html += '<label for="backup-bulk-select-all" class="form-check-label small fw-bold mb-0">Tout</label>';
     html += '<span class="badge bg-secondary" id="backup-bulk-count">0 s\u00e9l.</span>';
-    html += '<span class="small text-muted ms-1"><i class="fa-solid fa-hand-pointer me-1" style="font-size:10px;"></i>Glisser vers OC</span>';
-    html += '<button type="button" class="btn btn-sm btn-danger ms-auto btn-bulk-delete-backup" disabled style="font-size:11px;"><i class="fa-solid fa-trash me-1"></i>Supprimer s\u00e9l.</button>';
-    html += '</div>';
+    html += '<span class="small text-muted"><i class="fa-solid fa-hand-pointer me-1" style="font-size:10px;"></i>Glisser vers OC</span>';
+    html += '<div class="ms-auto d-flex gap-1">';
+    html += '<button type="button" class="btn btn-sm btn-outline-danger btn-bulk-xfer-backup" data-role="primary" disabled style="font-size:11px;"><i class="fa-solid fa-star me-1"></i>&#8594; Principal</button>';
+    html += '<button type="button" class="btn btn-sm btn-outline-primary btn-bulk-xfer-backup" data-role="secondary" disabled style="font-size:11px;"><i class="fa-solid fa-images me-1"></i>&#8594; Sec.</button>';
+    html += '<button type="button" class="btn btn-sm btn-danger btn-bulk-delete-backup" disabled style="font-size:11px;"><i class="fa-solid fa-trash me-1"></i>Suppr.</button>';
+    html += '</div></div>';
     html += '<div class="row g-2">';
     $.each(backupImages, function(i, f) {
       var qual  = resQuality(f.width, f.height);
@@ -607,11 +610,11 @@
             + ' data-drag-filename="' + escAttr(f.filename) + '"'
             + ' data-drag-product-id="' + productId + '"'
             + ' style="border:3px solid var(--bs-' + qual + ');cursor:grab;">';
-      // Checkbox overlay top-right
+      // Checkbox overlay top-right — solid white bg so checkmark is visible
       html += '<div class="position-absolute" style="top:4px;right:4px;z-index:10;">';
-      html += '<input type="checkbox" class="form-check-input backup-bulk-check shadow-sm"'
+      html += '<input type="checkbox" class="form-check-input backup-bulk-check"'
             + ' data-filename="' + escAttr(f.filename) + '"'
-            + ' style="width:16px;height:16px;cursor:pointer;background:#ffffffd0;"'
+            + ' style="width:18px;height:18px;cursor:pointer;accent-color:#dc3545;background:#fff;border:2px solid #aaa;box-shadow:0 0 3px rgba(0,0,0,.3);"'
             + ' onclick="event.stopPropagation();">'
       html += '</div>';
       html += '<div class="position-relative" style="height:130px;background:#f5f5f5;overflow:hidden;">';
@@ -788,7 +791,7 @@
   function updateBulkDeleteBtn() {
     var $checked = $('.backup-bulk-check:checked');
     var n = $checked.length;
-    $('.btn-bulk-delete-backup').prop('disabled', n === 0);
+    $('.btn-bulk-delete-backup, .btn-bulk-xfer-backup').prop('disabled', n === 0);
     $('#backup-bulk-count').text(n + ' s\u00e9l.');
   }
 
@@ -805,6 +808,33 @@
     $('#backup-bulk-select-all').prop('indeterminate', checked > 0 && checked < total)
                                 .prop('checked', checked === total && total > 0);
     updateBulkDeleteBtn();
+  });
+
+  $(document).off('click.bulkXfer', '.btn-bulk-xfer-backup')
+             .on('click.bulkXfer', '.btn-bulk-xfer-backup', function() {
+    var role = $(this).data('role');
+    var filenames = [];
+    $('.backup-bulk-check:checked').each(function() { filenames.push($(this).data('filename')); });
+    if (!filenames.length) return;
+    var label = role === 'primary' ? 'principal' : 'secondaire';
+    if (!confirm('Transf\u00e9rer ' + filenames.length + ' image(s) comme ' + label + ' vers OC ?')) return;
+    var pid = currentBackupProductId;
+    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>En cours\u2026');
+    var done = 0, errors = [];
+    function next() {
+      if (done >= filenames.length) {
+        if (errors.length) alert('Erreurs : ' + errors.join(', '));
+        reloadPopup(pid); return;
+      }
+      var fn = filenames[done++];
+      $.ajax({
+        url: URL_XFER_ROLE, type: 'POST', dataType: 'json',
+        data: { product_id: pid, filename: fn, role: role },
+        success: function(json) { if (json.error) errors.push(fn + ': ' + json.error); next(); },
+        error: function(xhr) { errors.push(fn + ' (HTTP ' + xhr.status + ')'); next(); }
+      });
+    }
+    next();
   });
 
   $(document).off('click.bulkDelete', '.btn-bulk-delete-backup')
