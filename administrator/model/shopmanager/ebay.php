@@ -902,7 +902,7 @@ private function buildRelistItemRequest($marketplace_item_id,$site_setting = [])
         return '<?xml version="1.0" encoding="utf-8"?>
             <ReviseItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
            
-                <ErrorLanguage>'.($site_setting['Language'] ?? 'en_US').'</ErrorLanguage>
+                <ErrorLanguage>'.$site_setting['Language'].'</ErrorLanguage>
                 <WarningLevel>High</WarningLevel>
                 <Item>
                     <ItemID>' . $marketplace_item_id . '</ItemID>
@@ -3118,8 +3118,8 @@ public function getImages($marketplace_item_id) {
     private function getLocation($made_in_country_id = null,$site_setting = []) {
 
        // if($made_in_country_id != 44 && $made_in_country_id !== null ){
-            $location = '<Location>'.($site_setting['Location']['Location'] ?? '').'</Location>
-            <PostalCode>'.($site_setting['Location']['PostalCode'] ?? '').'</PostalCode>';
+            $location = '<Location>'.$site_setting['Location']['Location'].'</Location>
+            <PostalCode>'.$site_setting['Location']['PostalCode'].'</PostalCode>';
      /*   }else{
             $location = '<Location>Longueuil, Quebec</Location>
             <PostalCode>J4G1R3</PostalCode>';

@@ -908,13 +908,16 @@ class Sync extends \Opencart\System\Engine\Controller {
             }
 
             $marketplace_item_id = $marketplace['marketplace_item_id'];
+            $marketplace_account_id = $marketplace['marketplace_account_id'];
             $new_quantity = (int)$product['quantity'] + (int)$product['unallocated_quantity'];
 
+            // Charger les modèles et récupérer site_settings (même pattern que syncQuantityToEbay)
+            $this->load->model('shopmanager/ebay');
+            $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
+            $site_settings = json_decode($account_info['site_setting'] ?? '{}', true);
+
             // Call eBay API to update quantity
-            require_once(DIR_SYSTEM . 'library/ebay/ebay_trading.php');
-            $ebay = new EbayTrading();
-            
-            $response = $ebay->editQuantity($marketplace_item_id, $new_quantity);
+            $response = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id, $new_quantity, null, $product_id, $marketplace_account_id, $site_settings);
 
             // Update last_sync timestamp using model
             $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
