@@ -812,21 +812,24 @@
 
   $(document).off('click.bulkXfer', '.btn-bulk-xfer-backup')
              .on('click.bulkXfer', '.btn-bulk-xfer-backup', function() {
-    var role = $(this).data('role');
+    var baseRole = $(this).data('role');
     var filenames = [];
     $('.backup-bulk-check:checked').each(function() { filenames.push($(this).data('filename')); });
     if (!filenames.length) return;
-    var label = role === 'primary' ? 'principal' : 'secondaire';
-    if (!confirm('Transf\u00e9rer ' + filenames.length + ' image(s) comme ' + label + ' vers OC ?')) return;
+    var label = baseRole === 'primary' ? 'principal (1\u00e8re) + secondaires (reste)' : 'secondaire';
+    if (!confirm('Transf\u00e9rer ' + filenames.length + ' image(s) \u2014 ' + label + ' ?')) return;
     var pid = currentBackupProductId;
-    var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>En cours\u2026');
+    $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>En cours\u2026');
     var done = 0, errors = [];
     function next() {
       if (done >= filenames.length) {
         if (errors.length) alert('Erreurs : ' + errors.join(', '));
         reloadPopup(pid); return;
       }
-      var fn = filenames[done++];
+      // Pour "primary" : 1ère image = primary, toutes les suivantes = secondary
+      var fn   = filenames[done];
+      var role = (baseRole === 'primary' && done > 0) ? 'secondary' : baseRole;
+      done++;
       $.ajax({
         url: URL_XFER_ROLE, type: 'POST', dataType: 'json',
         data: { product_id: pid, filename: fn, role: role },
