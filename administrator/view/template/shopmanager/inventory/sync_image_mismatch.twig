@@ -1,4 +1,11 @@
 {# Image Count Mismatch Tab — Section 1: OC vs eBay  |  Section 2: OC vs Backup #}
+<style>
+.backup-card-selected {
+  outline: 3px solid #0d6efd !important;
+  outline-offset: 1px;
+  background-color: rgba(13,110,253,0.08) !important;
+}
+</style>
 
 {# ═══════════════════════════════════════════════════════════════════════════ #}
 {# SECTION 1 — OC vs eBay                                                     #}
@@ -797,12 +804,15 @@
 
   $(document).off('change.bulkSelectAll', '#backup-bulk-select-all')
              .on('change.bulkSelectAll', '#backup-bulk-select-all', function() {
-    $('.backup-bulk-check').prop('checked', $(this).is(':checked'));
+    var isChecked = $(this).is(':checked');
+    $('.backup-bulk-check').prop('checked', isChecked)
+      .closest('.card').toggleClass('backup-card-selected', isChecked);
     updateBulkDeleteBtn();
   });
 
   $(document).off('change.bulkCheck', '.backup-bulk-check')
              .on('change.bulkCheck', '.backup-bulk-check', function() {
+    $(this).closest('.card').toggleClass('backup-card-selected', $(this).is(':checked'));
     var total   = $('.backup-bulk-check').length;
     var checked = $('.backup-bulk-check:checked').length;
     $('#backup-bulk-select-all').prop('indeterminate', checked > 0 && checked < total)
