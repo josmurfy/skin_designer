@@ -419,6 +419,7 @@ class Sync extends \Opencart\System\Engine\Model {
             AND pm.marketplace_item_id IS NOT NULL
             AND pm.marketplace_item_id != ''
             AND (pm.last_sync IS NULL OR pm.last_sync < DATE_SUB(NOW(), INTERVAL 7 DAY))
+            AND (pm.last_import IS NULL OR pm.last_import < DATE_SUB(NOW(), INTERVAL 7 DAY))
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             ORDER BY pm.last_sync ASC
         ");
@@ -813,6 +814,7 @@ class Sync extends \Opencart\System\Engine\Model {
             WHERE p.quantity > 0
             AND p.status = 1
             AND (pm.last_sync IS NULL OR pm.last_sync < DATE_SUB(NOW(), INTERVAL 7 DAY))
+            AND (pm.last_import IS NULL OR pm.last_import < DATE_SUB(NOW(), INTERVAL 7 DAY))
         ");
         if ($query->row['total'] > 0) {
             $alerts[] = [
@@ -1420,7 +1422,256 @@ class Sync extends \Opencart\System\Engine\Model {
         
         return (int)$query->row['total'];
     }
-    
+
+    /**
+     * Get products where OC image count differs from eBay image count
+     * OC count = primary image (1 if set) + additional images in oc_product_image
+     * eBay count = pm.ebay_image_count (populated during sync)
+     *
+     * @param array $data Sort/pagination options
+     * @return array
+     */
+    public function getImageMismatch(array $data = []): array {
+        $sql = "
+            SELECT
+                p.product_id,
+                p.sku,
+                p.location,
+                pd.name,
+                pm.marketplace_item_id,
+                pm.ebay_image_count,
+                pm.image_backup_count,
+                (
+                    CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                    + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)
+                ) AS oc_image_count,
+                (
+                    (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                    + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id))
+                    - pm.ebay_image_count
+                ) AS image_diff,
+                (
+                    (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                    + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id))
+                    - COALESCE(pm.image_backup_count, 0)
+                ) AS backup_diff
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+            WHERE pm.marketplace_id = 1
+            AND pm.is_com = 0
+            AND pm.ebay_image_count > 0
+            HAVING oc_image_count != pm.ebay_image_count
+        ";
+
+        // Sorting
+        $sort  = $data['sort']  ?? 'product_id';
+        $order = $data['order'] ?? 'ASC';
+
+        $allowed_sorts = ['product_id', 'name', 'location', 'oc_image_count', 'ebay_image_count', 'image_diff', 'backup_diff'];
+        if (!in_array($sort, $allowed_sorts)) {
+            $sort = 'product_id';
+        }
+        if ($order != 'ASC' && $order != 'DESC') {
+            $order = 'ASC';
+        }
+
+        $sort_map = [
+            'product_id'       => 'p.product_id',
+            'name'             => 'pd.name',
+            'location'         => 'p.location',
+            'oc_image_count'   => 'oc_image_count',
+            'ebay_image_count' => 'pm.ebay_image_count',
+            'image_diff'       => 'image_diff',
+            'backup_diff'      => 'backup_diff',
+        ];
+        $sql .= " ORDER BY " . $sort_map[$sort] . " " . $order;
+
+        // Pagination
+        if (isset($data['start']) && isset($data['limit'])) {
+            $sql .= " LIMIT " . (int)$data['start'] . ", " . (int)$data['limit'];
+        }
+
+        $query = $this->db->query($sql);
+        return $query->rows;
+    }
+
+    /**
+     * Get total count of image count mismatches (OC vs eBay)
+     *
+     * @return int
+     */
+    public function getTotalImageMismatch(): int {
+        $query = $this->db->query("
+            SELECT COUNT(*) as total
+            FROM (
+                SELECT p.product_id,
+                    (
+                        CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                        + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)
+                    ) AS oc_image_count,
+                    pm.ebay_image_count AS ebay_count,
+                    pm.image_backup_count AS backup_count
+                FROM " . DB_PREFIX . "product p
+                INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+                WHERE pm.marketplace_id = 1
+                AND pm.is_com = 0
+                AND pm.ebay_image_count > 0
+                HAVING oc_image_count != ebay_count
+            ) as subquery
+        ");
+        return (int)$query->row['total'];
+    }
+
+    /**
+     * Get products where backup has MORE images than OC.
+     * Only shown when image_backup_count > oc_image_count (images in backup not yet in OC).
+     */
+    public function getImageBackupMismatch(array $data = []): array {
+        $lang_id = (int)$this->config->get('config_language_id');
+        $sql = "
+            SELECT
+                p.product_id,
+                p.sku,
+                p.location,
+                pd.name,
+                pm.image_backup_count,
+                (
+                    CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                    + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)
+                ) AS oc_image_count,
+                (
+                    pm.image_backup_count
+                    - (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                       + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi2 WHERE pi2.product_id = p.product_id))
+                ) AS backup_extra
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . $lang_id . "')
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+            WHERE pm.marketplace_id = 1
+            AND pm.is_com = 0
+            AND pm.image_backup_count IS NOT NULL
+            HAVING pm.image_backup_count > oc_image_count
+        ";
+
+        $sort  = $data['sort']  ?? 'product_id';
+        $order = $data['order'] ?? 'ASC';
+        $allowed_sorts = ['product_id', 'name', 'location', 'oc_image_count', 'image_backup_count', 'backup_extra'];
+        if (!in_array($sort, $allowed_sorts)) $sort = 'product_id';
+        if ($order != 'ASC' && $order != 'DESC') $order = 'ASC';
+        $sort_map = [
+            'product_id'         => 'p.product_id',
+            'name'               => 'pd.name',
+            'location'           => 'p.location',
+            'oc_image_count'     => 'oc_image_count',
+            'image_backup_count' => 'pm.image_backup_count',
+            'backup_extra'       => 'backup_extra',
+        ];
+        $sql .= " ORDER BY " . $sort_map[$sort] . " " . $order;
+
+        if (isset($data['start']) && isset($data['limit'])) {
+            $sql .= " LIMIT " . (int)$data['start'] . ", " . (int)$data['limit'];
+        }
+        return $this->db->query($sql)->rows;
+    }
+
+    /**
+     * Get total count of products where backup > OC.
+     */
+    public function getTotalImageBackupMismatch(): int {
+        $lang_id = (int)$this->config->get('config_language_id');
+        $query = $this->db->query("
+            SELECT COUNT(*) as total
+            FROM (
+                SELECT p.product_id,
+                    (
+                        CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                        + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)
+                    ) AS oc_image_count,
+                    pm.image_backup_count
+                FROM " . DB_PREFIX . "product p
+                INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+                WHERE pm.marketplace_id = 1
+                AND pm.is_com = 0
+                AND pm.image_backup_count IS NOT NULL
+                HAVING pm.image_backup_count > oc_image_count
+            ) as subquery
+        ");
+        return (int)$query->row['total'];
+    }
+
+    /**
+     * Scan image_backup directory and update image_backup_count in product_marketplace.
+     * Counts ALL image files in image_backup/data/product/{product_id}/
+     * regardless of naming convention (old: {id}.jpg / {id}_{num}.jpg  OR
+     * new: {id}pri{N}.jpg / {id}sec{N}.jpg).
+     *
+     * @param string $backup_dir  Absolute path to image_backup/ directory (trailing slash)
+     * @return array ['scanned', 'with_images', 'empty', 'not_found']
+     */
+    public function scanImageBackupCounts(string $backup_dir): array {
+        $query = $this->db->query("
+            SELECT DISTINCT product_id
+            FROM " . DB_PREFIX . "product_marketplace
+            WHERE marketplace_id = 1
+        ");
+
+        if (!$query->num_rows) {
+            return ['scanned' => 0, 'with_images' => 0, 'empty' => 0, 'not_found' => 0];
+        }
+
+        $stats = ['scanned' => 0, 'with_images' => 0, 'empty' => 0, 'not_found' => 0];
+        $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+        $updates = []; // product_id => count
+
+        foreach ($query->rows as $row) {
+            $product_id = (int)$row['product_id'];
+            $dir   = $backup_dir . 'data/product/' . $product_id . '/';
+            $count = 0;
+
+            if (is_dir($dir)) {
+                $files = @scandir($dir);
+                if ($files) {
+                    foreach ($files as $file) {
+                        if ($file === '.' || $file === '..') continue;
+                        if (!is_file($dir . $file)) continue;
+                        $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                        if (in_array($ext, $image_extensions)) {
+                            $count++;
+                        }
+                    }
+                }
+                if ($count > 0) $stats['with_images']++;
+                else             $stats['empty']++;
+            } else {
+                $stats['not_found']++;
+            }
+
+            $updates[$product_id] = $count;
+            $stats['scanned']++;
+        }
+
+        // Batch UPDATE in chunks of 500 to avoid huge SQL statements
+        foreach (array_chunk($updates, 500, true) as $chunk) {
+            if (empty($chunk)) continue;
+            $cases = '';
+            $ids   = [];
+            foreach ($chunk as $pid => $cnt) {
+                $cases .= " WHEN " . (int)$pid . " THEN " . (int)$cnt;
+                $ids[]  = (int)$pid;
+            }
+            $ids_str = implode(',', $ids);
+            $this->db->query("
+                UPDATE " . DB_PREFIX . "product_marketplace
+                SET image_backup_count = CASE product_id" . $cases . " END
+                WHERE product_id IN (" . $ids_str . ")
+                AND marketplace_id = 1
+            ");
+        }
+
+        return $stats;
+    }
+
     /**
      * Import category from eBay for single product
      */

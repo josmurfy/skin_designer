@@ -174,3 +174,54 @@ $_['text_confirm_sync_all']     = 'This will synchronize all products with eBay.
 $_['text_error_sync_url']       = 'Error: Sync URL not configured';
 $_['text_confirm_sync_product'] = 'Sync product "%s" to eBay marketplace?';
 $_['text_confirm_refresh_all']  = 'Refresh ALL data from eBay (price, quantity, specifics, dates)?';
+
+// Image mismatch
+$_['tab_image_mismatch']      = 'Image Count Mismatch';
+$_['column_oc_images']        = 'OC Images';
+$_['column_ebay_images']      = 'eBay Images';
+$_['column_diff']             = 'Diff';
+$_['text_image_mismatch_info'] = 'Products where the number of images in OpenCart differs from what was published on eBay. Run a sync to update eBay image counts.';
+
+// Force refresh
+$_['button_force_refresh']        = 'Force Full Refresh';
+$_['tooltip_force_refresh']       = 'Force re-import ALL data from eBay (category, condition, specifics, images) even if already stored. Slower — calls GetItem for every product.';
+$_['text_confirm_force_refresh']  = 'This will call GetItem on ALL listed products to refresh category, condition, specifics and images. This is much slower and uses more eBay API quota. Continue?';
+
+// Bulk fix image mismatch
+$_['button_close']                   = 'Close';
+$_['button_bulk_fix_images']         = 'Fix All Images';
+$_['button_fix_single_image']        = 'Import eBay Images for this product';
+$_['text_bulk_fix_tooltip']          = 'Import eBay images for ALL products with a mismatch, then reset their image counter to 0 so the next sync re-validates.';
+$_['text_bulk_fix_confirm']          = 'This will download eBay images for all mismatched products and replace their current OC images. The ebay_image_count will be reset to 0 and re-validated on the next eBay import. Continue?';
+$_['text_bulk_fix_modal_title']      = 'Bulk Import eBay Images';
+$_['text_bulk_fix_processing']       = 'Importing eBay images for all mismatched products… Please wait.';
+$_['text_bulk_fix_imported']         = 'Imported';
+$_['text_bulk_fix_skipped']          = 'Skipped';
+$_['text_bulk_fix_errors']           = 'Errors';
+$_['text_bulk_fix_reset_info']       = 'After import, the eBay image counter (ebay_image_count) was reset to 0 for each product. Run "Import from eBay" or "Force Full Refresh" to re-fetch the true count from eBay.';
+$_['text_bulk_fix_error_details']    = 'Products with errors:';
+
+// Image Backup Scan
+$_['button_scan_image_backup']       = 'Scan image_backup';
+$_['tooltip_scan_image_backup']      = 'Count image files in image_backup/data/product/ for each product and save the count to the database.';
+$_['text_scan_backup_confirm']       = 'This will scan the image_backup directory and count images for all products. May take a few seconds. Continue?';
+$_['text_scan_backup_complete']      = 'Backup scan complete';
+$_['column_backup_images']           = 'Backup';
+$_['text_backup_not_scanned']        = 'N/A';
+
+// Backup mismatch table & popup
+$_['text_backup_table_title']        = 'OC vs Backup — Products with more backup images than OC';
+$_['text_backup_table_info']         = 'These products have more images in image_backup than in OpenCart. Use the button to review and transfer them.';
+$_['column_backup_extra']            = 'Extra in Backup';
+$_['button_open_backup_popup']       = 'Review Backup';
+$_['text_popup_backup_title']        = 'Backup Images — Product #%s';
+$_['button_transfer_to_oc']          = 'Transfer to OC';
+$_['button_delete_from_backup']      = 'Delete from Backup';
+$_['text_backup_select_all']         = 'Select All';
+$_['text_backup_no_files']           = 'No backup images found for this product.';
+$_['text_backup_already_in_oc']      = 'Already in OC';
+$_['text_backup_type_primary']       = 'Primary';
+$_['text_backup_type_secondary']     = 'Secondary';
+$_['text_backup_transferred']        = '%d image(s) transferred to OC.';
+$_['text_backup_deleted']            = '%d image(s) deleted from backup.';
+$_['text_backup_confirm_delete']     = 'Are you sure you want to permanently delete the selected backup images?';

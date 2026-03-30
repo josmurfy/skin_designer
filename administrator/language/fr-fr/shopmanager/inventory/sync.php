@@ -176,3 +176,54 @@ $_['text_confirm_sync_all']     = 'Ceci synchronisera tous les produits avec eBa
 $_['text_error_sync_url']       = 'Erreur : URL de synchronisation non configurée';
 $_['text_confirm_sync_product'] = 'Synchroniser le produit "%s" sur le marketplace eBay ?';
 $_['text_confirm_refresh_all']  = 'Rafraîchir TOUTES les données depuis eBay (prix, quantité, spécificités, dates) ?';
+
+// Écart nombre d'images
+$_['tab_image_mismatch']       = 'Écart Images';
+$_['column_oc_images']         = 'Images OC';
+$_['column_ebay_images']       = 'Images eBay';
+$_['column_diff']              = 'Diff';
+$_['text_image_mismatch_info'] = 'Produits dont le nombre d\'images dans OpenCart diffère de ce qui a été publié sur eBay. Lancez un sync pour mettre à jour les compteurs.';
+
+// Force refresh
+$_['button_force_refresh']        = 'Forcer Refresh Complet';
+$_['tooltip_force_refresh']       = 'Ré-importer TOUTES les données depuis eBay (catégorie, condition, spécificités, images) même si déjà en BD. Plus lent — appelle GetItem pour chaque produit.';
+$_['text_confirm_force_refresh']  = 'Ceci va appeler GetItem sur TOUS les produits listés pour rafraîchir catégorie, condition, spécificités et images. Beaucoup plus lent et consomme plus de quota API eBay. Continuer ?';
+
+// Correction en masse des images
+$_['button_close']                   = 'Fermer';
+$_['button_bulk_fix_images']         = 'Corriger toutes les images';
+$_['button_fix_single_image']        = 'Importer les images eBay pour ce produit';
+$_['text_bulk_fix_tooltip']          = "Importer les images eBay pour TOUS les produits avec un écart, puis réinitialiser leur compteur d'images à 0 pour revalider au prochain sync.";
+$_['text_bulk_fix_confirm']          = "Cette action va télécharger les images eBay pour tous les produits avec un écart et remplacer leurs images OC actuelles. Le compteur ebay_image_count sera remis à 0 et revalidé au prochain import eBay. Continuer ?";
+$_['text_bulk_fix_modal_title']      = 'Import en masse des images eBay';
+$_['text_bulk_fix_processing']       = 'Importation des images eBay pour tous les produits avec écart… Veuillez patienter.';
+$_['text_bulk_fix_imported']         = 'Importés';
+$_['text_bulk_fix_skipped']          = 'Ignorés';
+$_['text_bulk_fix_errors']           = 'Erreurs';
+$_['text_bulk_fix_reset_info']       = "Après l'import, le compteur eBay (ebay_image_count) a été remis à 0 pour chaque produit. Lancez 'Importer depuis eBay' ou 'Forcer Refresh Complet' pour récupérer le vrai compte eBay.";
+$_['text_bulk_fix_error_details']    = 'Produits en erreur :';
+
+// Image Backup Scan
+$_['button_scan_image_backup']       = 'Scanner image_backup';
+$_['tooltip_scan_image_backup']      = 'Compte les fichiers images dans image_backup/data/product/ pour chaque produit et sauvegarde le total en base.';
+$_['text_scan_backup_confirm']       = 'Ceci va scanner le répertoire image_backup et compter les images pour tous les produits. Quelques secondes. Continuer ?';
+$_['text_scan_backup_complete']      = 'Scan sauvegarde terminé';
+$_['column_backup_images']           = 'Backup';
+$_['text_backup_not_scanned']        = 'N/A';
+
+// Tableau de mismatch backup & popup
+$_['text_backup_table_title']        = 'OC vs Backup — Produits avec plus d\'images en backup qu\'en OC';
+$_['text_backup_table_info']         = 'Ces produits ont plus d\'images dans image_backup que dans OpenCart. Utilisez le bouton pour les examiner et les transférer.';
+$_['column_backup_extra']            = 'En extra dans Backup';
+$_['button_open_backup_popup']       = 'Voir Backup';
+$_['text_popup_backup_title']        = 'Images Backup — Produit #%s';
+$_['button_transfer_to_oc']          = 'Transférer vers OC';
+$_['button_delete_from_backup']      = 'Supprimer du Backup';
+$_['text_backup_select_all']         = 'Tout sélectionner';
+$_['text_backup_no_files']           = 'Aucune image backup trouvée pour ce produit.';
+$_['text_backup_already_in_oc']      = 'Déjà dans OC';
+$_['text_backup_type_primary']       = 'Principale';
+$_['text_backup_type_secondary']     = 'Secondaire';
+$_['text_backup_transferred']        = '%d image(s) transférée(s) vers OC.';
+$_['text_backup_deleted']            = '%d image(s) supprimée(s) du backup.';
+$_['text_backup_confirm_delete']     = 'Voulez-vous vraiment supprimer définitivement les images backup sélectionnées ?';

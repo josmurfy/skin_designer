@@ -80,10 +80,12 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['button_print_report'] = ($lang['button_print_report'] ?? '');
         $data['button_import_from_ebay'] = ($lang['button_import_from_ebay'] ?? '');
         $data['button_edit'] = ($lang['button_edit'] ?? '');
+        $data['button_force_refresh'] = ($lang['button_force_refresh'] ?? '');
 
         // Tooltips
         $data['tooltip_import_from_ebay'] = ($lang['tooltip_import_from_ebay'] ?? '');
         $data['tooltip_refresh_item'] = ($lang['tooltip_refresh_item'] ?? '');
+        $data['tooltip_force_refresh'] = ($lang['tooltip_force_refresh'] ?? '');
 
         // Sync table labels
         $data['text_edit_product']  = ($lang['text_edit_product'] ?? '');
@@ -102,6 +104,10 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['text_error_sync_url']       = ($lang['text_error_sync_url'] ?? '');
         $data['text_confirm_sync_product'] = ($lang['text_confirm_sync_product'] ?? '');
         $data['text_confirm_refresh_all']  = ($lang['text_confirm_refresh_all'] ?? '');
+        $data['text_confirm_force_refresh'] = ($lang['text_confirm_force_refresh'] ?? '');
+        $data['button_scan_image_backup']    = ($lang['button_scan_image_backup'] ?? '');
+        $data['tooltip_scan_image_backup']   = ($lang['tooltip_scan_image_backup'] ?? '');
+        $data['text_scan_backup_confirm']    = ($lang['text_scan_backup_confirm'] ?? '');
 
         // Messages for JavaScript
         $data['text_update_confirm'] = ($lang['text_update_confirm'] ?? '');
@@ -127,6 +133,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['specifics_mismatch_content'] = $this->getSpecificsMismatchContent();
         $data['condition_mismatch_content'] = $this->getConditionMismatchContent();
         $data['category_mismatch_content'] = $this->getCategoryMismatchContent();
+        $data['image_mismatch_content'] = $this->getImageMismatchContent();
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
@@ -321,6 +328,63 @@ class Sync extends \Opencart\System\Engine\Controller {
     }
 
     /**
+     * Get initial Image Count Mismatch tab content (OC vs eBay)
+     */
+    private function getImageMismatchContent(): string {
+        $this->load->model('shopmanager/inventory/sync');
+        $lang = $this->load->language('shopmanager/inventory/sync');
+
+        $limit = 20;
+        $filter_data = ['start' => 0, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
+
+        $image_mismatch = $this->model_shopmanager_inventory_sync->getImageMismatch($filter_data);
+        $total = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
+
+        $backup_mismatch = $this->model_shopmanager_inventory_sync->getImageBackupMismatch($filter_data);
+        $backup_total    = $this->model_shopmanager_inventory_sync->getTotalImageBackupMismatch();
+
+        $data['image_mismatch']            = $image_mismatch;
+        $data['image_mismatch_total']      = $total;
+        $data['image_mismatch_page']       = 1;
+        $data['image_mismatch_sort']       = 'product_id';
+        $data['image_mismatch_order']      = 'ASC';
+        $data['image_mismatch_start']      = 1;
+        $data['image_mismatch_end']        = min($limit, $total);
+        $data['image_mismatch_num_pages']  = ceil($total / $limit);
+        $data['image_mismatch_pagination'] = $total > $limit;
+
+        $data['backup_mismatch']            = $backup_mismatch;
+        $data['backup_mismatch_total']      = $backup_total;
+        $data['backup_mismatch_page']       = 1;
+        $data['backup_mismatch_sort']       = 'product_id';
+        $data['backup_mismatch_order']      = 'ASC';
+        $data['backup_mismatch_start']      = 1;
+        $data['backup_mismatch_end']        = min($limit, $backup_total);
+        $data['backup_mismatch_num_pages']  = ceil($backup_total / $limit);
+        $data['backup_mismatch_pagination'] = $backup_total > $limit;
+
+        $data['user_token'] = $this->session->data['user_token'];
+        $new_keys = ['text_backup_table_title','text_backup_table_info','button_open_backup_popup',
+                     'text_popup_backup_title','button_transfer_to_oc','button_delete_from_backup',
+                     'text_backup_select_all','text_backup_no_files','text_backup_already_in_oc',
+                     'text_backup_type_primary','text_backup_type_secondary','column_backup_extra',
+                     'text_backup_transferred','text_backup_deleted','text_backup_confirm_delete'];
+        foreach (array_merge(['column_product_id','column_product','column_ebay_id','column_location',
+                  'column_oc_images','column_ebay_images','column_diff','column_actions',
+                  'text_image_mismatch_info','text_no_results','button_refresh',
+                  'button_close','button_bulk_fix_images','button_fix_single_image',
+                  'text_bulk_fix_tooltip','text_bulk_fix_confirm','text_bulk_fix_modal_title',
+                  'text_bulk_fix_processing','text_bulk_fix_imported','text_bulk_fix_skipped',
+                  'text_bulk_fix_errors','text_bulk_fix_reset_info','text_bulk_fix_error_details',
+                  'column_backup_images','text_backup_not_scanned','button_scan_image_backup',
+                  'tooltip_scan_image_backup','text_scan_backup_confirm'], $new_keys) as $key) {
+            $data[$key] = $lang[$key] ?? '';
+        }
+
+        return $this->load->view('shopmanager/inventory/sync_image_mismatch', $data);
+    }
+
+    /**
      * Get Data - AJAX endpoint pour rafraîchir les données
      *
      * @return void
@@ -385,6 +449,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['specifics_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalSpecificsMismatch();
         $data['condition_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalConditionMismatch();
         $data['category_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalCategoryMismatch();
+        $data['image_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
 
         // Slow Moving Products
         $data['bottom_products'] = $this->model_shopmanager_inventory_sync->getBottomProducts($period, 10);
@@ -467,22 +532,25 @@ class Sync extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/ebay');
         $this->load->model('shopmanager/marketplace');
 
-        // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Models loaded\n", FILE_APPEND);
+        file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Models loaded\n", FILE_APPEND);
         
         $json = [];
 
         try {
             // Get parameters
             $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+            $offset = isset($this->request->get['offset']) ? max(0, (int)$this->request->get['offset']) : 0;
+            $batch_size = 20; // max items traités par request (pour éviter timeout 502)
             $marketplace_account_id = isset($this->request->get['account_id']) ? (int)$this->request->get['account_id'] : 1;
+            $force_refresh = !empty($this->request->get['force_refresh']); // Force GetItem even if data already exists
             $limit = 200; // eBay allows up to 200 per page for GetMyeBaySelling
 
-            // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Page: $page, Account: $marketplace_account_id\n", FILE_APPEND);
+            file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Page: $page, Account: $marketplace_account_id\n", FILE_APPEND);
 
             // Use GetMyeBaySelling instead - more efficient for bulk sync
             $response = $this->model_shopmanager_ebay->getMyeBaySellingBulk($page, $marketplace_account_id);
             
-            // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - API response received\n", FILE_APPEND);
+            file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - API response received\n", FILE_APPEND);
 
             // Check if we have products (GetMyeBaySelling uses different structure)
             $items = [];
@@ -499,19 +567,33 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
             }
             
-            // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Found " . count($items) . " items\n", FILE_APPEND);
+            file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Found " . count($items) . " items (offset=$offset, batch=$batch_size)\n", FILE_APPEND);
             
+            // Calcul pagination eBay (pour total_pages)
+            $total_pages = 1;
+            $total_entries = 0;
+            if (isset($response['ActiveList']['PaginationResult'])) {
+                $total_pages = isset($response['ActiveList']['PaginationResult']['TotalNumberOfPages'])
+                    ? (int)$response['ActiveList']['PaginationResult']['TotalNumberOfPages'] : 1;
+                $total_entries = isset($response['ActiveList']['PaginationResult']['TotalNumberOfEntries'])
+                    ? (int)$response['ActiveList']['PaginationResult']['TotalNumberOfEntries'] : 0;
+            }
+
             if (empty($items)) {
                 $json['success'] = true;
                 $json['completed'] = true;
+                $json['page_complete'] = true;
                 $json['message'] = 'Synchronization completed';
                 $json['processed'] = 0;
                 $json['page'] = $page;
             } else {
+                $total_items_on_page = count($items);
+                // Extraire seulement le batch courant
+                $batch = array_slice($items, $offset, $batch_size);
                 $processed = 0;
 
-                // Process each item
-                foreach ($items as $item) {
+                // Process each item in the batch
+                foreach ($batch as $item) {
                     // // Stop after 10 products for testing
                     // if ($processed >= 10) {
                     //     break;
@@ -565,10 +647,11 @@ class Sync extends \Opencart\System\Engine\Controller {
 
                     // Only call GetItem if we don't have complete data already
                     $item_details = null;
-                    $needs_getitem = !$existing_data || 
+                    $needs_getitem = $force_refresh || !$existing_data || 
                                     is_null($existing_data['category_id']) || 
                                     is_null($existing_data['condition_id']) || 
-                                    is_null($existing_data['specifics']);
+                                    is_null($existing_data['specifics']) ||
+                                    empty($existing_data['ebay_image_count']);
                     
                     if ($needs_getitem) {
                         // GET FULL ITEM DETAILS with GetItem API call (for category, condition, specifics)
@@ -651,7 +734,8 @@ class Sync extends \Opencart\System\Engine\Controller {
                         'is_com' => $is_com,
                         'date_added' => $date_added,
                         'date_ended' => $date_ended,
-                        'last_import_time' => date('Y-m-d H:i:s')
+                        'last_import_time' => date('Y-m-d H:i:s'),
+                        'ebay_image_count' => $this->extractEbayImageCount($item, $item_details),
                     ];
 
                     // Update or insert in product_marketplace table (in the appropriate database)
@@ -667,25 +751,23 @@ class Sync extends \Opencart\System\Engine\Controller {
                     $processed++;
                 }
 
-                // Check if there are more pages (GetMyeBaySelling structure)
-                $total_pages = 1;
-                $total_entries = 0;
-                
-                if (isset($response['ActiveList']['PaginationResult'])) {
-                    $total_pages = isset($response['ActiveList']['PaginationResult']['TotalNumberOfPages']) ? 
-                        (int)$response['ActiveList']['PaginationResult']['TotalNumberOfPages'] : 1;
-                    $total_entries = isset($response['ActiveList']['PaginationResult']['TotalNumberOfEntries']) ? 
-                        (int)$response['ActiveList']['PaginationResult']['TotalNumberOfEntries'] : 0;
-                }
+                // Calcul batch/page completion
+                $next_offset = $offset + $batch_size;
+                $page_complete = ($next_offset >= $total_items_on_page);
+                $completed = $page_complete && ($page >= $total_pages);
 
-                // Check if there are more pages to process
+                file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Batch done: processed=$processed, offset=$offset, next=$next_offset, page_complete=" . ($page_complete?'true':'false') . ", completed=" . ($completed?'true':'false') . "\n", FILE_APPEND);
+
                 $json['success'] = true;
-                $json['completed'] = ($page >= $total_pages);
+                $json['completed'] = $completed;
+                $json['page_complete'] = $page_complete;
+                $json['next_offset'] = $next_offset;
                 $json['processed'] = $processed;
                 $json['page'] = $page;
                 $json['total_pages'] = $total_pages;
                 $json['total_entries'] = $total_entries;
-                $json['message'] = "Processed $processed products on page $page of $total_pages";
+                $json['force_refresh'] = $force_refresh;
+                $json['message'] = ($force_refresh ? '[Force Refresh] ' : '') . "Processed $processed items (page $page/" . $total_pages . ", batch " . ($offset/$batch_size+1) . ")";
             }
         } catch (\Exception $e) {
             error_log("[Analytics Sync] Error: " . $e->getMessage());
@@ -1572,6 +1654,337 @@ class Sync extends \Opencart\System\Engine\Controller {
     }
     
     /**
+     * Get Image Count Mismatch Tab - AJAX reload endpoint
+     */
+    public function getImageMismatchTab(): void {
+        $lang = $this->load->language('shopmanager/inventory/sync');
+        $data = $data ?? [];
+        $data += $lang;
+        $this->load->model('shopmanager/inventory/sync');
+
+        // === eBay mismatch pagination ===
+        $page  = isset($this->request->get['page'])  ? (int)$this->request->get['page']  : 1;
+        $limit = 20;
+        $start = ($page - 1) * $limit;
+        $sort  = isset($this->request->get['sort'])  ? $this->request->get['sort']  : 'product_id';
+        $order = isset($this->request->get['order']) ? $this->request->get['order'] : 'ASC';
+
+        $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => $sort, 'order' => $order];
+        $image_mismatch = $this->model_shopmanager_inventory_sync->getImageMismatch($filter_data);
+        $total = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
+
+        $data['image_mismatch']            = $image_mismatch;
+        $data['image_mismatch_total']      = $total;
+        $data['image_mismatch_page']       = $page;
+        $data['image_mismatch_sort']       = $sort;
+        $data['image_mismatch_order']      = $order;
+        $data['image_mismatch_start']      = $start + 1;
+        $data['image_mismatch_end']        = min($start + $limit, $total);
+        $data['image_mismatch_num_pages']  = ceil($total / $limit);
+        $data['image_mismatch_pagination'] = $total > $limit;
+
+        // === Backup mismatch pagination ===
+        $bpage  = isset($this->request->get['bpage'])  ? (int)$this->request->get['bpage']  : 1;
+        $bstart = ($bpage - 1) * $limit;
+        $bsort  = isset($this->request->get['bsort'])  ? $this->request->get['bsort']  : 'product_id';
+        $border = isset($this->request->get['border']) ? $this->request->get['border'] : 'ASC';
+
+        $bfilter = ['start' => $bstart, 'limit' => $limit, 'sort' => $bsort, 'order' => $border];
+        $backup_mismatch = $this->model_shopmanager_inventory_sync->getImageBackupMismatch($bfilter);
+        $backup_total    = $this->model_shopmanager_inventory_sync->getTotalImageBackupMismatch();
+
+        $data['backup_mismatch']            = $backup_mismatch;
+        $data['backup_mismatch_total']      = $backup_total;
+        $data['backup_mismatch_page']       = $bpage;
+        $data['backup_mismatch_sort']       = $bsort;
+        $data['backup_mismatch_order']      = $border;
+        $data['backup_mismatch_start']      = $bstart + 1;
+        $data['backup_mismatch_end']        = min($bstart + $limit, $backup_total);
+        $data['backup_mismatch_num_pages']  = ceil($backup_total / $limit);
+        $data['backup_mismatch_pagination'] = $backup_total > $limit;
+
+        $data['user_token'] = $this->session->data['user_token'];
+        $new_keys = ['text_backup_table_title','text_backup_table_info','button_open_backup_popup',
+                     'text_popup_backup_title','button_transfer_to_oc','button_delete_from_backup',
+                     'text_backup_select_all','text_backup_no_files','text_backup_already_in_oc',
+                     'text_backup_type_primary','text_backup_type_secondary','column_backup_extra',
+                     'text_backup_transferred','text_backup_deleted','text_backup_confirm_delete'];
+        foreach (array_merge(['column_product_id','column_product','column_ebay_id','column_location',
+                  'column_oc_images','column_ebay_images','column_diff','column_actions',
+                  'text_image_mismatch_info','text_no_results','button_refresh',
+                  'button_close','button_bulk_fix_images','button_fix_single_image',
+                  'text_bulk_fix_tooltip','text_bulk_fix_confirm','text_bulk_fix_modal_title',
+                  'text_bulk_fix_processing','text_bulk_fix_imported','text_bulk_fix_skipped',
+                  'text_bulk_fix_errors','text_bulk_fix_reset_info','text_bulk_fix_error_details',
+                  'column_backup_images','text_backup_not_scanned','button_scan_image_backup',
+                  'tooltip_scan_image_backup','text_scan_backup_confirm'], $new_keys) as $key) {
+            $data[$key] = $lang[$key] ?? '';
+        }
+
+        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_image_mismatch', $data));
+    }
+
+    /**
+     * Scan image_backup directory to count backup images per product.
+     * Updates oc_product_marketplace.image_backup_count.
+     * Called via AJAX button "Scan image_backup".
+     */
+    public function scanImageBackupCounts(): void {
+        $this->load->model('shopmanager/inventory/sync');
+
+        $json = [];
+        try {
+            // DIR_OPENCART is the project root (with trailing slash)
+            $backup_dir = DIR_OPENCART . 'image_backup/';
+
+            if (!is_dir($backup_dir)) {
+                $json['error'] = 'image_backup directory not found: ' . $backup_dir;
+                $this->response->addHeader('Content-Type: application/json');
+                $this->response->setOutput(json_encode($json));
+                return;
+            }
+
+            $stats = $this->model_shopmanager_inventory_sync->scanImageBackupCounts($backup_dir);
+
+            $json['success']     = true;
+            $json['scanned']     = $stats['scanned'];
+            $json['with_images'] = $stats['with_images'];
+            $json['empty']       = $stats['empty'];
+            $json['not_found']   = $stats['not_found'];
+            $json['message']     = sprintf(
+                '%d products scanned — %d with backup images, %d empty dirs, %d not found in backup',
+                $stats['scanned'], $stats['with_images'], $stats['empty'], $stats['not_found']
+            );
+        } catch (\Exception $e) {
+            $json['error'] = $e->getMessage();
+        }
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Get list of images in image_backup/data/product/{product_id}/
+     * Returns JSON array of file info for the backup popup.
+     */
+    public function getBackupImagesList(): void {
+        $json = [];
+        $product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
+
+        if (!$product_id) {
+            $json['error'] = 'Missing product_id';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $backup_dir = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+        if (!is_dir($backup_dir)) {
+            $json['files'] = [];
+            $json['success'] = true;
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+        $files = [];
+        foreach (scandir($backup_dir) as $file) {
+            if ($file === '.' || $file === '..') continue;
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            if (!in_array($ext, $allowed_ext)) continue;
+
+            $subfolder = substr((string)$product_id, 0, 2);
+            $oc_rel_path = 'catalog/product/' . $subfolder . '/' . $product_id . '/' . $file;
+            $oc_exists = file_exists(DIR_IMAGE . $oc_rel_path);
+
+            // Determine type (pri/sec) from filename pattern {product_id}priN or {product_id}secN
+            $type = 'unknown';
+            if (preg_match('/^' . preg_quote((string)$product_id) . 'pri\d+/', pathinfo($file, PATHINFO_FILENAME))) {
+                $type = 'primary';
+            } elseif (preg_match('/^' . preg_quote((string)$product_id) . 'sec\d+/', pathinfo($file, PATHINFO_FILENAME))) {
+                $type = 'secondary';
+            }
+
+            $files[] = [
+                'filename'   => $file,
+                'type'       => $type,
+                'oc_exists'  => $oc_exists,
+                'oc_path'    => $oc_rel_path,
+                'backup_url' => 'image_backup/data/product/' . $product_id . '/' . rawurlencode($file),
+                'size'       => filesize($backup_dir . $file),
+            ];
+        }
+
+        // Sort: primary first, then secondary
+        usort($files, function($a, $b) {
+            if ($a['type'] === $b['type']) return strcmp($a['filename'], $b['filename']);
+            return ($a['type'] === 'primary') ? -1 : 1;
+        });
+
+        $json['success'] = true;
+        $json['product_id'] = $product_id;
+        $json['files'] = $files;
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Transfer selected backup images to OC (copy file + insert into DB).
+     * POST: product_id, filenames[] (array)
+     */
+    public function transferBackupImages(): void {
+        $this->load->model('shopmanager/inventory/sync');
+        $json = [];
+
+        $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
+        $filenames  = isset($this->request->post['filenames']) ? (array)$this->request->post['filenames'] : [];
+
+        if (!$product_id || empty($filenames)) {
+            $json['error'] = 'Missing product_id or filenames';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $backup_dir  = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+        $subfolder   = substr((string)$product_id, 0, 2);
+        $dest_rel    = 'catalog/product/' . $subfolder . '/' . $product_id . '/';
+        $dest_dir    = DIR_IMAGE . $dest_rel;
+
+        if (!is_dir($dest_dir)) {
+            mkdir($dest_dir, 0755, true);
+        }
+
+        $transferred = 0;
+        $skipped     = 0;
+        $errors      = [];
+
+        // Get current primary image for this product
+        $prod_query = $this->db->query("SELECT image FROM " . DB_PREFIX . "product WHERE product_id = '" . $product_id . "'");
+        $current_main = $prod_query->row['image'] ?? '';
+
+        // Get max sort_order in product_image
+        $sort_query = $this->db->query("SELECT MAX(sort_order) as max_sort FROM " . DB_PREFIX . "product_image WHERE product_id = '" . $product_id . "'");
+        $next_sort = (int)($sort_query->row['max_sort'] ?? 0) + 1;
+
+        foreach ($filenames as $raw_filename) {
+            $filename = basename($raw_filename); // security: no path traversal
+            $src = $backup_dir . $filename;
+            $dst = $dest_dir . $filename;
+
+            if (!file_exists($src)) {
+                $errors[] = $filename . ' not found in backup';
+                continue;
+            }
+
+            if (file_exists($dst)) {
+                $skipped++;
+                continue; // already there
+            }
+
+            if (!copy($src, $dst)) {
+                $errors[] = 'Failed to copy ' . $filename;
+                continue;
+            }
+
+            $oc_path = $dest_rel . $filename;
+
+            // Determine if primary or secondary
+            $is_primary = preg_match('/^' . preg_quote((string)$product_id) . 'pri\d+/', pathinfo($filename, PATHINFO_FILENAME));
+
+            if ($is_primary && (empty($current_main) || $current_main === 'no_image.png')) {
+                // Set as main image
+                $this->db->query("UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($oc_path) . "' WHERE product_id = '" . $product_id . "'");
+                $current_main = $oc_path;
+            } else {
+                // Insert as secondary image
+                $check = $this->db->query("SELECT product_image_id FROM " . DB_PREFIX . "product_image WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($oc_path) . "'");
+                if (!$check->num_rows) {
+                    $this->db->query("INSERT INTO " . DB_PREFIX . "product_image SET product_id = '" . $product_id . "', image = '" . $this->db->escape($oc_path) . "', sort_order = '" . $next_sort . "'");
+                    $next_sort++;
+                }
+            }
+
+            $transferred++;
+        }
+
+        // Update image_backup_count in product_marketplace
+        $new_count = 0;
+        if (is_dir($backup_dir)) {
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            foreach (scandir($backup_dir) as $f) {
+                if ($f !== '.' && $f !== '..' && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), $allowed_ext)) {
+                    $new_count++;
+                }
+            }
+        }
+        $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET image_backup_count = '" . $new_count . "' WHERE product_id = '" . $product_id . "'");
+
+        $json['success']     = true;
+        $json['transferred'] = $transferred;
+        $json['skipped']     = $skipped;
+        $json['errors']      = $errors;
+        $json['message']     = "$transferred image(s) transférée(s) dans OC.";
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Delete selected backup images physically from image_backup/data/product/{id}/.
+     * POST: product_id, filenames[] (array)
+     */
+    public function deleteBackupImages(): void {
+        $json = [];
+
+        $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
+        $filenames  = isset($this->request->post['filenames']) ? (array)$this->request->post['filenames'] : [];
+
+        if (!$product_id || empty($filenames)) {
+            $json['error'] = 'Missing product_id or filenames';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $backup_dir = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+        $deleted = 0;
+        $errors  = [];
+
+        foreach ($filenames as $raw_filename) {
+            $filename = basename($raw_filename);
+            $path = $backup_dir . $filename;
+            if (!file_exists($path)) { continue; }
+            if (unlink($path)) {
+                $deleted++;
+            } else {
+                $errors[] = 'Cannot delete ' . $filename;
+            }
+        }
+
+        // Update image_backup_count
+        $new_count = 0;
+        if (is_dir($backup_dir)) {
+            $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+            foreach (scandir($backup_dir) as $f) {
+                if ($f !== '.' && $f !== '..' && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), $allowed_ext)) {
+                    $new_count++;
+                }
+            }
+        }
+        $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET image_backup_count = '" . $new_count . "' WHERE product_id = '" . $product_id . "'");
+
+        $json['success'] = true;
+        $json['deleted']  = $deleted;
+        $json['errors']   = $errors;
+        $json['message']  = "$deleted image(s) supprimée(s) du backup.";
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
      * Sync Category To eBay - Export single category
      */
     public function syncCategoryToEbay(): void {
@@ -1668,5 +2081,30 @@ class Sync extends \Opencart\System\Engine\Controller {
         
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Extract eBay image count from GetMyeBaySelling item or GetItem details.
+     * GetMyeBaySelling item has PictureDetails; GetItem response has raw_item with PictureDetails.
+     *
+     * @param array      $item         Item from GetMyeBaySelling
+     * @param array|null $item_details Result of getItemDetails() — has 'raw_item' key if available
+     * @return int
+     */
+    private function extractEbayImageCount(array $item, ?array $item_details): int {
+        // Try GetItem response first (most complete — includes all PictureURL)
+        if ($item_details && isset($item_details['image_count'])) {
+            return (int)$item_details['image_count'];
+        }
+        // Fallback: GetMyeBaySelling item — PictureDetails rarely present in bulk, but check anyway
+        if (isset($item['PictureDetails']['PictureURL'])) {
+            $urls = $item['PictureDetails']['PictureURL'];
+            return is_array($urls) ? count($urls) : (empty($urls) ? 0 : 1);
+        }
+        // GalleryURL means at least 1 image
+        if (!empty($item['PictureDetails']['GalleryURL'])) {
+            return 1;
+        }
+        return 0;
     }
 }
