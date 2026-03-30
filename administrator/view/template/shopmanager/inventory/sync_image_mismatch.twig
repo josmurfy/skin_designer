@@ -25,6 +25,10 @@
       <span class="badge bg-dark ms-1">{{ image_mismatch_total }}</span>
     </button>
     {% endif %}
+    <button class="btn btn-sm btn-success d-none" id="btn-fix-selected-images">
+      <i class="fa-solid fa-check-double me-1"></i>Fix Selected
+      <span class="badge bg-dark ms-1" id="fix-selected-count">0</span>
+    </button>
     <button class="btn btn-sm btn-secondary refresh-image-mismatch">
       <i class="fa-solid fa-rotate-right"></i> {{ button_refresh }}
     </button>
@@ -36,6 +40,9 @@
     <table class="table table-bordered table-hover" style="white-space: nowrap; font-size: 11px;">
       <thead>
         <tr>
+          <th style="width: 30px;" class="text-center">
+            <input type="checkbox" id="select-all-mismatch" class="form-check-input" title="Tout sélectionner">
+          </th>
           <th style="width: 80px;">
             <a href="#" class="sort-image-mismatch" data-sort="product_id"
                data-order="{{ image_mismatch_sort == 'product_id' and image_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
@@ -89,6 +96,9 @@
       <tbody>
         {% for product in image_mismatch %}
           <tr id="mismatch-row-{{ product.product_id }}">
+            <td class="text-center">
+              <input type="checkbox" class="form-check-input mismatch-checkbox" value="{{ product.product_id }}">
+            </td>
             <td class="text-center">{{ product.product_id }}</td>
             <td style="max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                 title="{{ product.name }}">{{ product.name }}</td>
@@ -424,6 +434,84 @@
       }
     });
   }
+
+  // ─── Select All / checkboxes ──────────────────────────────────────────────
+  $(document).off('change.selectAll', '#select-all-mismatch')
+             .on('change.selectAll', '#select-all-mismatch', function() {
+    var checked = $(this).is(':checked');
+    $('.mismatch-checkbox').prop('checked', checked);
+    updateFixSelectedBtn();
+  });
+
+  $(document).off('change.mismatCb', '.mismatch-checkbox')
+             .on('change.mismatCb', '.mismatch-checkbox', function() {
+    var total = $('.mismatch-checkbox').length;
+    var checked = $('.mismatch-checkbox:checked').length;
+    $('#select-all-mismatch').prop('indeterminate', checked > 0 && checked < total);
+    $('#select-all-mismatch').prop('checked', checked === total && total > 0);
+    updateFixSelectedBtn();
+  });
+
+  function updateFixSelectedBtn() {
+    var count = $('.mismatch-checkbox:checked').length;
+    if (count > 0) {
+      $('#btn-fix-selected-images').removeClass('d-none');
+      $('#fix-selected-count').text(count);
+    } else {
+      $('#btn-fix-selected-images').addClass('d-none');
+    }
+  }
+
+  // ─── Fix Selected ─────────────────────────────────────────────────────────
+  $(document).off('click.fixSelected', '#btn-fix-selected-images')
+             .on('click.fixSelected', '#btn-fix-selected-images', function() {
+    var ids = [];
+    $('.mismatch-checkbox:checked').each(function() { ids.push($(this).val()); });
+    if (ids.length === 0) return;
+    if (!confirm('Fixer ' + ids.length + ' produit(s) sélectionné(s) ? (direction automatique OC↔eBay)')) return;
+
+    var $btn = $(this).prop('disabled', true);
+    var done = 0, successCount = 0, errorCount = 0;
+
+    function processNext() {
+      if (done >= ids.length) {
+        $btn.prop('disabled', false);
+        alert('Terminé : ' + successCount + ' ok, ' + errorCount + ' erreur(s).');
+        loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                             {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+        return;
+      }
+      var pid = ids[done];
+      var $row = $('#mismatch-row-' + pid);
+      $row.find('.btn-fix-single-image').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+      $.ajax({
+        url: URL_FIX_SINGLE,
+        type: 'POST',
+        data: { product_id: pid },
+        dataType: 'json',
+        success: function(json) {
+          if (json.error) {
+            errorCount++;
+            $row.addClass('table-danger');
+            $row.find('.btn-fix-single-image').prop('disabled', false).html('<i class="fa-solid fa-images"></i>').attr('title', json.error);
+          } else {
+            successCount++;
+            $row.addClass('table-success').css('opacity', '0.6');
+            $row.find('.btn-fix-single-image').html('<i class="fa-solid fa-check text-success"></i>');
+          }
+          done++;
+          processNext();
+        },
+        error: function(xhr) {
+          errorCount++;
+          $row.addClass('table-danger');
+          done++;
+          processNext();
+        }
+      });
+    }
+    processNext();
+  });
 
   // ─── eBay Bulk Fix ────────────────────────────────────────────────────────
   $(document).off('click.bulkFixImages', '#btn-bulk-fix-images')

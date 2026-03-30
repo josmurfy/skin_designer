@@ -887,21 +887,42 @@ class Image extends \Opencart\System\Engine\Controller {
             if ($product_id <= 0) {
                 $json['error'] = ($lang['error_product_id_required'] ?? 'Product ID is required.');
             } else {
+                set_time_limit(120);
+                ini_set('memory_limit', '256M');
+
                 $this->load->model('shopmanager/catalog/product');
                 $this->load->model('shopmanager/tools');
                 $this->load->model('shopmanager/ebay');
                 $this->load->model('shopmanager/marketplace');
                 $this->load->model('tool/image');
 
-                $json = $this->importEbayImagesForProduct($product_id, $lang);
-            }
-        }
+                // Déterminer la direction : OC→eBay ou eBay→OC
+                $product    = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                $sec_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+                $oc_count   = ((!empty($product['image']) && $product['image'] !== 'no_image.png') ? 1 : 0)
+                            + count($sec_images);
+                $ebay_count = $this->model_shopmanager_marketplace->getEbayImageCount($product_id);
 
-        $this->response->addHeader('Content-Type: application/json');
-        $this->response->setOutput(json_encode($json));
-    }
-
-    /**
+                if ($oc_count > $ebay_count) {
+                    // OC a plus d'images → pousser vers eBay via ReviseItem
+                    $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+                    $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
+                    $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+                    $json = [
+                        'success'               => true,
+                        'image_count'           => $oc_count,
+                        'direction'             => 'oc_to_ebay',
+                        'message'               => 'Images OC poussées vers eBay via ReviseItem',
+                        'ebay_image_count_reset' => true,
+                    ];
+                } else {
+                    // eBay a plus (ou égal) → importer les images eBay dans OC
+                    $result = $this->importEbayImagesForProduct($product_id, $lang);
+                    $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+                    $json = $result;
+                    $json['direction']             = 'ebay_to_oc';
+                    $json['ebay_image_count_reset'] = true;
+                }
      * Bulk: import eBay images for ALL products that have an image count mismatch.
      * After importing, resets ebay_image_count = 0 so the next eBay import
      * re-fetches the true count from the API.
