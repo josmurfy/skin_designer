@@ -2075,6 +2075,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             } else {
                 $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($image_path) . "'");
             }
+            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
             $json['success'] = true;
         } catch (\Exception $e) { $json['error'] = 'removeOcImage: ' . $e->getMessage(); }
         $this->response->setOutput(json_encode($json));
@@ -2106,6 +2107,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             }
             $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($image_path) . "'");
             $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($image_path) . "' WHERE product_id = '" . $product_id . "'");
+            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
             $json['success'] = true;
         } catch (\Exception $e) { $json['error'] = 'setOcImagePrimary: ' . $e->getMessage(); }
         $this->response->setOutput(json_encode($json));
@@ -2159,6 +2161,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                     $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($oc_path) . "', sort_order = '" . $next . "'");
                 }
             }
+            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
             $json['success'] = true;
             $json['oc_path'] = $oc_path;
         } catch (\Exception $e) { $json['error'] = 'transferBackupAsRole: ' . $e->getMessage(); }

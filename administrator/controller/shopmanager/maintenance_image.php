@@ -900,7 +900,158 @@ class MaintenanceImage extends \Opencart\System\Engine\Controller {
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($json));
     }
-    
+
+    /**
+     * Bulk: import eBay images for ALL products that have an image count mismatch.
+     * After importing, resets ebay_image_count = 0 so the next eBay import
+     * re-fetches the true count from the API.
+     * Called from the Image Mismatch tab in the Inventory/Sync dashboard.
+     */
+    public function bulkImportMismatchImages(): void {
+        $lang = $this->load->language('shopmanager/maintenance_image');
+        $json = [];
+
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+            $json['error'] = $lang['error_permission'] ?? 'Permission denied';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        set_time_limit(600);
+        ini_set('memory_limit', '512M');
+
+        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('shopmanager/tools');
+        $this->load->model('shopmanager/ebay');
+        $this->load->model('shopmanager/marketplace');
+        $this->load->model('tool/image');
+
+        // Fetch all product_ids that currently have a mismatch between
+        // OC image count and the stored ebay_image_count.
+        $sql = "SELECT product_id FROM (
+            SELECT p.product_id,
+                (CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                 + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)) AS oc_image_count,
+                pm.ebay_image_count AS ebay_count
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
+            WHERE pm.marketplace_id = 1
+              AND pm.is_com = 0
+              AND pm.ebay_image_count > 0
+            HAVING oc_image_count != ebay_count
+        ) AS mismatch_list";
+
+        $rows = $this->db->query($sql)->rows;
+        $product_ids = array_column($rows, 'product_id');
+
+        if (empty($product_ids)) {
+            $json['success'] = true;
+            $json['total'] = 0;
+            $json['message'] = 'No image mismatch products to process.';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $total         = count($product_ids);
+        $success_count = 0;
+        $skipped_count = 0;
+        $error_count   = 0;
+        $results       = [];
+
+        foreach ($product_ids as $product_id) {
+            $product_id = (int)$product_id;
+            $result = $this->importEbayImagesForProduct($product_id, $lang);
+
+            // Reset ebay_image_count to 0 so the next eBay import re-fetches
+            // the true image count (forces GetItem to run again).
+            $this->db->query(
+                "UPDATE " . DB_PREFIX . "product_marketplace
+                 SET ebay_image_count = 0, to_update = 1
+                 WHERE product_id = '" . $product_id . "'
+                   AND marketplace_id = 1"
+            );
+
+            if (!empty($result['success'])) {
+                $success_count++;
+            } elseif (!empty($result['skipped'])) {
+                $skipped_count++;
+            } else {
+                $error_count++;
+            }
+
+            $results[] = [
+                'product_id'  => $product_id,
+                'success'     => $result['success']     ?? false,
+                'skipped'     => $result['skipped']     ?? false,
+                'image_count' => $result['image_count'] ?? 0,
+                'message'     => $result['message']     ?? ($result['error'] ?? ''),
+            ];
+        }
+
+        $json['success']       = true;
+        $json['total']         = $total;
+        $json['success_count'] = $success_count;
+        $json['skipped_count'] = $skipped_count;
+        $json['error_count']   = $error_count;
+        $json['results']       = $results;
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Import eBay images for a single product (by product_id via POST).
+     * Also resets ebay_image_count = 0 to force re-fetch on next eBay import.
+     * Used for the per-row "Import" button in the Image Mismatch tab.
+     */
+    public function importEbayImagesForProductAjax(): void {
+        $lang = $this->load->language('shopmanager/maintenance_image');
+        $json = [];
+
+        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance_image')) {
+            $json['error'] = $lang['error_permission'] ?? 'Permission denied';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $product_id = (int)($this->request->post['product_id'] ?? 0);
+
+        if ($product_id <= 0) {
+            $json['error'] = 'Missing product_id';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        set_time_limit(120);
+        ini_set('memory_limit', '256M');
+
+        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('shopmanager/tools');
+        $this->load->model('shopmanager/ebay');
+        $this->load->model('shopmanager/marketplace');
+        $this->load->model('tool/image');
+
+        $result = $this->importEbayImagesForProduct($product_id, $lang);
+
+        // Reset ebay_image_count = 0 to force re-fetch on next eBay import
+        $this->db->query(
+            "UPDATE " . DB_PREFIX . "product_marketplace
+             SET ebay_image_count = 0, to_update = 1
+             WHERE product_id = '" . $product_id . "'
+               AND marketplace_id = 1"
+        );
+
+        $json = $result;
+        $json['ebay_image_count_reset'] = true;
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
     /**
      * Fix image nomenclature and convert to webp
      */
