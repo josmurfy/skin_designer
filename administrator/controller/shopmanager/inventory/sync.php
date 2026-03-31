@@ -1155,8 +1155,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                 if (!$marketplace || !isset($marketplace['quantity_listed'])) {
                     throw new \Exception("Product not listed on eBay");
                 }
-                
-                $ebay_quantity = (int)$marketplace['quantity_listed'];
+
+                // eBay available = listed - sold  (same formula used in the mismatch detection query)
+                $ebay_quantity = max(0, (int)$marketplace['quantity_listed'] - (int)($marketplace['quantity_sold'] ?? 0));
                 $this->model_shopmanager_marketplace->updateProductQuantity($product_id, $ebay_quantity);
                 $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = 'Local quantity updated from eBay: ' . $ebay_quantity;

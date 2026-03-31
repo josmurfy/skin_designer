@@ -1073,7 +1073,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	 * Get marketplace item details
 	 */
 	public function getMarketplaceItem($product_id, $marketplace_id = 1) {
-		$query = $this->db->query("SELECT marketplace_item_id, marketplace_account_id, price, quantity_listed, specifics 
+		$query = $this->db->query("SELECT marketplace_item_id, marketplace_account_id, price, quantity_listed, quantity_sold, specifics 
 								   FROM " . DB_PREFIX . "product_marketplace 
 								   WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_id);
 		return $query->num_rows ? $query->row : null;
