@@ -576,13 +576,12 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function importMarketplace(): void {
-        // Force write to a test file to confirm function is called
-        file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - importMarketplace CALLED\n", FILE_APPEND);
+        file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - importMarketplace CALLED\n", FILE_APPEND);
         
         $this->load->model('shopmanager/ebay');
         $this->load->model('shopmanager/marketplace');
 
-        file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Models loaded\n", FILE_APPEND);
+        file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Models loaded\n", FILE_APPEND);
         
         $json = [];
 
@@ -596,12 +595,12 @@ class Sync extends \Opencart\System\Engine\Controller {
             $marketplace_account_id = isset($this->request->get['account_id']) ? (int)$this->request->get['account_id'] : 1;
             $limit = 200; // eBay allows up to 200 per page for GetMyeBaySelling
 
-            file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Page: $page, Account: $marketplace_account_id\n", FILE_APPEND);
+            file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Page: $page, Account: $marketplace_account_id\n", FILE_APPEND);
 
             // Use GetMyeBaySelling instead - more efficient for bulk sync
             $response = $this->model_shopmanager_ebay->getMyeBaySellingBulk($page, $marketplace_account_id);
             
-            file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - API response received\n", FILE_APPEND);
+            file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - API response received\n", FILE_APPEND);
 
             // Check if we have products (GetMyeBaySelling uses different structure)
             $items = [];
@@ -614,11 +613,11 @@ class Sync extends \Opencart\System\Engine\Controller {
                 
                 // DUMP first item to see what eBay is actually returning
                 if (!empty($items)) {
-                    // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - FIRST ITEM DUMP:\n" . print_r($items[0], true) . "\n", FILE_APPEND);
+                    // file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - FIRST ITEM DUMP:\n" . print_r($items[0], true) . "\n", FILE_APPEND);
                 }
             }
             
-            file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Found " . count($items) . " items (offset=$offset, batch=$batch_size)\n", FILE_APPEND);
+            file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Found " . count($items) . " items (offset=$offset, batch=$batch_size)\n", FILE_APPEND);
             
             // Calcul pagination eBay (pour total_pages)
             $total_pages = 1;
@@ -707,9 +706,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                     if ($needs_getitem) {
                         // GET FULL ITEM DETAILS with GetItem API call (for category, condition, specifics)
                         $item_details = $this->model_shopmanager_ebay->getItemDetails($item_id, $marketplace_account_id);
-                        // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - GetItem called for $item_id (missing data)\n", FILE_APPEND);
+                        // file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - GetItem called for $item_id (missing data)\n", FILE_APPEND);
                     } else {
-                        // file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Skipped GetItem for $item_id (data already exists)\n", FILE_APPEND);
+                        // file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Skipped GetItem for $item_id (data already exists)\n", FILE_APPEND);
                     }
 
                     // Get eBay dates
@@ -807,7 +806,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $page_complete = ($next_offset >= $total_items_on_page);
                 $completed = $page_complete && ($page >= $total_pages);
 
-                file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Batch done: processed=$processed, offset=$offset, next=$next_offset, page_complete=" . ($page_complete?'true':'false') . ", completed=" . ($completed?'true':'false') . "\n", FILE_APPEND);
+                file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Batch done: processed=$processed, offset=$offset, next=$next_offset, page_complete=" . ($page_complete?'true':'false') . ", completed=" . ($completed?'true':'false') . "\n", FILE_APPEND);
 
                 $json['success'] = true;
                 $json['completed'] = $completed;
