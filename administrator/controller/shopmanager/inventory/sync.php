@@ -337,11 +337,11 @@ class Sync extends \Opencart\System\Engine\Controller {
         $upcs = array_filter(array_unique(array_column($rows, 'upc')));
         if (empty($upcs)) return;
 
-        $escaped = implode('","', array_map([$this->db, 'escape'], $upcs));
+        $escaped = implode("','", array_map([$this->db, 'escape'], $upcs));
         $query = $this->db->query("
             SELECT upc, ebay_category
             FROM " . DB_PREFIX . "product_info_sources
-            WHERE upc IN (\"$escaped\") AND ebay_category IS NOT NULL AND ebay_category != ''
+            WHERE upc IN ('$escaped') AND ebay_category IS NOT NULL AND ebay_category != ''
         ");
 
         // Build map: upc => {category_id, category_name, percent}
