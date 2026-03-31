@@ -1871,7 +1871,7 @@ class Sync extends \Opencart\System\Engine\Model {
         
         // Reset category_id, specific, and condition_id in oc_product_marketplace to force re-import
         $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-                          SET category_id = NULL, specific = NULL, condition_id = NULL 
+                          SET category_id = NULL, specifics = NULL, condition_id = NULL 
                           WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
         
         // Use edit() - it will update category and specifics
@@ -1951,7 +1951,7 @@ class Sync extends \Opencart\System\Engine\Model {
                 
                 // Reset category_id, specific, and condition_id in oc_product_marketplace to force re-import
                 $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-                                  SET category_id = NULL, specific = NULL, condition_id = NULL 
+                                  SET category_id = NULL, specifics = NULL, condition_id = NULL 
                                   WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
                 
                 // Use edit() - it will update category and specifics
