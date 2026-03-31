@@ -673,9 +673,11 @@ public function editQuantityToMarketplace($product_id,$marketplace_account_id = 
 	$result = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id,$total_quantity,$made_in_country_id,$product_id,$marketplace_account_id,$site_setting);
 
 	// Mettre à jour quantity_listed en DB si eBay confirme le succès
+	// quantity_sold remis à 0 : on vient de redéfinir la quantité disponible sur eBay,
+	// la baseline repart de zéro (sinon la formule mismatch quantity_listed-quantity_sold serait fausse)
 	if (isset($result['Ack']) && ($result['Ack'] === 'Success' || $result['Ack'] === 'Warning')) {
 		$this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-						  SET quantity_listed = " . (int)$total_quantity . ", last_sync = NOW() 
+						  SET quantity_listed = " . (int)$total_quantity . ", quantity_sold = 0, last_sync = NOW() 
 						  WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_account_id);
 	}
 
