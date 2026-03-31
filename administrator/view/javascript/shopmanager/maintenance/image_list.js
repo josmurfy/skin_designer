@@ -10,6 +10,27 @@
  *   MAINT_TEXT_IMPORT_EBAY_TITLE — titre modal import eBay
  */
 
+/**
+ * Affiche une notification Bootstrap toast (remplace alert)
+ * @param {string} message
+ * @param {string} type  success | danger | warning | info
+ */
+function showToast(message, type) {
+    type = type || 'info';
+    var toast = $(
+        '<div class="toast align-items-center text-white bg-' + type + ' border-0 position-fixed" role="alert"' +
+        ' style="top:20px;right:20px;z-index:10999;min-width:260px;">'
+        + '<div class="d-flex">'
+        + '<div class="toast-body">' + message + '</div>'
+        + '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>'
+        + '</div></div>'
+    );
+    $('body').append(toast);
+    var bsToast = new bootstrap.Toast(toast[0], { autohide: true, delay: 3500 });
+    bsToast.show();
+    toast.on('hidden.bs.toast', function() { $(this).remove(); });
+}
+
 // Handle checkbox changes
 $(document).off('change.maintenanceImageList', '.remove-missing-image').on('change.maintenanceImageList', '.remove-missing-image', function() {
     const checkedCount = $('.remove-missing-image:checked').length;
@@ -155,7 +176,7 @@ $(document).off('click.maintenanceImageList', '#add-orphan-images-btn').on('clic
                 completed++;
                 if (json['error']) { console.error('Product ' + productId + ': ' + json['error']); }
                 if (completed === totalProducts) {
-                    alert('Orphan images have been added.');
+                    showToast('Orphan images have been added.', 'success');
                     var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
                     if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                     $('#report').load(url);
@@ -165,7 +186,7 @@ $(document).off('click.maintenanceImageList', '#add-orphan-images-btn').on('clic
                 completed++;
                 console.error('Error for product ' + productId + ': ' + thrownError);
                 if (completed === totalProducts) {
-                    alert('Orphan images have been added with some errors. Check console.');
+                    showToast('Orphan images have been added with some errors. Check console.', 'warning');
                     var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
                     if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                     $('#report').load(url);
@@ -208,7 +229,7 @@ $(document).off('click.maintenanceImageList', '#btn-check-ebay-images-selected')
     const checkedBoxes = $('input[name*=\'selected\']:checked');
 
     if (checkedBoxes.length === 0) {
-        alert(TEXT_CHECK_EBAY_NO_SELECTION);
+        showToast(TEXT_CHECK_EBAY_NO_SELECTION, 'warning');
         return;
     }
 
@@ -322,7 +343,7 @@ $(document).off('click.maintenanceImageList', '#btn-import-ebay-selected').on('c
     const checkedBoxes = $('input[name*=\'selected\']:checked');
 
     if (checkedBoxes.length === 0) {
-        alert(TEXT_IMPORT_EBAY_NO_SELECTION);
+        showToast(TEXT_IMPORT_EBAY_NO_SELECTION, 'warning');
         return;
     }
 
@@ -372,7 +393,7 @@ $(document).off('click.maintenanceImageList', '#btn-import-ebay-selected').on('c
         $('#import-ebay-products-list').scrollTop($('#import-ebay-products-list')[0].scrollHeight);
 
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.importEbayImagesForProductAjax&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=shopmanager/maintenance/image.syncImagesForProductWitheBay&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: { product_id: productId },
             dataType: 'json',
