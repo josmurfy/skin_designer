@@ -38,19 +38,23 @@ class CardImportPrice extends \Opencart\System\Engine\Model {
             $where[] = $rawExpr . " >= '" . (float)$data['filter_min_price'] . "'";
         if (isset($data['filter_max_price']) && $data['filter_max_price'] !== '')
             $where[] = $rawExpr . " <= '" . (float)$data['filter_max_price'] . "'";
+        if (!empty($data['filter_has_sold']))
+            $where[] = "card_number != '' AND EXISTS (SELECT 1 FROM " . DB_PREFIX . "card_price_sold s WHERE s.card_number = card_number)";
 
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
 
-        $valid_sorts = ['card_raw_id','title','category','year','brand','set_name','player','card_number','ungraded','grade_9','grade_10','date_added','ebay_market_checked_at'];
-        $sort  = (isset($data['sort']) && in_array($data['sort'], $valid_sorts)) ? $data['sort'] : 'card_raw_id';
+        $bestPriceExpr = "GREATEST(COALESCE({$rawExpr}, 0), COALESCE({$grade9Expr}, 0), COALESCE({$grade10Expr}, 0))";
+        $valid_sorts = ['card_raw_id','title','category','year','brand','set_name','player','card_number','ungraded','grade_9','grade_10','date_added','ebay_market_checked_at','best_price'];
+        $sort  = (isset($data['sort']) && in_array($data['sort'], $valid_sorts)) ? $data['sort'] : 'best_price';
         $order = (isset($data['order']) && strtoupper($data['order']) === 'ASC') ? 'ASC' : 'DESC';
         $sortMap = [
             'ungraded' => $rawExpr,
             'grade_9' => $grade9Expr,
             'grade_10' => $grade10Expr,
             'ebay_market_checked_at' => $checkedExpr,
+            'best_price' => $bestPriceExpr,
         ];
         $sql  .= ' ORDER BY ' . ($sortMap[$sort] ?? $sort) . ' ' . $order;
 
@@ -93,6 +97,8 @@ class CardImportPrice extends \Opencart\System\Engine\Model {
             $where[] = $rawExpr . " >= '" . (float)$data['filter_min_price'] . "'";
         if (isset($data['filter_max_price']) && $data['filter_max_price'] !== '')
             $where[] = $rawExpr . " <= '" . (float)$data['filter_max_price'] . "'";
+        if (!empty($data['filter_has_sold']))
+            $where[] = "card_number != '' AND EXISTS (SELECT 1 FROM " . DB_PREFIX . "card_price_sold s WHERE s.card_number = card_number)";
 
         if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);

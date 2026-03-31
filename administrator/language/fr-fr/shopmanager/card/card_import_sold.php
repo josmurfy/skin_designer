@@ -94,3 +94,7 @@ $_['error_invalid_file']     = 'Format de fichier invalide. Veuillez téléverse
 $_['error_empty_file']       = 'Le fichier CSV est vide ou a un format invalide.';
 $_['error_no_data']          = 'Aucun enregistrement sélectionné.';
 $_['error_ajax']             = 'Erreur AJAX survenue.';
+$_['text_use_filters']       = 'Utilisez les filtres pour afficher les ventes correspondant aux cartes en base.';
+$_['text_bid_singular']      = 'enchère';
+$_['text_bid_plural']        = 'enchères';
+$_['column_ungraded']        = 'Non gradée';

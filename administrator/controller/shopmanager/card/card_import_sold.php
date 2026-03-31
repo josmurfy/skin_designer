@@ -32,23 +32,33 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             'filter_max_price'            => $this->request->get['filter_max_price']           ?? '',
             'filter_missing_card_number'  => $this->request->get['filter_missing_card_number'] ?? '',
         ];
-        $sort  = $this->request->get['sort']  ?? 'card_price_sold_id';
+        $sort  = $this->request->get['sort']  ?? 'price';
         $order = $this->request->get['order'] ?? 'DESC';
         $limit = (int)($this->request->get['limit'] ?? 25);
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
         $start = ($page - 1) * $limit;
+
+        // Check if any filter is active
+        $has_filter = false;
+        foreach ($filters as $v) {
+            if ($v !== '') { $has_filter = true; break; }
+        }
 
         $queryData = array_merge($filters, [
             'sort'  => $sort,
             'order' => $order,
             'start' => $start,
             'limit' => $limit,
+            'filter_has_price' => '1',
         ]);
 
-        $total = $this->model_shopmanager_card_card_import_sold->getTotalSoldRecords($queryData);
-        $records = $this->model_shopmanager_card_card_import_sold->getSoldRecords($queryData);
-
-        $data['list']    = $this->buildListHtml($records, $lang, $sort, $order, $queryData, $total, $page, $limit);
+        if (!$has_filter) {
+            $data['list'] = '<div class="p-5 text-center text-muted"><i class="fa-solid fa-filter fa-3x d-block mb-3 opacity-25"></i><p>' . ($lang['text_use_filters'] ?? 'Utilisez les filtres pour afficher les ventes.') . '</p></div>';
+        } else {
+            $total   = $this->model_shopmanager_card_card_import_sold->getTotalSoldRecords($queryData);
+            $records = $this->model_shopmanager_card_card_import_sold->getSoldRecords($queryData);
+            $data['list'] = $this->buildListHtml($records, $lang, $sort, $order, $queryData, $total, $page, $limit);
+        }
         $data['filters'] = $filters;
         $data['limit']   = $limit;
         $data['brands']  = $this->model_shopmanager_card_card_import_sold->getDistinctValues('brand');
@@ -88,15 +98,27 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             'filter_max_price'           => $this->request->get['filter_max_price']           ?? '',
             'filter_missing_card_number' => $this->request->get['filter_missing_card_number'] ?? '',
         ];
-        $sort  = $this->request->get['sort']  ?? 'card_price_sold_id';
+        $sort  = $this->request->get['sort']  ?? 'price';
         $order = $this->request->get['order'] ?? 'DESC';
         $limit = (int)($this->request->get['limit'] ?? 25);
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
         $start = ($page - 1) * $limit;
 
+        // Check if any filter is active
+        $has_filter = false;
+        foreach ($filters as $v) {
+            if ($v !== '') { $has_filter = true; break; }
+        }
+
         $queryData = array_merge($filters, [
             'sort' => $sort, 'order' => $order, 'start' => $start, 'limit' => $limit,
+            'filter_has_price' => '1',
         ]);
+
+        if (!$has_filter) {
+            $this->response->setOutput('<div class="p-5 text-center text-muted"><i class="fa-solid fa-filter fa-3x d-block mb-3 opacity-25"></i><p>' . ($lang['text_use_filters'] ?? 'Utilisez les filtres pour afficher les ventes.') . '</p></div>');
+            return;
+        }
 
         $total   = $this->model_shopmanager_card_card_import_sold->getTotalSoldRecords($queryData);
         $records = $this->model_shopmanager_card_card_import_sold->getSoldRecords($queryData);
@@ -494,8 +516,8 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
         $data['records'] = $records;
         $data  += $lang;
 
-        // Build filter string for pagination URL (without sort/order/start/limit)
-        $filterParams = array_filter($queryData, fn($v, $k) => !in_array($k, ['sort','order','start','limit']), ARRAY_FILTER_USE_BOTH);
+        // Build filter string for pagination URL (without sort/order/start/limit/internal flags)
+        $filterParams = array_filter($queryData, fn($v, $k) => !in_array($k, ['sort','order','start','limit','filter_has_price']), ARRAY_FILTER_USE_BOTH);
         $filterUrl = '';
         foreach ($filterParams as $k => $v) {
             if ($v !== '') $filterUrl .= '&' . $k . '=' . rawurlencode((string)$v);

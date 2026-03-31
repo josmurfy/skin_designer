@@ -67,6 +67,7 @@ $_['button_ok']              = 'OK';
 $_['button_close']           = 'Close';
 $_['button_fetch_ebay']        = 'Fetch eBay Prices';
 $_['button_sold_graded']       = 'Sold Graded';
+$_['button_merge_preview']     = 'Merge Rows';
 
 // Errors
 $_['error_permission']       = 'Warning: You do not have permission to perform this action!';
@@ -96,5 +97,6 @@ $_['text_market_fetch_done']        = 'Fetch done';
 $_['text_market_cached']            = 'cached';
 $_['text_market_rate_limit']        = 'eBay API rate limit reached';
 $_['text_market_updated']           = 'Market prices updated';
+$_['text_use_filters']               = 'Use filters to display cards matching sold data.';
 $_['text_bid_singular']              = 'bid';
 $_['text_bid_plural']                = 'bids';

@@ -6,6 +6,7 @@
         <button type="button" data-bs-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-card').toggleClass('d-none');" class="btn btn-light d-lg-none"><i class="fa-solid fa-filter"></i></button>
         <a href="{{ add }}" data-bs-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i></a>
         <button type="submit" form="form-card" formaction="{{ copy }}" data-bs-toggle="tooltip" title="{{ button_copy }}" class="btn btn-info"><i class="fa-solid fa-copy"></i></button>
+        <button type="button" id="button-merge-cards" data-bs-toggle="tooltip" title="{{ button_merge }}" class="btn btn-warning"><i class="fa-solid fa-code-merge"></i></button>
         <button type="submit" form="form-card" formaction="{{ delete }}" data-bs-toggle="tooltip" title="{{ button_delete }}" onclick="return confirm('{{ text_confirm }}');" class="btn btn-danger"><i class="fa-regular fa-trash-can"></i></button>
       </div>
       <h1>{{ heading_title }}</h1>
@@ -218,5 +219,9 @@
     var TEXT_CONFIRM_TRANSFER = '{{ confirm_transfer|escape('js') }}';
     var TEXT_CONFIRM_DELETE = '{{ confirm_are_you_sure|escape('js') }}';
     var USER_TOKEN = '{{ user_token }}';
+    var TEXT_MERGE_MIN     = '{{ error_merge_min|escape('js') }}';
+    var TEXT_CONFIRM_MERGE = '{{ text_confirm_merge|escape('js') }}';
+    var TEXT_MERGE_SUCCESS = '{{ text_merge_success|escape('js') }}';
+    var URL_MERGE_CARDS    = 'index.php?route=shopmanager/card/card.mergeCards&user_token={{ user_token }}';
 </script>
 {{ footer }}

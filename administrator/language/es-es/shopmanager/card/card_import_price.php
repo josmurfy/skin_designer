@@ -67,6 +67,7 @@ $_['button_ok']              = 'OK';
 $_['button_close']           = 'Cerrar';
 $_['button_fetch_ebay']        = 'Buscar precios eBay';
 $_['button_sold_graded']       = 'Sold Graded';
+$_['button_merge_preview']     = 'Fusionar filas';
 
 // Errors
 $_['error_permission']       = 'Advertencia: ¡No tiene permiso para realizar esta acción!';
@@ -96,5 +97,6 @@ $_['text_market_fetch_done']        = 'Búsqueda completada';
 $_['text_market_cached']            = 'en caché';
 $_['text_market_rate_limit']        = 'Límite API de eBay alcanzado';
 $_['text_market_updated']           = 'Precios de mercado actualizados';
+$_['text_use_filters']               = 'Utilice los filtros para mostrar las tarjetas con datos de ventas.';
 $_['text_bid_singular']              = 'puja';
 $_['text_bid_plural']                = 'pujas';

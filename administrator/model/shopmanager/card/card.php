@@ -559,4 +559,91 @@ class Card extends \Opencart\System\Engine\Model {
              WHERE `card_id` = '" . (int)$card_id . "'"
         );
     }
+
+    /**
+     * Merge multiple cards into one keeper.
+     * All selected cards must share the same card_number.
+     * Keeper = longest player_name (ties: lowest card_id).
+     * Quantities are summed; card_image rows are reassigned to keeper.
+     *
+     * @param array<mixed> $ids
+     * @return array<string,mixed>
+     */
+    public function mergeCards(array $ids): array {
+        // Sanitize & deduplicate
+        $clean = array_unique(array_filter(array_map('intval', $ids), fn(int $i): bool => $i > 0));
+
+        if (count($clean) < 2) {
+            return ['error' => 'Sélectionnez au moins 2 cartes valides.'];
+        }
+
+        $in    = implode(',', $clean);
+        $query = $this->db->query(
+            "SELECT card_id, card_number, player_name, quantity
+             FROM `" . DB_PREFIX . "card`
+             WHERE card_id IN (" . $in . ")"
+        );
+
+        if ((int)$query->num_rows !== count($clean)) {
+            return ['error' => 'Certaines cartes sélectionnées sont introuvables.'];
+        }
+
+        $cards = $query->rows;
+
+        // All must share the same card_number
+        $numbers = array_unique(array_map(fn(array $c): string => strtolower(trim((string)$c['card_number'])), $cards));
+        if (count($numbers) > 1) {
+            return ['error' => 'Toutes les cartes doivent avoir le même numéro de carte (trouvé: ' . implode(', ', $numbers) . ').'];
+        }
+
+        // Keeper = longest player_name; ties broken by lowest card_id
+        usort($cards, function(array $a, array $b): int {
+            $diff = mb_strlen((string)$b['player_name']) - mb_strlen((string)$a['player_name']);
+            return $diff !== 0 ? $diff : (int)$a['card_id'] - (int)$b['card_id'];
+        });
+
+        $keeper_id   = (int)$cards[0]['card_id'];
+        $player_name = (string)$cards[0]['player_name'];
+        $card_number = trim((string)$cards[0]['card_number']);
+        $total_qty   = (int)array_sum(array_column($cards, 'quantity'));
+
+        $to_delete = array_values(array_filter($clean, fn(int $id): bool => $id !== $keeper_id));
+
+        if (!empty($to_delete)) {
+            $del_in = implode(',', $to_delete);
+            // Reassign images to keeper before deleting
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_image`
+                 SET `card_id` = '" . $keeper_id . "'
+                 WHERE `card_id` IN (" . $del_in . ")"
+            );
+            // Delete merged cards
+            $this->db->query(
+                "DELETE FROM `" . DB_PREFIX . "card` WHERE `card_id` IN (" . $del_in . ")"
+            );
+        }
+
+        // Rebuild SKU
+        $name_clean = preg_replace('/[^a-zA-Z0-9_]/', '', str_replace(' ', '_', $player_name));
+        $sku        = $card_number . '_' . $name_clean;
+
+        // Update keeper
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card`
+             SET `player_name`   = '" . $this->db->escape($player_name) . "',
+                 `title`         = '" . $this->db->escape($player_name) . "',
+                 `sku`           = '" . $this->db->escape($sku) . "',
+                 `quantity`      = '" . (int)$total_qty . "',
+                 `date_modified` = NOW()
+             WHERE `card_id` = '" . $keeper_id . "'"
+        );
+
+        return [
+            'success'      => true,
+            'keeper_id'    => $keeper_id,
+            'merged_count' => count($to_delete),
+            'player_name'  => $player_name,
+            'quantity'     => $total_qty,
+        ];
+    }
 }

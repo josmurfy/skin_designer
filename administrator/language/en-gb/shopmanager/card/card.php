@@ -60,4 +60,8 @@ $_['tab_general'] = 'General';
 // ====================
 $_['error_permission'] = 'Warning: You do not have permission to modify cards!';
 $_['error_name'] = 'Player Name must be between 1 and 255 characters!';
+$_['button_merge']       = 'Merge Cards';
+$_['error_merge_min']    = 'Select at least 2 cards to merge.';
+$_['text_confirm_merge'] = 'Merge selected cards? (longest player name kept, quantities summed)';
+$_['text_merge_success'] = '%d card(s) merged → keeper card #%d.';
 ?>

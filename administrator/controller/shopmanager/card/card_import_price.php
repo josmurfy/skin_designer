@@ -93,7 +93,16 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $filters[$k] = $this->request->get[$k] ?? '';
         }
 
-        $sort  = $this->request->get['sort']  ?? 'card_raw_id';
+        // ── Early exit: no filter → show placeholder ────────────────────────
+        $has_filter = false;
+        foreach ($filters as $v) {
+            if ($v !== '') { $has_filter = true; break; }
+        }
+        if (!$has_filter) {
+            return '<div class="p-5 text-center text-muted"><i class="fa-solid fa-filter fa-3x d-block mb-3 opacity-25"></i><p>' . ($lang['text_use_filters'] ?? 'Utilisez les filtres pour afficher les cartes.') . '</p></div>';
+        }
+
+        $sort  = $this->request->get['sort']  ?? 'best_price';
         $order = $this->request->get['order'] ?? 'DESC';
         $page  = max(1, (int)($this->request->get['page']  ?? 1));
         $limit = max(1, (int)($this->request->get['limit'] ?? 25));
@@ -147,7 +156,8 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
 
         // Query
         $query_params = array_merge($filters, [
-            'sort' => $sort, 'order' => $order, 'start' => $start, 'limit' => $limit
+            'sort' => $sort, 'order' => $order, 'start' => $start, 'limit' => $limit,
+            'filter_has_sold' => '1',
         ]);
         $data['cards'] = $this->model_shopmanager_card_card_import_price->getCardPrices($query_params);
         $soldBilanMap = $this->getSoldBilanMap($data['cards']);
@@ -157,7 +167,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $card['ebay_sales_rendered'] = $this->renderSoldBilanHtml($soldBilanMap[$bilanKey] ?? []);
         }
         unset($card);
-        $data['total'] = $this->model_shopmanager_card_card_import_price->getTotalCardPrices($filters);
+        $data['total'] = $this->model_shopmanager_card_card_import_price->getTotalCardPrices(array_merge($filters, ['filter_has_sold' => '1']));
 
         // Sort links — OC4 standard with ASC/DESC toggle per column
         // Pattern: if already sorted on this col → flip order; otherwise default ASC
@@ -174,6 +184,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
         $data['sort_grade_9']      = $this->url->link('shopmanager/card/card_import_price.list', 'user_token=' . $ut . '&sort=grade_9'      . '&order=' . ($sort == 'grade_9'      ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
         $data['sort_grade_10']     = $this->url->link('shopmanager/card/card_import_price.list', 'user_token=' . $ut . '&sort=grade_10'     . '&order=' . ($sort == 'grade_10'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
         $data['sort_date_added']   = $this->url->link('shopmanager/card/card_import_price.list', 'user_token=' . $ut . '&sort=date_added'   . '&order=' . ($sort == 'date_added'   ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_best_price']   = $this->url->link('shopmanager/card/card_import_price.list', 'user_token=' . $ut . '&sort=best_price'   . '&order=' . ($sort == 'best_price'   ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'DESC') . $url, true);
         $data['sort']  = $sort;
         $data['order'] = $order;
         $data['limit'] = $limit;
@@ -921,6 +932,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
         $html .= '<th style="min-width:120px;">Prices</th>';
         $html .= '<th style="min-width:180px;">Market eBay</th>';
         $html .= '<th style="min-width:160px;">' . htmlspecialchars((string)$this->language->get('column_ebay_sales')) . '</th>';
+        $html .= '<th style="width:44px;" class="text-center" title="Fusion"></th>';
         $html .= '<th style="width:36px;"></th>';
         $html .= '</tr></thead><tbody>';
 
@@ -1055,7 +1067,9 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $bilanKey = ($card['card_number'] ?? '') . '|||' . ($card['set_name'] ?? $card['set'] ?? '');
             $html .= '<td>' . $this->renderSoldBilanHtml($soldBilanMap[$bilanKey] ?? []) . '</td>';
 
-            // ── Col 8: delete ─────────────────────────────────────────────────
+            // ── Col 8: merge inline ───────────────────────────────────────────
+            $html .= '<td class="preview-merge-col" style="padding:1px;vertical-align:middle;text-align:center;"></td>';
+            // ── Col 9: delete ─────────────────────────────────────────────────
             $html .= '<td><button type="button" class="btn btn-sm btn-outline-danger btn-preview-delete" title="Remove row"><i class="fa-solid fa-xmark"></i></button></td>';
             $html .= '</tr>';
         }
@@ -1161,9 +1175,11 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             return '<span class="text-muted" style="font-size:11px;">—</span>';
         }
 
-        $bin_raw  = [];  // BIN ungraded
-        $auc_raw  = [];  // AUC ungraded
-        $graded   = [];  // graded, keyed by "Grader Grade" label (grade asc)
+        $bin_raw    = [];  // BIN non gradée
+        $auc_raw    = [];  // AUC non gradée
+        $graded_auc = [];  // AUC gradée, clé = numéro de grade (ex: "9", "9.5", "10")
+        $graded_bin = [];  // BIN gradée, clé = numéro de grade
+        $all_graded = [];  // toutes les entrées gradées (pour le bilan)
 
         foreach ($soldRows as $row) {
             $currency = strtoupper(trim((string)($row['currency'] ?? 'CAD')));
@@ -1191,14 +1207,14 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             ];
 
             if ($isGraded) {
-                // key = "Grader Grade" or just "Grade", e.g. "PSA 9", "BGS 8", "9"
-                $gkey = trim(($grader !== '' ? $grader . ' ' : '') . $gradeRaw);
+                // Clé = numéro de grade seulement (PSA 9 + BGS 9 + SGC 9 → "9")
+                $gnKey = ($gradeNum == (int)$gradeNum) ? (string)(int)$gradeNum : (string)$gradeNum;
                 if ($isAuc) {
-                    $graded[$gkey]['auc'][] = $entry;
+                    $graded_auc[$gnKey][] = $entry;
                 } else {
-                    $graded[$gkey]['bin'][] = $entry;
+                    $graded_bin[$gnKey][] = $entry;
                 }
-                $graded[$gkey]['grade_num'] = $gradeNum; // for sorting
+                $all_graded[] = $entry;
             } elseif ($isAuc) {
                 $auc_raw[] = $entry;
             } else {
@@ -1206,10 +1222,10 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             }
         }
 
-        // Sort graded groups by grade_num ascending
-        uasort($graded, fn(array $a, array $b): int => $a['grade_num'] <=> $b['grade_num']);
+        ksort($graded_auc, SORT_NUMERIC);
+        ksort($graded_bin, SORT_NUMERIC);
 
-        // ── Helper: compute stats (low+date, median, high+date, avg_bids, most recent) ──
+        // ── Helper: compute stats ──
         $computeStats = function(array $entries): ?array {
             if (empty($entries)) return null;
             usort($entries, fn(array $a, array $b): int => $a['price'] <=> $b['price']);
@@ -1222,9 +1238,8 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                 : $entries[$midIdx]['price'];
             $totalBids = array_sum(array_column($entries, 'bids'));
             $avgBids   = $n > 0 ? round($totalBids / $n, 1) : 0;
-            // Most recent by date_raw (lexicographic DESC)
-            $withDate = array_filter($entries, fn(array $e): bool => ($e['date_raw'] ?? '') !== '' && ($e['date_raw'] ?? '') !== '0000-00-00');
-            $recent = null;
+            $withDate  = array_filter($entries, fn(array $e): bool => ($e['date_raw'] ?? '') !== '' && ($e['date_raw'] ?? '') !== '0000-00-00');
+            $recent    = null;
             if (!empty($withDate)) {
                 usort($withDate, fn(array $a, array $b): int => strcmp($b['date_raw'] ?? '', $a['date_raw'] ?? ''));
                 $recent = array_values($withDate)[0];
@@ -1249,7 +1264,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $dateFn = fn(string $d): string => $d !== ''
                 ? '<span style="font-size:9px;color:#aaa;">(' . htmlspecialchars($d) . ')</span>' : '';
             $bidsCell = $showBids && $stats['avg_bids'] > 0
-                ? '<td style="padding:1px 3px;color:#888;font-size:9px;">~' . number_format($stats['avg_bids'], 1) . ' bid' . ($stats['avg_bids'] != 1 ? 's' : '') . '</td>'
+                ? '<td style="padding:1px 3px;color:#888;font-size:9px;">~' . number_format($stats['avg_bids'], 1) . ' enchère' . ($stats['avg_bids'] != 1 ? 's' : '') . '</td>'
                 : '<td></td>';
             $recentEid = $stats['recent_eid'] ?? '';
             $recentD   = $stats['recent_d']   ?? '';
@@ -1261,6 +1276,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             } else {
                 $recentCell = '<td style="padding:1px 3px;font-size:9px;color:#888;">' . htmlspecialchars($recentD) . '</td>';
             }
+            $countLabel = $stats['count'] . ' vente' . ($stats['count'] > 1 ? 's' : '');
             return '<tr>'
                  . '<td style="white-space:nowrap;padding:1px 4px 1px 0;">' . $badge . '</td>'
                  . '<td style="white-space:nowrap;padding:1px 3px;font-size:10px;">'
@@ -1270,71 +1286,78 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                  . '<td style="white-space:nowrap;padding:1px 3px;font-size:10px;">'
                  .   '<span style="color:#198754;font-weight:600;">' . $fmt($stats['high']) . '</span> ' . $dateFn($stats['high_d'])
                  . '</td>'
-                 . '<td style="padding:1px 3px;color:#888;font-size:9px;">n=' . $stats['count'] . '</td>'
+                 . '<td style="padding:1px 3px;color:#888;font-size:9px;">' . $countLabel . '</td>'
                  . $bidsCell
                  . $recentCell
                  . '</tr>';
         };
 
+        // ── Helper: separator row ──
+        $sepRow = fn(string $label): string =>
+            '<tr><td colspan="7" style="padding:4px 2px 2px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid #dee2e6;">'
+            . $label . '</td></tr>';
+
         $BIN_badge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#0d6efd;padding:1px 4px;border-radius:3px;">BIN</span>';
-        $AUC_badge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#212529;padding:1px 4px;border-radius:3px;">AUC</span>';
+        $AUC_badge = '<span style="font-size:9px;font-weight:700;color:#212529;background:#dee2e6;padding:1px 4px;border-radius:3px;">AUC</span>';
 
         $statsBin = $computeStats($bin_raw);
         $statsAuc = $computeStats($auc_raw);
 
-        // Graded: BIN + AUC stats per grade group
-        $gradedStats = [];
-        foreach ($graded as $glabel => $gdata) {
-            $gradedStats[$glabel] = [
-                'bin' => $computeStats($gdata['bin'] ?? []),
-                'auc' => $computeStats($gdata['auc'] ?? []),
-            ];
-        }
+        $hasUngraded  = ($statsBin !== null || $statsAuc !== null);
+        $hasAucGraded = !empty($graded_auc);
+        $hasBinGraded = !empty($graded_bin);
+        $hasAny       = $hasUngraded || $hasAucGraded || $hasBinGraded;
 
-        $hasAny = $statsBin !== null || $statsAuc !== null || !empty($gradedStats);
-        $html   = '<div style="min-width:200px;font-size:11px;">';
+        $html = '<div style="min-width:200px;font-size:11px;">';
 
         if ($hasAny) {
             $html .= '<table style="border-collapse:collapse;width:100%;"><thead><tr>'
                    . '<th style="padding:0 4px 2px 0;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
-                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Low</th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Bas</th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Med</th>'
-                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">High</th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Haut</th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Récent</th>'
                    . '</tr></thead><tbody>';
 
-            $html .= $statsRow($BIN_badge, $statsBin,  false);
-            $html .= $statsRow($AUC_badge, $statsAuc,  true);
+            // ── Section 1 : Non gradée ──
+            if ($hasUngraded) {
+                $html .= $sepRow('📦 Non gradée');
+                $html .= $statsRow($BIN_badge, $statsBin, false);
+                $html .= $statsRow($AUC_badge, $statsAuc, true);
+            }
 
-            // Per grade: BIN row then AUC row
-            foreach ($gradedStats as $glabel => $gs) {
-                $glabelHtml = htmlspecialchars($glabel);
-                $gBinBadge  = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">' . $glabelHtml . '</span>'
+            // ── Section 2 : Gradée — Enchère (AUC) ──
+            if ($hasAucGraded) {
+                $html .= $sepRow('🏷 Gradée — Enchère (AUC)');
+                foreach ($graded_auc as $gnKey => $entries) {
+                    $gBadge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">Grade ' . htmlspecialchars((string)$gnKey) . '</span>'
+                            . '&#8201;<span style="font-size:9px;font-weight:700;color:#212529;background:#dee2e6;padding:1px 4px;border-radius:3px;">AUC</span>';
+                    $html .= $statsRow($gBadge, $computeStats($entries), true);
+                }
+            }
+
+            // ── Section 3 : Gradée — Prix fixe (BIN) ──
+            if ($hasBinGraded) {
+                $html .= $sepRow('🏷 Gradée — Prix fixe (BIN)');
+                foreach ($graded_bin as $gnKey => $entries) {
+                    $gBadge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">Grade ' . htmlspecialchars((string)$gnKey) . '</span>'
                             . '&#8201;<span style="font-size:9px;font-weight:700;color:#fff;background:#0d6efd;padding:1px 4px;border-radius:3px;">BIN</span>';
-                $gAucBadge  = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">' . $glabelHtml . '</span>'
-                            . '&#8201;<span style="font-size:9px;font-weight:700;color:#fff;background:#212529;padding:1px 4px;border-radius:3px;">AUC</span>';
-                $html .= $statsRow($gBinBadge, $gs['bin'], false);
-                $html .= $statsRow($gAucBadge, $gs['auc'], true);
+                    $html .= $statsRow($gBadge, $computeStats($entries), false);
+                }
             }
 
             $html .= '</tbody></table>';
         }
 
         // ── Grading bilan (vaut la peine?) ──
-        $allGradedParts = [];
-        foreach ($graded as $gdata) {
-            if (!empty($gdata['bin'])) $allGradedParts[] = $gdata['bin'];
-            if (!empty($gdata['auc'])) $allGradedParts[] = $gdata['auc'];
-        }
-        $allGraded = !empty($allGradedParts) ? array_merge(...$allGradedParts) : [];
-        if (!empty($allGraded)) {
+        if (!empty($all_graded)) {
             $GRADING_COST   = 55.0;
             $EBAY_FEE       = 0.13;
             $MIN_NET_PROFIT = 20.0;
 
-            $above7 = array_values(array_filter($allGraded, fn(array $e): bool => $e['grade_num'] >= 7.0));
+            $above7 = array_values(array_filter($all_graded, fn(array $e): bool => $e['grade_num'] >= 7.0));
 
             if (!empty($above7)) {
                 usort($above7, fn(array $a, array $b): int => $a['price'] <=> $b['price']);

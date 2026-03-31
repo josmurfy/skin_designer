@@ -94,3 +94,7 @@ $_['error_invalid_file']     = 'Formato de archivo inválido. Por favor suba un 
 $_['error_empty_file']       = 'El archivo CSV está vacío o tiene un formato inválido.';
 $_['error_no_data']          = 'No hay registros seleccionados.';
 $_['error_ajax']             = 'Ocurrió un error AJAX.';
+$_['text_use_filters']       = 'Utilice los filtros para mostrar ventas con tarjetas en base de datos.';
+$_['text_bid_singular']      = 'puja';
+$_['text_bid_plural']        = 'pujas';
+$_['column_ungraded']        = 'Sin gradar';

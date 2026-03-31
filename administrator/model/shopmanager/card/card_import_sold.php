@@ -243,6 +243,8 @@ class CardImportSold extends \Opencart\System\Engine\Model {
             $where[] = "price <= '" . (float)$data['filter_max_price'] . "'";
         if (isset($data['filter_missing_card_number']) && $data['filter_missing_card_number'])
             $where[] = "(card_number = '' OR card_number IS NULL)";
+        if (!empty($data['filter_has_price']))
+            $where[] = "card_number != '' AND EXISTS (SELECT 1 FROM " . DB_PREFIX . "card_price p WHERE p.card_number = card_number)";
 
         return $where;
     }

@@ -120,10 +120,14 @@ class Card extends \Opencart\System\Engine\Controller {
             'href' => $this->url->link('shopmanager/card', 'user_token=' . $this->session->data['user_token'] . $url, true)
         );
 
-        $data['add'] = $this->url->link('shopmanager/card/card.form', 'user_token=' . $this->session->data['user_token'] . $url);
-        $data['copy'] = $this->url->link('shopmanager/card/card.copy', 'user_token=' . $this->session->data['user_token']);
+        $data['add']    = $this->url->link('shopmanager/card/card.form', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['copy']   = $this->url->link('shopmanager/card/card.copy', 'user_token=' . $this->session->data['user_token']);
         $data['delete'] = $this->url->link('shopmanager/card/card.delete', 'user_token=' . $this->session->data['user_token']);
         $data['user_token'] = $this->session->data['user_token'];
+        $data['button_merge']     = $lang['button_merge']     ?? 'Fusionner';
+        $data['error_merge_min']  = $lang['error_merge_min']  ?? 'Sélectionnez au moins 2 cartes.';
+        $data['text_confirm_merge'] = $lang['text_confirm_merge'] ?? 'Fusionner les cartes sélectionnées? (player = plus long, quantités additionnées)';
+        $data['text_merge_success'] = $lang['text_merge_success'] ?? '%d carte(s) fusionnée(s) → carte gardée #%d.';
 
         $data['list'] = $this->load->controller('shopmanager/card/card.getList');
 
@@ -1184,6 +1188,50 @@ class Card extends \Opencart\System\Engine\Controller {
         } catch (\Throwable $e) {
             ob_end_clean();
             $json['error'] = 'Exception: ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
+        }
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Merge selected cards (AJAX)
+     *
+     * @return void
+     */
+    public function mergeCards(): void {
+        $lang = $this->load->language('shopmanager/card/card');
+        $json = [];
+
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+            $json['error'] = $lang['error_permission'] ?? 'Permission refusée.';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $selected = isset($this->request->post['selected']) ? (array)$this->request->post['selected'] : [];
+
+        if (count($selected) < 2) {
+            $json['error'] = $lang['error_merge_min'] ?? 'Sélectionnez au moins 2 cartes.';
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+
+        $this->load->model('shopmanager/card/card');
+        $result = $this->model_shopmanager_card_card->mergeCards($selected);
+
+        if (isset($result['error'])) {
+            $json['error'] = $result['error'];
+        } else {
+            $json['success']      = sprintf(
+                $lang['text_merge_success'] ?? '%d carte(s) fusionnée(s) → carte gardée #%d.',
+                (int)$result['merged_count'],
+                (int)$result['keeper_id']
+            );
+            $json['keeper_id']    = $result['keeper_id'];
+            $json['merged_count'] = $result['merged_count'];
         }
 
         $this->response->addHeader('Content-Type: application/json');

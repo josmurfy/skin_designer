@@ -60,4 +60,8 @@ $_['tab_general'] = 'General';
 // ====================
 $_['error_permission'] = '¡Advertencia: No tiene permiso para modificar las cartas!';
 $_['error_name'] = '¡El nombre del jugador debe tener entre 1 y 255 caracteres!';
+$_['button_merge']       = 'Fusionar cartas';
+$_['error_merge_min']    = 'Seleccione al menos 2 cartas para fusionar.';
+$_['text_confirm_merge'] = '¿Fusionar las cartas seleccionadas? (se conserva el nombre más largo, se suman las cantidades)';
+$_['text_merge_success'] = '%d carta(s) fusionada(s) → carta guardada #%d.';
 ?>

@@ -94,3 +94,7 @@ $_['error_invalid_file']     = 'Invalid file format. Please upload a CSV file.';
 $_['error_empty_file']       = 'CSV file is empty or has invalid format.';
 $_['error_no_data']          = 'No records selected.';
 $_['error_ajax']             = 'AJAX error occurred.';
+$_['text_use_filters']       = 'Use filters to display sold records matching priced cards.';
+$_['text_bid_singular']      = 'bid';
+$_['text_bid_plural']        = 'bids';
+$_['column_ungraded']        = 'Ungraded';

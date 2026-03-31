@@ -173,4 +173,53 @@ $(document).ready(function() {
         e.preventDefault();
         $('#button-filter').trigger('click');
     });
+
+    // ── Merge selected cards ──────────────────────────────────────────────────
+    $('#button-merge-cards').on('click', function() {
+        var selected = [];
+        $('input[name="selected[]"]:checked').each(function() {
+            selected.push($(this).val());
+        });
+
+        if (selected.length < 2) {
+            alert(typeof TEXT_MERGE_MIN !== 'undefined' ? TEXT_MERGE_MIN : 'Sélectionnez au moins 2 cartes.');
+            return;
+        }
+
+        var msg = (typeof TEXT_CONFIRM_MERGE !== 'undefined' ? TEXT_CONFIRM_MERGE : 'Fusionner les cartes sélectionnées?')
+                + '\n\n(' + selected.length + ' cartes sélectionnées)';
+
+        if (!confirm(msg)) {
+            return;
+        }
+
+        showLoadingPopup('Fusion en cours...');
+
+        var url = typeof URL_MERGE_CARDS !== 'undefined' ? URL_MERGE_CARDS
+                : 'index.php?route=shopmanager/card/card.mergeCards&user_token=' + (typeof USER_TOKEN !== 'undefined' ? USER_TOKEN : '');
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: { selected: selected },
+            dataType: 'json',
+            success: function(json) {
+                if (json.error) {
+                    appendLoadingMessage(json.error, 'error');
+                    finishLoadingPopup('❌ Erreur');
+                } else {
+                    appendLoadingMessage(json.success, 'success');
+                    finishLoadingPopup('✅ Fusion terminée');
+                    setTimeout(function() {
+                        hideLoadingPopup();
+                        location.reload();
+                    }, 1800);
+                }
+            },
+            error: function(xhr) {
+                appendLoadingMessage('Erreur AJAX (' + xhr.status + ')', 'error');
+                finishLoadingPopup('❌ Échec');
+            }
+        });
+    });
 });

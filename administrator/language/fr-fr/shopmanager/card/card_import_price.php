@@ -67,6 +67,7 @@ $_['button_ok']              = 'OK';
 $_['button_close']           = 'Fermer';
 $_['button_fetch_ebay']        = 'Récupérer prix eBay';
 $_['button_sold_graded']       = 'Sold Graded';
+$_['button_merge_preview']     = 'Fusionner';
 
 // Errors
 $_['error_permission']       = 'Attention: Vous n\'avez pas la permission d\'effectuer cette action!';
@@ -98,3 +99,4 @@ $_['text_market_rate_limit']        = 'Limite API eBay atteinte';
 $_['text_market_updated']           = 'Prix marché mis à jour';
 $_['text_bid_singular']              = 'enchère';
 $_['text_bid_plural']                = 'enchères';
+$_['text_use_filters']               = 'Utilisez les filtres pour afficher les cartes correspondant à des ventes.';

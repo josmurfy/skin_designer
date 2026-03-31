@@ -1034,12 +1034,14 @@ $(document).ready(function () {
 
                 /* preview */
                 $('#preview-content').html(json.preview_html || '');
+                markPreviewDuplicates();
                 $('#preview-container').show();
                 $('#preview-container')[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                 /* save button */
                 $('#button-save-to-db').show();
                 $('#button-fetch-preview-market-prices').show();
+                $('#button-merge-preview').show();
 
                 /* count info */
                 var sc = json.would_skip || 0, ic = json.would_insert || 0;
@@ -1083,6 +1085,7 @@ $(document).ready(function () {
                 currentCards = null;
                 $btn.hide();
                 $('#button-fetch-preview-market-prices').hide();
+                $('#button-merge-preview').hide();
                 $('#preview-container').hide();
                 $('#already-imported-alert').hide();
 
@@ -1095,6 +1098,109 @@ $(document).ready(function () {
                 $btn.prop('disabled', false);
                 showAlert(TEXT_ERROR, TEXT_AJAX_ERROR + ' ' + err.message);
             });
+    });
+
+    /* ── MERGE PREVIEW ROWS (client-side) ── */
+    var _mergeLock = false;
+
+    function doMergeSelectedRows() {
+        if (_mergeLock) return;
+        if (!currentCards || !currentCards.length) return;
+
+        var selectedIdxs = [];
+        $('#preview-table tbody tr[data-index]').filter(function () {
+            return $(this).find('.preview-row-check').is(':checked');
+        }).each(function () {
+            var idx = parseInt($(this).attr('data-index'), 10);
+            if (!isNaN(idx)) selectedIdxs.push(idx);
+        });
+
+        if (selectedIdxs.length < 2) return; // silencieux — jamais via bouton inline (pré-sélectionné)
+
+        // Collect cards matching selected rows
+        var cards = selectedIdxs.map(function (idx) {
+            return currentCards.find(function (c) { return parseInt(c._index, 10) === idx; });
+        }).filter(Boolean);
+
+        // Validate: all must share the same card_number
+        var numbers = cards.map(function (c) { return String(c.card_number || '').trim().toLowerCase(); });
+        var uniqueNums = numbers.filter(function (v, i, a) { return a.indexOf(v) === i; });
+        if (uniqueNums.length > 1) {
+            alert((typeof TEXT_MERGE_PREVIEW_DIFF_NUM !== 'undefined' ? TEXT_MERGE_PREVIEW_DIFF_NUM : 'Numéros de carte différents:')
+                + ' ' + uniqueNums.join(', '));
+            return;
+        }
+
+        var msg = (typeof TEXT_MERGE_PREVIEW_CONFIRM !== 'undefined' ? TEXT_MERGE_PREVIEW_CONFIRM
+                    : 'Fusionner les lignes sélectionnées?')
+                + '\n\n(' + cards.length + ' lignes)';
+        if (!confirm(msg)) return;
+
+        _mergeLock = true;
+
+        // Keeper = longest player; tie = smallest _index
+        cards.sort(function (a, b) {
+            var la = String(a.player || '').length, lb = String(b.player || '').length;
+            if (lb !== la) return lb - la;
+            return parseInt(a._index, 10) - parseInt(b._index, 10);
+        });
+        var keeper = cards[0];
+
+        // Merge: keeper takes MAX prices from all rows
+        var priceFields = ['ungraded', 'grade_9', 'grade_10'];
+        cards.forEach(function (c) {
+            priceFields.forEach(function (f) {
+                var v = parseFloat(c[f]) || 0;
+                if (v > (parseFloat(keeper[f]) || 0)) keeper[f] = v;
+            });
+        });
+
+        // Update keeper in currentCards
+        var keeperPos = currentCards.findIndex(function (c) { return parseInt(c._index, 10) === parseInt(keeper._index, 10); });
+        if (keeperPos !== -1) currentCards[keeperPos] = keeper;
+
+        // Remove non-keeper rows from currentCards and DOM
+        var toRemove = cards.slice(1);
+        toRemove.forEach(function (c) {
+            var pos = currentCards.findIndex(function (cc) { return parseInt(cc._index, 10) === parseInt(c._index, 10); });
+            if (pos !== -1) currentCards.splice(pos, 1);
+            $('#preview-table tr[data-index="' + c._index + '"]').remove();
+        });
+
+        // Update the keeper row display: badges in col 4
+        var $keeperRow = $('#preview-table tr[data-index="' + keeper._index + '"]');
+        $keeperRow.find('.badge.bg-primary').text(keeper.player || '');
+        var $pricesCell = $keeperRow.find('td').eq(4);
+        var pHtml = '';
+        [['Raw', 'ungraded', 'bg-secondary'], ['G9', 'grade_9', 'bg-success'], ['G10', 'grade_10', 'bg-primary']].forEach(function (p) {
+            var v = parseFloat(keeper[p[1]]) || 0;
+            if (v > 0) {
+                pHtml += '<div style="margin-bottom:2px;"><span class="badge ' + p[2] + '" style="font-size:10px;min-width:30px;">' + p[0] + '</span> <span style="font-size:12px;font-weight:600;">$' + v.toFixed(2) + '</span></div>';
+            } else {
+                pHtml += '<div style="margin-bottom:2px;opacity:0.35;"><span class="badge bg-light text-dark border" style="font-size:10px;min-width:30px;">' + p[0] + '</span> <span style="font-size:11px;">—</span></div>';
+            }
+        });
+        $pricesCell.find('div[style*="margin-bottom"]').remove();
+        $pricesCell.prepend(pHtml);
+
+        renumberPreviewRows();
+        $('#preview-table .preview-row-check').prop('checked', false);
+        $('#preview-check-all').prop('checked', false);
+        $('#button-merge-preview').hide();
+        _mergeLock = false;
+        markPreviewDuplicates();
+
+        var done = typeof TEXT_MERGE_PREVIEW_DONE !== 'undefined' ? TEXT_MERGE_PREVIEW_DONE : 'Lignes fusionnées.';
+        var $info = $('<div class="alert alert-success alert-dismissible fade show py-1 px-2 mt-1" role="alert" style="font-size:11px;">'
+            + done + ' (' + toRemove.length + ' supprimée(s), keeper: #' + keeper._index + ')'
+            + '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>');
+        $('#preview-content').prepend($info);
+        setTimeout(function () { $info.alert('close'); }, 3000);
+    }
+
+    $('#button-merge-preview').on('click', function () {
+        if (!$(this).is(':visible')) return; // guard double-clic
+        doMergeSelectedRows();
     });
 
     /* ── DELETE SELECTED ── */
@@ -1273,5 +1379,137 @@ $(document).ready(function () {
     $('#button-close-duplicates').on('click', function () {
         $('#db-duplicates-section').hide();
     });
+
+    /* ── PREVIEW DUPLICATE DETECTION ── */
+    function markPreviewDuplicates() {
+        if (!currentCards || !currentCards.length) return;
+
+        // Count occurrences per card_number (ignore empty)
+        var counts = {};
+        currentCards.forEach(function (c) {
+            var cn = String(c.card_number || '').trim();
+            if (!cn) return;
+            counts[cn] = (counts[cn] || 0) + 1;
+        });
+
+        // Reset all rows first + remove banner
+        $('#dup-alert-banner').remove();
+        $('#preview-table tbody tr[data-index]').each(function () {
+            $(this).find('.dup-badge').remove();
+            $(this).find('.inline-merge-btn').remove();
+            $(this).find('.preview-merge-col').html('');
+            $(this).css({'outline': '', 'outline-offset': '', 'background-color': ''});
+        });
+
+        // For each card with a duplicate card_number, add badge
+        currentCards.forEach(function (c) {
+            var cn = String(c.card_number || '').trim();
+            if (!cn || counts[cn] < 2) return;
+            var $row = $('#preview-table tr[data-index="' + c._index + '"]');
+            if (!$row.length) return;
+            $row.css({'outline': '3px solid #fd7e14', 'outline-offset': '-3px', 'background-color': '#fff3e0'});
+            // Find the card_number badge in col 4 (4th td = index 3)
+            var $infoCell = $row.find('td').eq(3);
+            if ($infoCell.find('.dup-badge').length) return; // already added
+            var $badge = $('<span class="dup-badge badge" style="font-size:10px;vertical-align:middle;margin-left:4px;background:#fd7e14;color:#fff;cursor:pointer;" title="Clic sur Fusionner pour regrouper ces cartes">'
+                + '<i class="fa-solid fa-clone me-1"></i>'
+                + counts[cn] + ' doublons'
+                + '</span>');
+            // Insert after the card_number badge (bg-light text-dark border containing #cn)
+            var $cnBadge = $infoCell.find('.badge.bg-light').filter(function () {
+                return $(this).text().trim().replace(/^#/, '') === cn;
+            });
+            if ($cnBadge.length) {
+                $cnBadge.after($badge);
+            } else {
+                $infoCell.find('div').eq(1).append($badge);
+            }
+        });
+
+        // --- Boutons inline merge par groupe de doublons ---
+        var dupGroupsMap = {};
+        currentCards.forEach(function (c) {
+            var cn = String(c.card_number || '').trim();
+            if (!cn || counts[cn] < 2) return;
+            if (!dupGroupsMap[cn]) dupGroupsMap[cn] = [];
+            dupGroupsMap[cn].push(c._index);
+        });
+        Object.keys(dupGroupsMap).forEach(function (cn) {
+            var idxs = dupGroupsMap[cn];
+            // Trier par position DOM
+            var rowsWithPos = idxs.map(function (idx) {
+                var $r = $('#preview-table tr[data-index="' + idx + '"]');
+                return {idx: idx, $row: $r, pos: $r.length ? $r.index() : 9999};
+            }).filter(function (x) { return x.$row.length > 0; });
+            rowsWithPos.sort(function (a, b) { return a.pos - b.pos; });
+            if (!rowsWithPos.length) return;
+
+            var $btn = $('<button type="button" class="btn btn-warning btn-sm inline-merge-btn" '
+                + 'style="font-size:10px;padding:3px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:38px;" '
+                + 'title="Fusionner ' + idxs.length + ' lignes (card #' + cn + ')">' 
+                + '<i class="fa-solid fa-code-merge"></i>'
+                + '<span style="font-size:9px;line-height:1.1;">' + idxs.length + ' ⇌</span>'
+                + '</button>');
+            $btn.on('click', function (e) {
+                e.stopPropagation();
+                // Pré-sélectionner toutes les lignes du groupe
+                $('#preview-table .preview-row-check').prop('checked', false);
+                idxs.forEach(function (idx) {
+                    $('#preview-table tr[data-index="' + idx + '"]').find('.preview-row-check').prop('checked', true);
+                });
+                doMergeSelectedRows();
+            });
+            rowsWithPos[0].$row.find('.preview-merge-col').append($btn);
+        });
+
+        // --- Banner d'avertissement doublons en haut du preview ---
+        var dupGroups = Object.keys(counts).filter(function (cn) { return counts[cn] >= 2; });
+        if (dupGroups.length > 0) {
+            var totalDupCards = dupGroups.reduce(function (sum, cn) { return sum + counts[cn]; }, 0);
+            var $banner = $('<div id="dup-alert-banner" class="alert alert-warning d-flex align-items-center gap-2 mb-2 py-2 px-3" style="cursor:pointer;border:2px solid #fd7e14;font-size:13px;" role="alert">'
+                + '<i class="fa-solid fa-clone fa-lg"></i>'
+                + '<span><strong>' + dupGroups.length + ' numéro' + (dupGroups.length > 1 ? 's' : '') + ' en doublon</strong>'
+                + ' — ' + totalDupCards + ' cartes concernées.'
+                + ' <u>Cliquez pour aller au premier doublon.</u></span>'
+                + '</div>');
+            $banner.on('click', function () {
+                // Trouver la première rangée en doublon
+                var $firstDup = $('#preview-table tbody tr[data-index]').filter(function () {
+                    return $(this).find('.dup-badge').length > 0;
+                }).first();
+                if (!$firstDup.length) return;
+
+                // Récupérer le card_number du premier groupe
+                var firstIdx = parseInt($firstDup.attr('data-index'), 10);
+                var firstCard = currentCards.find(function (c) { return parseInt(c._index, 10) === firstIdx; });
+                var targetCn = firstCard ? String(firstCard.card_number || '').trim().toLowerCase() : '';
+
+                // Décocher tout d'abord
+                $('#preview-table .preview-row-check').prop('checked', false);
+
+                // Cocher TOUTES les rangées ayant le même card_number
+                $('#preview-table tbody tr[data-index]').each(function () {
+                    var idx = parseInt($(this).attr('data-index'), 10);
+                    var card = currentCards.find(function (c) { return parseInt(c._index, 10) === idx; });
+                    if (card && String(card.card_number || '').trim().toLowerCase() === targetCn) {
+                        $(this).find('.preview-row-check').prop('checked', true);
+                    }
+                });
+                $('#preview-check-all').prop('checked', false); // pas "tout" coché
+
+                // Scroll + flash sur la première rangée
+                $('html, body').animate({scrollTop: $firstDup.offset().top - 100}, 300);
+                $firstDup.css('outline', '4px solid #fd7e14');
+                setTimeout(function () { $firstDup.css('outline', '3px solid #fd7e14'); }, 800);
+            });
+            // Insérer avant le tableau de preview
+            var $table = $('#preview-table');
+            if ($table.length) {
+                $table.before($banner);
+            } else {
+                $('#preview-content').prepend($banner);
+            }
+        }
+    }
 
 }); // end $(document).ready

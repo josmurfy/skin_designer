@@ -72,6 +72,9 @@
       <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-eye me-2"></i>{{ text_preview_title }}</span>
         <div class="d-flex align-items-center">
+          <button type="button" id="button-merge-preview" class="btn btn-warning me-2" data-bs-toggle="tooltip" title="{{ button_merge_preview }}" style="display:none;">
+            <i class="fa-solid fa-code-merge me-1"></i>{{ button_merge_preview }}
+          </button>
           <button type="button" id="button-fetch-preview-market-prices" class="btn btn-primary me-2" data-bs-toggle="tooltip" title="{{ button_fetch_ebay }}" style="display:none;">
             <i class="fa-solid fa-tags me-1"></i>{{ button_fetch_ebay }}
           </button>
@@ -457,6 +460,10 @@
     var TEXT_MARKET_AUCTION_GRADED = '{{ column_ebay_sold_graded|escape("js") }}';
     var TEXT_MARKET_BUY_NOW_RAW   = '{{ column_ebay_list_raw|escape("js") }}';
     var TEXT_MARKET_BUY_NOW_GRADED = '{{ column_ebay_list_graded|escape("js") }}';
+    var TEXT_MERGE_PREVIEW_MIN      = 'Sélectionnez au moins 2 lignes à fusionner.';
+    var TEXT_MERGE_PREVIEW_DIFF_NUM = 'Toutes les lignes sélectionnées doivent avoir le même numéro de carte.';
+    var TEXT_MERGE_PREVIEW_CONFIRM  = 'Fusionner les lignes sélectionnées? (player le plus long conservé, prix=MAX)';
+    var TEXT_MERGE_PREVIEW_DONE     = 'Lignes fusionnées.';
 
 </script>
 <script src="view/javascript/shopmanager/card/card_import_price.js?v=20260323e"></script>
