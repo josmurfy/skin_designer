@@ -53,56 +53,64 @@
             <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ product.name }}">{{ product.name }}</td>
             <td><a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary"><i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}</a></td>
             <td>
-              {% if product.leaf != 1 %}
-                {# No leaf category - red border #}
-                <div style="border: 2px solid #dc3545; padding: 8px; border-radius: 4px; background-color: #f8d7da;">
+              {% if product.source_category_id %}
+                {# Info source available → green box #}
+                <div style="border: 2px solid #198754; padding: 8px; border-radius: 4px; background-color: #d1e7dd;">
                   <div style="line-height: 1.4;">
-                    <div class="text-danger fw-bold mb-2" style="font-size: 11px;">
-                      <i class="fa-solid fa-exclamation-triangle"></i> {{ text_no_leaf_category }}
+                    <div class="text-success fw-bold mb-2" style="font-size: 11px;">
+                      <i class="fa-solid fa-star"></i>
+                      {{ product.source_category_id }}{% if product.source_category_name %} - {{ product.source_category_name }}{% endif %}
+                      <span class="badge bg-success ms-1">{{ product.source_percent }}%</span>
                     </div>
                     <small class="text-muted d-block">
                       {{ text_local }}: {{ product.local_category_id ?? 'N/A' }}
-                      {% if product.local_category_name %}
-                        - {{ product.local_category_name }}
-                      {% endif %}
+                      {% if product.local_category_name %} - {{ product.local_category_name }}{% endif %}
                     </small>
                     <small class="text-muted d-block">
                       {{ text_ebay }}: {{ product.ebay_category_id ?? 'N/A' }}
-                      {% if product.ebay_category_name %}
-                        - {{ product.ebay_category_name }}
-                      {% endif %}
+                      {% if product.ebay_category_name %} - {{ product.ebay_category_name }}{% endif %}
                     </small>
                   </div>
                 </div>
               {% else %}
-                {# Leaf category exists but values differ - orange/warning border #}
-                <div style="border: 2px solid #ffc107; padding: 8px; border-radius: 4px; background-color: #fff3cd;">
-                  <div style="line-height: 1.4;">
-                    <div class="text-warning fw-bold mb-2" style="font-size: 11px;">
-                      <i class="fa-solid fa-exclamation-circle"></i> {{ text_category_values_differ }}
+                {# No info source → red/orange box + red "no source" badge #}
+                {% if product.leaf != 1 %}
+                  <div style="border: 2px solid #dc3545; padding: 8px; border-radius: 4px; background-color: #f8d7da;">
+                    <div style="line-height: 1.4;">
+                      <div class="text-danger fw-bold mb-2" style="font-size: 11px;">
+                        <i class="fa-solid fa-exclamation-triangle"></i> {{ text_no_leaf_category }}
+                      </div>
+                      <small class="text-muted d-block">
+                        {{ text_local }}: {{ product.local_category_id ?? 'N/A' }}
+                        {% if product.local_category_name %} - {{ product.local_category_name }}{% endif %}
+                      </small>
+                      <small class="text-muted d-block">
+                        {{ text_ebay }}: {{ product.ebay_category_id ?? 'N/A' }}
+                        {% if product.ebay_category_name %} - {{ product.ebay_category_name }}{% endif %}
+                      </small>
                     </div>
-                    <small class="text-muted d-block">
-                      {{ text_local }}: {{ product.local_category_id ?? 'N/A' }}
-                      {% if product.local_category_name %}
-                        - {{ product.local_category_name }}
-                      {% endif %}
-                    </small>
-                    <small class="text-muted d-block">
-                      {{ text_ebay }}: {{ product.ebay_category_id ?? 'N/A' }}
-                      {% if product.ebay_category_name %}
-                        - {{ product.ebay_category_name }}
-                      {% endif %}
-                    </small>
                   </div>
-                </div>
-              {% endif %}
-              {% if product.source_category_id %}
-                <div style="border: 1px solid #198754; padding: 3px 6px; border-radius: 4px; background-color: #d1e7dd; margin-top: 4px;">
-                  <small class="text-success">
-                    <i class="fa-solid fa-star"></i>
-                    {{ product.source_category_id }}{% if product.source_category_name %} - {{ product.source_category_name }}{% endif %}
-                    <span class="badge bg-success ms-1">{{ product.source_percent }}%</span>
-                  </small>
+                {% else %}
+                  <div style="border: 2px solid #ffc107; padding: 8px; border-radius: 4px; background-color: #fff3cd;">
+                    <div style="line-height: 1.4;">
+                      <div class="text-warning fw-bold mb-2" style="font-size: 11px;">
+                        <i class="fa-solid fa-exclamation-circle"></i> {{ text_category_values_differ }}
+                      </div>
+                      <small class="text-muted d-block">
+                        {{ text_local }}: {{ product.local_category_id ?? 'N/A' }}
+                        {% if product.local_category_name %} - {{ product.local_category_name }}{% endif %}
+                      </small>
+                      <small class="text-muted d-block">
+                        {{ text_ebay }}: {{ product.ebay_category_id ?? 'N/A' }}
+                        {% if product.ebay_category_name %} - {{ product.ebay_category_name }}{% endif %}
+                      </small>
+                    </div>
+                  </div>
+                {% endif %}
+                <div style="margin-top: 4px;">
+                  <span style="background-color: #dc3545; color: #fff; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold;">
+                    <i class="fa-solid fa-circle-xmark"></i> No source
+                  </span>
                 </div>
               {% endif %}
             </td>
