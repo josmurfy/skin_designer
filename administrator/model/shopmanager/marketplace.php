@@ -671,7 +671,14 @@ public function editQuantityToMarketplace($product_id,$marketplace_account_id = 
 	$marketplace_accounts[$marketplace_account_id] =$product['marketplace_accounts_id'][$marketplace_account_id];
 	
 	$result = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id,$total_quantity,$made_in_country_id,$product_id,$marketplace_account_id,$site_setting);
-	//print("<pre>" . print_r($result, true) . "</pre>");
+
+	// Mettre à jour quantity_listed en DB si eBay confirme le succès
+	if (isset($result['Ack']) && ($result['Ack'] === 'Success' || $result['Ack'] === 'Warning')) {
+		$this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
+						  SET quantity_listed = " . (int)$total_quantity . ", last_sync = NOW() 
+						  WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_account_id);
+	}
+
 	return $result;
 }
 public function editToMarketplace($product_id, $marketplace_account_id=null) {
@@ -1247,7 +1254,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	 * @param array $product_info
 	 * @return void
 	 */
-	public function updateMarketplaceListings(int $product_id, array $product_info): void {
+	public function updateMarketplaceListings(int $product_id): void {
 		try {
 			// Get all active marketplace listings with account settings
 			$query = $this->db->query("
