@@ -2368,7 +2368,7 @@ class Product extends \Opencart\System\Engine\Controller {
 				
 				// Update eBay listings if product has marketplace items
 				$this->load->model('shopmanager/marketplace');
-				$this->model_shopmanager_marketplace->updateMarketplaceListings($post_info['product_id'], $post_info);
+				$this->model_shopmanager_marketplace->updateMarketplaceListings($post_info['product_id']);
 			}
 
 			$json['success'] = ($lang['text_success'] ?? '');

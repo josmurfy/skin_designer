@@ -334,7 +334,8 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
                        . '</td></tr>';
             }
 
-            $rowClass = $missingCardNr ? 'table-danger' : '';
+            $isFuzzy  = ((string)($row['match_fuzzy'] ?? '0') === '1');
+            $rowClass = $missingCardNr ? 'table-danger' : ($isFuzzy ? 'table-warning' : '');
             $idx      = (int)($row['_index'] ?? 0);
 
             $html .= '<tr class="' . $rowClass . '" data-index="' . $idx . '">';
@@ -354,9 +355,37 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             }
 
             // Col 4 — Card identity (title, player, + meta badges)
+            $ebayTitle = trim((string)($row['ebay_title'] ?? ''));
             $html .= '<td style="white-space:normal;">';
             $html .= '<div class="cell-title" style="font-size:12px;font-weight:600;line-height:1.3;">' . htmlspecialchars((string)($row['title'] ?? '')) . '</div>';
             $html .= '<div class="cell-player" style="font-size:11px;color:#555;margin-top:1px;">' . htmlspecialchars((string)($row['player'] ?? '')) . '</div>';
+            if ($ebayTitle !== '') {
+                // Bold player and card_number occurrences inside ebay_title for visual verification
+                $highlightTerms = array_values(array_filter([
+                    trim((string)($row['player']      ?? '')),
+                    trim((string)($row['card_number'] ?? '')),
+                ], fn(string $t): bool => $t !== ''));
+
+                if (!empty($highlightTerms)) {
+                    $quotedTerms = array_map(fn(string $t): string => preg_quote($t, '/'), $highlightTerms);
+                    $parts = preg_split('/(' . implode('|', $quotedTerms) . ')/i', $ebayTitle, -1, PREG_SPLIT_DELIM_CAPTURE);
+                    $matchPattern = '/^(' . implode('|', $quotedTerms) . ')$/i';
+                    $ebayTitleHtml = '';
+                    foreach ($parts as $part) {
+                        $ebayTitleHtml .= preg_match($matchPattern, $part)
+                            ? '<strong style="color:#198754;font-style:normal;">' . htmlspecialchars($part) . '</strong>'
+                            : htmlspecialchars($part);
+                    }
+                } else {
+                    $ebayTitleHtml = htmlspecialchars($ebayTitle);
+                }
+                $html .= '<div style="font-size:10px;color:#888;font-style:italic;margin-top:3px;border-left:2px solid #dee2e6;padding-left:5px;line-height:1.3;" title="eBay title (vérification seulement)">🏷 ' . $ebayTitleHtml . '</div>';
+            }
+            if ($isFuzzy) {
+                $html .= '<div style="margin-top:5px;padding:4px 7px;background:#fff3cd;border:1px solid #ffc107;border-radius:4px;font-size:10px;color:#856404;line-height:1.4;">';
+                $html .= '<span style="font-weight:700;">⚠ Correspondance approx.</span> — Vérifier que cette vente correspond bien à la carte avant d\'importer.';
+                $html .= '</div>';
+            }
             $html .= '<div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:3px;">';
             $year    = (string)($row['year']     ?? ''); if ($year    !== '') $html .= '<span class="badge bg-secondary" style="font-size:10px;">' . htmlspecialchars($year)    . '</span>';
             $brand   = (string)($row['brand']    ?? ''); if ($brand   !== '') $html .= '<span class="badge bg-secondary" style="font-size:10px;">' . htmlspecialchars($brand)   . '</span>';

@@ -13,7 +13,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
 
         $this->db->query("
             CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "card_price_sold` (
-                `sold_id`       INT(11)        NOT NULL AUTO_INCREMENT,
+                `card_price_sold_id` INT(11)        NOT NULL AUTO_INCREMENT,
                 `title`         VARCHAR(255)   NOT NULL DEFAULT '',
                 `category`      VARCHAR(100)   NOT NULL DEFAULT '',
                 `year`          VARCHAR(20)    NOT NULL DEFAULT '',
@@ -37,7 +37,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
                 `status`        TINYINT(1)     NOT NULL DEFAULT 1,
                 `date_sold`     DATE           DEFAULT NULL,
                 `date_added`    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (`sold_id`),
+                PRIMARY KEY (`card_price_sold_id`),
                 KEY `idx_card_number`  (`card_number`),
                 KEY `idx_player`       (`player`(100)),
                 KEY `idx_year_brand`   (`year`, `brand`),
@@ -56,11 +56,11 @@ class CardImportSold extends \Opencart\System\Engine\Model {
         if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
 
         $valid_sorts = [
-            'sold_id','title','category','year','brand','set_name',
+            'card_price_sold_id','title','category','year','brand','set_name',
             'player','card_number','price','date_sold','date_added','grader','grade'
         ];
         $sort  = (isset($data['sort']) && in_array($data['sort'], $valid_sorts))
-                  ? $data['sort'] : 'sold_id';
+                  ? $data['sort'] : 'card_price_sold_id';
         $order = (isset($data['order']) && strtoupper($data['order']) === 'ASC')
                   ? 'ASC' : 'DESC';
         $sql  .= ' ORDER BY ' . $sort . ' ' . $order;
@@ -136,7 +136,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
         $this->ensureTable();
         $ids = array_map('intval', $ids);
         $this->db->query(
-            'DELETE FROM ' . DB_PREFIX . 'card_price_sold WHERE sold_id IN (' . implode(',', $ids) . ')'
+            'DELETE FROM ' . DB_PREFIX . 'card_price_sold WHERE card_price_sold_id IN (' . implode(',', $ids) . ')'
         );
     }
 
@@ -177,6 +177,43 @@ class CardImportSold extends \Opencart\System\Engine\Model {
 
         $rows = $this->db->query($sql)->rows;
         return array_column($rows, 'val');
+    }
+
+    /**
+     * Fetch all sold records from oc_card_price_sold matching a list of
+     * (card_number + set_name) pairs.  Returns a map keyed by
+     * "card_number|||set_name" => [ rows... ] for O(1) lookup by the caller.
+     *
+     * @param  array $cards  Each element must have keys 'card_number' and 'set_name' (or 'set').
+     * @return array<string, array[]>
+     */
+    public function getSoldBilanForCards(array $cards): array {
+        if (empty($cards)) return [];
+        $this->ensureTable();
+
+        $conditions = [];
+        foreach ($cards as $card) {
+            $cn = $this->db->escape(trim((string)($card['card_number'] ?? '')));
+            $sn = $this->db->escape(trim((string)($card['set_name'] ?? $card['set'] ?? '')));
+            if ($cn === '' && $sn === '') continue;
+            $parts = [];
+            if ($cn !== '') $parts[] = "card_number = '$cn'";
+            if ($sn !== '') $parts[] = "set_name    = '$sn'";
+            $conditions[] = '(' . implode(' AND ', $parts) . ')';
+        }
+
+        if (empty($conditions)) return [];
+
+        $sql = 'SELECT * FROM ' . DB_PREFIX . 'card_price_sold'
+             . ' WHERE status = 1 AND (' . implode(' OR ', array_unique($conditions)) . ')'
+             . ' ORDER BY date_sold DESC';
+
+        $bilan = [];
+        foreach ($this->db->query($sql)->rows as $row) {
+            $key = $row['card_number'] . '|||' . $row['set_name'];
+            $bilan[$key][] = $row;
+        }
+        return $bilan;
     }
 
     // ─── Private helpers ─────────────────────────────────────────────────────

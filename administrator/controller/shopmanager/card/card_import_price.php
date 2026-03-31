@@ -150,8 +150,11 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             'sort' => $sort, 'order' => $order, 'start' => $start, 'limit' => $limit
         ]);
         $data['cards'] = $this->model_shopmanager_card_card_import_price->getCardPrices($query_params);
+        $soldBilanMap = $this->getSoldBilanMap($data['cards']);
         foreach ($data['cards'] as &$card) {
-            $card['ebay_sales_rendered'] = $this->renderEbaySalesColumnHtml($card['ebay_sales'] ?? '');
+            $bilanKey = ($card['card_number'] ?? '') . '|||' . ($card['set_name'] ?? '');
+            $card['has_sold']          = !empty($soldBilanMap[$bilanKey]);
+            $card['ebay_sales_rendered'] = $this->renderSoldBilanHtml($soldBilanMap[$bilanKey] ?? []);
         }
         unset($card);
         $data['total'] = $this->model_shopmanager_card_card_import_price->getTotalCardPrices($filters);
@@ -921,6 +924,9 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
         $html .= '<th style="width:36px;"></th>';
         $html .= '</tr></thead><tbody>';
 
+        // Load sold bilan from oc_card_price_sold (one batch query)
+        $soldBilanMap = $this->getSoldBilanMap($cards);
+
         $n = 1;
         foreach ($cards as $card) {
             $ungraded  = (float)($card['ungraded'] ?? 0);
@@ -951,7 +957,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             // ── Col 3: image ──────────────────────────────────────────────────
             $img = htmlspecialchars($card['front_image'] ?? '');
             if ($img) {
-                $html .= '<td><img src="' . $img . '" class="preview-thumb-img" data-fullsrc="' . $img . '" style="max-height:70px;max-width:70px;cursor:zoom-in;" onerror="this.style.display:\'none\'"></td>';
+                $html .= '<td><img src="' . $img . '" class="preview-thumb-img" data-fullsrc="' . $img . '" style="max-height:70px;max-width:70px;cursor:zoom-in;" onerror="this.style.display=\'none\'"></td>';
             } else {
                 $html .= '<td class="text-muted text-center">—</td>';
             }
@@ -1045,8 +1051,9 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $html .= '</div>';
             $html .= '</td>';
 
-            // ── Col 7: eBay Sales ─────────────────────────────────────────────
-            $html .= '<td>' . $this->renderEbaySalesColumnHtml($card['ebay_sales'] ?? '') . '</td>';
+            // ── Col 7: eBay Sales (from oc_card_price_sold) ──────────────────
+            $bilanKey = ($card['card_number'] ?? '') . '|||' . ($card['set_name'] ?? $card['set'] ?? '');
+            $html .= '<td>' . $this->renderSoldBilanHtml($soldBilanMap[$bilanKey] ?? []) . '</td>';
 
             // ── Col 8: delete ─────────────────────────────────────────────────
             $html .= '<td><button type="button" class="btn btn-sm btn-outline-danger btn-preview-delete" title="Remove row"><i class="fa-solid fa-xmark"></i></button></td>';
@@ -1132,6 +1139,227 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $html .= '<div style="font-size:11px;color:#666;line-height:1.1;">' . (int)$bidCount . ' ' . htmlspecialchars($label) . '</div>';
         }
 
+        return $html;
+    }
+
+    /**
+     * Load sold bilan map from oc_card_price_sold for an array of cards.
+     * Returns array keyed "card_number|||set_name" => [rows...].
+     */
+    private function getSoldBilanMap(array $cards): array {
+        $this->load->model('shopmanager/card/card_import_sold');
+        return $this->model_shopmanager_card_card_import_sold->getSoldBilanForCards($cards);
+    }
+
+    /**
+     * Render the sold bilan for the "eBay Sales" column from oc_card_price_sold rows.
+     * Distinguishes AUC/BIN and graded/ungraded.
+     * Shows grading recommendation if a grade 7+ entry exists.
+     */
+    private function renderSoldBilanHtml(array $soldRows): string {
+        if (empty($soldRows)) {
+            return '<span class="text-muted" style="font-size:11px;">—</span>';
+        }
+
+        $bin_raw  = [];  // BIN ungraded
+        $auc_raw  = [];  // AUC ungraded
+        $graded   = [];  // graded, keyed by "Grader Grade" label (grade asc)
+
+        foreach ($soldRows as $row) {
+            $currency = strtoupper(trim((string)($row['currency'] ?? 'CAD')));
+            $priceRaw = (float)($row['price'] ?? 0);
+            $priceCad = ($currency !== 'CAD')
+                ? round((float)$this->currency->convert($priceRaw, $currency, 'CAD'), 2)
+                : $priceRaw;
+
+            $grader   = trim((string)($row['grader'] ?? ''));
+            $gradeRaw = trim((string)($row['grade']  ?? ''));
+            $gradeNum = ($gradeRaw !== '') ? (float)$gradeRaw : 0.0;
+            $isGraded = ($grader !== '' || $gradeNum > 0);
+            $typeRaw  = strtoupper(trim((string)($row['type_listing'] ?? '')));
+            $isAuc    = ($typeRaw === 'AUCTION' || $typeRaw === 'AUC');
+            $dateSold = trim((string)($row['date_sold'] ?? ''));
+            $bids     = (int)($row['bids'] ?? 0);
+
+            $entry = [
+                'price'     => $priceCad,
+                'date'      => ($dateSold !== '' && $dateSold !== '0000-00-00') ? substr($dateSold, 0, 7) : '',
+                'date_raw'  => $dateSold,
+                'bids'      => $bids,
+                'grade_num' => $gradeNum,
+                'eid'       => trim((string)($row['ebay_item_id'] ?? '')),
+            ];
+
+            if ($isGraded) {
+                // key = "Grader Grade" or just "Grade", e.g. "PSA 9", "BGS 8", "9"
+                $gkey = trim(($grader !== '' ? $grader . ' ' : '') . $gradeRaw);
+                if ($isAuc) {
+                    $graded[$gkey]['auc'][] = $entry;
+                } else {
+                    $graded[$gkey]['bin'][] = $entry;
+                }
+                $graded[$gkey]['grade_num'] = $gradeNum; // for sorting
+            } elseif ($isAuc) {
+                $auc_raw[] = $entry;
+            } else {
+                $bin_raw[] = $entry;
+            }
+        }
+
+        // Sort graded groups by grade_num ascending
+        uasort($graded, fn(array $a, array $b): int => $a['grade_num'] <=> $b['grade_num']);
+
+        // ── Helper: compute stats (low+date, median, high+date, avg_bids, most recent) ──
+        $computeStats = function(array $entries): ?array {
+            if (empty($entries)) return null;
+            usort($entries, fn(array $a, array $b): int => $a['price'] <=> $b['price']);
+            $n      = count($entries);
+            $low    = $entries[0];
+            $high   = $entries[$n - 1];
+            $midIdx = (int)floor(($n - 1) / 2);
+            $median = ($n % 2 === 0)
+                ? round(($entries[$midIdx]['price'] + $entries[$midIdx + 1]['price']) / 2, 2)
+                : $entries[$midIdx]['price'];
+            $totalBids = array_sum(array_column($entries, 'bids'));
+            $avgBids   = $n > 0 ? round($totalBids / $n, 1) : 0;
+            // Most recent by date_raw (lexicographic DESC)
+            $withDate = array_filter($entries, fn(array $e): bool => ($e['date_raw'] ?? '') !== '' && ($e['date_raw'] ?? '') !== '0000-00-00');
+            $recent = null;
+            if (!empty($withDate)) {
+                usort($withDate, fn(array $a, array $b): int => strcmp($b['date_raw'] ?? '', $a['date_raw'] ?? ''));
+                $recent = array_values($withDate)[0];
+            }
+            return [
+                'low'        => $low['price'],
+                'low_d'      => $low['date'],
+                'median'     => $median,
+                'high'       => $high['price'],
+                'high_d'     => $high['date'],
+                'count'      => $n,
+                'avg_bids'   => $avgBids,
+                'recent_d'   => $recent ? substr($recent['date_raw'], 0, 7) : '',
+                'recent_eid' => $recent ? ($recent['eid'] ?? '') : '',
+            ];
+        };
+
+        // ── Helper: render one summary row ──
+        $statsRow = function(string $badge, ?array $stats, bool $showBids = false): string {
+            if ($stats === null) return '';
+            $fmt    = fn(float $v): string => '$' . number_format($v, 2);
+            $dateFn = fn(string $d): string => $d !== ''
+                ? '<span style="font-size:9px;color:#aaa;">(' . htmlspecialchars($d) . ')</span>' : '';
+            $bidsCell = $showBids && $stats['avg_bids'] > 0
+                ? '<td style="padding:1px 3px;color:#888;font-size:9px;">~' . number_format($stats['avg_bids'], 1) . ' bid' . ($stats['avg_bids'] != 1 ? 's' : '') . '</td>'
+                : '<td></td>';
+            $recentEid = $stats['recent_eid'] ?? '';
+            $recentD   = $stats['recent_d']   ?? '';
+            if ($recentEid !== '') {
+                $recentCell = '<td style="padding:1px 3px;white-space:nowrap;">'
+                    . '<span style="font-size:9px;color:#888;">' . htmlspecialchars($recentD) . '</span> '
+                    . '<a href="https://www.ebay.ca/itm/' . htmlspecialchars($recentEid) . '" target="ebay_sold" style="font-size:10px;color:#0d6efd;text-decoration:none;" title="' . htmlspecialchars($recentEid) . '">🔗</a>'
+                    . '</td>';
+            } else {
+                $recentCell = '<td style="padding:1px 3px;font-size:9px;color:#888;">' . htmlspecialchars($recentD) . '</td>';
+            }
+            return '<tr>'
+                 . '<td style="white-space:nowrap;padding:1px 4px 1px 0;">' . $badge . '</td>'
+                 . '<td style="white-space:nowrap;padding:1px 3px;font-size:10px;">'
+                 .   '<span style="color:#dc3545;font-weight:600;">' . $fmt($stats['low']) . '</span> ' . $dateFn($stats['low_d'])
+                 . '</td>'
+                 . '<td style="white-space:nowrap;padding:1px 3px;color:#0d6efd;font-weight:600;font-size:10px;">' . $fmt($stats['median']) . '</td>'
+                 . '<td style="white-space:nowrap;padding:1px 3px;font-size:10px;">'
+                 .   '<span style="color:#198754;font-weight:600;">' . $fmt($stats['high']) . '</span> ' . $dateFn($stats['high_d'])
+                 . '</td>'
+                 . '<td style="padding:1px 3px;color:#888;font-size:9px;">n=' . $stats['count'] . '</td>'
+                 . $bidsCell
+                 . $recentCell
+                 . '</tr>';
+        };
+
+        $BIN_badge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#0d6efd;padding:1px 4px;border-radius:3px;">BIN</span>';
+        $AUC_badge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#212529;padding:1px 4px;border-radius:3px;">AUC</span>';
+
+        $statsBin = $computeStats($bin_raw);
+        $statsAuc = $computeStats($auc_raw);
+
+        // Graded: BIN + AUC stats per grade group
+        $gradedStats = [];
+        foreach ($graded as $glabel => $gdata) {
+            $gradedStats[$glabel] = [
+                'bin' => $computeStats($gdata['bin'] ?? []),
+                'auc' => $computeStats($gdata['auc'] ?? []),
+            ];
+        }
+
+        $hasAny = $statsBin !== null || $statsAuc !== null || !empty($gradedStats);
+        $html   = '<div style="min-width:200px;font-size:11px;">';
+
+        if ($hasAny) {
+            $html .= '<table style="border-collapse:collapse;width:100%;"><thead><tr>'
+                   . '<th style="padding:0 4px 2px 0;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Low</th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Med</th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">High</th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Récent</th>'
+                   . '</tr></thead><tbody>';
+
+            $html .= $statsRow($BIN_badge, $statsBin,  false);
+            $html .= $statsRow($AUC_badge, $statsAuc,  true);
+
+            // Per grade: BIN row then AUC row
+            foreach ($gradedStats as $glabel => $gs) {
+                $glabelHtml = htmlspecialchars($glabel);
+                $gBinBadge  = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">' . $glabelHtml . '</span>'
+                            . '&#8201;<span style="font-size:9px;font-weight:700;color:#fff;background:#0d6efd;padding:1px 4px;border-radius:3px;">BIN</span>';
+                $gAucBadge  = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">' . $glabelHtml . '</span>'
+                            . '&#8201;<span style="font-size:9px;font-weight:700;color:#fff;background:#212529;padding:1px 4px;border-radius:3px;">AUC</span>';
+                $html .= $statsRow($gBinBadge, $gs['bin'], false);
+                $html .= $statsRow($gAucBadge, $gs['auc'], true);
+            }
+
+            $html .= '</tbody></table>';
+        }
+
+        // ── Grading bilan (vaut la peine?) ──
+        $allGradedParts = [];
+        foreach ($graded as $gdata) {
+            if (!empty($gdata['bin'])) $allGradedParts[] = $gdata['bin'];
+            if (!empty($gdata['auc'])) $allGradedParts[] = $gdata['auc'];
+        }
+        $allGraded = !empty($allGradedParts) ? array_merge(...$allGradedParts) : [];
+        if (!empty($allGraded)) {
+            $GRADING_COST   = 55.0;
+            $EBAY_FEE       = 0.13;
+            $MIN_NET_PROFIT = 20.0;
+
+            $above7 = array_values(array_filter($allGraded, fn(array $e): bool => $e['grade_num'] >= 7.0));
+
+            if (!empty($above7)) {
+                usort($above7, fn(array $a, array $b): int => $a['price'] <=> $b['price']);
+                $min7       = $above7[0]['price'];
+                $netProceed = $min7 * (1 - $EBAY_FEE) - $GRADING_COST;
+                $worthIt    = ($netProceed > $MIN_NET_PROFIT);
+
+                if ($worthIt) {
+                    $html .= '<div style="margin-top:4px;background:#d1e7dd;border-radius:4px;padding:3px 6px;">'
+                           . '<div style="font-size:10px;font-weight:700;color:#0a3622;">✅ Vaut la peine</div>'
+                           . '<div style="font-size:9px;color:#0a3622;">Low grade 7+ : $' . number_format($min7, 2)
+                           . ' → net $' . number_format($netProceed, 2) . ' CAD</div>'
+                           . '</div>';
+                } else {
+                    $html .= '<div style="margin-top:4px;background:#f8d7da;border-radius:4px;padding:3px 6px;">'
+                           . '<div style="font-size:10px;font-weight:700;color:#842029;">❌ Pas rentable</div>'
+                           . '<div style="font-size:9px;color:#842029;">Low grade 7+ : $' . number_format($min7, 2)
+                           . ' → net $' . number_format($netProceed, 2)
+                           . ' ≤ $' . number_format($MIN_NET_PROFIT, 0) . '</div>'
+                           . '</div>';
+                }
+            }
+        }
+
+        $html .= '</div>';
         return $html;
     }
 

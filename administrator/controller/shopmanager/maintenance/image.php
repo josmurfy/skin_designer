@@ -975,7 +975,7 @@ class Image extends \Opencart\System\Engine\Controller {
      * Also resets ebay_image_count = 0 to force re-fetch on next eBay import.
      * Used for the per-row "Import" button in the Image Mismatch tab.
      */
-    public function importEbayImagesForProductAjax(): void {
+    public function syncImagesForProductWitheBay(): void {
         $lang = $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
@@ -1023,6 +1023,7 @@ class Image extends \Opencart\System\Engine\Controller {
         } else {
             // eBay a plus (ou égal) → importer les images eBay dans OC
             $result = $this->importEbayImagesForProduct($product_id, $lang);
+            $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
             $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
             if (!empty($result['success'])) {
                 $this->model_shopmanager_marketplace->resetSyncState($product_id);

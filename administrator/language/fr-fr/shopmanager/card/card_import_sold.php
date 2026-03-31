@@ -33,7 +33,7 @@ $_['text_truncate_confirm']  = 'AVERTISSEMENT: Ceci supprimera TOUS les prix ven
 $_['text_delete_confirm']    = 'Supprimer les enregistrements sélectionnés?';
 
 // Column headers
-$_['column_sold_id']         = 'ID';
+$_['column_card_price_sold_id'] = 'ID';
 $_['column_title']           = 'Titre';
 $_['column_category']        = 'Catégorie';
 $_['column_year']            = 'Année';

@@ -33,7 +33,7 @@ $_['text_truncate_confirm']  = 'ADVERTENCIA: Esto eliminará TODOS los registros
 $_['text_delete_confirm']    = '¿Eliminar los registros seleccionados?';
 
 // Column headers
-$_['column_sold_id']         = 'ID';
+$_['column_card_price_sold_id'] = 'ID';
 $_['column_title']           = 'Título';
 $_['column_category']        = 'Categoría';
 $_['column_year']            = 'Año';

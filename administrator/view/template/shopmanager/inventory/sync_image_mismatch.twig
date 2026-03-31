@@ -19,12 +19,6 @@
   </div>
   <div class="d-flex gap-2">
     {% if image_mismatch_total > 0 %}
-    <button class="btn btn-sm btn-warning" id="btn-bulk-fix-images"
-            data-bs-toggle="tooltip" title="{{ text_bulk_fix_tooltip }}">
-      <i class="fa-solid fa-images me-1"></i>{{ button_bulk_fix_images }}
-      <span class="badge bg-dark ms-1">{{ image_mismatch_total }}</span>
-    </button>
-    {% endif %}
     <button class="btn btn-sm btn-success d-none" id="btn-fix-selected-images">
       <i class="fa-solid fa-check-double me-1"></i>Fix Selected
       <span class="badge bg-dark ms-1" id="fix-selected-count">0</span>
@@ -32,6 +26,8 @@
     <button class="btn btn-sm btn-secondary refresh-image-mismatch">
       <i class="fa-solid fa-rotate-right"></i> {{ button_refresh }}
     </button>
+    {% endif %}
+   
   </div>
 </div>
 
@@ -393,7 +389,7 @@
 (function() {
 
   var URL_BULK_FIX      = 'index.php?route=shopmanager/maintenance/image.bulkImportMismatchImages&user_token={{ user_token }}';
-  var URL_FIX_SINGLE    = 'index.php?route=shopmanager/maintenance/image.importEbayImagesForProductAjax&user_token={{ user_token }}';
+  var URL_FIX_SINGLE    = 'index.php?route=shopmanager/maintenance/image.syncImagesForProductWitheBay&user_token={{ user_token }}';
   var URL_IMAGES_FULL = 'index.php?route=shopmanager/inventory/sync.getProductImagesFull&user_token={{ user_token }}';
   var URL_REMOVE_OC   = 'index.php?route=shopmanager/inventory/sync.removeOcImage&user_token={{ user_token }}';
   var URL_SET_PRIMARY = 'index.php?route=shopmanager/inventory/sync.setOcImagePrimary&user_token={{ user_token }}';
@@ -513,58 +509,7 @@
     processNext();
   });
 
-  // ─── eBay Bulk Fix ────────────────────────────────────────────────────────
-  $(document).off('click.bulkFixImages', '#btn-bulk-fix-images')
-             .on('click.bulkFixImages', '#btn-bulk-fix-images', function() {
-    if (!confirm(TEXT_CONFIRM_BULK_FIX)) return;
-
-    $('#bulk-fix-progress-area').show();
-    $('#bulk-fix-results-area').hide();
-    $('#bulk-fix-modal-footer').hide();
-    $('#bulk-fix-error-details').hide();
-    $('#bulk-fix-error-list').html('');
-    var $modal = new bootstrap.Modal(document.getElementById('bulk-fix-images-modal'));
-    $modal.show();
-
-    $.ajax({
-      url: URL_BULK_FIX,
-      type: 'POST',
-      dataType: 'json',
-      success: function(json) {
-        $('#bulk-fix-progress-area').hide();
-        $('#bulk-fix-results-area').show();
-        $('#bulk-fix-modal-footer').show();
-
-        if (json.error) {
-          $('#bulk-fix-results-area').html('<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>' + json.error + '</div>');
-          return;
-        }
-
-        $('#bulk-fix-count-success').text(json.success_count || 0);
-        $('#bulk-fix-count-skipped').text(json.skipped_count || 0);
-        $('#bulk-fix-count-errors').text(json.error_count || 0);
-
-        if (json.error_count > 0 && json.results) {
-          var errorHtml = '';
-          $.each(json.results, function(i, r) {
-            if (!r.success && !r.skipped) {
-              errorHtml += '<li>#' + r.product_id + ' — ' + (r.message || 'Unknown error') + '</li>';
-            }
-          });
-          if (errorHtml) {
-            $('#bulk-fix-error-list').html(errorHtml);
-            $('#bulk-fix-error-details').show();
-          }
-        }
-      },
-      error: function(xhr) {
-        $('#bulk-fix-progress-area').hide();
-        $('#bulk-fix-results-area').show();
-        $('#bulk-fix-modal-footer').show();
-        $('#bulk-fix-results-area').html('<div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation me-1"></i>AJAX error: ' + xhr.statusText + '</div>');
-      }
-    });
-  });
+  
 
   // ─── eBay Fix Single ──────────────────────────────────────────────────────
   $(document).off('click.fixSingleImage', '.btn-fix-single-image')

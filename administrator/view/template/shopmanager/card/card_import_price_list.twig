@@ -110,7 +110,11 @@
           {% else %}{% set row_class = '' %}{% endif %}
           {% set keyword = card.title ?: ((card.set_name ?: '') ~ ' ' ~ (card.player ?: '') ~ ' #' ~ (card.card_number ?: '')) %}
           {% set sold_graded_manual = 'https://www.ebay.ca/sch/i.html?_nkw=' ~ keyword|url_encode ~ '&_sacat=261328&LH_Sold=1&Graded=Yes&_sop=3&_udlo=35' %}
+          {% if card.has_sold %}
+          <tr class="{{ row_class }}" style="background:#b8860b !important;color:#fff !important;" data-card-raw-id="{{ card.card_raw_id }}" data-market-keyword="{{ keyword|e('html_attr') }}">
+          {% else %}
           <tr class="{{ row_class }}" data-card-raw-id="{{ card.card_raw_id }}" data-market-keyword="{{ keyword|e('html_attr') }}">
+          {% endif %}
             <td class="text-center"><input type="checkbox" name="selected[]" value="{{ card.card_raw_id }}" /></td>
             <td class="text-center">{{ card.card_raw_id }}</td>
             <td class="text-start">{{ card.title }}</td>

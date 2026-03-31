@@ -33,7 +33,7 @@ $_['text_truncate_confirm']  = 'WARNING: This will delete ALL sold price records
 $_['text_delete_confirm']    = 'Delete selected records?';
 
 // Column headers
-$_['column_sold_id']         = 'ID';
+$_['column_card_price_sold_id'] = 'ID';
 $_['column_title']           = 'Title';
 $_['column_category']        = 'Category';
 $_['column_year']            = 'Year';

@@ -3171,7 +3171,7 @@ function uploadEbayImages() {
     
     // Send request to controller
     $.ajax({
-        url: 'index.php?route=shopmanager/maintenance/image.importEbayImagesForProductAjax&user_token=' + user_token,
+        url: 'index.php?route=shopmanager/maintenance/image.syncImagesForProductWitheBay&user_token=' + user_token,
         type: 'post',
         data: formData,
         contentType: false,

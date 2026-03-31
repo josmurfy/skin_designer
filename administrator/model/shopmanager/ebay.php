@@ -3600,14 +3600,6 @@ private function initializePriceVariants($category_id, $site_setting = []) {
         } 
         
         $headers = $this->getBrowseHeaders($marketplace_account_id, $siteId);
-        $loggedHeaders = $headers;
-        foreach ($loggedHeaders as &$loggedHeader) {
-            if (stripos($loggedHeader, 'Authorization: Bearer ') === 0) {
-                $token = substr($loggedHeader, strlen('Authorization: Bearer '));
-                $loggedHeader = 'Authorization: Bearer ' . substr($token, 0, 12) . '...';
-            }
-        }
-        unset($loggedHeader);
 
         $queryParams = [
             'q'            => $keyword,
@@ -3642,35 +3634,31 @@ private function initializePriceVariants($category_id, $site_setting = []) {
 
         $ebayLogFile = '/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log';
         $ts = '[' . date('Y-m-d H:i:s') . ']';
-        file_put_contents($ebayLogFile, "$ts [searchPresentItems] keyword=\"$keyword\" url=$url\n", FILE_APPEND | LOCK_EX);
-        file_put_contents($ebayLogFile, "$ts [searchPresentItems] headers=" . json_encode($loggedHeaders) . "\n", FILE_APPEND | LOCK_EX);
 
         $response = $this->makeCurlRequest($url, $headers);
         if (!$response) {
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] ERROR: empty response\n", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchPresentItems] ERROR: empty response. keyword=\"$keyword\"", FILE_APPEND | LOCK_EX);
             return ['items' => [], 'total' => 0, 'keyword' => $keyword, 'error' => 'Empty response from Browse API', 'auto_corrections' => [], 'warnings' => []];
         }
 
         $data = json_decode($response, true);
         if (!is_array($data)) {
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] ERROR: invalid JSON. raw=" . substr($response, 0, 500) . "\n", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchPresentItems] ERROR: invalid JSON. keyword=\"$keyword\" raw=" . substr($response, 0, 500) . "", FILE_APPEND | LOCK_EX);
             return ['items' => [], 'total' => 0, 'keyword' => $keyword, 'error' => 'Invalid JSON from Browse API', 'auto_corrections' => [], 'warnings' => []];
         }
-        file_put_contents($ebayLogFile, "$ts [searchPresentItems] response total=" . (int)($data['total'] ?? 0) . " items=" . count($data['itemSummaries'] ?? []) . "\n", FILE_APPEND | LOCK_EX);
         if (isset($data['errors'])) {
             $msg = $data['errors'][0]['longMessage'] ?? $data['errors'][0]['message'] ?? json_encode($data['errors'][0]);
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] API error: $msg\n", FILE_APPEND | LOCK_EX);
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] full error response=" . json_encode($data['errors']) . "\n", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchPresentItems] API error: $msg. keyword=\"$keyword\"", FILE_APPEND | LOCK_EX);
             return ['items' => [], 'total' => 0, 'keyword' => $keyword, 'error' => $msg, 'auto_corrections' => $data['autoCorrections'] ?? [], 'warnings' => $data['warnings'] ?? []];
         }
 
         $rawItems = $data['itemSummaries'] ?? [];
         $parsedItems = $this->parseBrowseSummaryItems($rawItems, false, $options);
-
-        file_put_contents($ebayLogFile, "$ts [searchPresentItems] parsed " . count($parsedItems) . " items from " . count($rawItems) . " raw\n", FILE_APPEND | LOCK_EX);
         if (!empty($rawItems) && empty($parsedItems)) {
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] WARNING: parsed 0 from non-empty raw. First raw item=" . json_encode($rawItems[0] ?? []) . "\n", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchPresentItems] WARNING: parsed 0 from non-empty raw. keyword=\"$keyword\" First raw item=" . json_encode($rawItems[0] ?? []) . "", FILE_APPEND | LOCK_EX);
         }
+
+
 
         return [
             'items' => $parsedItems,
