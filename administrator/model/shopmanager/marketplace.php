@@ -1222,6 +1222,20 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
+	 * Reset sync state — force le produit à apparaître dans l'onglet "not synced"
+	 * Appelé après n'importe quel fix (image, qty, prix, catégorie, condition, specifics)
+	 * afin qu'il soit re-scanné par le prochain importMarketplace.
+	 */
+	public function resetSyncState(int $product_id, int $marketplace_id = 1): void {
+		$this->db->query("
+			UPDATE " . DB_PREFIX . "product_marketplace 
+			SET last_sync = NULL, last_import = NULL
+			WHERE product_id = " . (int)$product_id . "
+			AND marketplace_id = " . (int)$marketplace_id . "
+		");
+	}
+
+	/**
 	 * Update marketplace full refresh data (price, quantity, category, specifics, dates)
 	 */
 	public function updateMarketplaceFullRefresh($product_id, $data) {

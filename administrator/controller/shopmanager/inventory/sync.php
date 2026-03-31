@@ -1059,6 +1059,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
                     $this->model_shopmanager_marketplace->updateMarketplacePrice($product_id, $price);
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
                     $json['success'] = 'Price synced to eBay: $' . number_format($price, 2);
                 } else {
                     $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1079,6 +1080,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncPriceFromEbay(): void {
+        $this->load->model('shopmanager/marketplace');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1093,6 +1095,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 
                 $ebay_price = (float)$marketplace['price'];
                 $this->model_shopmanager_marketplace->updateProductPrice($product_id, $ebay_price);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = 'Local price updated from eBay: $' . number_format($ebay_price, 2);
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -1120,6 +1123,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $response = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id);
 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
                     $json['success'] = 'Quantity synced to eBay';
                 } else {
                     $json['error'] = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1139,6 +1143,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncQuantityFromEbay(): void {
+        $this->load->model('shopmanager/marketplace');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1153,6 +1158,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 
                 $ebay_quantity = (int)$marketplace['quantity_listed'];
                 $this->model_shopmanager_marketplace->updateProductQuantity($product_id, $ebay_quantity);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = 'Local quantity updated from eBay: ' . $ebay_quantity;
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -1200,6 +1206,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
                     $this->model_shopmanager_marketplace->updateMarketplaceSpecifics($product_id, $specifics);
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
                     $json['success'] = 'Specifics synced to eBay';
                 } else {
                     $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1220,6 +1227,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncSpecificsFromEbay(): void {
+        $this->load->model('shopmanager/marketplace');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1234,6 +1242,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 
                 $ebay_specifics = $marketplace['specifics'];
                 $this->model_shopmanager_marketplace->updateProductDescriptionSpecifics($product_id, $ebay_specifics, 1);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = 'Local specifics updated from eBay';
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -2219,6 +2228,9 @@ class Sync extends \Opencart\System\Engine\Controller {
             try {
                 $result = $this->model_shopmanager_inventory_sync->exportCategoryToEbay($product_id);
                 $json = $result;
+                if (!isset($json['error'])) {
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -2268,6 +2280,9 @@ class Sync extends \Opencart\System\Engine\Controller {
             try {
                 $result = $this->model_shopmanager_inventory_sync->importCategoryFromEbay($product_id);
                 $json = $result;
+                if (!isset($json['error'])) {
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }

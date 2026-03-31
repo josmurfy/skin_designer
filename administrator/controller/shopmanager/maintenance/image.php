@@ -1013,9 +1013,10 @@ class Image extends \Opencart\System\Engine\Controller {
 
         if ($oc_count > $ebay_count) {
             // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
-            $product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
-            $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id, $product);
+          
+            $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
             $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+            $this->model_shopmanager_marketplace->resetSyncState($product_id);
             $json = ['success' => true, 'image_count' => $oc_count,
                      'direction' => 'oc_to_ebay',
                      'message' => 'Images OC poussées vers eBay via ReviseItem'];
@@ -1023,6 +1024,9 @@ class Image extends \Opencart\System\Engine\Controller {
             // eBay a plus (ou égal) → importer les images eBay dans OC
             $result = $this->importEbayImagesForProduct($product_id, $lang);
             $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+            if (!empty($result['success'])) {
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+            }
             $json = $result;
             $json['direction'] = 'ebay_to_oc';
         }
