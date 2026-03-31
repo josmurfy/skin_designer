@@ -294,6 +294,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get initial Category Mismatch tab content
      */
     private function getCategoryMismatchContent(): string {
+        $lang = $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
         
         $limit = 20;
@@ -306,7 +307,10 @@ class Sync extends \Opencart\System\Engine\Controller {
         
         $category_mismatch = $this->model_shopmanager_inventory_sync->getCategoryMismatch($filter_data);
         $total = $this->model_shopmanager_inventory_sync->getTotalCategoryMismatch();
-        
+
+        $this->enrichCategoryRowsWithInfoSource($category_mismatch);
+
+        $data  = $lang;
         $data['category_mismatch'] = $category_mismatch;
         $data['category_mismatch_total'] = $total;
         $data['category_mismatch_page'] = 1;
@@ -316,15 +320,61 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['category_mismatch_end'] = min($limit, $total);
         $data['category_mismatch_num_pages'] = ceil($total / $limit);
         $data['category_mismatch_pagination'] = $total > $limit;
-        
         $data['user_token'] = $this->session->data['user_token'];
-        $data['column_product_id'] = ($lang['column_product_id'] ?? '');
-        $data['column_product'] = ($lang['column_product'] ?? '');
-        $data['column_ebay_id'] = ($lang['column_ebay_id'] ?? '');
-        $data['column_location'] = ($lang['column_location'] ?? '');
-        $data['column_actions'] = ($lang['column_actions'] ?? '');
         
         return $this->load->view('shopmanager/inventory/sync_category_mismatch', $data);
+    }
+
+    /**
+     * Enrichit chaque ligne de getCategoryMismatch avec la meilleure catégorie
+     * trouvée dans oc_product_info_sources (champ ebay_category JSON).
+     * Ajoute les clés : source_category_id, source_category_name, source_percent
+     */
+    private function enrichCategoryRowsWithInfoSource(array &$rows): void {
+        if (empty($rows)) return;
+
+        // Collect unique UPCs
+        $upcs = array_filter(array_unique(array_column($rows, 'upc')));
+        if (empty($upcs)) return;
+
+        $escaped = implode('","', array_map([$this->db, 'escape'], $upcs));
+        $query = $this->db->query("
+            SELECT upc, ebay_category
+            FROM " . DB_PREFIX . "product_info_sources
+            WHERE upc IN (\"$escaped\") AND ebay_category IS NOT NULL AND ebay_category != ''
+        ");
+
+        // Build map: upc => {category_id, category_name, percent}
+        $map = [];
+        foreach ($query->rows as $row) {
+            $cats = json_decode($row['ebay_category'] ?? '[]', true);
+            if (!is_array($cats)) continue;
+            $best_id = null; $best_pct = -1; $best_name = '';
+            foreach ($cats as $cat) {
+                $pct = (int)($cat['percent'] ?? 0);
+                if ($pct > $best_pct && !empty($cat['category_id'])) {
+                    $best_pct  = $pct;
+                    $best_id   = (int)$cat['category_id'];
+                    $best_name = $cat['category_name'] ?? '';
+                }
+            }
+            if ($best_id) {
+                $map[$row['upc']] = [
+                    'source_category_id'   => $best_id,
+                    'source_category_name' => $best_name,
+                    'source_percent'       => $best_pct,
+                ];
+            }
+        }
+
+        // Merge into rows
+        foreach ($rows as &$row) {
+            $info = $map[$row['upc'] ?? ''] ?? null;
+            $row['source_category_id']   = $info['source_category_id']   ?? null;
+            $row['source_category_name'] = $info['source_category_name'] ?? null;
+            $row['source_percent']       = $info['source_percent']       ?? null;
+        }
+        unset($row);
     }
 
     /**
@@ -1568,55 +1618,6 @@ class Sync extends \Opencart\System\Engine\Controller {
     }
     
     /**
-     * AJAX method to load Category Mismatch tab with pagination
-     */
-    public function getCategoryMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
-        $this->load->model('shopmanager/inventory/sync');
-        
-        // Pagination parameters
-        $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
-        $limit = 20;
-        $start = ($page - 1) * $limit;
-        
-        // Sorting parameters
-        $sort = isset($this->request->get['sort']) ? $this->request->get['sort'] : 'product_id';
-        $order = isset($this->request->get['order']) ? $this->request->get['order'] : 'ASC';
-        
-        // Get data with pagination
-        $filter_data = [
-            'start' => $start,
-            'limit' => $limit,
-            'sort' => $sort,
-            'order' => $order
-        ];
-        
-        $category_mismatch = $this->model_shopmanager_inventory_sync->getCategoryMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalCategoryMismatch();
-        
-        $data['category_mismatch'] = $category_mismatch;
-        $data['category_mismatch_total'] = $total;
-        $data['category_mismatch_page'] = $page;
-        $data['category_mismatch_sort'] = $sort;
-        $data['category_mismatch_order'] = $order;
-        $data['category_mismatch_start'] = $start + 1;
-        $data['category_mismatch_end'] = min($start + $limit, $total);
-        $data['category_mismatch_num_pages'] = ceil($total / $limit);
-        $data['category_mismatch_pagination'] = $total > $limit;
-        
-        $data['user_token'] = $this->session->data['user_token'];
-        $data['column_product_id'] = ($lang['column_product_id'] ?? '');
-        $data['column_product'] = ($lang['column_product'] ?? '');
-        $data['column_ebay_id'] = ($lang['column_ebay_id'] ?? '');
-        $data['column_location'] = ($lang['column_location'] ?? '');
-        $data['column_actions'] = ($lang['column_actions'] ?? '');
-        
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_category_mismatch', $data));
-    }
-    
-    /**
      * Get Image Count Mismatch Tab - AJAX reload endpoint
      */
     public function getImageMismatchTab(): void {
@@ -2293,6 +2294,69 @@ class Sync extends \Opencart\System\Engine\Controller {
         $this->response->setOutput(json_encode($json));
     }
     
+    /**
+     * AJAX method to load Category Mismatch tab with pagination (reload after fix)
+     */
+    public function getCategoryMismatchTab(): void {
+        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/inventory/sync');
+
+        $page  = max(1, (int)($this->request->get['page'] ?? 1));
+        $limit = 20;
+        $start = ($page - 1) * $limit;
+        $sort  = $this->request->get['sort']  ?? 'product_id';
+        $order = $this->request->get['order'] ?? 'ASC';
+
+        $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => $sort, 'order' => $order];
+
+        $category_mismatch = $this->model_shopmanager_inventory_sync->getCategoryMismatch($filter_data);
+        $total             = $this->model_shopmanager_inventory_sync->getTotalCategoryMismatch();
+
+        $this->enrichCategoryRowsWithInfoSource($category_mismatch);
+
+        $data  = $lang;
+        $data['category_mismatch']            = $category_mismatch;
+        $data['category_mismatch_total']      = $total;
+        $data['category_mismatch_page']       = $page;
+        $data['category_mismatch_sort']       = $sort;
+        $data['category_mismatch_order']      = $order;
+        $data['category_mismatch_start']      = $start + 1;
+        $data['category_mismatch_end']        = min($start + $limit, $total);
+        $data['category_mismatch_num_pages']  = ceil($total / $limit);
+        $data['category_mismatch_pagination'] = $total > $limit;
+        $data['user_token'] = $this->session->data['user_token'];
+
+        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_category_mismatch', $data));
+    }
+
+    /**
+     * Sync Category From Info Source - Applique la meilleure catégorie oc_product_info_sources
+     */
+    public function syncCategoryFromInfoSource(): void {
+        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/marketplace');
+
+        $json = [];
+        $product_id = (int)($this->request->post['product_id'] ?? 0);
+
+        if (!$product_id) {
+            $json['error'] = 'Product ID required';
+        } else {
+            try {
+                $result = $this->model_shopmanager_inventory_sync->applyCategoryFromInfoSource($product_id);
+                $json = $result;
+                if (isset($result['success'])) {
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                }
+            } catch (\Exception $e) {
+                $json['error'] = $e->getMessage();
+            }
+        }
+
+        $this->response->addHeader('Content-Type: application/json');
+        $this->response->setOutput(json_encode($json));
+    }
+
     /**
      * Bulk Sync Categories From eBay - Import multiple categories
      */

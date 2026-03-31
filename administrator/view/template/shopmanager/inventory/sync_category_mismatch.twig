@@ -40,7 +40,7 @@
           <th style="width: 120px;">{{ column_ebay_id }}</th>
           <th style="width: 200px;">{{ column_category }}</th>
           <th style="width: 100px;">{{ column_location }}</th>
-          <th class="text-center" style="width: 80px;">{{ column_actions }}</th>
+          <th class="text-center" style="width: 100px;">{{ column_actions }}</th>
         </tr>
       </thead>
       <tbody>
@@ -96,12 +96,45 @@
                   </div>
                 </div>
               {% endif %}
+              {% if product.source_category_id %}
+                <div style="border: 1px solid #198754; padding: 3px 6px; border-radius: 4px; background-color: #d1e7dd; margin-top: 4px;">
+                  <small class="text-success">
+                    <i class="fa-solid fa-star"></i>
+                    {{ product.source_category_id }}{% if product.source_category_name %} - {{ product.source_category_name }}{% endif %}
+                    <span class="badge bg-success ms-1">{{ product.source_percent }}%</span>
+                  </small>
+                </div>
+              {% endif %}
             </td>
             <td><span class="badge bg-secondary">{{ product.location }}</span></td>
             <td class="text-center">
-              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary">
-                <i class="fa-solid fa-edit"></i>
-              </a>
+              <div class="d-flex flex-column gap-1 align-items-center">
+                <button class="btn btn-xs btn-outline-warning sync-category-btn"
+                        data-product-id="{{ product.product_id }}"
+                        data-direction="from_ebay"
+                        title="eBay ({{ product.ebay_category_id }}) → OC">
+                  <i class="fa-solid fa-cloud-arrow-down"></i>
+                </button>
+                <button class="btn btn-xs btn-outline-primary sync-category-btn"
+                        data-product-id="{{ product.product_id }}"
+                        data-direction="to_ebay"
+                        title="OC ({{ product.local_category_id }}) → eBay">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                </button>
+                {% if product.source_category_id %}
+                <button class="btn btn-xs btn-outline-success sync-category-btn"
+                        data-product-id="{{ product.product_id }}"
+                        data-direction="from_source"
+                        title="Source: {{ product.source_category_id }}{% if product.source_category_name %} - {{ product.source_category_name }}{% endif %} ({{ product.source_percent }}%) → OC">
+                  <i class="fa-solid fa-star"></i> {{ product.source_percent }}%
+                </button>
+                {% endif %}
+                <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}"
+                   class="btn btn-xs btn-outline-secondary"
+                   title="Edit product" target="_blank">
+                  <i class="fa-solid fa-edit"></i>
+                </a>
+              </div>
             </td>
           </tr>
         {% endfor %}
@@ -273,53 +306,52 @@ $(document).ready(function() {
     });
   }
   
-  // Sync category buttons
+  // Sync category buttons (bidirectional + from source)
   $('.sync-category-btn').on('click', function() {
     var btn = $(this);
     var productId = btn.data('product-id');
     var direction = btn.data('direction');
     
-    console.log('Sync category clicked:', {productId: productId, direction: direction});
-    
-    var route = direction === 'to_ebay' ? 'syncCategoryToEbay' : 'syncCategoryFromEbay';
-    var confirmMsg = direction === 'to_ebay' ? 
-      'Export local category to eBay?' : 
-      'Import eBay category to local?';
-    
-    if (!confirm(confirmMsg)) {
-      return;
-    }
-    
+    var routes = {
+      'to_ebay':    'syncCategoryToEbay',
+      'from_ebay':  'syncCategoryFromEbay',
+      'from_source': 'syncCategoryFromInfoSource'
+    };
+    var msgs = {
+      'to_ebay':    'Export local category to eBay?',
+      'from_ebay':  'Import eBay category to local product?',
+      'from_source': 'Apply best info_source category to local product?'
+    };
+    var icons = {
+      'to_ebay':    'fa-cloud-arrow-up',
+      'from_ebay':  'fa-cloud-arrow-down',
+      'from_source': 'fa-star'
+    };
+
+    if (!confirm(msgs[direction] || 'Confirm?')) return;
+
     $.ajax({
-      url: 'index.php?route=shopmanager/inventory/sync.' + route + '&user_token={{ user_token }}',
+      url: 'index.php?route=shopmanager/inventory/sync.' + routes[direction] + '&user_token={{ user_token }}',
       type: 'POST',
       data: {product_id: productId},
       dataType: 'json',
       beforeSend: function() {
-        console.log('Sending request to:', route);
         btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
       },
       success: function(json) {
-        console.log('Response received:', json);
-        btn.prop('disabled', false);
         if (json.success) {
           btn.html('<i class="fa-solid fa-check"></i>');
-          alert(json.success);
+          // Fade row + reload tab
+          btn.closest('tr').fadeOut(300, function() { $(this).remove(); });
           loadCategoryMismatchTab({{ category_mismatch_page }}, '{{ category_mismatch_sort }}', '{{ category_mismatch_order }}');
         } else if (json.error) {
-          btn.html('<i class="fa-solid fa-' + (direction === 'to_ebay' ? 'upload' : 'download') + '"></i>');
+          btn.prop('disabled', false).html('<i class="fa-solid ' + (icons[direction] || 'fa-refresh') + '"></i>');
           alert('Error: ' + json.error);
         }
       },
       error: function(xhr, ajaxOptions, thrownError) {
-        console.error('AJAX Error:', {
-          status: xhr.status,
-          statusText: xhr.statusText,
-          responseText: xhr.responseText,
-          thrownError: thrownError
-        });
-        btn.prop('disabled', false).html('<i class="fa-solid fa-' + (direction === 'to_ebay' ? 'upload' : 'download') + '"></i>');
-        alert('Error: ' + thrownError + '\nCheck console for details');
+        btn.prop('disabled', false).html('<i class="fa-solid ' + (icons[direction] || 'fa-refresh') + '"></i>');
+        alert('Error: ' + thrownError);
       }
     });
   });

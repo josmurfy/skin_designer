@@ -1307,6 +1307,7 @@ class Sync extends \Opencart\System\Engine\Model {
             SELECT 
                 p.product_id,
                 p.sku,
+                p.upc,
                 p.location,
                 pd.name,
                 COALESCE(
@@ -1984,6 +1985,87 @@ class Sync extends \Opencart\System\Engine\Model {
         }
         
         return $result;
+    }
+
+    /**
+     * Apply the best-match category from oc_product_info_sources to a product.
+     * Finds the entry with the highest percent, removes leaf=1 categories,
+     * inserts the new one, resets specifics.
+     */
+    public function applyCategoryFromInfoSource(int $product_id): array {
+        // Get product UPC
+        $p = $this->db->query("
+            SELECT upc FROM " . DB_PREFIX . "product
+            WHERE product_id = " . (int)$product_id);
+        if (!$p->num_rows || empty($p->row['upc'])) {
+            return ['error' => 'Product has no UPC'];
+        }
+        $upc = $p->row['upc'];
+
+        // Get all info_sources rows for this UPC
+        $sources = $this->db->query("
+            SELECT ebay_category FROM " . DB_PREFIX . "product_info_sources
+            WHERE upc = '" . $this->db->escape($upc) . "'");
+        if (!$sources->num_rows) {
+            return ['error' => 'No info sources found for UPC ' . htmlspecialchars($upc)];
+        }
+
+        // Find entry with highest percent
+        $best_id   = null;
+        $best_pct  = -1;
+        $best_name = '';
+        foreach ($sources->rows as $row) {
+            $cats = json_decode($row['ebay_category'] ?? '[]', true);
+            if (!is_array($cats)) continue;
+            foreach ($cats as $cat) {
+                $pct = (int)($cat['percent'] ?? 0);
+                if ($pct > $best_pct && !empty($cat['category_id'])) {
+                    $best_pct  = $pct;
+                    $best_id   = (int)$cat['category_id'];
+                    $best_name = $cat['category_name'] ?? '';
+                }
+            }
+        }
+
+        if (!$best_id) {
+            return ['error' => 'No valid category found in info sources'];
+        }
+
+        // Verify category exists locally
+        $check = $this->db->query("
+            SELECT category_id FROM " . DB_PREFIX . "category
+            WHERE category_id = " . (int)$best_id);
+        if (!$check->num_rows) {
+            return ['error' => "Category $best_id from info source not in local database"];
+        }
+
+        // Delete existing leaf=1 categories
+        $this->db->query("
+            DELETE pc FROM " . DB_PREFIX . "product_to_category pc
+            INNER JOIN " . DB_PREFIX . "category c ON pc.category_id = c.category_id
+            WHERE pc.product_id = " . (int)$product_id . "
+            AND c.leaf = 1");
+
+        // Insert new category (avoid duplicate)
+        $existing = $this->db->query("
+            SELECT 1 FROM " . DB_PREFIX . "product_to_category
+            WHERE product_id = " . (int)$product_id . "
+            AND category_id = " . (int)$best_id);
+        if (!$existing->num_rows) {
+            $this->db->query("
+                INSERT INTO " . DB_PREFIX . "product_to_category
+                SET product_id = " . (int)$product_id . ",
+                    category_id = " . (int)$best_id);
+        }
+
+        // Reset specifics (new category = new specifics needed)
+        $this->db->query("
+            UPDATE " . DB_PREFIX . "product_description
+            SET specifics = NULL
+            WHERE product_id = " . (int)$product_id);
+
+        $label = $best_name ? "$best_id - $best_name" : "$best_id";
+        return ['success' => "Category $label ($best_pct%) applied from info source (specifics reset)"];
     }
 }
 
