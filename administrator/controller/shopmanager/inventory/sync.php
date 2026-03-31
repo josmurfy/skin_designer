@@ -590,9 +590,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             // Get parameters
             $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
             $offset = isset($this->request->get['offset']) ? max(0, (int)$this->request->get['offset']) : 0;
-            $batch_size = 20; // max items traités par request (pour éviter timeout 502)
-            $marketplace_account_id = isset($this->request->get['account_id']) ? (int)$this->request->get['account_id'] : 1;
             $force_refresh = !empty($this->request->get['force_refresh']); // Force GetItem even if data already exists
+            // force_refresh = GetItem API call per item (~2s each) → batch petit pour éviter 502
+            $batch_size = $force_refresh ? 3 : 20;
+            $marketplace_account_id = isset($this->request->get['account_id']) ? (int)$this->request->get['account_id'] : 1;
             $limit = 200; // eBay allows up to 200 per page for GetMyeBaySelling
 
             file_put_contents('/home/n7f9655/import_test.txt', date('Y-m-d H:i:s') . " - Page: $page, Account: $marketplace_account_id\n", FILE_APPEND);
