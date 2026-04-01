@@ -393,4 +393,90 @@ public function create_label($sku = '', $upc ='', $quantity = 1) {
     //$this->response->addHeader('Content-Type: application/json');
    // $this->response->setOutput(json_encode($json));
    }
+
+    /**
+     * Rotate an image file 90°/180°/270° clockwise on disk — generic tool.
+     *
+     * POST  path    Path to the image, relative to DIR_OPENCART
+     *               (e.g.  "image/catalog/product/12/1234/file.jpg"
+     *                or    "image_backup/data/product/12/1234/file.jpg")
+     *       degrees 90 | 180 | 270  (default: 90)
+     */
+    public function rotateImage(): void {
+        ini_set('display_errors', '0');
+        $this->response->addHeader('Content-Type: application/json');
+        $json = [];
+        try {
+            $rel_path = $this->request->post['path'] ?? '';
+            $degrees  = (int)($this->request->post['degrees'] ?? 90);
+            if (!in_array($degrees, [90, 180, 270])) $degrees = 90;
+
+            // Security: no path traversal, must stay within DIR_OPENCART
+            $rel_path = ltrim(str_replace('..', '', $rel_path), '/');
+            if (empty($rel_path)) {
+                $json['error'] = 'Missing path';
+                $this->response->setOutput(json_encode($json));
+                return;
+            }
+            $abs_path = rtrim(DIR_OPENCART, '/') . '/' . $rel_path;
+
+            if (!file_exists($abs_path) || !is_readable($abs_path) || !is_writable($abs_path)) {
+                $json['error'] = 'File not found or not writable: ' . $rel_path;
+                $this->response->setOutput(json_encode($json));
+                return;
+            }
+
+            $ext = strtolower(pathinfo($abs_path, PATHINFO_EXTENSION));
+            set_error_handler(function() { return true; });
+            $img = null;
+            switch ($ext) {
+                case 'jpg': case 'jpeg': $img = imagecreatefromjpeg($abs_path); break;
+                case 'png':  $img = imagecreatefrompng($abs_path);  break;
+                case 'webp': $img = imagecreatefromwebp($abs_path); break;
+                case 'gif':  $img = imagecreatefromgif($abs_path);  break;
+            }
+            restore_error_handler();
+
+            if (!$img) {
+                $json['error'] = 'Cannot read image (unsupported format or corrupt)';
+                $this->response->setOutput(json_encode($json));
+                return;
+            }
+
+            // GD imagerotate rotates counter-clockwise; invert for clockwise
+            $rotated = imagerotate($img, 360 - $degrees, 0);
+            imagedestroy($img);
+
+            if (!$rotated) {
+                $json['error'] = 'Rotation failed';
+                $this->response->setOutput(json_encode($json));
+                return;
+            }
+
+            $saved = false;
+            switch ($ext) {
+                case 'jpg': case 'jpeg': $saved = imagejpeg($rotated, $abs_path, 92); break;
+                case 'png':
+                    imagealphablending($rotated, false);
+                    imagesavealpha($rotated, true);
+                    $saved = imagepng($rotated, $abs_path);
+                    break;
+                case 'webp': $saved = imagewebp($rotated, $abs_path, 85); break;
+                case 'gif':  $saved = imagegif($rotated, $abs_path);       break;
+            }
+            imagedestroy($rotated);
+
+            if (!$saved) {
+                $json['error'] = 'Failed to save rotated image';
+                $this->response->setOutput(json_encode($json));
+                return;
+            }
+
+            $json['success'] = true;
+            $json['message'] = 'Image rotated ' . $degrees . '°';
+        } catch (\Exception $e) {
+            $json['error'] = 'rotateImage: ' . $e->getMessage();
+        }
+        $this->response->setOutput(json_encode($json));
+    }
 }

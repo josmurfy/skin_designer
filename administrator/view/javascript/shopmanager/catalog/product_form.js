@@ -3117,6 +3117,7 @@ function updateImagesUI(productImages) {
             html += '      <div class="d-grid">';
             html += '        <button type="button" data-oc-toggle="image" data-oc-target="#input-product-image-' + image_row + '" data-oc-thumb="#product-image-' + image_row + '" class="btn btn-primary rounded-0"><i class="fa-solid fa-pencil"></i> Edit</button>';
             html += '        <button type="button" data-oc-toggle="clear" data-oc-target="#input-product-image-' + image_row + '" data-oc-thumb="#product-image-' + image_row + '" class="btn btn-warning rounded-0"><i class="fa-regular fa-trash-can"></i> Clear</button>';
+            html += '        <button type="button" class="btn btn-secondary rounded-0 btn-rotate-product-image" data-img-input="input-product-image-' + image_row + '" data-img-thumb="product-image-' + image_row + '"><i class="fa-solid fa-rotate-right"></i> Rotation 90°</button>';
             html += '      </div>';
             html += '    </div>';
             html += '  </td>';
@@ -3853,3 +3854,47 @@ function translateAllContent() {
         alert(TEXT_TRANSLATION_COMPLETED_FIELDS.replace('%s', translationCount));
     }, 2000);
 }
+
+// ─── Rotate image 90° CW ──────────────────────────────────────────────────
+// Appel: shopmanager/tools.rotateImage  POST path=<relatif DIR_OPENCART> degrees=90
+$(document).on('click', '.btn-rotate-product-image', function() {
+    var $btn      = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var inputId   = $(this).data('img-input');
+    var thumbId   = $(this).data('img-thumb');
+    var imagePath = document.getElementById(inputId) ? document.getElementById(inputId).value : '';
+    if (!imagePath) {
+        alert('Aucune image \u00e0 faire pivoter.');
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right"></i> Rotation 90\u00b0');
+        return;
+    }
+    var userToken = document.querySelector('input[name="user_token"]').value;
+    $.ajax({
+        url: 'index.php?route=shopmanager/tools.rotateImage&user_token=' + userToken,
+        type: 'POST',
+        dataType: 'json',
+        data: { path: 'image/' + imagePath, degrees: 90 },
+        success: function(json) {
+            $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right"></i> Rotation 90\u00b0');
+            if (json.error) { alert('Erreur rotation: ' + json.error); return; }
+            var ts = '?t=' + Date.now();
+            var $thumb = $('#' + thumbId);
+            // Refresh full-size preview first (always has an absolute URL via HTTP_CATALOG)
+            var $container = $thumb.closest('.actual-image-container');
+            var $preview   = $container.find('img.actual-image-preview');
+            if ($preview.length) {
+                $preview.attr('src', $preview.attr('src').split('?')[0] + ts);
+            }
+            // Refresh thumb only when it has a root-relative or absolute URL (not bare filename)
+            if ($thumb.length) {
+                var s = $thumb.attr('src') || '';
+                if (s.indexOf('http') === 0 || s.indexOf('/') === 0) {
+                    $thumb.attr('src', s.split('?')[0] + ts);
+                }
+            }
+        },
+        error: function(xhr) {
+            $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right"></i> Rotation 90\u00b0');
+            alert('Erreur AJAX: ' + xhr.status);
+        }
+    });
+});

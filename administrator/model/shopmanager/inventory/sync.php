@@ -1583,7 +1583,140 @@ class Sync extends \Opencart\System\Engine\Model {
     }
 
     /**
-     * Scan image_backup directory and update image_backup_count in product_marketplace.
+     * Products where backup quality > OC quality (backup_max_width > oc_max_width)
+     * AND backup count <= OC count (no missing images, just better resolution available).
+     */
+    public function getTotalResolutionUpgradeMismatch(): int {
+        $query = $this->db->query("
+            SELECT COUNT(*) as total
+            FROM (
+                SELECT p.product_id,
+                    (
+                        CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                        + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)
+                    ) AS oc_image_count,
+                    pm.image_backup_count,
+                    pm.backup_max_width,
+                    pm.oc_max_width
+                FROM " . DB_PREFIX . "product p
+                INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
+                WHERE pm.marketplace_id = 1
+                AND pm.backup_max_width IS NOT NULL AND pm.backup_max_width > 0
+                AND pm.oc_max_width IS NOT NULL
+                AND pm.backup_max_width > pm.oc_max_width
+                HAVING pm.image_backup_count <= oc_image_count
+            ) as sub
+        ");
+        return (int)$query->row['total'];
+    }
+
+    public function getResolutionUpgradeMismatch(array $data = []): array {
+        $sort  = isset($data['sort'])  ? $data['sort']  : 'backup_max_width';
+        $order = isset($data['order']) && strtoupper($data['order']) === 'ASC' ? 'ASC' : 'DESC';
+        $start = isset($data['start']) ? (int)$data['start'] : 0;
+        $limit = isset($data['limit']) ? (int)$data['limit'] : 50;
+        $lang_id = (int)$this->config->get('config_language_id');
+
+        $allowed_sort = ['product_id', 'name', 'oc_max_width', 'backup_max_width', 'image_backup_count'];
+        if (!in_array($sort, $allowed_sort)) $sort = 'backup_max_width';
+
+        $query = $this->db->query("
+            SELECT p.product_id, pd.name,
+                pm.image_backup_count,
+                pm.backup_max_width,
+                pm.oc_max_width,
+                (
+                    CASE WHEN (p.image IS NOT NULL AND p.image != '' AND p.image != 'no_image.png') THEN 1 ELSE 0 END
+                    + (SELECT COUNT(*) FROM " . DB_PREFIX . "product_image pi WHERE pi.product_id = p.product_id)
+                ) AS oc_image_count
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
+            LEFT JOIN " . DB_PREFIX . "product_description pd ON pd.product_id = p.product_id AND pd.language_id = '" . $lang_id . "'
+            WHERE pm.marketplace_id = 1
+            AND pm.backup_max_width IS NOT NULL AND pm.backup_max_width > 0
+            AND pm.oc_max_width IS NOT NULL
+            AND pm.backup_max_width > pm.oc_max_width
+            HAVING pm.image_backup_count <= oc_image_count
+            ORDER BY " . $sort . " " . $order . "
+            LIMIT " . $start . ", " . $limit . "
+        ");
+        return $query->rows;
+    }
+
+    /**
+     * Reset oc_max_width and backup_max_width to NULL for a product so it
+     * gets recomputed on the next scanImageBackupCounts run.
+     */
+    public function resetProductImageScan(int $product_id): void {
+        $this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace`
+                          SET `oc_max_width` = NULL, `backup_max_width` = NULL
+                          WHERE `product_id` = '" . $product_id . "'");
+    }
+
+    /**
+     * Recompute image_backup_count, backup_max_width and oc_max_width for a
+     * single product and persist to oc_product_marketplace.
+     *
+     * @param int    $product_id
+     * @param string $backup_dir  Absolute path to image_backup/ root (trailing slash)
+     */
+    public function refreshProductResolutionScan(int $product_id, string $backup_dir): void {
+        $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+        $prefix = substr((string)$product_id, 0, 2);
+        $dir_flat   = $backup_dir . 'data/product/' . $product_id . '/';
+        $dir_nested = $backup_dir . 'data/product/' . $prefix . '/' . $product_id . '/';
+        $dir = is_dir($dir_flat) ? $dir_flat : (is_dir($dir_nested) ? $dir_nested : null);
+
+        $count        = 0;
+        $backup_max_w = 0;
+
+        if ($dir !== null) {
+            $files = @scandir($dir);
+            if ($files) {
+                foreach ($files as $file) {
+                    if ($file === '.' || $file === '..') continue;
+                    if (!is_file($dir . $file)) continue;
+                    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+                    if (in_array($ext, $image_extensions)) {
+                        $count++;
+                        set_error_handler(function() { return true; });
+                        $info = is_readable($dir . $file) ? getimagesize($dir . $file) : false;
+                        restore_error_handler();
+                        if ($info && $info[0] > $backup_max_w) $backup_max_w = $info[0];
+                    }
+                }
+            }
+        }
+
+        $oc_max_w = 0;
+        $dir_image = defined('DIR_IMAGE') ? DIR_IMAGE : '';
+        $pq = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
+        $oc_paths = [];
+        if (!empty($pq->row['image']) && $pq->row['image'] !== 'no_image.png') {
+            $oc_paths[] = $pq->row['image'];
+        }
+        $sq = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
+        foreach ($sq->rows as $r) { $oc_paths[] = $r['image']; }
+        foreach ($oc_paths as $rel) {
+            $abs = $dir_image . $rel;
+            if (!is_readable($abs)) continue;
+            set_error_handler(function() { return true; });
+            $info = getimagesize($abs);
+            restore_error_handler();
+            if ($info && $info[0] > $oc_max_w) $oc_max_w = $info[0];
+        }
+
+        $this->db->query("
+            UPDATE `" . DB_PREFIX . "product_marketplace`
+            SET image_backup_count = '" . $count . "',
+                backup_max_width   = '" . $backup_max_w . "',
+                oc_max_width       = '" . $oc_max_w . "'
+            WHERE product_id = '" . $product_id . "'
+            AND marketplace_id = 1
+        ");
+    }
+
+    /**
      * Counts ALL image files in image_backup/data/product/{product_id}/
      * regardless of naming convention (old: {id}.jpg / {id}_{num}.jpg  OR
      * new: {id}pri{N}.jpg / {id}sec{N}.jpg).
@@ -1602,16 +1735,37 @@ class Sync extends \Opencart\System\Engine\Model {
             return ['scanned' => 0, 'with_images' => 0, 'empty' => 0, 'not_found' => 0];
         }
 
-        $stats = ['scanned' => 0, 'with_images' => 0, 'empty' => 0, 'not_found' => 0];
+        $stats = ['scanned' => 0, 'with_images' => 0, 'empty' => 0, 'not_found' => 0, 'not_found_samples' => []];
         $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
-        $updates = []; // product_id => count
+        $updates = []; // product_id => ['count' => int, 'backup_max_width' => int, 'oc_max_width' => int]
+
+        // Pre-load OC image paths for all products in one query
+        $oc_primary = [];
+        $pq = $this->db->query("SELECT p.product_id, p.image FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = p.product_id
+            WHERE pm.marketplace_id = 1");
+        foreach ($pq->rows as $r) { $oc_primary[(int)$r['product_id']] = $r['image']; }
+
+        $oc_secondary = [];
+        $sq = $this->db->query("SELECT pi.product_id, pi.image FROM " . DB_PREFIX . "product_image pi
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON pm.product_id = pi.product_id
+            WHERE pm.marketplace_id = 1");
+        foreach ($sq->rows as $r) { $oc_secondary[(int)$r['product_id']][] = $r['image']; }
+
+        // DIR_IMAGE is available via config
+        $dir_image = defined('DIR_IMAGE') ? DIR_IMAGE : '';
 
         foreach ($query->rows as $row) {
             $product_id = (int)$row['product_id'];
-            $dir   = $backup_dir . 'data/product/' . $product_id . '/';
+            $prefix = substr((string)$product_id, 0, 2);
+            // Check flat path first, then nested path (e.g. 27098 → product/27/27098/)
+            $dir_flat   = $backup_dir . 'data/product/' . $product_id . '/';
+            $dir_nested = $backup_dir . 'data/product/' . $prefix . '/' . $product_id . '/';
+            $dir = is_dir($dir_flat) ? $dir_flat : (is_dir($dir_nested) ? $dir_nested : null);
             $count = 0;
+            $backup_max_w = 0;
 
-            if (is_dir($dir)) {
+            if ($dir !== null) {
                 $files = @scandir($dir);
                 if ($files) {
                     foreach ($files as $file) {
@@ -1620,6 +1774,10 @@ class Sync extends \Opencart\System\Engine\Model {
                         $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                         if (in_array($ext, $image_extensions)) {
                             $count++;
+                            set_error_handler(function() { return true; });
+                            $info = is_readable($dir . $file) ? getimagesize($dir . $file) : false;
+                            restore_error_handler();
+                            if ($info && $info[0] > $backup_max_w) $backup_max_w = $info[0];
                         }
                     }
                 }
@@ -1627,25 +1785,52 @@ class Sync extends \Opencart\System\Engine\Model {
                 else             $stats['empty']++;
             } else {
                 $stats['not_found']++;
+                if (count($stats['not_found_samples']) < 5) {
+                    $stats['not_found_samples'][] = $product_id;
+                }
             }
 
-            $updates[$product_id] = $count;
+            // Compute OC max width
+            $oc_max_w = 0;
+            $oc_paths = [];
+            if (!empty($oc_primary[$product_id]) && $oc_primary[$product_id] !== 'no_image.png') {
+                $oc_paths[] = $oc_primary[$product_id];
+            }
+            if (!empty($oc_secondary[$product_id])) {
+                $oc_paths = array_merge($oc_paths, $oc_secondary[$product_id]);
+            }
+            foreach ($oc_paths as $rel) {
+                $abs = $dir_image . $rel;
+                if (!is_readable($abs)) continue;
+                set_error_handler(function() { return true; });
+                $info = getimagesize($abs);
+                restore_error_handler();
+                if ($info && $info[0] > $oc_max_w) $oc_max_w = $info[0];
+            }
+
+            $updates[$product_id] = ['count' => $count, 'backup_max_w' => $backup_max_w, 'oc_max_w' => $oc_max_w];
             $stats['scanned']++;
         }
 
         // Batch UPDATE in chunks of 500 to avoid huge SQL statements
         foreach (array_chunk($updates, 500, true) as $chunk) {
             if (empty($chunk)) continue;
-            $cases = '';
+            $cases_count  = '';
+            $cases_backup = '';
+            $cases_oc     = '';
             $ids   = [];
-            foreach ($chunk as $pid => $cnt) {
-                $cases .= " WHEN " . (int)$pid . " THEN " . (int)$cnt;
+            foreach ($chunk as $pid => $d) {
+                $cases_count  .= " WHEN " . (int)$pid . " THEN " . (int)$d['count'];
+                $cases_backup .= " WHEN " . (int)$pid . " THEN " . (int)$d['backup_max_w'];
+                $cases_oc     .= " WHEN " . (int)$pid . " THEN " . (int)$d['oc_max_w'];
                 $ids[]  = (int)$pid;
             }
             $ids_str = implode(',', $ids);
             $this->db->query("
                 UPDATE " . DB_PREFIX . "product_marketplace
-                SET image_backup_count = CASE product_id" . $cases . " END
+                SET image_backup_count = CASE product_id" . $cases_count . " END,
+                    backup_max_width   = CASE product_id" . $cases_backup . " END,
+                    oc_max_width       = CASE product_id" . $cases_oc . " END
                 WHERE product_id IN (" . $ids_str . ")
                 AND marketplace_id = 1
             ");
@@ -1655,308 +1840,22 @@ class Sync extends \Opencart\System\Engine\Model {
     }
 
     /**
-     * Import category from eBay for single product
+     * Get best eBay category per UPC from oc_product_info_sources.
+     * Returns map: upc => ['source_category_id', 'source_category_name', 'source_percent']
      */
-    public function importCategoryFromEbay(int $product_id): array {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        
-        $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
-        if (!$marketplace || !isset($marketplace['category_id'])) {
-            return ['error' => 'Product not listed on eBay or no category_id'];
-        }
-        
-        $ebay_category_id = (int)$marketplace['category_id'];
-        
-        // Vérifier si la catégorie existe dans BD
-        $category_check = $this->db->query("
-            SELECT category_id FROM " . DB_PREFIX . "category 
-            WHERE category_id = '" . (int)$ebay_category_id . "'
+    public function getBestCategoryByUpcs(array $upcs): array {
+        if (empty($upcs)) return [];
+        $escaped = implode("','", array_map([$this->db, 'escape'], $upcs));
+        $query = $this->db->query("
+            SELECT upc, ebay_category
+            FROM " . DB_PREFIX . "product_info_sources
+            WHERE upc IN ('" . $escaped . "') AND ebay_category IS NOT NULL AND ebay_category != ''
         ");
-        
-        if ($category_check->num_rows == 0) {
-            return ['error' => "eBay category $ebay_category_id does not exist in local database"];
-        }
-        
-        // Remplace la catégorie leaf (pattern editProduct: delete all + re-add)
-        $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
-        
-        return ['success' => "Category imported: $ebay_category_id"];
-    }
-    
-    /**
-     * Import categories from eBay for multiple products
-     */
-    public function importCategoriesFromEbayBulk(array $product_ids): array {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        
-        $success_count = 0;
-        $error_count = 0;
-        $errors = [];
-        
-        foreach ($product_ids as $product_id) {
-            try {
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
-                
-                if (!$marketplace || !isset($marketplace['category_id'])) {
-                    $errors[] = "Product $product_id: Not on eBay";
-                    $error_count++;
-                    continue;
-                }
-                
-                $ebay_category_id = (int)$marketplace['category_id'];
-                
-                // Vérifier existence
-                $category_check = $this->db->query("
-                    SELECT category_id FROM " . DB_PREFIX . "category 
-                    WHERE category_id = '" . (int)$ebay_category_id . "'
-                ");
-                
-                if ($category_check->num_rows == 0) {
-                    $errors[] = "Product $product_id: Category $ebay_category_id not in database";
-                    $error_count++;
-                    continue;
-                }
-                
-                // Remplace la catégorie leaf (pattern editProduct: delete all + re-add)
-                $this->model_shopmanager_catalog_product->setProductLeafCategory((int)$product_id, $ebay_category_id);
-                
-                $this->model_shopmanager_marketplace->resetSyncState((int)$product_id);
-                $success_count++;
-            } catch (\Exception $e) {
-                $errors[] = "Product $product_id: " . $e->getMessage();
-                $error_count++;
-            }
-        }
-        
-        $result = [];
-        if ($success_count > 0) {
-            $result['success'] = "$success_count category(ies) imported";
-            if ($error_count > 0) {
-                $result['success'] .= " ($error_count failed)";
-            }
-        } else {
-            $result['error'] = "All imports failed";
-        }
-        
-        if (!empty($errors)) {
-            $result['details'] = implode("\n", array_slice($errors, 0, 5));
-        }
-        
-        return $result;
-    }
-    
-    /**
-     * Export category to eBay - update eBay listing category with local category (leaf=1 priority)
-     */
-    public function exportCategoryToEbay(int $product_id): array {
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        
-        // Get local category with leaf=1 priority
-        $category_query = $this->db->query("
-            SELECT COALESCE(
-                (SELECT pc2.category_id FROM " . DB_PREFIX . "product_to_category pc2
-                 LEFT JOIN " . DB_PREFIX . "category c2 ON pc2.category_id = c2.category_id
-                 WHERE pc2.product_id = '" . (int)$product_id . "' AND c2.leaf = 1 LIMIT 1),
-                (SELECT pc3.category_id FROM " . DB_PREFIX . "product_to_category pc3
-                 WHERE pc3.product_id = '" . (int)$product_id . "' LIMIT 1)
-            ) as category_id
-        ");
-        
-        if (!$category_query->num_rows || !$category_query->row['category_id']) {
-            return ['error' => 'Product has no category assigned'];
-        }
-        
-        $local_category_id = (int)$category_query->row['category_id'];
-        
-        // Get product info
-        $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
-        if (!$product) {
-            return ['error' => 'Product not found'];
-        }
-        
-        // Override category with local one
-        $product['category_id'] = $local_category_id;
-        
-        // Calculate total quantity
-        $quantity = (int)$product['quantity'] + (int)($product['unallocated_quantity'] ?? 0);
-        
-        // Get marketplace accounts
-        $marketplace_accounts = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id, 'marketplace_id' => 1]);
-        if (empty($marketplace_accounts)) {
-            return ['error' => 'Product not listed on eBay'];
-        }
-        
-        // Get site settings for each account
-        foreach ($marketplace_accounts as $key => $marketplace) {
-            $site_setting = $marketplace['site_setting'] ?? '{}';
-            $marketplace_accounts[$key]['site_setting'] = is_array($site_setting) ? $site_setting : json_decode($site_setting, true);
-        }
-        
-        // Get site_setting from first account for edit()
-        $first_site_setting = reset($marketplace_accounts)['site_setting'] ?? [];
-        
-        // Reset category_id, specific, and condition_id in oc_product_marketplace to force re-import
-        $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-                          SET category_id = NULL, specifics = NULL, condition_id = NULL 
-                          WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
-        
-        // Use edit() - it will update category and specifics
-        $response = $this->model_shopmanager_ebay->edit($product, $quantity, $first_site_setting, $marketplace_accounts);
-        
-        if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-            // Restore pm.category_id so mismatch list resolves
-            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-                              SET category_id = '" . (int)$local_category_id . "' 
-                              WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
-            return ['success' => "Category exported to eBay: $local_category_id"];
-        } else {
-            $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
-            return ['error' => $error_msg];
-        }
-    }
-    
-    /**
-     * Export categories to eBay for multiple products
-     */
-    public function exportCategoriesToEbayBulk(array $product_ids): array {
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        
-        $success_count = 0;
-        $error_count = 0;
-        $errors = [];
-        
-        foreach ($product_ids as $product_id) {
-            try {
-                // Get local category with leaf=1 priority
-                $category_query = $this->db->query("
-                    SELECT COALESCE(
-                        (SELECT pc2.category_id FROM " . DB_PREFIX . "product_to_category pc2
-                         LEFT JOIN " . DB_PREFIX . "category c2 ON pc2.category_id = c2.category_id
-                         WHERE pc2.product_id = '" . (int)$product_id . "' AND c2.leaf = 1 LIMIT 1),
-                        (SELECT pc3.category_id FROM " . DB_PREFIX . "product_to_category pc3
-                         WHERE pc3.product_id = '" . (int)$product_id . "' LIMIT 1)
-                    ) as category_id
-                ");
-                
-                if (!$category_query->num_rows || !$category_query->row['category_id']) {
-                    $errors[] = "Product $product_id: No category assigned";
-                    $error_count++;
-                    continue;
-                }
-                
-                $local_category_id = (int)$category_query->row['category_id'];
-                
-                // Get product info
-                $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
-                if (!$product) {
-                    $errors[] = "Product $product_id: Not found";
-                    $error_count++;
-                    continue;
-                }
-                
-                // Override category with local one
-                $product['category_id'] = $local_category_id;
-                
-                // Calculate total quantity
-                $quantity = (int)$product['quantity'] + (int)($product['unallocated_quantity'] ?? 0);
-                
-                // Get marketplace accounts
-                $marketplace_accounts = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id, 'marketplace_id' => 1]);
-                if (empty($marketplace_accounts)) {
-                    $errors[] = "Product $product_id: Not on eBay";
-                    $error_count++;
-                    continue;
-                }
-                
-                // Get site settings for each account
-                foreach ($marketplace_accounts as $key => $marketplace) {
-                    $site_setting = $marketplace['site_setting'] ?? '{}';
-                    $marketplace_accounts[$key]['site_setting'] = is_array($site_setting) ? $site_setting : json_decode($site_setting, true);
-                }
-                
-                // Get site_setting from first account for edit()
-                $first_site_setting = reset($marketplace_accounts)['site_setting'] ?? [];
-                
-                // Reset category_id, specific, and condition_id in oc_product_marketplace to force re-import
-                $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-                                  SET category_id = NULL, specifics = NULL, condition_id = NULL 
-                                  WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
-                
-                // Use edit() - it will update category and specifics
-                $response = $this->model_shopmanager_ebay->edit($product, $quantity, $first_site_setting, $marketplace_accounts);
-                
-                if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                    // Restore pm.category_id so mismatch list resolves
-                    $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-                                      SET category_id = '" . (int)$local_category_id . "' 
-                                      WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
-                    $this->model_shopmanager_marketplace->resetSyncState((int)$product_id);
-                    $success_count++;
-                } else {
-                    $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
-                    $errors[] = "Product $product_id: $error_msg";
-                    $error_count++;
-                }
-            } catch (\Exception $e) {
-                $errors[] = "Product $product_id: " . $e->getMessage();
-                $error_count++;
-            }
-        }
-        
-        $result = [];
-        if ($success_count > 0) {
-            $result['success'] = "$success_count category(ies) exported";
-            if ($error_count > 0) {
-                $result['success'] .= " ($error_count failed)";
-            }
-        } else {
-            $result['error'] = "All exports failed";
-        }
-        
-        if (!empty($errors)) {
-            $result['details'] = implode("\n", array_slice($errors, 0, 5));
-        }
-        
-        return $result;
-    }
-
-    /**
-     * Apply the best-match category from oc_product_info_sources to a product.
-     * Finds the entry with the highest percent, removes leaf=1 categories,
-     * inserts the new one, resets specifics.
-     */
-    public function applyCategoryFromInfoSource(int $product_id): array {
-        $this->load->model('shopmanager/catalog/product');
-        // Get product UPC
-        $p = $this->db->query("
-            SELECT upc FROM " . DB_PREFIX . "product
-            WHERE product_id = " . (int)$product_id);
-        if (!$p->num_rows || empty($p->row['upc'])) {
-            return ['error' => 'Product has no UPC'];
-        }
-        $upc = $p->row['upc'];
-
-        // Get all info_sources rows for this UPC
-        $sources = $this->db->query("
-            SELECT ebay_category FROM " . DB_PREFIX . "product_info_sources
-            WHERE upc = '" . $this->db->escape($upc) . "'");
-        if (!$sources->num_rows) {
-            return ['error' => 'No info sources found for UPC ' . htmlspecialchars($upc)];
-        }
-
-        // Find entry with highest percent
-        $best_id   = null;
-        $best_pct  = -1;
-        $best_name = '';
-        foreach ($sources->rows as $row) {
+        $map = [];
+        foreach ($query->rows as $row) {
             $cats = json_decode($row['ebay_category'] ?? '[]', true);
             if (!is_array($cats)) continue;
+            $best_id = null; $best_pct = -1; $best_name = '';
             foreach ($cats as $cat) {
                 $pct = (int)($cat['percent'] ?? 0);
                 if ($pct > $best_pct && !empty($cat['category_id'])) {
@@ -1965,28 +1864,23 @@ class Sync extends \Opencart\System\Engine\Model {
                     $best_name = $cat['category_name'] ?? '';
                 }
             }
+            if ($best_id) {
+                $map[$row['upc']] = [
+                    'source_category_id'   => $best_id,
+                    'source_category_name' => $best_name,
+                    'source_percent'       => $best_pct,
+                ];
+            }
         }
-
-        if (!$best_id) {
-            return ['error' => 'No valid category found in info sources'];
-        }
-
-        // Verify category exists locally
-        $check = $this->db->query("
-            SELECT category_id FROM " . DB_PREFIX . "category
-            WHERE category_id = " . (int)$best_id);
-        if (!$check->num_rows) {
-            return ['error' => "Category $best_id from info source not in local database"];
-        }
-
-        // Remplace la catégorie leaf (pattern editProduct: delete all + re-add)
-        $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $best_id);
-
-        // Reset specifics (new category = new specifics needed)
-        // $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, null);
-
-        $label = $best_name ? "$best_id - $best_name" : "$best_id";
-        return ['success' => "Category $label ($best_pct%) applied from info source"];
+        return $map;
     }
-}
 
+    /**
+     * Get all info_sources rows (ebay_category column) for a given UPC.
+     */
+    public function getInfoSourcesByUpc(string $upc): array {
+        $query = $this->db->query("SELECT ebay_category FROM `" . DB_PREFIX . "product_info_sources` WHERE upc = '" . $this->db->escape($upc) . "'");
+        return $query->rows;
+    }
+
+}

@@ -137,8 +137,13 @@
       <div class="col-md-4">
         <div class="card border-warning stat-card" data-tab="image-mismatch" style="cursor: pointer;" onclick="document.getElementById('image-mismatch-tab').click();">
           <div class="card-body text-center">
-            <h2 class="text-warning stat-number">{{ analytics_data.image_mismatch_count }}</h2>
+            <h2 class="text-warning stat-number">{{ analytics_data.image_mismatch_count + analytics_data.backup_image_mismatch_count + analytics_data.resolution_upgrade_count }}</h2>
             <p class="text-muted mb-0"><i class="fa-solid fa-images"></i> {{ tab_image_mismatch }}</p>
+            <small class="text-muted" style="font-size:10px;">
+              eBay: {{ analytics_data.image_mismatch_count }} &nbsp;|&nbsp;
+              Backup: {{ analytics_data.backup_image_mismatch_count }} &nbsp;|&nbsp;
+              Résol.: {{ analytics_data.resolution_upgrade_count }}
+            </small>
           </div>
         </div>
       </div>

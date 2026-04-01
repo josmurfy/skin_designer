@@ -1051,22 +1051,6 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
-	 * Get product price
-	 */
-	public function getProductPrice($product_id) {
-		$query = $this->db->query("SELECT price FROM " . DB_PREFIX . "product WHERE product_id = " . (int)$product_id);
-		return $query->num_rows ? $query->row : null;
-	}
-
-	/**
-	 * Get product quantities
-	 */
-	public function getProductQuantities($product_id) {
-		$query = $this->db->query("SELECT quantity, unallocated_quantity FROM " . DB_PREFIX . "product WHERE product_id = " . (int)$product_id);
-		return $query->num_rows ? $query->row : null;
-	}
-
-	/**
 	 * Get marketplace item details
 	 */
 	public function getMarketplaceItem($product_id, $marketplace_id = 1) {
@@ -1077,29 +1061,10 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
-	 * Get product specifics from description
-	 */
-	public function getProductSpecifics($product_id, $language_id = 1) {
-		$query = $this->db->query("SELECT specifics FROM " . DB_PREFIX . "product_description 
-								   WHERE product_id = " . (int)$product_id . " AND language_id = " . (int)$language_id);
-		return $query->num_rows ? $query->row : null;
-	}
-
-
-	/**
 	 * Update marketplace price
 	 */
 	public function updateMarketplacePrice($product_id, $price) {
 		$this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-						  SET price = " . (float)$price . ", date_modified = NOW() 
-						  WHERE product_id = " . (int)$product_id);
-	}
-
-	/**
-	 * Update product price
-	 */
-	public function updateProductPrice($product_id, $price) {
-		$this->db->query("UPDATE " . DB_PREFIX . "product 
 						  SET price = " . (float)$price . ", date_modified = NOW() 
 						  WHERE product_id = " . (int)$product_id);
 	}
@@ -1114,30 +1079,12 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
-	 * Update product quantity
-	 */
-	public function updateProductQuantity($product_id, $quantity) {
-		$this->db->query("UPDATE " . DB_PREFIX . "product 
-						  SET quantity = " . (int)$quantity . ", unallocated_quantity = 0, date_modified = NOW() 
-						  WHERE product_id = " . (int)$product_id);
-	}
-
-	/**
 	 * Update marketplace specifics
 	 */
 	public function updateMarketplaceSpecifics($product_id, $specifics) {
 		$this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
 						  SET specifics = '" . $this->db->escape(json_encode($specifics)) . "', date_modified = NOW() 
 						  WHERE product_id = " . (int)$product_id);
-	}
-
-	/**
-	 * Update product description specifics
-	 */
-	public function updateProductDescriptionSpecifics($product_id, $specifics, $language_id = 1) {
-		$this->db->query("UPDATE " . DB_PREFIX . "product_description 
-						  SET specifics = '" . $this->db->escape($specifics) . "' 
-						  WHERE product_id = " . (int)$product_id . " AND language_id = " . (int)$language_id);
 	}
 
 	/**
@@ -1167,33 +1114,6 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
-	 * Get product for refresh (with quantities)
-	 */
-	public function getProductForRefresh($product_id) {
-		$query = $this->db->query("
-			SELECT p.product_id, p.sku, p.quantity, p.unallocated_quantity, pd.name
-			FROM " . DB_PREFIX . "product p 
-			LEFT JOIN " . DB_PREFIX . "product_description pd ON p.product_id = pd.product_id AND pd.language_id = 1
-			WHERE p.product_id = " . (int)$product_id
-		);
-		return $query->num_rows ? $query->row : null;
-	}
-
-	/**
-	 * Get marketplace data for refresh
-	 */
-	public function getMarketplaceForRefresh($product_id) {
-		$query = $this->db->query("
-			SELECT marketplace_item_id, marketplace_account_id, is_com 
-			FROM " . DB_PREFIX . "product_marketplace 
-			WHERE product_id = " . (int)$product_id . " 
-			AND marketplace_id = 1
-			LIMIT 1
-		");
-		return $query->num_rows ? $query->row : null;
-	}
-
-	/**
 	 * Update marketplace quantity listed and last sync
 	 */
 	public function updateMarketplaceQuantityListed($product_id, $quantity) {
@@ -1212,7 +1132,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	public function updateMarketplaceLastSync($product_id) {
 		$this->db->query("
 			UPDATE " . DB_PREFIX . "product_marketplace 
-			SET last_sync = NOW() 
+			SET last_sync = NOW() , to_update = 0
 			WHERE product_id = " . (int)$product_id . " 
 			AND marketplace_id = 1
 		");
@@ -1226,7 +1146,8 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	public function resetSyncState(int $product_id, int $marketplace_id = 1): void {
 		$this->db->query("
 			UPDATE " . DB_PREFIX . "product_marketplace 
-			SET last_sync = NULL, last_import = NULL
+			SET last_import = NULL, to_update = 0, ebay_image_count = 0, 
+			sync_error = NULL, sync_error_details = NULL, price = NULL, quantity_listed = NULL, quantity_sold = NULL, category_id = NULL, condition_id = NULL, specifics = NULL
 			WHERE product_id = " . (int)$product_id . "
 			AND marketplace_id = " . (int)$marketplace_id . "
 		");
@@ -1240,6 +1161,8 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 		$date_ended_sql = isset($data['date_ended']) && $data['date_ended'] ? "'" . $this->db->escape($data['date_ended']) . "'" : "NULL";
 		$specifics_sql = isset($data['specifics']) && $data['specifics'] ? "'" . $this->db->escape($data['specifics']) . "'" : "NULL";
 		
+		$ebay_image_count_sql = isset($data['ebay_image_count']) ? ', ebay_image_count = ' . (int)$data['ebay_image_count'] : '';
+
 		$this->db->query("
 			UPDATE " . DB_PREFIX . "product_marketplace 
 			SET 
@@ -1253,6 +1176,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				date_ended = " . $date_ended_sql . ",
 				date_modified = NOW(),
 				last_sync = NOW()
+				" . $ebay_image_count_sql . "
 			WHERE product_id = " . (int)$product_id . "
 			AND marketplace_id = 1
 		");
@@ -1344,4 +1268,20 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 		$this->log->write('Edit Card Listing Error - Listing ID: ' . $listing_id . ', eBay Item ID: ' . $ebay_item_id . ', Error: ' . json_encode($error));
 	}
 	
+	public function updateImageBackupCount(int $product_id, int $count): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `image_backup_count` = '" . (int)$count . "' WHERE `product_id` = '" . (int)$product_id . "'");
+	}
+
+	public function setToUpdate(int $product_id, int $marketplace_id = 1): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `to_update` = 1 WHERE `product_id` = '" . (int)$product_id . "' AND `marketplace_id` = '" . (int)$marketplace_id . "'");
+	}
+
+	public function clearMarketplaceCategory(int $product_id, int $marketplace_id = 1): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `category_id` = NULL, `specifics` = NULL, `condition_id` = NULL WHERE `product_id` = '" . (int)$product_id . "' AND `marketplace_id` = '" . (int)$marketplace_id . "'");
+	}
+
+	public function updateMarketplaceCategory(int $product_id, int $category_id, int $marketplace_id = 1): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `category_id` = '" . (int)$category_id . "' WHERE `product_id` = '" . (int)$product_id . "' AND `marketplace_id` = '" . (int)$marketplace_id . "'");
+	}
 }
+

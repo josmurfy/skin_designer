@@ -4616,6 +4616,8 @@ private function initializePriceVariants($category_id, $site_setting = []) {
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);  // 10s max pour établir la connexion
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);          // 30s max total — évite le freeze indéfini
     
         if ($postFields) {
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);

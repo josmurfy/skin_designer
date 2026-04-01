@@ -3736,6 +3736,14 @@ public function editProductError($product_id, $json_error) {
 			WHERE `product_id` = '" . $product_id . "'");
 	}
 
+	public function editProductPrice(int $product_id, float $price): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET `price` = '" . (float)$price . "', `date_modified` = NOW() WHERE `product_id` = '" . (int)$product_id . "'");
+	}
+
+	public function editProductQuantity(int $product_id, int $quantity): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET `quantity` = '" . (int)$quantity . "', `unallocated_quantity` = 0, `date_modified` = NOW() WHERE `product_id` = '" . (int)$product_id . "'");
+	}
+
 	public function editPriceWithShipping($product_id, $price_with_shipping) {
 		$product_id = (int)$product_id;
 		$price_with_shipping = (float)$price_with_shipping;
@@ -4335,5 +4343,32 @@ public function editProductError($product_id, $json_error) {
             //	//print("<pre>".print_r ($total,true )."</pre>");
             return $total;
         }
+
+	public function setPrimaryImage(int $product_id, string $image_path): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET `image` = '" . $this->db->escape($image_path) . "' WHERE `product_id` = '" . (int)$product_id . "'");
+	}
+
+	public function clearPrimaryImage(int $product_id): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET `image` = '' WHERE `product_id` = '" . (int)$product_id . "'");
+	}
+
+	public function deleteImageByPath(int $product_id, string $image_path): void {
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE `product_id` = '" . (int)$product_id . "' AND `image` = '" . $this->db->escape($image_path) . "'");
+	}
+
+	public function deleteImagesByPaths(int $product_id, array $paths): void {
+		if (empty($paths)) return;
+		$escaped = implode("','", array_map([$this->db, 'escape'], $paths));
+		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE `product_id` = '" . (int)$product_id . "' AND `image` IN ('" . $escaped . "')");
+	}
+
+	public function addImageIfNotExists(int $product_id, string $image_path): void {
+		$check = $this->db->query("SELECT `product_image_id` FROM `" . DB_PREFIX . "product_image` WHERE `product_id` = '" . (int)$product_id . "' AND `image` = '" . $this->db->escape($image_path) . "'");
+		if (!$check->num_rows) {
+			$sort = $this->db->query("SELECT MAX(`sort_order`) as m FROM `" . DB_PREFIX . "product_image` WHERE `product_id` = '" . (int)$product_id . "'");
+			$next = (int)($sort->row['m'] ?? 0) + 1;
+			$this->addImage($product_id, ['image' => $image_path, 'sort_order' => $next]);
+		}
+	}
 
 }

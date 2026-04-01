@@ -600,6 +600,7 @@
               <div class="d-grid">
                 <button type="button" data-oc-toggle="image" data-oc-target="#input-image" data-oc-thumb="#thumb-image" class="btn btn-primary rounded-0"><i class="fa-solid fa-pencil"></i> {{ button_edit }}</button>
                 <button type="button" data-oc-toggle="clear" data-oc-target="#input-image" data-oc-thumb="#thumb-image" class="btn btn-warning rounded-0"><i class="fa-regular fa-trash-can"></i> {{ button_clear }}</button>
+                <button type="button" class="btn btn-secondary rounded-0 btn-rotate-product-image" data-img-input="input-image" data-img-thumb="thumb-image"><i class="fa-solid fa-rotate-right"></i> Rotation 90°</button>
                 {% if master_id %}
                   <div class="mx-auto w-25">
                     <div class="form-check form-switch">
@@ -648,6 +649,7 @@
                               <div class="d-grid">
                                 <button type="button" data-oc-toggle="image" data-oc-target="#input-product-image-{{ image_row }}" data-oc-thumb="#product-image-{{ image_row }}" class="btn btn-primary rounded-0"><i class="fa-solid fa-pencil"></i> {{ button_edit }}</button>
                                 <button type="button" data-oc-toggle="clear" data-oc-target="#input-product-image-{{ image_row }}" data-oc-thumb="#product-image-{{ image_row }}" class="btn btn-warning rounded-0"><i class="fa-regular fa-trash-can"></i> {{ button_clear }}</button>
+                                <button type="button" class="btn btn-secondary rounded-0 btn-rotate-product-image" data-img-input="input-product-image-{{ image_row }}" data-img-thumb="product-image-{{ image_row }}"><i class="fa-solid fa-rotate-right"></i> Rotation 90°</button>
                               </div>
                             </div>
                           </td>
@@ -2892,6 +2894,7 @@ $('#button-image').on('click', function() {
     html += '    <div class="d-grid">';
     html += '      <button type="button" data-oc-toggle="image" data-oc-target="#input-product-image-' + image_row + '" data-oc-thumb="#thumb-image-' + image_row + '" class="btn btn-primary rounded-0"><i class="fa-solid fa-pencil"></i> {{ button_edit|escape('js') }}</button>';
     html += '      <button type="button" data-oc-toggle="clear" data-oc-target="#input-product-image-' + image_row + '" data-oc-thumb="#thumb-image-' + image_row + '" class="btn btn-warning rounded-0"><i class="fa-regular fa-trash-can"></i> {{ button_clear|escape('js') }}</button>';
+    html += '      <button type="button" class="btn btn-secondary rounded-0 btn-rotate-product-image" data-img-input="input-product-image-' + image_row + '" data-img-thumb="thumb-image-' + image_row + '"><i class="fa-solid fa-rotate-right"></i> Rotation 90°</button>';
     html += '    </div>';
     html += '  </div></td>';
     html += '  <td><input type="text" name="product_image[' + image_row + '][sort_order]" value="0" placeholder="{{ entry_sort_order|escape('js') }}" class="form-control"/></td>';

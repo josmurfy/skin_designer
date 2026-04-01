@@ -5,6 +5,11 @@
   outline-offset: 1px;
   background-color: rgba(13,110,253,0.08) !important;
 }
+.oc-card-selected {
+  outline: 3px solid #dc3545 !important;
+  outline-offset: 1px;
+  background-color: rgba(220,53,69,0.08) !important;
+}
 </style>
 
 {# ═══════════════════════════════════════════════════════════════════════════ #}
@@ -296,6 +301,110 @@
 {% endif %}
 
 {# ═══════════════════════════════════════════════════════════════════════════ #}
+{# SECTION — Résolution backup supérieure à OC (même nb d'images ou moins)    #}
+{# ═══════════════════════════════════════════════════════════════════════════ #}
+<hr class="my-4">
+<h5 class="fw-bold text-info mb-3">
+  <i class="fa-solid fa-up-right-and-down-left-from-center me-2"></i>
+  Résolution backup supérieure à OC
+  <span class="badge bg-info ms-2">{{ resolution_upgrade_total }}</span>
+  <small class="text-muted fw-normal ms-2" style="font-size:12px;">(backup ≤ nb images OC, mais meilleure résolution disponible)</small>
+</h5>
+
+{% if resolution_upgrade is not empty %}
+  <div class="table-responsive">
+    <table class="table table-sm table-hover table-striped">
+      <thead class="table-info">
+        <tr>
+          <th class="text-center">#</th>
+          <th>Produit</th>
+          <th class="text-center">
+            <a href="#" class="sort-resolution-upgrade" data-sort="oc_max_width"
+               data-order="{{ resolution_upgrade_sort == 'oc_max_width' and resolution_upgrade_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              Résol. OC (max px)
+              {% if resolution_upgrade_sort == 'oc_max_width' %}
+                <i class="fa-solid fa-sort-{{ resolution_upgrade_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center">
+            <a href="#" class="sort-resolution-upgrade" data-sort="backup_max_width"
+               data-order="{{ resolution_upgrade_sort == 'backup_max_width' and resolution_upgrade_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              Résol. Backup (max px)
+              {% if resolution_upgrade_sort == 'backup_max_width' %}
+                <i class="fa-solid fa-sort-{{ resolution_upgrade_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th class="text-center">Gain</th>
+          <th class="text-center">Nb images OC / Backup</th>
+          <th class="text-center">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in resolution_upgrade %}
+          <tr id="resolution-row-{{ product.product_id }}">
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
+                title="{{ product.name }}">{{ product.name }}</td>
+            <td class="text-center">
+              <span class="badge bg-secondary">{{ product.oc_max_width }}px</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-info text-dark">{{ product.backup_max_width }}px</span>
+            </td>
+            <td class="text-center">
+              {% set gain = product.backup_max_width - product.oc_max_width %}
+              <span class="badge bg-success">+{{ gain }}px</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-primary">{{ product.oc_image_count }}</span>
+              /
+              <span class="badge bg-warning text-dark">{{ product.image_backup_count }}</span>
+            </td>
+            <td class="text-center">
+             <button type="button"
+                      class="btn btn-sm btn-warning btn-open-backup-popup"
+                      data-product-id="{{ product.product_id }}"
+                      data-product-name="{{ product.name|escape('html_attr') }}"
+                      data-section="resolution"
+                      title="{{ button_open_backup_popup }}">
+                <i class="fa-solid fa-folder-open me-1"></i>{{ button_open_backup_popup }}
+              </button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination — resolution upgrade #}
+  {% if resolution_upgrade_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div class="text-muted" style="font-size:12px;">
+        {{ resolution_upgrade_start }} – {{ resolution_upgrade_end }} / {{ resolution_upgrade_total }}
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% for page_num in 1..resolution_upgrade_num_pages %}
+            <li class="page-item {{ page_num == resolution_upgrade_page ? 'active' : '' }}">
+              <a class="page-link page-resolution-upgrade" href="#" data-page="{{ page_num }}">{{ page_num }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="alert alert-success">
+    <i class="fa-solid fa-check-circle"></i>
+    Aucun produit avec une résolution backup supérieure aux images OC.
+    <small class="d-block text-muted mt-1">Faites d'abord un "Scan image_backup" pour calculer les résolutions.</small>
+  </div>
+{% endif %}
+
+{# ═══════════════════════════════════════════════════════════════════════════ #}
 {# MODAL — Bulk Fix eBay                                                       #}
 {# ═══════════════════════════════════════════════════════════════════════════ #}
 <div class="modal fade" id="bulk-fix-images-modal" tabindex="-1" aria-hidden="true"
@@ -394,12 +503,15 @@
   var URL_REMOVE_OC   = 'index.php?route=shopmanager/inventory/sync.removeOcImage&user_token={{ user_token }}';
   var URL_SET_PRIMARY = 'index.php?route=shopmanager/inventory/sync.setOcImagePrimary&user_token={{ user_token }}';
   var URL_XFER_ROLE   = 'index.php?route=shopmanager/inventory/sync.transferBackupAsRole&user_token={{ user_token }}';
-  var URL_DEL_BACKUP  = 'index.php?route=shopmanager/inventory/sync.deleteBackupImages&user_token={{ user_token }}';
+  var URL_DEL_BACKUP   = 'index.php?route=shopmanager/inventory/sync.deleteBackupImages&user_token={{ user_token }}';
+  var URL_RESET_SCAN  = 'index.php?route=shopmanager/inventory/sync.resetProductImageScan&user_token={{ user_token }}';
+  var URL_ROTATE      = 'index.php?route=shopmanager/tools.rotateImage&user_token={{ user_token }}';
 
   var TEXT_CONFIRM_BULK_FIX = '{{ text_bulk_fix_confirm|escape('js') }}';
 
   var currentBackupProductId  = null;
   var currentPopupBackupCount  = null; // updated after each reloadPopup
+  var currentPopupSection      = null; // 'resolution' or null
   var MIN_RES_GOOD = 800, MIN_RES_OK = 500;
 
   function resQuality(w, h) {
@@ -413,11 +525,13 @@
   function escAttr(s)     { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
 
   // ─── Reload entire tab ────────────────────────────────────────────────────
-  function loadImageMismatchTab(page, sort, order, bpage, bsort, border) {
+  function loadImageMismatchTab(page, sort, order, bpage, bsort, border, rpage, rsort, rorder) {
     $.ajax({
       url: 'index.php?route=shopmanager/inventory/sync.getImageMismatchTab&user_token={{ user_token }}',
       type: 'GET',
-      data: { page: page, sort: sort, order: order, bpage: bpage || 1, bsort: bsort || 'product_id', border: border || 'ASC' },
+      data: { page: page, sort: sort, order: order,
+              bpage: bpage || 1, bsort: bsort || 'product_id', border: border || 'ASC',
+              rpage: rpage || 1, rsort: rsort || 'backup_max_width', rorder: rorder || 'DESC' },
       dataType: 'html',
       beforeSend: function() {
         $('#image-mismatch').html('<div class="text-center p-5"><i class="fa-solid fa-spinner fa-spin fa-3x"></i></div>');
@@ -572,7 +686,8 @@
              .on('click.sortBackup', '.sort-backup-mismatch', function(e) {
     e.preventDefault();
     loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
-                          1, $(this).data('sort'), $(this).data('order'));
+                          1, $(this).data('sort'), $(this).data('order'),
+                          {{ resolution_upgrade_page }}, '{{ resolution_upgrade_sort }}', '{{ resolution_upgrade_order }}');
   });
 
   // ─── Pagination — Backup table ────────────────────────────────────────────
@@ -580,28 +695,53 @@
              .on('click.pageBackup', '.page-backup-mismatch', function(e) {
     e.preventDefault();
     loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
-                          $(this).data('page'), '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+                          $(this).data('page'), '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}',
+                          {{ resolution_upgrade_page }}, '{{ resolution_upgrade_sort }}', '{{ resolution_upgrade_order }}');
+  });
+
+  // ─── Sort — Resolution upgrade table ─────────────────────────────────────
+  $(document).off('click.sortResolution', '.sort-resolution-upgrade')
+             .on('click.sortResolution', '.sort-resolution-upgrade', function(e) {
+    e.preventDefault();
+    loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                          {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}',
+                          1, $(this).data('sort'), $(this).data('order'));
+  });
+
+  // ─── Pagination — Resolution upgrade table ───────────────────────────────
+  $(document).off('click.pageResolution', '.page-resolution-upgrade')
+             .on('click.pageResolution', '.page-resolution-upgrade', function(e) {
+    e.preventDefault();
+    loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                          {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}',
+                          $(this).data('page'), '{{ resolution_upgrade_sort }}', '{{ resolution_upgrade_order }}');
   });
 
   // ─── Render OC images section ─────────────────────────────────────────────
   function renderOcSection(ocImages, productId) {
-    // Drop zones — always shown so user can drag backup images here
-    var zones = '<div class="d-flex gap-2 mb-3">';
-    zones += '<div class="backup-drop-zone flex-fill text-center py-3 rounded" data-role="primary" data-product-id="' + productId + '" style="border:2px dashed #dc3545;background:#fff8f8;cursor:copy;transition:background .15s;">';
-    zones += '<i class="fa-solid fa-star text-danger" style="font-size:18px;"></i><div class="small text-danger fw-bold mt-1">Glisser ici &#8594; Principal</div></div>';
-    zones += '<div class="backup-drop-zone flex-fill text-center py-3 rounded" data-role="secondary" data-product-id="' + productId + '" style="border:2px dashed #0d6efd;background:#f8f8ff;cursor:copy;transition:background .15s;">';
-    zones += '<i class="fa-solid fa-images text-primary" style="font-size:18px;"></i><div class="small text-primary fw-bold mt-1">Glisser ici &#8594; Secondaire</div></div>';
-    zones += '</div>';
     if (!ocImages || !ocImages.length) {
-      return zones + '<div class="alert alert-warning py-2 mb-0"><i class="fa-solid fa-triangle-exclamation me-1"></i>Aucune image dans OpenCart pour ce produit.</div>';
+      return '<div class="alert alert-warning py-2 mb-0"><i class="fa-solid fa-triangle-exclamation me-1"></i>Aucune image dans OpenCart pour ce produit.</div>';
     }
-    var html = zones + '<div class="row g-2">';
+    // Bulk toolbar OC
+    var toolbar = '<div class="d-flex flex-wrap align-items-center gap-2 mb-2 px-2 py-1 rounded" style="background:#f0f4ff;">';
+    toolbar += '<input type="checkbox" id="oc-bulk-select-all" class="form-check-input" style="width:17px;height:17px;cursor:pointer;accent-color:#dc3545;">';
+    toolbar += '<label for="oc-bulk-select-all" class="form-check-label small fw-bold mb-0">Tout</label>';
+    toolbar += '<span class="badge bg-secondary" id="oc-bulk-count">0 s\u00e9l.</span>';
+    toolbar += '<div class="ms-auto">';
+    toolbar += '<button type="button" class="btn btn-sm btn-danger btn-bulk-remove-oc" disabled style="font-size:11px;"><i class="fa-solid fa-trash me-1"></i>Retirer s\u00e9lection OC</button>';
+    toolbar += '</div></div>';
+    var html = toolbar + '<div class="row g-2">';
     $.each(ocImages, function(i, img) {
       var qual  = resQuality(img.width, img.height);
       var dim   = dimLabel(img.width, img.height);
       var isPri = img.role === 'primary';
       html += '<div class="col-6 col-md-3 col-lg-2">';
-      html += '<div class="card h-100" style="border:3px solid var(--bs-' + qual + ');">';
+      html += '<div class="card h-100 position-relative oc-selectable-card" style="border:3px solid var(--bs-' + qual + ');cursor:pointer;">';
+      html += '<input type="checkbox" class="oc-bulk-check"'
+            + ' data-image="' + encodeURIComponent(img.image) + '"'
+            + ' data-role="' + img.role + '"'
+            + ' onclick="event.stopPropagation();"'
+            + ' style="position:absolute;top:6px;left:6px;z-index:10;width:18px;height:18px;cursor:pointer;accent-color:#dc3545;">';
       html += '<div class="position-relative" style="height:130px;background:#f5f5f5;overflow:hidden;">';
       html += '<img src="' + img.url + '" style="width:100%;height:100%;object-fit:contain;" loading="lazy" onerror="this.style.opacity=0.15;">';
       html += '<span class="position-absolute top-0 start-0 m-1 badge ' + (isPri ? 'bg-danger' : 'bg-secondary') + '" style="font-size:9px;">' + (isPri ? '&#11088; Principal' : 'Secondaire') + '</span>';
@@ -619,6 +759,9 @@
       html += '<button type="button" class="btn btn-sm btn-outline-danger w-100 btn-popup-remove-oc"'
             + ' data-product-id="' + productId + '" data-image="' + encodeURIComponent(img.image) + '" data-role="' + img.role + '"'
             + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-trash me-1"></i>Retirer OC</button>';
+      html += '<button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-popup-rotate"'
+            + ' data-source="oc" data-product-id="' + productId + '" data-image="' + encodeURIComponent(img.image) + '"'
+            + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-rotate-right me-1"></i>Rotation 90°</button>';
       html += '</div></div></div>';
     });
     return html + '</div>';
@@ -650,10 +793,11 @@
             + ' data-drag-filename="' + escAttr(f.filename) + '"'
             + ' data-drag-product-id="' + productId + '"'
             + ' style="border:3px solid var(--bs-' + qual + ');cursor:pointer;">';
-      // Checkbox caché — sélection via clic sur la carte (highlight suffit comme feedback)
       html += '<input type="checkbox" class="backup-bulk-check"'
             + ' data-filename="' + escAttr(f.filename) + '"'
-            + ' style="display:none;">';
+            + ' data-type="' + escAttr(f.type) + '"'
+            + ' onclick="event.stopPropagation();"'
+            + ' style="position:absolute;top:6px;left:6px;z-index:10;width:18px;height:18px;cursor:pointer;accent-color:#0d6efd;">';
       html += '<div class="position-relative" style="height:130px;background:#f5f5f5;overflow:hidden;">';
       html += '<img src="' + f.url + '" style="width:100%;height:100%;object-fit:contain;" loading="lazy" onerror="this.style.opacity=0.15;">';
       if (inOC) {
@@ -677,6 +821,9 @@
       html += '<button type="button" class="btn btn-sm btn-outline-danger w-100 btn-popup-del-backup"'
             + ' data-product-id="' + productId + '" data-filename="' + escAttr(f.filename) + '"'
             + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-trash me-1"></i>Suppr. backup</button>';
+      html += '<button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-popup-rotate"'
+            + ' data-source="backup" data-product-id="' + productId + '" data-filename="' + escAttr(f.filename) + '"'
+            + ' style="font-size:10px;padding:2px 4px;"><i class="fa-solid fa-rotate-right me-1"></i>Rotation 90°</button>';
       html += '</div></div></div>';
     });
     return html + '</div>';
@@ -709,19 +856,25 @@
 
   // ─── Modal close: sync badge in table ─────────────────────────────────────
   document.getElementById('backup-images-modal').addEventListener('hidden.bs.modal', function() {
-    if (!currentBackupProductId || currentPopupBackupCount === null) return;
-    var pid   = currentBackupProductId;
-    var count = currentPopupBackupCount;
-    var $badge = $('#backup-count-' + pid);
-    if (!$badge.length) return;
-    $badge.text(count);
-    // Dim row if backup is now empty
-    if (count === 0) {
-      $('#backup-row-' + pid).css('opacity', '0.4').find('button').prop('disabled', true);
-    } else {
-      $('#backup-row-' + pid).css('opacity', '');
+    var pid     = currentBackupProductId;
+    var section = currentPopupSection;
+    if (pid && section === 'resolution') {
+      $('#resolution-row-' + pid).remove();
+    }
+    if (pid && currentPopupBackupCount !== null) {
+      var count  = currentPopupBackupCount;
+      var $badge = $('#backup-count-' + pid);
+      if ($badge.length) {
+        $badge.text(count);
+        if (count === 0) {
+          $('#backup-row-' + pid).css('opacity', '0.4').find('button').prop('disabled', true);
+        } else {
+          $('#backup-row-' + pid).css('opacity', '');
+        }
+      }
     }
     currentPopupBackupCount = null;
+    currentPopupSection     = null;
   });
 
   // ─── Open Backup Popup ────────────────────────────────────────────────────
@@ -729,10 +882,15 @@
              .on('click.openBackupPopup', '.btn-open-backup-popup', function() {
     var productId   = $(this).data('product-id');
     var productName = $(this).data('product-name');
+    var section     = $(this).data('section') || null;
     currentBackupProductId = productId;
+    currentPopupSection    = section;
     $('#backup-modal-title-text').text(productName + ' (#' + productId + ')');
     var $modal = new bootstrap.Modal(document.getElementById('backup-images-modal'));
     $modal.show();
+    if (section === 'resolution') {
+      $.post(URL_RESET_SCAN, { product_id: productId });
+    }
     reloadPopup(productId);
   });
 
@@ -767,6 +925,9 @@
       success: function(json) {
         if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Retirer OC'); return; }
         reloadPopup(pid);
+        if (confirm('Image retirée. Transférer une image backup vers OpenCart maintenant ?')) {
+          $('#backup-modal-body').find('.btn-popup-xfer-pri').first().trigger('click');
+        }
       },
       error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Retirer OC'); }
     });
@@ -824,6 +985,69 @@
     });
   });
 
+  // ─── OC images bulk helpers ───────────────────────────────────────────────
+  function updateOcBulkBtn() {
+    var n = $('.oc-bulk-check:checked').length;
+    $('.btn-bulk-remove-oc').prop('disabled', n === 0);
+    $('#oc-bulk-count').text(n + ' s\u00e9l.');
+  }
+
+  $(document).off('change.ocSelectAll', '#oc-bulk-select-all')
+             .on('change.ocSelectAll', '#oc-bulk-select-all', function() {
+    var isChecked = $(this).is(':checked');
+    $('.oc-bulk-check').prop('checked', isChecked)
+      .closest('.card').toggleClass('oc-card-selected', isChecked);
+    updateOcBulkBtn();
+  });
+
+  $(document).off('change.ocBulkCheck', '.oc-bulk-check')
+             .on('change.ocBulkCheck', '.oc-bulk-check', function() {
+    $(this).closest('.card').toggleClass('oc-card-selected', $(this).is(':checked'));
+    var total   = $('.oc-bulk-check').length;
+    var checked = $('.oc-bulk-check:checked').length;
+    $('#oc-bulk-select-all').prop('indeterminate', checked > 0 && checked < total)
+                            .prop('checked', checked === total && total > 0);
+    updateOcBulkBtn();
+  });
+
+  $(document).off('click.ocCardSelect', '.oc-selectable-card')
+             .on('click.ocCardSelect', '.oc-selectable-card', function(e) {
+    if ($(e.target).closest('button, a, input').length) return;
+    var $cb = $(this).find('.oc-bulk-check');
+    $cb.prop('checked', !$cb.prop('checked')).trigger('change');
+  });
+
+  $(document).off('click.bulkRemoveOc', '.btn-bulk-remove-oc')
+             .on('click.bulkRemoveOc', '.btn-bulk-remove-oc', function() {
+    var items = [];
+    $('.oc-bulk-check:checked').each(function() {
+      items.push({ image: decodeURIComponent($(this).data('image')), role: $(this).data('role') });
+    });
+    if (!items.length) return;
+    if (!confirm('Retirer ' + items.length + ' image(s) d\u2019OpenCart ?')) return;
+    var pid  = currentBackupProductId;
+    var done = 0, errors = [];
+    $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>En cours\u2026');
+    function next() {
+      if (done >= items.length) {
+        if (errors.length) alert('Erreurs : ' + errors.join(', '));
+        reloadPopup(pid);
+        if (confirm('Images retirées. Transférer les images backup vers OpenCart maintenant ?')) {
+          $('#backup-modal-body').find('.btn-popup-xfer-pri').first().trigger('click');
+        }
+        return;
+      }
+      var item = items[done++];
+      $.ajax({
+        url: URL_REMOVE_OC, type: 'POST', dataType: 'json',
+        data: { product_id: pid, image_path: item.image, role: item.role },
+        success: function(json) { if (json.error) errors.push(item.image + ': ' + json.error); next(); },
+        error: function(xhr) { errors.push(item.image + ' (HTTP ' + xhr.status + ')'); next(); }
+      });
+    }
+    next();
+  });
+
   // ─── Bulk delete helpers ──────────────────────────────────────────────────
   function updateBulkDeleteBtn() {
     var $checked = $('.backup-bulk-check:checked');
@@ -860,12 +1084,24 @@
 
   $(document).off('click.bulkXfer', '.btn-bulk-xfer-backup')
              .on('click.bulkXfer', '.btn-bulk-xfer-backup', function() {
-    var baseRole = $(this).data('role');
-    var filenames = [];
-    $('.backup-bulk-check:checked').each(function() { filenames.push($(this).data('filename')); });
+    var baseRole    = $(this).data('role');
+    var $checked    = $('.backup-bulk-check:checked');
+    var totalImgs   = $('.backup-bulk-check').length;
+    var allSelected = ($checked.length === totalImgs && totalImgs > 0);
+    var filenames = [], types = [];
+    $checked.each(function() {
+      filenames.push($(this).data('filename'));
+      types.push($(this).data('type') || 'secondary');
+    });
     if (!filenames.length) return;
-    var label = baseRole === 'primary' ? 'principal (1\u00e8re) + secondaires (reste)' : 'secondaire';
-    if (!confirm('Transf\u00e9rer ' + filenames.length + ' image(s) \u2014 ' + label + ' ?')) return;
+    var useOriginalRoles = false;
+    if (allSelected) {
+      if (!confirm('Transf\u00e9rer TOUTES les images backup vers OC en respectant les r\u00f4les ?\n(primaire backup \u2192 primaire OC, secondaire backup \u2192 secondaire OC)')) return;
+      useOriginalRoles = true;
+    } else {
+      var label = baseRole === 'primary' ? 'principal (1\u00e8re) + secondaires (reste)' : 'secondaire';
+      if (!confirm('Transf\u00e9rer ' + filenames.length + ' image(s) \u2014 ' + label + ' ?')) return;
+    }
     var pid = currentBackupProductId;
     $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>En cours\u2026');
     var done = 0, errors = [];
@@ -874,9 +1110,8 @@
         if (errors.length) alert('Erreurs : ' + errors.join(', '));
         reloadPopup(pid); return;
       }
-      // Pour "primary" : 1ère image = primary, toutes les suivantes = secondary
       var fn   = filenames[done];
-      var role = (baseRole === 'primary' && done > 0) ? 'secondary' : baseRole;
+      var role = useOriginalRoles ? types[done] : ((baseRole === 'primary' && done > 0) ? 'secondary' : baseRole);
       done++;
       $.ajax({
         url: URL_XFER_ROLE, type: 'POST', dataType: 'json',
@@ -944,6 +1179,36 @@
         reloadPopup(pid);
       },
       error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); reloadPopup(pid); }
+    });
+  });
+
+  // ─── Rotate image 90° CW ─────────────────────────────────────────────────
+  $(document).off('click.rotateImg', '.btn-popup-rotate')
+             .on('click.rotateImg', '.btn-popup-rotate', function() {
+    var $btn    = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+    var source  = $(this).data('source');
+    var pid     = $(this).data('product-id');
+    var postData = { source: source, product_id: pid, degrees: 90 };
+    if (source === 'oc') {
+      postData.image_path = decodeURIComponent($(this).data('image'));
+    } else {
+      postData.filename = $(this).data('filename');
+    }
+    $.ajax({
+      url: URL_ROTATE, type: 'POST', dataType: 'json',
+      data: postData,
+      success: function(json) {
+        if (json.error) {
+          alert('Erreur rotation: ' + json.error);
+          $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right me-1"></i>Rotation 90°');
+          return;
+        }
+        reloadPopup(pid);
+      },
+      error: function(xhr) {
+        alert('Erreur AJAX: ' + xhr.status);
+        $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right me-1"></i>Rotation 90°');
+      }
     });
   });
 

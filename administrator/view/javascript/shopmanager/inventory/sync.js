@@ -120,13 +120,15 @@
                             });
                         }, 300);
                     }
-                    alert(
-                        'Scan terminé ✓\n' +
+                    var msg = 'Scan terminé ✓\n' +
                         '• Produits scannés : ' + json.scanned + '\n' +
                         '• Avec images backup : ' + json.with_images + '\n' +
                         '• Répertoires vides : ' + json.empty + '\n' +
-                        '• Non trouvés : ' + json.not_found
-                    );
+                        '• Non trouvés : ' + json.not_found;
+                    if (json.not_found_samples && json.not_found_samples.length) {
+                        msg += '\n  (5 premiers IDs) : ' + json.not_found_samples.join(', ');
+                    }
+                    alert(msg);
                 },
                 error: function(xhr) {
                     $btn.prop('disabled', false).html(

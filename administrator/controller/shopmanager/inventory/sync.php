@@ -337,35 +337,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         $upcs = array_filter(array_unique(array_column($rows, 'upc')));
         if (empty($upcs)) return;
 
-        $escaped = implode("','", array_map([$this->db, 'escape'], $upcs));
-        $query = $this->db->query("
-            SELECT upc, ebay_category
-            FROM " . DB_PREFIX . "product_info_sources
-            WHERE upc IN ('$escaped') AND ebay_category IS NOT NULL AND ebay_category != ''
-        ");
-
-        // Build map: upc => {category_id, category_name, percent}
-        $map = [];
-        foreach ($query->rows as $row) {
-            $cats = json_decode($row['ebay_category'] ?? '[]', true);
-            if (!is_array($cats)) continue;
-            $best_id = null; $best_pct = -1; $best_name = '';
-            foreach ($cats as $cat) {
-                $pct = (int)($cat['percent'] ?? 0);
-                if ($pct > $best_pct && !empty($cat['category_id'])) {
-                    $best_pct  = $pct;
-                    $best_id   = (int)$cat['category_id'];
-                    $best_name = $cat['category_name'] ?? '';
-                }
-            }
-            if ($best_id) {
-                $map[$row['upc']] = [
-                    'source_category_id'   => $best_id,
-                    'source_category_name' => $best_name,
-                    'source_percent'       => $best_pct,
-                ];
-            }
-        }
+        $this->load->model('shopmanager/inventory/sync');
+        $map = $this->model_shopmanager_inventory_sync->getBestCategoryByUpcs(array_values($upcs));
 
         // Merge into rows
         foreach ($rows as &$row) {
@@ -412,6 +385,18 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['backup_mismatch_end']        = min($limit, $backup_total);
         $data['backup_mismatch_num_pages']  = ceil($backup_total / $limit);
         $data['backup_mismatch_pagination'] = $backup_total > $limit;
+
+        $resolution_upgrade       = $this->model_shopmanager_inventory_sync->getResolutionUpgradeMismatch(['start' => 0, 'limit' => $limit, 'sort' => 'backup_max_width', 'order' => 'DESC']);
+        $resolution_upgrade_total = $this->model_shopmanager_inventory_sync->getTotalResolutionUpgradeMismatch();
+        $data['resolution_upgrade']            = $resolution_upgrade;
+        $data['resolution_upgrade_total']      = $resolution_upgrade_total;
+        $data['resolution_upgrade_page']       = 1;
+        $data['resolution_upgrade_sort']       = 'backup_max_width';
+        $data['resolution_upgrade_order']      = 'DESC';
+        $data['resolution_upgrade_start']      = 1;
+        $data['resolution_upgrade_end']        = min($limit, $resolution_upgrade_total);
+        $data['resolution_upgrade_num_pages']  = ceil($resolution_upgrade_total / $limit);
+        $data['resolution_upgrade_pagination'] = $resolution_upgrade_total > $limit;
 
         $data['user_token'] = $this->session->data['user_token'];
         $new_keys = ['text_backup_table_title','text_backup_table_info','button_open_backup_popup',
@@ -499,7 +484,17 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['specifics_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalSpecificsMismatch();
         $data['condition_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalConditionMismatch();
         $data['category_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalCategoryMismatch();
-        $data['image_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
+        $data['image_mismatch_count']          = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
+        $data['backup_image_mismatch_count']   = $this->model_shopmanager_inventory_sync->getTotalImageBackupMismatch();
+        $data['resolution_upgrade_count']      = $this->model_shopmanager_inventory_sync->getTotalResolutionUpgradeMismatch();
+        $data['total_mismatch_count']          = $data['price_mismatch_count']
+                                               + $data['qty_mismatch_count']
+                                               + $data['specifics_mismatch_count']
+                                               + $data['condition_mismatch_count']
+                                               + $data['category_mismatch_count']
+                                               + $data['image_mismatch_count']
+                                               + $data['backup_image_mismatch_count']
+                                               + $data['resolution_upgrade_count'];
 
         // Slow Moving Products
         $data['bottom_products'] = $this->model_shopmanager_inventory_sync->getBottomProducts($period, 10);
@@ -823,15 +818,20 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $product_id = (int)$this->request->post['product_id'];
 
-            // Get product info using model
-            $product = $this->model_shopmanager_marketplace->getProductQuantities($product_id);
-            
-            if (!$product) {
+            // Load models
+            $this->load->model('shopmanager/ebay');
+            $this->load->model('shopmanager/marketplace');
+            $this->load->model('shopmanager/catalog/product');
+
+            // Get product info
+            $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+
+            if (empty($product)) {
                 throw new \Exception('Product not found');
             }
 
-            // Get marketplace info using model
-            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceForRefresh($product_id);
+            // Get marketplace info
+            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
 
             if (!$marketplace) {
                 throw new \Exception('Product not listed on eBay');
@@ -839,11 +839,7 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $marketplace_item_id = $marketplace['marketplace_item_id'];
             $marketplace_account_id = (int)$marketplace['marketplace_account_id'];
-            $new_quantity = (int)$product['quantity'] + (int)$product['unallocated_quantity'];
-
-            // Load models
-            $this->load->model('shopmanager/ebay');
-            $this->load->model('shopmanager/marketplace');
+            $new_quantity = (int)($product['quantity'] ?? 0) + (int)($product['unallocated_quantity'] ?? 0);
             
             // Get marketplace account settings
             $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
@@ -853,23 +849,6 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $site_settings = json_decode($account_info['site_setting'], true) ?: [];
             }
             
-            // Set all default values if not present
-            if (!isset($site_settings['Currency']['Currency'])) {
-                $site_settings['Currency']['Currency'] = 'CAD';
-            }
-            if (!isset($site_settings['Location']['Location'])) {
-                $site_settings['Location']['Location'] = 'CA';
-            }
-            if (!isset($site_settings['Location']['PostalCode'])) {
-                $site_settings['Location']['PostalCode'] = 'J0H1L0';
-            }
-            if (!isset($site_settings['Country']['Country'])) {
-                $site_settings['Country']['Country'] = 'CA';
-            }
-            // Language is a direct string, not nested
-            if (!isset($site_settings['Language'])) {
-                $site_settings['Language'] = 'en';
-            }
             
             // Update quantity on eBay
             $response = $this->model_shopmanager_ebay->editQuantity(
@@ -882,9 +861,11 @@ class Sync extends \Opencart\System\Engine\Controller {
             );
 
             // Update local quantity_listed using model
-            $this->model_shopmanager_marketplace->updateMarketplaceQuantityListed($product_id, $new_quantity);
+          
 
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+                $this->model_shopmanager_marketplace->updateMarketplaceQuantityListed($product_id, $new_quantity);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = true;
                 $json['message'] = 'Quantity updated to ' . $new_quantity . ' on eBay';
             } else {
@@ -925,9 +906,10 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $response = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id);
 
-            $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
-
+            
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+                $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = true;
                 $json['message'] = 'Product #' . $product_id . ' synced successfully to eBay';
             } else {
@@ -1059,6 +1041,7 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function syncPriceToEbay(): void {
         $this->load->model('shopmanager/ebay');
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
@@ -1067,7 +1050,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $product = $this->model_shopmanager_marketplace->getProductPrice($product_id);
+                $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
                 if (!$product) {
                     throw new \Exception("Product not found");
                 }
@@ -1110,6 +1093,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     public function syncPriceFromEbay(): void {
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1119,13 +1103,16 @@ class Sync extends \Opencart\System\Engine\Controller {
             try {
                 $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || !isset($marketplace['price'])) {
+                    $json['error'] = "Product not listed on eBay";
                     throw new \Exception("Product not listed on eBay");
+                }else{
+                    $ebay_price = (float)$marketplace['price'];
+                    $this->model_shopmanager_catalog_product->editProductPrice($product_id, $ebay_price);
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $json['success'] = 'Local price updated from eBay: $' . number_format($ebay_price, 2);
                 }
                 
-                $ebay_price = (float)$marketplace['price'];
-                $this->model_shopmanager_marketplace->updateProductPrice($product_id, $ebay_price);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
-                $json['success'] = 'Local price updated from eBay: $' . number_format($ebay_price, 2);
+                
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -1173,6 +1160,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     public function syncQuantityFromEbay(): void {
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1182,14 +1170,17 @@ class Sync extends \Opencart\System\Engine\Controller {
             try {
                 $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || !isset($marketplace['quantity_listed'])) {
+                    $json['error'] = "Product not listed on eBay";
                     throw new \Exception("Product not listed on eBay");
-                }
+                    
+                }else{
 
-                // eBay available = listed - sold  (same formula used in the mismatch detection query)
-                $ebay_quantity = max(0, (int)$marketplace['quantity_listed'] - (int)($marketplace['quantity_sold'] ?? 0));
-                $this->model_shopmanager_marketplace->updateProductQuantity($product_id, $ebay_quantity);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
-                $json['success'] = 'Local quantity updated from eBay: ' . $ebay_quantity;
+                    // eBay available = listed - sold  (same formula used in the mismatch detection query)
+                    $ebay_quantity = max(0, (int)$marketplace['quantity_listed'] - (int)($marketplace['quantity_sold'] ?? 0));
+                    $this->model_shopmanager_catalog_product->editProductQuantity($product_id, $ebay_quantity);
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $json['success'] = 'Local quantity updated from eBay: ' . $ebay_quantity;
+                }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -1207,6 +1198,7 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function syncSpecificsToEbay(): void {
         $this->load->model('shopmanager/ebay');
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
@@ -1215,7 +1207,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $product_desc = $this->model_shopmanager_marketplace->getProductSpecifics($product_id, 1);
+                $product_desc = $this->model_shopmanager_catalog_product->getProduct($product_id);
                 if (!$product_desc || empty($product_desc['specifics'])) {
                     throw new \Exception("No local specifics found");
                 }
@@ -1258,6 +1250,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     public function syncSpecificsFromEbay(): void {
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1267,13 +1260,15 @@ class Sync extends \Opencart\System\Engine\Controller {
             try {
                 $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || empty($marketplace['specifics'])) {
+                    $json['error'] = "Product not listed on eBay or no specifics found";
                     throw new \Exception("No eBay specifics found");
-                }
+                }else{
                 
-                $ebay_specifics = $marketplace['specifics'];
-                $this->model_shopmanager_marketplace->updateProductDescriptionSpecifics($product_id, $ebay_specifics, 1);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
-                $json['success'] = 'Local specifics updated from eBay';
+                    $ebay_specifics = $marketplace['specifics'];
+                    $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $ebay_specifics, 1);
+                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $json['success'] = 'Local specifics updated from eBay';
+                }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -1303,7 +1298,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             $this->load->model('shopmanager/ebay');
             
             // Get marketplace item ID from database using model
-            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceForRefresh($product_id);
+            $this->load->model('shopmanager/marketplace');
+            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
             
             if (!$marketplace) {
                 throw new \Exception("Product not found on eBay marketplace");
@@ -1311,7 +1307,6 @@ class Sync extends \Opencart\System\Engine\Controller {
             
             $marketplace_item_id = $marketplace['marketplace_item_id'];
             $marketplace_account_id = $marketplace['marketplace_account_id'];
-            $is_com = $marketplace['is_com'];
             
             // Call eBay API to get item details
             $response = $this->model_shopmanager_ebay->getItem($marketplace_item_id, $marketplace_account_id);
@@ -1362,7 +1357,14 @@ class Sync extends \Opencart\System\Engine\Controller {
             $quantity_sold = isset($item['SellingStatus']['QuantitySold']) ? (int)$item['SellingStatus']['QuantitySold'] : 0;
             $currency = isset($item['Currency']) ? $item['Currency'] : 'CAD';
             $category_id = isset($item['PrimaryCategory']['CategoryID']) ? (int)$item['PrimaryCategory']['CategoryID'] : 0;
-            
+
+            // Count eBay images from PictureDetails
+            $ebay_image_count = 0;
+            if (isset($item['PictureDetails']['PictureURL'])) {
+                $pics = $item['PictureDetails']['PictureURL'];
+                $ebay_image_count = is_array($pics) ? count($pics) : 1;
+            }
+
             // Update product_marketplace table using model
             $marketplace_data = [
                 'price' => (float)$price,
@@ -1372,11 +1374,19 @@ class Sync extends \Opencart\System\Engine\Controller {
                 'category_id' => (int)$category_id,
                 'specifics' => $specifics,
                 'date_added' => $date_added,
-                'date_ended' => $date_ended
+                'date_ended' => $date_ended,
+                'ebay_image_count' => $ebay_image_count,
             ];
-            
+
             $this->model_shopmanager_marketplace->updateMarketplaceFullRefresh($product_id, $marketplace_data);
-            
+
+            // Refresh backup image count + resolution widths (reuses same request, no extra eBay call)
+            $this->load->model('shopmanager/inventory/sync');
+            $backup_dir = DIR_OPENCART . 'image_backup/';
+            if (is_dir($backup_dir)) {
+                $this->model_shopmanager_inventory_sync->refreshProductResolutionScan((int)$product_id, $backup_dir);
+            }
+
             $json['success'] = true;
             $json['message'] = 'Item refreshed from eBay successfully';
             $json['data'] = [
@@ -1388,6 +1398,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 'category_id' => $category_id,
                 'date_added' => $date_added,
                 'date_ended' => $date_ended,
+                'ebay_image_count' => $ebay_image_count,
                 'specifics_updated' => !empty($specifics)
             ];
             
@@ -1646,7 +1657,25 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['backup_mismatch_num_pages']  = ceil($backup_total / $limit);
         $data['backup_mismatch_pagination'] = $backup_total > $limit;
 
-        $data['user_token'] = $this->session->data['user_token'];
+        // === Resolution upgrade pagination ===
+        $rpage  = isset($this->request->get['rpage'])  ? (int)$this->request->get['rpage']  : 1;
+        $rstart = ($rpage - 1) * $limit;
+        $rsort  = isset($this->request->get['rsort'])  ? $this->request->get['rsort']  : 'backup_max_width';
+        $rorder = isset($this->request->get['rorder']) ? $this->request->get['rorder'] : 'DESC';
+
+        $rfilter = ['start' => $rstart, 'limit' => $limit, 'sort' => $rsort, 'order' => $rorder];
+        $resolution_upgrade       = $this->model_shopmanager_inventory_sync->getResolutionUpgradeMismatch($rfilter);
+        $resolution_upgrade_total = $this->model_shopmanager_inventory_sync->getTotalResolutionUpgradeMismatch();
+
+        $data['resolution_upgrade']            = $resolution_upgrade;
+        $data['resolution_upgrade_total']      = $resolution_upgrade_total;
+        $data['resolution_upgrade_page']       = $rpage;
+        $data['resolution_upgrade_sort']       = $rsort;
+        $data['resolution_upgrade_order']      = $rorder;
+        $data['resolution_upgrade_start']      = $rstart + 1;
+        $data['resolution_upgrade_end']        = min($rstart + $limit, $resolution_upgrade_total);
+        $data['resolution_upgrade_num_pages']  = ceil($resolution_upgrade_total / $limit);
+        $data['resolution_upgrade_pagination'] = $resolution_upgrade_total > $limit;
         $new_keys = ['text_backup_table_title','text_backup_table_info','button_open_backup_popup',
                      'text_popup_backup_title','button_transfer_to_oc','button_delete_from_backup',
                      'text_backup_select_all','text_backup_no_files','text_backup_already_in_oc',
@@ -1693,7 +1722,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['scanned']     = $stats['scanned'];
             $json['with_images'] = $stats['with_images'];
             $json['empty']       = $stats['empty'];
-            $json['not_found']   = $stats['not_found'];
+            $json['not_found']          = $stats['not_found'];
+            $json['not_found_samples'] = $stats['not_found_samples'];
             $json['message']     = sprintf(
                 '%d products scanned — %d with backup images, %d empty dirs, %d not found in backup',
                 $stats['scanned'], $stats['with_images'], $stats['empty'], $stats['not_found']
@@ -1723,8 +1753,11 @@ class Sync extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $backup_dir = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
-        if (!is_dir($backup_dir)) {
+        $prefix = substr((string)$product_id, 0, 2);
+        $backup_dir_flat   = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+        $backup_dir_nested = DIR_OPENCART . 'image_backup/data/product/' . $prefix . '/' . $product_id . '/';
+        $backup_dir = is_dir($backup_dir_flat) ? $backup_dir_flat : (is_dir($backup_dir_nested) ? $backup_dir_nested : null);
+        if ($backup_dir === null) {
             $json['files'] = [];
             $json['success'] = true;
             $this->response->addHeader('Content-Type: application/json');
@@ -1759,7 +1792,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 'type'       => $type,
                 'oc_exists'  => $oc_exists,
                 'oc_path'    => $oc_rel_path,
-                'backup_url' => HTTP_CATALOG . 'image_backup/data/product/' . $product_id . '/' . rawurlencode($file),
+                'backup_url' => HTTP_CATALOG . substr($backup_dir, strlen(DIR_OPENCART)) . rawurlencode($file),
                 'size'       => filesize($backup_dir . $file),
                 'width'      => $img_info ? $img_info[0] : 0,
                 'height'     => $img_info ? $img_info[1] : 0,
@@ -1789,6 +1822,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         ini_set('display_errors', '0');
         $this->response->addHeader('Content-Type: application/json');
         $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('shopmanager/marketplace');
         $json = [];
         try {
         $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -1800,8 +1835,11 @@ class Sync extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $backup_dir  = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
-        $subfolder   = substr((string)$product_id, 0, 2);
+        $prefix      = substr((string)$product_id, 0, 2);
+        $backup_dir  = is_dir(DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/')
+            ? DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/'
+            : DIR_OPENCART . 'image_backup/data/product/' . $prefix . '/' . $product_id . '/';
+        $subfolder   = $prefix;
         $dest_rel    = 'catalog/product/' . $subfolder . '/' . $product_id . '/';
         $dest_dir    = DIR_IMAGE . $dest_rel;
 
@@ -1814,12 +1852,12 @@ class Sync extends \Opencart\System\Engine\Controller {
         $errors      = [];
 
         // Get current primary image for this product
-        $prod_query = $this->db->query("SELECT image FROM " . DB_PREFIX . "product WHERE product_id = '" . $product_id . "'");
-        $current_main = $prod_query->row['image'] ?? '';
+        $product      = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $current_main = $product['image'] ?? '';
 
         // Get max sort_order in product_image
-        $sort_query = $this->db->query("SELECT MAX(sort_order) as max_sort FROM " . DB_PREFIX . "product_image WHERE product_id = '" . $product_id . "'");
-        $next_sort = (int)($sort_query->row['max_sort'] ?? 0) + 1;
+        $existing_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+        $next_sort = count($existing_images) ? max(array_column($existing_images, 'sort_order')) + 1 : 1;
 
         foreach ($filenames as $raw_filename) {
             $filename = basename($raw_filename); // security: no path traversal
@@ -1848,15 +1886,12 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             if ($is_primary && (empty($current_main) || $current_main === 'no_image.png')) {
                 // Set as main image
-                $this->db->query("UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($oc_path) . "' WHERE product_id = '" . $product_id . "'");
+                $this->model_shopmanager_catalog_product->setPrimaryImage($product_id, $oc_path);
                 $current_main = $oc_path;
             } else {
                 // Insert as secondary image
-                $check = $this->db->query("SELECT product_image_id FROM " . DB_PREFIX . "product_image WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($oc_path) . "'");
-                if (!$check->num_rows) {
-                    $this->db->query("INSERT INTO " . DB_PREFIX . "product_image SET product_id = '" . $product_id . "', image = '" . $this->db->escape($oc_path) . "', sort_order = '" . $next_sort . "'");
-                    $next_sort++;
-                }
+                $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $oc_path);
+                $next_sort++;
             }
 
             $transferred++;
@@ -1872,7 +1907,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
             }
         }
-        $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET image_backup_count = '" . $new_count . "' WHERE product_id = '" . $product_id . "'");
+        $this->model_shopmanager_marketplace->updateImageBackupCount($product_id, $new_count);
 
         $json['success']     = true;
         $json['transferred'] = $transferred;
@@ -1892,6 +1927,7 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function deleteBackupImages(): void {
         ini_set('display_errors', '0');
         $this->response->addHeader('Content-Type: application/json');
+        $this->load->model('shopmanager/marketplace');
         $json = [];
         try {
         $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -1903,7 +1939,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $backup_dir = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+        $prefix     = substr((string)$product_id, 0, 2);
+        $backup_dir = is_dir(DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/')
+            ? DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/'
+            : DIR_OPENCART . 'image_backup/data/product/' . $prefix . '/' . $product_id . '/';
         $deleted = 0;
         $errors  = [];
 
@@ -1928,7 +1967,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
             }
         }
-        $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET image_backup_count = '" . $new_count . "' WHERE product_id = '" . $product_id . "'");
+        $this->model_shopmanager_marketplace->updateImageBackupCount($product_id, $new_count);
 
         $json['success'] = true;
         $json['deleted']  = $deleted;
@@ -1937,6 +1976,26 @@ class Sync extends \Opencart\System\Engine\Controller {
         } catch (\Exception $e) {
             $json['error'] = 'deleteBackupImages: ' . $e->getMessage();
         }
+        $this->response->setOutput(json_encode($json));
+    }
+
+    /**
+     * Reset oc_max_width + backup_max_width to NULL so the product is
+     * recomputed on the next scanImageBackupCounts run.
+     * POST: product_id
+     */
+    public function resetProductImageScan(): void {
+        $this->response->addHeader('Content-Type: application/json');
+        $json = [];
+        $product_id = (int)($this->request->post['product_id'] ?? 0);
+        if (!$product_id) {
+            $json['error'] = 'Missing product_id';
+            $this->response->setOutput(json_encode($json));
+            return;
+        }
+        $this->load->model('shopmanager/inventory/sync');
+        $this->model_shopmanager_inventory_sync->resetProductImageScan($product_id);
+        $json['success'] = true;
         $this->response->setOutput(json_encode($json));
     }
 
@@ -1954,8 +2013,9 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             // ── OC images ─────────────────────────────────────────────────
             $oc_images = [];
-            $prod = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
-            $main_path = $prod->row['image'] ?? '';
+            $this->load->model('shopmanager/catalog/product');
+            $product_data = $this->model_shopmanager_catalog_product->getProduct($product_id);
+            $main_path = $product_data['image'] ?? '';
             if ($main_path && $main_path !== 'no_image.png' && $main_path !== '') {
                 $abs  = DIR_IMAGE . $main_path;
                 set_error_handler(function() { return true; });
@@ -1963,8 +2023,8 @@ class Sync extends \Opencart\System\Engine\Controller {
                 restore_error_handler();
                 $oc_images[] = ['role' => 'primary', 'image' => $main_path, 'url' => HTTP_CATALOG . 'image/' . $main_path, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
             }
-            $secs = $this->db->query("SELECT image, sort_order FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' ORDER BY sort_order ASC");
-            foreach ($secs->rows as $row) {
+            $secondary_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+            foreach ($secondary_images as $row) {
                 $abs  = DIR_IMAGE . $row['image'];
                 set_error_handler(function() { return true; });
                 $info = is_readable($abs) ? getimagesize($abs) : false;
@@ -1973,9 +2033,12 @@ class Sync extends \Opencart\System\Engine\Controller {
             }
 
             // ── Backup images ──────────────────────────────────────────────
-            $backup_dir    = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+            $prefix         = substr((string)$product_id, 0, 2);
+            $backup_dir_flat   = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
+            $backup_dir_nested = DIR_OPENCART . 'image_backup/data/product/' . $prefix . '/' . $product_id . '/';
+            $backup_dir     = is_dir($backup_dir_flat) ? $backup_dir_flat : (is_dir($backup_dir_nested) ? $backup_dir_nested : null);
             $backup_images = [];
-            if (is_dir($backup_dir)) {
+            if ($backup_dir !== null) {
                 $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
                 foreach (scandir($backup_dir) as $file) {
                     if ($file === '.' || $file === '..') continue;
@@ -1990,7 +2053,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                     $type = 'unknown';
                     if (preg_match('/^' . preg_quote((string)$product_id) . 'pri\d+/', $basename)) $type = 'primary';
                     elseif (preg_match('/^' . preg_quote((string)$product_id) . 'sec\d+/', $basename)) $type = 'secondary';
-                    $backup_images[] = ['filename' => $file, 'type' => $type, 'url' => HTTP_CATALOG . 'image_backup/data/product/' . $product_id . '/' . rawurlencode($file), 'oc_exists' => file_exists(DIR_IMAGE . $oc_rel), 'oc_path' => $oc_rel, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
+                    $backup_images[] = ['filename' => $file, 'type' => $type, 'url' => HTTP_CATALOG . substr($backup_dir, strlen(DIR_OPENCART)) . rawurlencode($file), 'oc_exists' => file_exists(DIR_IMAGE . $oc_rel), 'oc_path' => $oc_rel, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
                 }
                 usort($backup_images, function($a, $b) {
                     if ($a['type'] === $b['type']) return strcmp($a['filename'], $b['filename']);
@@ -2021,12 +2084,14 @@ class Sync extends \Opencart\System\Engine\Controller {
             $image_path = $this->request->post['image_path'] ?? '';
             $role       = $this->request->post['role'] ?? 'secondary';
             if (!$product_id || !$image_path) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
+            $this->load->model('shopmanager/catalog/product');
+            $this->load->model('shopmanager/marketplace');
             if ($role === 'primary') {
-                $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '' WHERE product_id = '" . $product_id . "'");
+                $this->model_shopmanager_catalog_product->clearPrimaryImage($product_id);
             } else {
-                $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($image_path) . "'");
+                $this->model_shopmanager_catalog_product->deleteImageByPath($product_id, $image_path);
             }
-            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
+            $this->model_shopmanager_marketplace->setToUpdate($product_id);
             $json['success'] = true;
         } catch (\Exception $e) { $json['error'] = 'removeOcImage: ' . $e->getMessage(); }
         $this->response->setOutput(json_encode($json));
@@ -2063,8 +2128,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                 return $rel;
             };
 
-            $cur         = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
-            $old_primary = $cur->row['image'] ?? '';
+            $this->load->model('shopmanager/catalog/product');
+            $this->load->model('shopmanager/marketplace');
+            $old_primary = $this->model_shopmanager_catalog_product->getProduct($product_id)['image'] ?? '';
             $new_old     = $old_primary;
             $new_pri     = $image_path;
 
@@ -2075,21 +2141,16 @@ class Sync extends \Opencart\System\Engine\Controller {
 
                 // Remove stale DB path if file was renamed
                 if ($new_old !== $old_primary) {
-                    $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($old_primary) . "'");
+                    $this->model_shopmanager_catalog_product->deleteImageByPath($product_id, $old_primary);
                 }
                 // Insert demoted primary as secondary
-                $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($new_old) . "'");
-                if (!$chk->num_rows) {
-                    $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
-                    $next = (int)($sort->row['m'] ?? 0) + 1;
-                    $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($new_old) . "', sort_order = '" . $next . "'");
-                }
+                $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $new_old);
             }
 
             // Remove new primary from secondary table + set as main
-            $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image IN ('" . $this->db->escape($image_path) . "', '" . $this->db->escape($new_pri) . "')");
-            $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($new_pri) . "' WHERE product_id = '" . $product_id . "'");
-            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
+            $this->model_shopmanager_catalog_product->deleteImagesByPaths($product_id, [$image_path, $new_pri]);
+            $this->model_shopmanager_catalog_product->setPrimaryImage($product_id, $new_pri);
+            $this->model_shopmanager_marketplace->setToUpdate($product_id);
             $json['success']     = true;
             $json['new_primary'] = $new_pri;
         } catch (\Exception $e) { $json['error'] = 'setOcImagePrimary: ' . $e->getMessage(); }
@@ -2110,8 +2171,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             $role       = $this->request->post['role'] ?? 'secondary';
             if (!$product_id || !$filename) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
 
-            $backup_dir = DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/';
             $subfolder  = substr((string)$product_id, 0, 2);
+            $backup_dir = is_dir(DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/')
+                ? DIR_OPENCART . 'image_backup/data/product/' . $product_id . '/'
+                : DIR_OPENCART . 'image_backup/data/product/' . $subfolder . '/' . $product_id . '/';
             $dest_rel   = 'catalog/product/' . $subfolder . '/' . $product_id . '/';
             $dest_dir   = DIR_IMAGE . $dest_rel;
             $src        = $backup_dir . $filename;
@@ -2164,28 +2227,19 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
             }
 
+            $this->load->model('shopmanager/catalog/product');
+            $this->load->model('shopmanager/marketplace');
             if ($role === 'primary') {
-                $cur = $this->db->query("SELECT image FROM `" . DB_PREFIX . "product` WHERE product_id = '" . $product_id . "'");
-                $old = $cur->row['image'] ?? '';
+                $old = $this->model_shopmanager_catalog_product->getProduct($product_id)['image'] ?? '';
                 if ($old && $old !== $oc_path) {
-                    $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($old) . "'");
-                    if (!$chk->num_rows) {
-                        $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
-                        $next = (int)($sort->row['m'] ?? 0) + 1;
-                        $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($old) . "', sort_order = '" . $next . "'");
-                    }
+                    $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $old);
                 }
-                $this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($oc_path) . "'");
-                $this->db->query("UPDATE `" . DB_PREFIX . "product` SET image = '" . $this->db->escape($oc_path) . "' WHERE product_id = '" . $product_id . "'");
+                $this->model_shopmanager_catalog_product->deleteImageByPath($product_id, $oc_path);
+                $this->model_shopmanager_catalog_product->setPrimaryImage($product_id, $oc_path);
             } else {
-                $chk = $this->db->query("SELECT product_image_id FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "' AND image = '" . $this->db->escape($oc_path) . "'");
-                if (!$chk->num_rows) {
-                    $sort = $this->db->query("SELECT MAX(sort_order) as m FROM `" . DB_PREFIX . "product_image` WHERE product_id = '" . $product_id . "'");
-                    $next = (int)($sort->row['m'] ?? 0) + 1;
-                    $this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET product_id = '" . $product_id . "', image = '" . $this->db->escape($oc_path) . "', sort_order = '" . $next . "'");
-                }
+                $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $oc_path);
             }
-            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace SET to_update = 1 WHERE product_id = '" . $product_id . "' AND marketplace_id = 1");
+            $this->model_shopmanager_marketplace->setToUpdate($product_id);
             $json['success'] = true;
             $json['oc_path'] = $oc_path;
         } catch (\Exception $e) { $json['error'] = 'transferBackupAsRole: ' . $e->getMessage(); }
@@ -2198,19 +2252,46 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function syncCategoryToEbay(): void {
         $this->load->model('shopmanager/ebay');
         $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/catalog/product');
         
         $json = [];
-        $product_id = $this->request->post['product_id'] ?? 0;
+        $product_id = (int)($this->request->post['product_id'] ?? 0);
         
         if (!$product_id) {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $result = $this->model_shopmanager_inventory_sync->exportCategoryToEbay($product_id);
-                $json = $result;
-                if (!isset($json['error'])) {
+                $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                if (!$product) {
+                    throw new \Exception('Product not found');
+                }
+                $local_category_id = (int)$product['category_id'];
+                if (!$local_category_id) {
+                    throw new \Exception('Product has no category assigned');
+                }
+                $quantity = (int)$product['quantity'] + (int)($product['unallocated_quantity'] ?? 0);
+
+                $marketplace_accounts = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id, 'marketplace_id' => 1]);
+                if (empty($marketplace_accounts)) {
+                    throw new \Exception('Product not listed on eBay');
+                }
+                foreach ($marketplace_accounts as $key => $mp) {
+                    $s = $mp['site_setting'] ?? '{}';
+                    $marketplace_accounts[$key]['site_setting'] = is_array($s) ? $s : json_decode($s, true);
+                }
+                $first_site_setting = reset($marketplace_accounts)['site_setting'] ?? [];
+
+                $this->model_shopmanager_marketplace->clearMarketplaceCategory($product_id);
+
+                $response = $this->model_shopmanager_ebay->edit($product, $quantity, $first_site_setting, $marketplace_accounts);
+
+                if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+                    $this->model_shopmanager_marketplace->updateMarketplaceCategory($product_id, $local_category_id);
                     $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $json['success'] = "Category exported to eBay: $local_category_id";
+                } else {
+                    $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
+                    throw new \Exception($error_msg);
                 }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -2225,7 +2306,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Bulk Sync Categories To eBay - Export multiple categories
      */
     public function syncCategoryBulkToEbay(): void {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/ebay');
+        $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         
         $json = [];
         $product_ids = $this->request->post['product_ids'] ?? [];
@@ -2234,8 +2317,64 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'No products selected';
         } else {
             try {
-                $result = $this->model_shopmanager_inventory_sync->exportCategoriesToEbayBulk($product_ids);
-                $json = $result;
+                $success_count = 0;
+                $error_count   = 0;
+                $errors        = [];
+
+                foreach ($product_ids as $product_id) {
+                    $product_id = (int)$product_id;
+                    try {
+                        $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                        if (!$product) {
+                            $errors[] = "Product $product_id: Not found";
+                            $error_count++; continue;
+                        }
+                        $local_category_id = (int)$product['category_id'];
+                        if (!$local_category_id) {
+                            $errors[] = "Product $product_id: No category assigned";
+                            $error_count++; continue;
+                        }
+                        $quantity = (int)$product['quantity'] + (int)($product['unallocated_quantity'] ?? 0);
+
+                        $marketplace_accounts = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id, 'marketplace_id' => 1]);
+                        if (empty($marketplace_accounts)) {
+                            $errors[] = "Product $product_id: Not on eBay";
+                            $error_count++; continue;
+                        }
+                        foreach ($marketplace_accounts as $key => $mp) {
+                            $s = $mp['site_setting'] ?? '{}';
+                            $marketplace_accounts[$key]['site_setting'] = is_array($s) ? $s : json_decode($s, true);
+                        }
+                        $first_site_setting = reset($marketplace_accounts)['site_setting'] ?? [];
+
+                        $this->model_shopmanager_marketplace->clearMarketplaceCategory($product_id);
+
+                        $response = $this->model_shopmanager_ebay->edit($product, $quantity, $first_site_setting, $marketplace_accounts);
+
+                        if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+                            $this->model_shopmanager_marketplace->updateMarketplaceCategory($product_id, $local_category_id);
+                            $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                            $success_count++;
+                        } else {
+                            $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
+                            $errors[] = "Product $product_id: $error_msg";
+                            $error_count++;
+                        }
+                    } catch (\Exception $e) {
+                        $errors[] = "Product $product_id: " . $e->getMessage();
+                        $error_count++;
+                    }
+                }
+
+                if ($success_count > 0) {
+                    $json['success'] = "$success_count category(ies) exported";
+                    if ($error_count > 0) $json['success'] .= " ($error_count failed)";
+                } else {
+                    $json['error'] = 'All exports failed';
+                }
+                if (!empty($errors)) {
+                    $json['details'] = implode("\n", array_slice($errors, 0, 5));
+                }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -2250,20 +2389,29 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     public function syncCategoryFromEbay(): void {
         $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('shopmanager/catalog/category');
         
         $json = [];
-        $product_id = $this->request->post['product_id'] ?? 0;
+        $product_id = (int)($this->request->post['product_id'] ?? 0);
         
         if (!$product_id) {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $result = $this->model_shopmanager_inventory_sync->importCategoryFromEbay($product_id);
-                $json = $result;
-                if (!isset($json['error'])) {
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                if (!$marketplace || !isset($marketplace['category_id'])) {
+                    throw new \Exception('Product not listed on eBay or no category_id');
                 }
+                $ebay_category_id = (int)$marketplace['category_id'];
+
+                if (!$this->model_shopmanager_catalog_category->getCategory($ebay_category_id)) {
+                    throw new \Exception("eBay category $ebay_category_id does not exist in local database");
+                }
+
+                $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $json['success'] = "Category imported: $ebay_category_id";
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -2312,8 +2460,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Sync Category From Info Source - Applique la meilleure catégorie oc_product_info_sources
      */
     public function syncCategoryFromInfoSource(): void {
-        $this->load->model('shopmanager/inventory/sync');
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('shopmanager/catalog/category');
 
         $json = [];
         $product_id = (int)($this->request->post['product_id'] ?? 0);
@@ -2322,11 +2471,47 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $result = $this->model_shopmanager_inventory_sync->applyCategoryFromInfoSource($product_id);
-                $json = $result;
-                if (isset($result['success'])) {
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                if (!$product || empty($product['upc'])) {
+                    throw new \Exception('Product has no UPC');
                 }
+                $upc = $product['upc'];
+
+                $this->load->model('shopmanager/inventory/sync');
+                $source_rows = $this->model_shopmanager_inventory_sync->getInfoSourcesByUpc($upc);
+                if (empty($source_rows)) {
+                    throw new \Exception('No info sources found for UPC ' . htmlspecialchars($upc));
+                }
+
+                $best_id   = null;
+                $best_pct  = -1;
+                $best_name = '';
+                foreach ($source_rows as $row) {
+                    $cats = json_decode($row['ebay_category'] ?? '[]', true);
+                    if (!is_array($cats)) continue;
+                    foreach ($cats as $cat) {
+                        $pct = (int)($cat['percent'] ?? 0);
+                        if ($pct > $best_pct && !empty($cat['category_id'])) {
+                            $best_pct  = $pct;
+                            $best_id   = (int)$cat['category_id'];
+                            $best_name = $cat['category_name'] ?? '';
+                        }
+                    }
+                }
+
+                if (!$best_id) {
+                    throw new \Exception('No valid category found in info sources');
+                }
+
+                if (!$this->model_shopmanager_catalog_category->getCategory($best_id)) {
+                    throw new \Exception("Category $best_id from info source not in local database");
+                }
+
+                $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $best_id);
+                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+
+                $label = $best_name ? "$best_id - $best_name" : "$best_id";
+                $json['success'] = "Category $label ($best_pct%) applied from info source";
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
@@ -2340,7 +2525,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Bulk Sync Categories From eBay - Import multiple categories
      */
     public function syncCategoryBulkFromEbay(): void {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('shopmanager/catalog/category');
         
         $json = [];
         $product_ids = $this->request->post['product_ids'] ?? [];
@@ -2349,8 +2536,43 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'No products selected';
         } else {
             try {
-                $result = $this->model_shopmanager_inventory_sync->importCategoriesFromEbayBulk($product_ids);
-                $json = $result;
+                $success_count = 0;
+                $error_count   = 0;
+                $errors        = [];
+
+                foreach ($product_ids as $product_id) {
+                    $product_id = (int)$product_id;
+                    try {
+                        $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                        if (!$marketplace || !isset($marketplace['category_id'])) {
+                            $errors[] = "Product $product_id: Not on eBay";
+                            $error_count++; continue;
+                        }
+                        $ebay_category_id = (int)$marketplace['category_id'];
+
+                        if (!$this->model_shopmanager_catalog_category->getCategory($ebay_category_id)) {
+                            $errors[] = "Product $product_id: Category $ebay_category_id not in database";
+                            $error_count++; continue;
+                        }
+
+                        $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
+                        $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                        $success_count++;
+                    } catch (\Exception $e) {
+                        $errors[] = "Product $product_id: " . $e->getMessage();
+                        $error_count++;
+                    }
+                }
+
+                if ($success_count > 0) {
+                    $json['success'] = "$success_count category(ies) imported";
+                    if ($error_count > 0) $json['success'] .= " ($error_count failed)";
+                } else {
+                    $json['error'] = 'All imports failed';
+                }
+                if (!empty($errors)) {
+                    $json['details'] = implode("\n", array_slice($errors, 0, 5));
+                }
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
             }
