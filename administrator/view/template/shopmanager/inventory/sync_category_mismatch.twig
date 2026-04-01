@@ -100,18 +100,22 @@
             <td><span class="badge bg-secondary">{{ product.location }}</span></td>
             <td class="text-center">
               <div class="d-flex flex-column gap-1 align-items-center">
+                {% if product.ebay_category_id %}
                 <button class="btn btn-xs btn-outline-warning sync-category-btn"
                         data-product-id="{{ product.product_id }}"
                         data-direction="from_ebay"
                         title="eBay ({{ product.ebay_category_id }}) → OC">
                   <i class="fa-solid fa-cloud-arrow-down"></i>
                 </button>
+                {% endif %}
+                {% if product.local_category_id %}
                 <button class="btn btn-xs btn-outline-primary sync-category-btn"
                         data-product-id="{{ product.product_id }}"
                         data-direction="to_ebay"
                         title="OC ({{ product.local_category_id }}) → eBay">
                   <i class="fa-solid fa-cloud-arrow-up"></i>
                 </button>
+                {% endif %}
                 {% if product.source_category_id %}
                 <button class="btn btn-xs btn-outline-success sync-category-btn"
                         data-product-id="{{ product.product_id }}"

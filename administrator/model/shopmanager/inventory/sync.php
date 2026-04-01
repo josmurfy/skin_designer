@@ -1678,6 +1678,7 @@ class Sync extends \Opencart\System\Engine\Model {
      */
     public function importCategoryFromEbay(int $product_id): array {
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         
         $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
         if (!$marketplace || !isset($marketplace['category_id'])) {
@@ -1696,37 +1697,10 @@ class Sync extends \Opencart\System\Engine\Model {
             return ['error' => "eBay category $ebay_category_id does not exist in local database"];
         }
         
-        // Supprimer uniquement les catégories leaf=1
-        $this->db->query("
-            DELETE pc FROM " . DB_PREFIX . "product_to_category pc
-            INNER JOIN " . DB_PREFIX . "category c ON pc.category_id = c.category_id
-            WHERE pc.product_id = '" . (int)$product_id . "'
-            AND c.leaf = 1
-        ");
+        // Remplace la catégorie leaf (pattern editProduct: delete all + re-add)
+        $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
         
-        // Vérifier si la catégorie existe déjà pour éviter doublon
-        $existing = $this->db->query("
-            SELECT 1 FROM " . DB_PREFIX . "product_to_category
-            WHERE product_id = '" . (int)$product_id . "'
-            AND category_id = '" . (int)$ebay_category_id . "'
-        ");
-        
-        if ($existing->num_rows == 0) {
-            $this->db->query("
-                INSERT INTO " . DB_PREFIX . "product_to_category 
-                SET product_id = '" . (int)$product_id . "',
-                    category_id = '" . (int)$ebay_category_id . "'
-            ");
-        }
-        
-        // Reset specifics
-        $this->db->query("
-            UPDATE " . DB_PREFIX . "product_description
-            SET specifics = NULL
-            WHERE product_id = '" . (int)$product_id . "'
-        ");
-        
-        return ['success' => "Category imported: $ebay_category_id (specifics reset)"];
+        return ['success' => "Category imported: $ebay_category_id"];
     }
     
     /**
@@ -1734,6 +1708,7 @@ class Sync extends \Opencart\System\Engine\Model {
      */
     public function importCategoriesFromEbayBulk(array $product_ids): array {
         $this->load->model('shopmanager/marketplace');
+        $this->load->model('shopmanager/catalog/product');
         
         $success_count = 0;
         $error_count = 0;
@@ -1763,36 +1738,10 @@ class Sync extends \Opencart\System\Engine\Model {
                     continue;
                 }
                 
-                // Supprimer leaf=1
-                $this->db->query("
-                    DELETE pc FROM " . DB_PREFIX . "product_to_category pc
-                    INNER JOIN " . DB_PREFIX . "category c ON pc.category_id = c.category_id
-                    WHERE pc.product_id = '" . (int)$product_id . "'
-                    AND c.leaf = 1
-                ");
+                // Remplace la catégorie leaf (pattern editProduct: delete all + re-add)
+                $this->model_shopmanager_catalog_product->setProductLeafCategory((int)$product_id, $ebay_category_id);
                 
-                // Éviter doublon
-                $existing = $this->db->query("
-                    SELECT 1 FROM " . DB_PREFIX . "product_to_category
-                    WHERE product_id = '" . (int)$product_id . "'
-                    AND category_id = '" . (int)$ebay_category_id . "'
-                ");
-                
-                if ($existing->num_rows == 0) {
-                    $this->db->query("
-                        INSERT INTO " . DB_PREFIX . "product_to_category 
-                        SET product_id = '" . (int)$product_id . "',
-                            category_id = '" . (int)$ebay_category_id . "'
-                    ");
-                }
-                
-                // Reset specifics
-                $this->db->query("
-                    UPDATE " . DB_PREFIX . "product_description
-                    SET specifics = NULL
-                    WHERE product_id = '" . (int)$product_id . "'
-                ");
-                
+                $this->model_shopmanager_marketplace->resetSyncState((int)$product_id);
                 $success_count++;
             } catch (\Exception $e) {
                 $errors[] = "Product $product_id: " . $e->getMessage();
@@ -1802,7 +1751,7 @@ class Sync extends \Opencart\System\Engine\Model {
         
         $result = [];
         if ($success_count > 0) {
-            $result['success'] = "$success_count category(ies) imported (specifics reset)";
+            $result['success'] = "$success_count category(ies) imported";
             if ($error_count > 0) {
                 $result['success'] .= " ($error_count failed)";
             }
@@ -1878,6 +1827,10 @@ class Sync extends \Opencart\System\Engine\Model {
         $response = $this->model_shopmanager_ebay->edit($product, $quantity, $first_site_setting, $marketplace_accounts);
         
         if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+            // Restore pm.category_id so mismatch list resolves
+            $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
+                              SET category_id = '" . (int)$local_category_id . "' 
+                              WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
             return ['success' => "Category exported to eBay: $local_category_id"];
         } else {
             $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1958,6 +1911,11 @@ class Sync extends \Opencart\System\Engine\Model {
                 $response = $this->model_shopmanager_ebay->edit($product, $quantity, $first_site_setting, $marketplace_accounts);
                 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
+                    // Restore pm.category_id so mismatch list resolves
+                    $this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
+                                      SET category_id = '" . (int)$local_category_id . "' 
+                                      WHERE product_id = '" . (int)$product_id . "' AND marketplace_id = 1");
+                    $this->model_shopmanager_marketplace->resetSyncState((int)$product_id);
                     $success_count++;
                 } else {
                     $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1993,6 +1951,7 @@ class Sync extends \Opencart\System\Engine\Model {
      * inserts the new one, resets specifics.
      */
     public function applyCategoryFromInfoSource(int $product_id): array {
+        $this->load->model('shopmanager/catalog/product');
         // Get product UPC
         $p = $this->db->query("
             SELECT upc FROM " . DB_PREFIX . "product
@@ -2039,33 +1998,14 @@ class Sync extends \Opencart\System\Engine\Model {
             return ['error' => "Category $best_id from info source not in local database"];
         }
 
-        // Delete existing leaf=1 categories
-        $this->db->query("
-            DELETE pc FROM " . DB_PREFIX . "product_to_category pc
-            INNER JOIN " . DB_PREFIX . "category c ON pc.category_id = c.category_id
-            WHERE pc.product_id = " . (int)$product_id . "
-            AND c.leaf = 1");
-
-        // Insert new category (avoid duplicate)
-        $existing = $this->db->query("
-            SELECT 1 FROM " . DB_PREFIX . "product_to_category
-            WHERE product_id = " . (int)$product_id . "
-            AND category_id = " . (int)$best_id);
-        if (!$existing->num_rows) {
-            $this->db->query("
-                INSERT INTO " . DB_PREFIX . "product_to_category
-                SET product_id = " . (int)$product_id . ",
-                    category_id = " . (int)$best_id);
-        }
+        // Remplace la catégorie leaf (pattern editProduct: delete all + re-add)
+        $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $best_id);
 
         // Reset specifics (new category = new specifics needed)
-        $this->db->query("
-            UPDATE " . DB_PREFIX . "product_description
-            SET specifics = NULL
-            WHERE product_id = " . (int)$product_id);
+        // $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, null);
 
         $label = $best_name ? "$best_id - $best_name" : "$best_id";
-        return ['success' => "Category $label ($best_pct%) applied from info source (specifics reset)"];
+        return ['success' => "Category $label ($best_pct%) applied from info source"];
     }
 }
 

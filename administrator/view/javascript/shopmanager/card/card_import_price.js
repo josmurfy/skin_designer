@@ -325,7 +325,7 @@ function sortPreviewGradingPotentials() {
     var otherRows = [];
 
     if (!rows.length) {
-        return;
+        return 0;
     }
 
     $.each(rows, function (index, row) {
@@ -357,6 +357,7 @@ function sortPreviewGradingPotentials() {
     });
 
     renumberPreviewRows();
+    return profitableRows.length;
 }
 
 function applyMarketRowResult($row, rowResult) {
@@ -611,7 +612,7 @@ function finishPreviewFetch(mode) {
     previewFetchState.pauseRequested = false;
     previewFetchState.paused = (mode === 'paused');
 
-    sortPreviewGradingPotentials();
+    var profitableCount = sortPreviewGradingPotentials();
     updateFetchButtonUi();
     updateFetchStopButtonUi();
 
@@ -621,17 +622,57 @@ function finishPreviewFetch(mode) {
         return;
     }
 
+    var summaryText;
+    var summaryType;
     if (previewFetchState.stoppedByRateLimit) {
-        setFetchProgressSummary('Stopped: eBay API rate limit reached. Success: ' + previewFetchState.done + '/' + previewFetchState.total + ', errors: ' + previewFetchState.errors, 'warning');
+        summaryText = 'Stopped: eBay API rate limit reached. Success: ' + previewFetchState.done + '/' + previewFetchState.total + ', errors: ' + previewFetchState.errors;
+        summaryType = 'warning';
     } else if (previewFetchState.errors > 0) {
-        setFetchProgressSummary('Completed. Success: ' + previewFetchState.done + '/' + previewFetchState.total + ', errors: ' + previewFetchState.errors, 'warning');
+        summaryText = 'Completed. Success: ' + previewFetchState.done + '/' + previewFetchState.total + ', errors: ' + previewFetchState.errors;
+        summaryType = 'warning';
     } else {
-        setFetchProgressSummary('Completed successfully: ' + previewFetchState.done + '/' + previewFetchState.total, 'success');
+        summaryText = 'Completed successfully: ' + previewFetchState.done + '/' + previewFetchState.total;
+        summaryType = 'success';
     }
+
+    if (profitableCount > 0) {
+        summaryText += ' — ' + profitableCount + ' carte(s) à potentiel grading remontée(s) en tête.';
+        appendFetchProgressLog('success', profitableCount + ' carte(s) rentables remontées en tête du tableau.');
+    }
+
+    setFetchProgressSummary(summaryText, summaryType);
+
+    var snapshotDone = previewFetchState.done;
+    var snapshotTotal = previewFetchState.total;
+    var snapshotErrors = previewFetchState.errors;
+    var snapshotSummaryType = summaryType;
 
     resetPreviewFetchState();
     updateFetchButtonUi();
     updateFetchStopButtonUi();
+
+    // Auto-fermeture du modal après completion (3s pour lire le message)
+    window.setTimeout(function () {
+        var modalEl = document.getElementById('fetchProgressModal');
+        if (modalEl) {
+            var bsModal = bootstrap.Modal.getInstance(modalEl);
+            if (bsModal) {
+                bsModal.hide();
+            }
+        }
+
+        // Notification persistante après fermeture du modal
+        var notifCls = snapshotSummaryType === 'success' ? 'alert-success' : 'alert-warning';
+        var notifText = 'eBay Fetch: ' + snapshotDone + '/' + snapshotTotal + ' OK';
+        if (snapshotErrors > 0) {
+            notifText += ', ' + snapshotErrors + ' erreur(s)';
+        }
+        var $notif = $('<div class="alert ' + notifCls + ' alert-dismissible fade show py-2 px-3 mb-2" role="alert" style="font-size:13px;">'
+            + '<i class="fa-solid fa-circle-check me-1"></i>' + notifText
+            + '<button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button></div>');
+        $('#preview-content').prepend($notif);
+        setTimeout(function () { $notif.alert('close'); }, 5000);
+    }, 3000);
 }
 
 function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
@@ -705,19 +746,27 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
         var rowLabel = getPreviewRowLabel(card, index + 1);
         var $row = $('#preview-table tr[data-index="' + rowIndex + '"]');
 
-        setFetchProgressSummary('Fetching ' + (index + 1) + '/' + total + ': ' + rowLabel, 'info');
+        // Spinner sur la ligne en cours
+        $row.find('.market-sold-raw').html('<i class="fa-solid fa-circle-notch fa-spin text-muted"></i>');
+
+        setFetchProgressSummary('<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Fetching ' + (index + 1) + '/' + total + ': ' + rowLabel + '…', 'info');
         appendFetchProgressLog('info', 'Fetching: ' + rowLabel);
-        fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' sending card_index=' + rowIndex + ' to ' + URL_FETCH_PREVIEW_MARKET_PRICES, JSON.parse(JSON.stringify(card)));
+        if (DEBUG_CARD_IMPORT_FETCH) {
+            fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' sending card_index=' + rowIndex + ' to ' + URL_FETCH_PREVIEW_MARKET_PRICES, JSON.parse(JSON.stringify(card)));
+        }
 
         $.ajax({
             url: URL_FETCH_PREVIEW_MARKET_PRICES,
             type: 'POST',
             contentType: 'application/json',
             dataType: 'json',
+            timeout: 45000,
             data: JSON.stringify({ cards: [card] }),
             success: function (json) {
                 previewFetchState.processed++;
-                fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' response json:', JSON.parse(JSON.stringify(json)));
+                if (DEBUG_CARD_IMPORT_FETCH) {
+                    fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' response json:', JSON.parse(JSON.stringify(json)));
+                }
 
                 if (json.error) {
                     previewFetchState.errors++;
@@ -733,7 +782,9 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
                 }
 
                 var rowResult = json.results && json.results[rowIndex] ? json.results[rowIndex] : null;
-                fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' rowResult (idx=' + rowIndex + '):', rowResult);
+                if (DEBUG_CARD_IMPORT_FETCH) {
+                    fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' rowResult (idx=' + rowIndex + '):', rowResult);
+                }
 
                 if (!rowResult) {
                     previewFetchState.errors++;
@@ -781,9 +832,14 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
             error: function (xhr) {
                 previewFetchState.processed++;
                 previewFetchState.errors++;
-                var raw = (xhr.responseText || xhr.statusText || 'AJAX error').substring(0, 250);
-                fetchDebugError('[card_import_fetch] #' + (index + 1) + ' AJAX error status=' + xhr.status + ':', raw);
-                appendFetchProgressLog('error', rowLabel + ' → ' + raw);
+                var isTimeout = (xhr.statusText === 'timeout');
+                var raw = isTimeout
+                    ? 'Timeout (45s) — eBay API trop lent, carte ignorée'
+                    : (xhr.responseText || xhr.statusText || 'AJAX error').substring(0, 250);
+                if (DEBUG_CARD_IMPORT_FETCH) {
+                    fetchDebugError('[card_import_fetch] #' + (index + 1) + ' AJAX error status=' + xhr.status + ':', raw);
+                }
+                appendFetchProgressLog(isTimeout ? 'warning' : 'error', rowLabel + ' → ' + raw);
                 previewFetchState.nextIndex = index + 1;
 
                 if (previewFetchState.pauseRequested) {

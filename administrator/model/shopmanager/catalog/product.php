@@ -2203,7 +2203,45 @@ public function getTotalProducts(array $data = []): int {
 							   LIMIT 1");
 
 		return !empty($query->row['category_id']) ? (int)$query->row['category_id'] : 0;
-	}	/**
+	}
+
+	public function deleteLeafCategories(int $product_id): void {
+		$this->db->query("DELETE pc FROM `" . DB_PREFIX . "product_to_category` pc
+			INNER JOIN `" . DB_PREFIX . "category` c ON pc.category_id = c.category_id
+			WHERE pc.product_id = '" . (int)$product_id . "'
+			AND c.leaf = 1");
+	}
+
+	public function addCategoryIfNotExists(int $product_id, int $category_id): void {
+		$existing = $this->db->query("SELECT 1 FROM `" . DB_PREFIX . "product_to_category`
+			WHERE product_id = '" . (int)$product_id . "'
+			AND category_id = '" . (int)$category_id . "'");
+		if (!$existing->num_rows) {
+			$this->addCategory($product_id, $category_id);
+		}
+	}
+
+	public function setProductLeafCategory(int $product_id, int $new_category_id): void {
+		// Preserve all non-leaf categories (excluding new category to avoid duplicate)
+		$non_leaf = $this->db->query("
+			SELECT pc.category_id
+			FROM `" . DB_PREFIX . "product_to_category` pc
+			LEFT JOIN `" . DB_PREFIX . "category` c ON pc.category_id = c.category_id
+			WHERE pc.product_id = '" . (int)$product_id . "'
+			AND (c.leaf = 0 OR c.leaf IS NULL)
+			AND pc.category_id != '" . (int)$new_category_id . "'
+		");
+		$keep = array_column($non_leaf->rows, 'category_id');
+
+		// Delete all, then re-add non-leaf + new leaf (same pattern as editProduct)
+		$this->deleteCategories($product_id);
+		foreach ($keep as $cat_id) {
+			$this->addCategory($product_id, (int)$cat_id);
+		}
+		$this->addCategory($product_id, $new_category_id);
+	}
+
+	/**
 	 * Add Filter
 	 *
 	 * Create a new product filter record in the database.
