@@ -660,48 +660,36 @@ class Sync extends \Opencart\System\Engine\Controller {
                     if (empty($sku)) {
                         continue;
                     }
+
+                    // Skip COM_ and CARD_LISTING_ SKUs
+                    if (substr($sku, 0, 4) === 'COM_' || substr($sku, 0, 13) === 'CARD_LISTING_') {
+                        continue;
+                    }
                     
                     // Determine which database based on SKU
-                    $is_com = (substr($sku, 0, 4) === 'COM_') ? 1 : 0;
+                    $is_com = 0;
                     
                     $product_id = 0;
                     $db_active = null;
                     
-                    if ($is_com) {
-                        // phoenixsupplies: SKU = COM_xxxx, need to search
-                        $db_active = mysqli_connect('localhost', 'n7f9655_n7f9655', 'jnthngrvs01$$', 'n7f9655_phoenixsupplies');
-                        if (!$db_active) {
-                            continue;
-                        }
-                        
-                        $product_id = $this->model_shopmanager_marketplace->getProductIdBySku($sku, $db_active);
-                    } else {
-                        // phoenixliquidation: SKU = product_id (numeric)
-                        if (is_numeric($sku)) {
-                            $product_id = (int)$sku;
-                        }
+                    // phoenixliquidation: SKU = product_id (numeric)
+                    if (is_numeric($sku)) {
+                        $product_id = (int)$sku;
                     }
                     
                     // If product not found, skip
                     if ($product_id == 0) {
-                        if ($db_active) mysqli_close($db_active);
                         continue;
                     }
 
                     // Check if we already have category, condition, and specifics in database
-                    $existing_data = $this->model_shopmanager_marketplace->getMarketplaceExistingData(
-                        $product_id, 
-                        1, 
-                        $is_com ? $db_active : null
-                    );
+                    $existing_data = $this->model_shopmanager_marketplace->getMarketplaceExistingData($product_id, 1, null);
 
                     // Only call GetItem if we don't have complete data already
                     $item_details = null;
-                    $needs_getitem = $force_refresh || !$existing_data || 
-                                    is_null($existing_data['category_id']) || 
-                                    is_null($existing_data['condition_id']) || 
-                                    is_null($existing_data['specifics']) ||
-                                    empty($existing_data['ebay_image_count']);
+                    $required_fields = ['category_id', 'condition_id', 'specifics', 'ebay_image_count'];
+                    $needs_getitem = $force_refresh || !$existing_data ||
+                                    (bool) array_filter($required_fields, fn($k) => empty($existing_data[$k]));
                     
                     if ($needs_getitem) {
                         // GET FULL ITEM DETAILS with GetItem API call (for category, condition, specifics)
@@ -776,27 +764,18 @@ class Sync extends \Opencart\System\Engine\Controller {
                         'condition_id' => $condition_id,
                         'currency' => 'CAD', // Default for Canada site
                         'price' => $listing_price,
-                        'price_usd' => $listing_price, // Same for CAD site
                         'quantity_listed' => isset($item['Quantity']) ? (int)$item['Quantity'] : 0,
                         'quantity_sold' => isset($item['SellingStatus']['QuantitySold']) ? (int)$item['SellingStatus']['QuantitySold'] : 0,
                         'specifics' => $specifics,
                         'status' => isset($item['ListingDetails']['EndingReason']) ? 0 : 1,
-                        'is_com' => $is_com,
                         'date_added' => $date_added,
                         'date_ended' => $date_ended,
                         'last_import_time' => date('Y-m-d H:i:s'),
                         'ebay_image_count' => $this->extractEbayImageCount($item, $item_details),
                     ];
 
-                    // Update or insert in product_marketplace table (in the appropriate database)
-                    $this->model_shopmanager_marketplace->upsertProductMarketplace(
-                        $marketplace_data,
-                        $is_com ? $db_active : null
-                    );
-                    
-                    if ($is_com && $db_active) {
-                        mysqli_close($db_active);
-                    }
+                    // Update or insert in product_marketplace table
+                    $this->model_shopmanager_marketplace->upsertProductMarketplace($marketplace_data, null);
 
                     $processed++;
                 }

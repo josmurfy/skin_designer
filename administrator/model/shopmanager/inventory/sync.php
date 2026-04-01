@@ -464,7 +464,6 @@ class Sync extends \Opencart\System\Engine\Model {
             SELECT COUNT(DISTINCT pm.product_id) as total
             FROM " . DB_PREFIX . "product_marketplace pm
             INNER JOIN " . DB_PREFIX . "product p ON (p.product_id = pm.product_id)
-            WHERE pm.is_com = 0
             AND pm.marketplace_id = 1
         ");
         return (int)$query->row['total'];
@@ -477,7 +476,6 @@ class Sync extends \Opencart\System\Engine\Model {
      * @return array
      */
     public function getQuantityMismatch(array $data = []): array {
-        // Get mismatches from phoenixliquidation database ONLY (is_com = 0)
         $sql = "
             SELECT 
                 p.product_id,
@@ -495,13 +493,11 @@ class Sync extends \Opencart\System\Engine\Model {
                 pm.quantity_listed,
                 pm.quantity_sold,
                 pm.specifics as ebay_specifics,
-                pm.is_com,
                 (pm.quantity_listed - pm.quantity_sold) as ebay_available
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND (pm.quantity_listed - pm.quantity_sold) != (p.quantity + p.unallocated_quantity)
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
         ";
@@ -588,13 +584,11 @@ class Sync extends \Opencart\System\Engine\Model {
                 pm.quantity_listed,
                 pm.quantity_sold,
                 pm.specifics as ebay_specifics,
-                pm.is_com,
                 (pm.quantity_listed - pm.quantity_sold) as ebay_available
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND ABS(p.price - pm.price) > 0.01
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
         ";
@@ -675,13 +669,11 @@ class Sync extends \Opencart\System\Engine\Model {
                 pm.quantity_listed,
                 pm.quantity_sold,
                 pm.specifics as ebay_specifics,
-                pm.is_com,
                 (pm.quantity_listed - pm.quantity_sold) as ebay_available
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (pd.specifics IS NOT NULL AND pm.specifics IS NOT NULL AND pd.specifics != pm.specifics)
@@ -1165,7 +1157,6 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND ABS(p.price - pm.price) > 0.01
         ");
         
@@ -1183,7 +1174,6 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND (pm.quantity_listed - pm.quantity_sold) != (p.quantity + p.unallocated_quantity)
         ");
         
@@ -1202,7 +1192,6 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (pd.specifics IS NOT NULL AND pm.specifics IS NOT NULL AND pd.specifics != pm.specifics)
@@ -1234,7 +1223,6 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (p.condition_id IS NOT NULL AND pm.condition_id IS NOT NULL AND p.condition_id != pm.condition_id)
@@ -1285,7 +1273,6 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND (
                 (p.condition_id IS NOT NULL AND pm.condition_id IS NOT NULL AND p.condition_id != pm.condition_id)
                 OR (p.condition_id IS NULL AND pm.condition_id IS NOT NULL)
@@ -1355,7 +1342,6 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             LEFT JOIN " . DB_PREFIX . "category_description ecd ON (pm.category_id = ecd.category_id AND ecd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             GROUP BY p.product_id
             HAVING (
@@ -1411,7 +1397,6 @@ class Sync extends \Opencart\System\Engine\Model {
                 LEFT JOIN " . DB_PREFIX . "category c ON (pc.category_id = c.category_id)
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
-                AND pm.is_com = 0
                 AND (
                     (pc.category_id IS NOT NULL AND pm.category_id IS NOT NULL AND pc.category_id != pm.category_id)
                     OR (pc.category_id IS NULL AND pm.category_id IS NOT NULL)
@@ -1460,7 +1445,6 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND pm.ebay_image_count > 0
             HAVING oc_image_count != pm.ebay_image_count
         ";
@@ -1516,7 +1500,6 @@ class Sync extends \Opencart\System\Engine\Model {
                 FROM " . DB_PREFIX . "product p
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
-                AND pm.is_com = 0
                 AND pm.ebay_image_count > 0
                 HAVING oc_image_count != ebay_count
             ) as subquery
@@ -1550,7 +1533,6 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . $lang_id . "')
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND pm.is_com = 0
             AND pm.image_backup_count IS NOT NULL
             HAVING pm.image_backup_count > oc_image_count
         ";
@@ -1593,7 +1575,6 @@ class Sync extends \Opencart\System\Engine\Model {
                 FROM " . DB_PREFIX . "product p
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
-                AND pm.is_com = 0
                 AND pm.image_backup_count IS NOT NULL
                 HAVING pm.image_backup_count > oc_image_count
             ) as subquery

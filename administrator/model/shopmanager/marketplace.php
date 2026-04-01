@@ -949,6 +949,9 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				$query = $this->db->query("SELECT category_id, condition_id, specifics, ebay_image_count
 					FROM " . DB_PREFIX . "product_marketplace
 					WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_id . " LIMIT 1");
+				if (!empty($query->row)) {
+						return $query->row;
+				}
 		}
 		return null;
 	}
@@ -966,7 +969,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 			$sql = "
 				INSERT INTO oc_product_marketplace 
 				(product_id, customer_id, marketplace_id, marketplace_account_id, marketplace_item_id, 
-				 category_id, condition_id, currency, price, price_usd, quantity_listed, quantity_sold, specifics, status, is_com, ebay_image_count, date_added, date_ended, last_import)
+				 category_id, condition_id, currency, price, quantity_listed, quantity_sold, specifics, status, ebay_image_count, date_added, date_ended, last_import)
 				VALUES 
 				(" . (int)$marketplace_data['product_id'] . ", 
 				 " . (int)$marketplace_data['customer_id'] . ",
@@ -977,12 +980,10 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				 " . $condition_id_escaped . ",
 				 '" . mysqli_real_escape_string($db_connection, $marketplace_data['currency']) . "',
 				 " . (float)$marketplace_data['price'] . ", 
-				 " . (float)$marketplace_data['price_usd'] . ", 
 				 " . (int)$marketplace_data['quantity_listed'] . ", 
 				 " . (int)$marketplace_data['quantity_sold'] . ",
 				 " . $specifics_escaped . ",
 				 " . (int)$marketplace_data['status'] . ",
-				 " . (int)$marketplace_data['is_com'] . ",
 				 " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				 " . ($marketplace_data['date_added'] ? "'" . mysqli_real_escape_string($db_connection, $marketplace_data['date_added']) . "'" : "NULL") . ",
 				 " . ($marketplace_data['date_ended'] ? "'" . mysqli_real_escape_string($db_connection, $marketplace_data['date_ended']) . "'" : "NULL") . ",
@@ -993,12 +994,10 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				condition_id = IFNULL(" . $condition_id_escaped . ", condition_id),
 				currency = '" . mysqli_real_escape_string($db_connection, $marketplace_data['currency']) . "',
 				price = " . (float)$marketplace_data['price'] . ",
-				price_usd = " . (float)$marketplace_data['price_usd'] . ",
 				quantity_listed = " . (int)$marketplace_data['quantity_listed'] . ",
 				quantity_sold = " . (int)$marketplace_data['quantity_sold'] . ",
 				specifics = IFNULL(" . $specifics_escaped . ", specifics),
 				status = " . (int)$marketplace_data['status'] . ",
-				is_com = " . (int)$marketplace_data['is_com'] . ",
 				ebay_image_count = " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				last_import = '" . mysqli_real_escape_string($db_connection, $marketplace_data['last_import_time']) . "'
 			";
@@ -1015,7 +1014,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 			$this->db->query("
 				INSERT INTO " . DB_PREFIX . "product_marketplace 
 				(product_id, customer_id, marketplace_id, marketplace_account_id, marketplace_item_id, 
-				 category_id, condition_id, currency, price, price_usd, quantity_listed, quantity_sold, specifics, status, is_com, ebay_image_count, date_added, date_ended, last_import)
+				 category_id, condition_id, currency, price, quantity_listed, quantity_sold, specifics, status, ebay_image_count, date_added, date_ended, last_import)
 				VALUES 
 				(" . (int)$marketplace_data['product_id'] . ", 
 				 " . (int)$marketplace_data['customer_id'] . ",
@@ -1026,12 +1025,10 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				 " . $condition_id_sql . ",
 				 '" . $this->db->escape($marketplace_data['currency']) . "',
 				 " . (float)$marketplace_data['price'] . ", 
-				 " . (float)$marketplace_data['price_usd'] . ", 
 				 " . (int)$marketplace_data['quantity_listed'] . ", 
 				 " . (int)$marketplace_data['quantity_sold'] . ",
 				 " . $specifics_sql . ",
 				 " . (int)$marketplace_data['status'] . ",
-				 " . (int)$marketplace_data['is_com'] . ",
 				 " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				 " . $date_added_sql . ",
 				 " . $date_ended_sql . ",
@@ -1042,12 +1039,10 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				condition_id = IFNULL(" . $condition_id_sql . ", condition_id),
 				currency = '" . $this->db->escape($marketplace_data['currency']) . "',
 				price = " . (float)$marketplace_data['price'] . ",
-				price_usd = " . (float)$marketplace_data['price_usd'] . ",
 				quantity_listed = " . (int)$marketplace_data['quantity_listed'] . ",
 				quantity_sold = " . (int)$marketplace_data['quantity_sold'] . ",
 				specifics = IFNULL(" . $specifics_sql . ", specifics),
 				status = " . (int)$marketplace_data['status'] . ",
-				is_com = " . (int)$marketplace_data['is_com'] . ",
 				ebay_image_count = " . (int)($marketplace_data['ebay_image_count'] ?? 0) . ",
 				last_import = " . $last_import_sql . "
 			");

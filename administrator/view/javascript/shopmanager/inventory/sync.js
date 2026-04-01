@@ -215,19 +215,19 @@
                                 loadAnalyticsData(currentPeriod);
                                 setTimeout(function() {
                                     $('#sync-progress-container').fadeOut();
-                                }, 1000);
-                            }, 2000);
+                                }, 100);
+                            }, 200);
                             
                             isSyncing = false;
                         } else if (response.page_complete) {
                             // Page eBay terminée → passer à la page suivante
                             currentPage++;
                             currentOffset = 0;
-                            setTimeout(syncPage, 500);
+                            setTimeout(syncPage, 50);
                         } else {
                             // Batch partiel → continuer sur la même page avec le prochain offset
                             currentOffset = response.next_offset || (currentOffset + 20);
-                            setTimeout(syncPage, 300);
+                            setTimeout(syncPage, 30);
                         }
                     } else {
                         // Error
