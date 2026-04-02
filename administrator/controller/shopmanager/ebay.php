@@ -218,11 +218,19 @@ class Ebay extends \Opencart\System\Engine\Controller {
                     $data = array(
                         'customer_id' => 10,
                         'product_id' => $product_id,
-                      //  'marketplace_id' => 1,
-                      //  'marketplace_account_id' => $result['marketplace_account_id'],
+                        'marketplace_id' => 0,
+                        'marketplace_account_id' => 0,
                         'marketplace_item_id' => $result['ItemID'],
                         'quantity_listed' => $quantity,
-                        'quantity_sold' => 0
+                        'quantity_sold' => 0,
+                        'category_id' => 0,
+                        'currency' => '',
+                        'price' => 0,
+                        'specifics' => '',
+                        'error' => '',
+                        'status' => 1,
+                        'to_update' => 0,
+                        'ebay_image_count' => 0,
                     );
 
                     $this->model_shopmanager_marketplace->addProductMarketplace($data);
@@ -376,7 +384,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
                             $this->model_shopmanager_marketplace->deleteProductMarketplaceItemId($marketplace_item_id);
                             // Remettre en liste l'élément eBay
                             $result = $this->model_shopmanager_ebay->relist($marketplace_item_id);
-                            $existing_data['marketplace_item_id']=$result['ItemID'];
+                            $existing_data['marketplace_item_id'] = $result['ItemID'];
+                            $existing_data['to_update'] = 0;
                            
                             if ($result['Ack']!='Failure') {
                                 //$this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,'');\

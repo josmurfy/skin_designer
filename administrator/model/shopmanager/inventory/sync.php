@@ -416,6 +416,7 @@ class Sync extends \Opencart\System\Engine\Model {
             WHERE p.quantity > 0
             AND p.status = 1
             AND pm.marketplace_id = 1
+            AND pm.status = 1
             AND pm.marketplace_item_id IS NOT NULL
             AND pm.marketplace_item_id != ''
             AND (pm.last_sync IS NULL OR pm.last_sync < DATE_SUB(NOW(), INTERVAL 7 DAY))
@@ -498,6 +499,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND (pm.quantity_listed - pm.quantity_sold) != (p.quantity + p.unallocated_quantity)
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
         ";
@@ -589,6 +591,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND ABS(p.price - pm.price) > 0.01
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
         ";
@@ -674,6 +677,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (pd.specifics IS NOT NULL AND pm.specifics IS NOT NULL AND pd.specifics != pm.specifics)
@@ -1157,6 +1161,7 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND ABS(p.price - pm.price) > 0.01
         ");
         
@@ -1174,6 +1179,7 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND (pm.quantity_listed - pm.quantity_sold) != (p.quantity + p.unallocated_quantity)
         ");
         
@@ -1192,6 +1198,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (pd.specifics IS NOT NULL AND pm.specifics IS NOT NULL AND pd.specifics != pm.specifics)
@@ -1223,6 +1230,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (p.condition_id IS NOT NULL AND pm.condition_id IS NOT NULL AND p.condition_id != pm.condition_id)
@@ -1273,6 +1281,7 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND (
                 (p.condition_id IS NOT NULL AND pm.condition_id IS NOT NULL AND p.condition_id != pm.condition_id)
                 OR (p.condition_id IS NULL AND pm.condition_id IS NOT NULL)
@@ -1342,6 +1351,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             LEFT JOIN " . DB_PREFIX . "category_description ecd ON (pm.category_id = ecd.category_id AND ecd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             GROUP BY p.product_id
             HAVING (
@@ -1397,6 +1407,7 @@ class Sync extends \Opencart\System\Engine\Model {
                 LEFT JOIN " . DB_PREFIX . "category c ON (pc.category_id = c.category_id)
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
+                AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
                 AND (
                     (pc.category_id IS NOT NULL AND pm.category_id IS NOT NULL AND pc.category_id != pm.category_id)
                     OR (pc.category_id IS NULL AND pm.category_id IS NOT NULL)
@@ -1445,6 +1456,7 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
+            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
             AND pm.ebay_image_count > 0
             HAVING oc_image_count != pm.ebay_image_count
         ";
@@ -1500,6 +1512,7 @@ class Sync extends \Opencart\System\Engine\Model {
                 FROM " . DB_PREFIX . "product p
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
+                AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
                 AND pm.ebay_image_count > 0
                 HAVING oc_image_count != ebay_count
             ) as subquery
@@ -1661,7 +1674,7 @@ class Sync extends \Opencart\System\Engine\Model {
      * @param string $backup_dir  Absolute path to image_backup/ root (trailing slash)
      */
     public function refreshProductResolutionScan(int $product_id, string $backup_dir): void {
-        $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+        $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'jfif'];
         $prefix = substr((string)$product_id, 0, 2);
         $dir_flat   = $backup_dir . 'data/product/' . $product_id . '/';
         $dir_nested = $backup_dir . 'data/product/' . $prefix . '/' . $product_id . '/';
@@ -1736,7 +1749,7 @@ class Sync extends \Opencart\System\Engine\Model {
         }
 
         $stats = ['scanned' => 0, 'with_images' => 0, 'empty' => 0, 'not_found' => 0, 'not_found_samples' => []];
-        $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+        $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'jfif'];
         $updates = []; // product_id => ['count' => int, 'backup_max_width' => int, 'oc_max_width' => int]
 
         // Pre-load OC image paths for all products in one query
@@ -1781,8 +1794,16 @@ class Sync extends \Opencart\System\Engine\Model {
                         }
                     }
                 }
-                if ($count > 0) $stats['with_images']++;
-                else             $stats['empty']++;
+                if ($count > 0) {
+                    $stats['with_images']++;
+                } else {
+                    // No images found — delete only if truly empty (no files at all)
+                    $all_entries = array_diff(scandir($dir) ?: [], ['.', '..']);
+                    if (empty($all_entries)) {
+                        rmdir($dir);
+                    }
+                    $stats['empty']++;
+                }
             } else {
                 $stats['not_found']++;
                 if (count($stats['not_found_samples']) < 5) {

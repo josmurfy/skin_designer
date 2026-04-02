@@ -2207,6 +2207,8 @@ error_reporting(E_ALL);
 		//print("<pre>" . print_r($product_info, true) . "</pre>");
 		//	//print("<pre>" . print_r($product_info, true) . "</pre>");
 			$this->model_shopmanager_catalog_product->editProduct($product_id,$product_info);
+			$this->load->model('shopmanager/marketplace');
+			$this->model_shopmanager_marketplace->setToUpdate($product_id);
 			
 		}
 	/*	if (!isset($product_info['marketplace_item_id']) || $product_info['marketplace_item_id']==0) {
@@ -4488,6 +4490,7 @@ public function getSearchData() {
 
 		// Pattern OC4: Appeler directement product model
 		$this->model_shopmanager_catalog_product->editProduct($product_id, $data_received);
+		$this->model_shopmanager_marketplace->setToUpdate($product_id);
 		//print("<pre>".print_r ($data,true )."</pre>");
 	
 	$result = $this->model_shopmanager_catalog_product->getProducts(['filter_product_id' => $product_id]);

@@ -234,7 +234,7 @@ class Marketplace extends \Opencart\System\Engine\Model {
 			}
 
 			if (empty($data['filter_marketplace_account_id'])) {
-				$filters[] = "(pm.marketplace_account_id = 2)";
+				$filters[] = "(pm.marketplace_account_id = 1)";
 			}
 			if (!empty($data['filter_price'])) {
 				$filters[] = "(pm.price IS NULL OR pm.price = 0)";
@@ -418,53 +418,28 @@ public function getMarketplace($data = array()) {
 
 public function addProductMarketplace($data) {
 
-	
-    // Construction de la requête SQL
-    $query = "
-        INSERT INTO " . DB_PREFIX . "product_marketplace 
-        SET 
-			`product_id` = '" . (int)$data['product_id'] . "',
-			`customer_id` = '" . (isset($data['customer_id']) ? (int)$data['customer_id'] : 10) . "',
-			`marketplace_id` = '" . (int)$data['marketplace_id'] . "',
-			`marketplace_item_id` = '" . ($data['marketplace_item_id'] ?? '') . "',
-			`marketplace_account_id` = '" . ($data['marketplace_account_id']) . "',
-			`category_id` = '" . (isset($data['category_id']) ? (int)$data['category_id'] : 'DEFAULT') . "',
-			`currency` = '" . $this->db->escape($data['currency'] ?? 'USD') . "',
-			`price` = '" . (isset($data['price']) ? (float)$data['price'] : 0.00) . "',
-			`specifics` = '" . $this->db->escape($data['specifics'] ?? '') . "',
-			`error` = '',
-			`status` = 1,
-			`to_update` = '" . (isset($data['to_update']) ? (int)$data['to_update'] : 1) . "',
-			`quantity_listed` = '" . (isset($data['quantity_listed']) ? (int)$data['quantity_listed'] : 0) . "',
-			`quantity_sold` = '" . (isset($data['quantity_sold']) ? (int)$data['quantity_sold'] : 0) . "',
-			`ebay_image_count` = '" . (isset($data['ebay_image_count']) ? (int)$data['ebay_image_count'] : 0) . "',
-			`date_added` = NOW(),
-			`date_modified` = NOW()
-        ON DUPLICATE KEY UPDATE 
-            `marketplace_item_id` = VALUES(`marketplace_item_id`),
-            `quantity_listed` = VALUES(`quantity_listed`),
-            `quantity_sold` = VALUES(`quantity_sold`),
-            `date_modified` = NOW()
-    ";
+	$this->db->query("
+		INSERT INTO " . DB_PREFIX . "product_marketplace SET
+		`product_id`             = '" . (int)$data['product_id'] . "',
+		`customer_id`            = '" . (int)$data['customer_id'] . "',
+		`marketplace_id`         = '" . (int)$data['marketplace_id'] . "',
+		`marketplace_account_id` = '" . (int)$data['marketplace_account_id'] . "',
+		`marketplace_item_id`    = '" . $this->db->escape($data['marketplace_item_id']) . "',
+		`category_id`            = '" . (int)$data['category_id'] . "',
+		`currency`               = '" . $this->db->escape($data['currency']) . "',
+		`price`                  = '" . (float)$data['price'] . "',
+		`specifics`              = '" . $this->db->escape($data['specifics']) . "',
+		`error`                  = '" . $this->db->escape($data['error']) . "',
+		`status`                 = '" . (int)$data['status'] . "',
+		`to_update`              = '" . (int)$data['to_update'] . "',
+		`quantity_listed`        = '" . (int)$data['quantity_listed'] . "',
+		`quantity_sold`          = '" . (int)$data['quantity_sold'] . "',
+		`ebay_image_count`       = '" . (int)$data['ebay_image_count'] . "',
+		`date_added`             = NOW(),
+		`date_modified`          = NOW()
+	");
 
-    // Exécuter la requête et capturer une éventuelle erreur
-    $result = @$this->db->query($query); // Utilisation de @ pour éviter les warnings
-
-    // Vérifier si la requête a échoué en regardant la dernière erreur SQL
-    $error_check = $this->db->query("SHOW WARNINGS");
-    if ($error_check->num_rows > 0) {
-        $error_message = $error_check->row['Message']; // Récupération du message d'erreur SQL
-		//error_log("Erreur SQL : " . $error_message); // Journalisation de l'erreur
-
-        return [
-            'error' => true,
-            'message' => $error_message,
-            'product_id' => $data['product_id'],
-            'marketplace_item_id' => $data['marketplace_item_id']
-        ];
-    }
-
-    return $this->db->getLastId();
+	return $this->db->getLastId();
 }
 
 
@@ -487,76 +462,43 @@ public function editProductSpecifics($product_id, $marketplace_account_id,$speci
 
 public function editProductMarketplace($data = []) {
 
-	//print("<pre>" . print_r($data, true) . "</pre>");
-    // Vérifier si l'entrée existe déjà dans la base de données
-    $existingEntry = $this->getMarketplace([
-        'product_id' => $data['product_id'],
-        'marketplace_id' => $data['marketplace_id'],
-		'marketplace_account_id' => $data['marketplace_account_id'],
-		'marketplace_item_id' => $data['marketplace_item_id']
-    ]);
-	
-    if (!empty($existingEntry[$data['product_id']])) {
+	$to_update = (int)$data['to_update'];
+	$to_update_sql = ($to_update === 0)
+		? "CASE WHEN to_update = 1 THEN 1 ELSE 0 END"
+		: "'" . $to_update . "'";
 
-		if (!empty($existingEntry[$data['product_id']]) && count($existingEntry[$data['product_id']]) === 1) {
-			$existingEntry = reset($existingEntry[$data['product_id']]); // Transforme `[['key' => 'value']]` en `['key' => 'value']`
-		}
-		//print("<pre>" . print_r($existingEntry, true) . "</pre>");
-        // Si l'entrée existe, mise à jour // " . ($data['to_update'] ?? $existingEntry['to_update']) . "'
-		//print("<pre>" . print_r(value: '1620:product') . "</pre>");
-		
-        $this->db->query("
-            UPDATE " . DB_PREFIX . "product_marketplace pm
-            SET 
-                pm.marketplace_item_id = '" . $this->db->escape($data['marketplace_item_id'] ?? $existingEntry['marketplace_item_id']) . "',
-                pm.category_id = '" . $this->db->escape($data['category_id'] ?? $existingEntry['category_id']) . "',
-                pm.currency = '" . $this->db->escape($data['currency'] ?? $existingEntry['currency']) . "',
-                pm.price = '" . (isset($data['price']) ? (float)$data['price'] : (float)$existingEntry['price']) . "',
-                pm.quantity_listed = '" . (isset($data['quantity_listed']) ? (int)$data['quantity_listed'] : (int)$existingEntry['quantity_listed']) . "',
-                pm.quantity_sold = '" . (isset($data['quantity_sold']) ? (int)$data['quantity_sold'] : (int)$existingEntry['quantity_sold']) . "',
-                pm.specifics = '" . (!empty($data['specifics']) ? $this->db->escape($data['specifics']) : $this->db->escape($existingEntry['specifics'])) . "',
-                pm.status = '" . (isset($data['status']) ? (int)$data['status'] : (int)$existingEntry['status']) . "',
-                pm.date_added = " . (isset($data['date_added']) ? "'" . $this->db->escape($data['date_added']) . "'" : "'" . $this->db->escape($existingEntry['date_added']) . "'") . ",
-                pm.date_ended = " . (isset($data['date_ended']) && !empty($data['date_ended']) ? "'" . $this->db->escape($data['date_ended']) . "'" : (isset($existingEntry['date_ended']) ? "'" . $this->db->escape($existingEntry['date_ended']) . "'" : "NULL")) . ",
-                pm.date_modified = NOW(),
-                pm.error = '" . (isset($data['error']) ? $this->db->escape($data['error']) : $this->db->escape($existingEntry['error'])) . "',
-                pm.ebay_image_count = " . (isset($data['ebay_image_count']) ? (int)$data['ebay_image_count'] : "ebay_image_count") . ",
-                pm.to_update = '2' 
-            
-           WHERE product_id = '" . (isset($data['product_id']) ? (int)$data['product_id'] : (int)$existingEntry['product_id']) . "'
-		AND marketplace_id = '" . (isset($data['marketplace_id']) ? (int)$data['marketplace_id'] : (int)$existingEntry['marketplace_id']) . "'
+	$this->db->query("
+		UPDATE " . DB_PREFIX . "product_marketplace SET
+		`marketplace_item_id` = '" . $this->db->escape($data['marketplace_item_id'] ?? '') . "',
+		`category_id`         = '" . (int)$data['category_id'] . "',
+		`currency`            = '" . $this->db->escape($data['currency'] ?? '') . "',
+		`price`               = '" . (float)$data['price'] . "',
+		`specifics`           = '" . $this->db->escape($data['specifics'] ?? '') . "',
+		`error`               = '" . $this->db->escape($data['error'] ?? '') . "',
+		`status`              = '" . (int)$data['status'] . "',
+		`to_update`           = " . $to_update_sql . ",
+		`quantity_listed`     = '" . (int)$data['quantity_listed'] . "',
+		`quantity_sold`       = '" . (int)$data['quantity_sold'] . "',
+		`ebay_image_count`    = '" . (int)$data['ebay_image_count'] . "',
+		`date_added`          = '" . $this->db->escape($data['date_added'] ?? '') . "',
+		`date_ended`          = " . (!empty($data['date_ended']) ? "'" . $this->db->escape($data['date_ended']) . "'" : "NULL") . ",
+		`date_modified`       = NOW()
+		" . ($to_update === 0 ? ", last_sync = NOW()" : "") . "
+		WHERE `product_id`   = '" . (int)$data['product_id'] . "'
+		AND `marketplace_id` = '" . (int)$data['marketplace_id'] . "'
+	");
 
-        "); 
-		
-    } else {
-        // Sinon, on ajoute une nouvelle entrée en utilisant la fonction existante
-        $this->addProductMarketplace($data);
-    }
+	if ($this->db->countAffected() === 0) {
+		$this->addProductMarketplace($data);
+	}
 }
 
-
-public function editProductMarketplaceERROR($product_id= null,$marketplace_item_id = null, $error = '') {
-
-	//print("<pre>" . print_r($product_id, true) . "</pre>");
-	//print("<pre>" . print_r($marketplace_item_id, true) . "</pre>");
-	//print("<pre>" . print_r($error, true) . "</pre>");
-    // Vérifier si l'entrée existe déjà dans la base de données
-
-        if(isset($marketplace_item_id)){// Si l'entrée existe, on met à jour
-				$this->db->query("
-				UPDATE " . DB_PREFIX . "product_marketplace 
-				 
-				SET error = '" . (isset($error) ? $this->db->escape($error) : '') . "',
-				to_update = '" . (!empty($error) ? 9 : 2) . "'
-				WHERE marketplace_item_id = '" . (int)$marketplace_item_id . "'");
-		}elseif(isset($product_id)){
-				$this->db->query("
-				UPDATE " . DB_PREFIX . "product_marketplace 
-				SET error = '" . (isset($error) ? $this->db->escape($error) : '') . "',
-				to_update = '" . (!empty($error) ? 9 : 2) . "'
-				WHERE product_id = '" . (int)$product_id . "'");
-		}
+public function getProductMarketplaceRow($marketplace_item_id) {
+	if (empty($marketplace_item_id)) return [];
+	$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_marketplace WHERE marketplace_item_id = '" . $this->db->escape($marketplace_item_id) . "' LIMIT 1");
+	return $query->row;
 }
+
 
 public function getMarketplaceERROR($product_id = null) {
 
@@ -641,7 +583,7 @@ public function addToMarketplace($product_id, $marketplace_account_id=null, $mar
 	}
 }
 
-public function editQuantityToMarketplace($product_id,$marketplace_account_id = 1){
+public function editQuantity($product_id, $marketplace_account_id = 1){
 	
 	// Charger les modèles nécessaires
 	$this->load->model('shopmanager/ebay');
@@ -672,13 +614,18 @@ public function editQuantityToMarketplace($product_id,$marketplace_account_id = 
 	
 	$result = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id,$total_quantity,$made_in_country_id,$product_id,$marketplace_account_id,$site_setting);
 
-	// Mettre à jour quantity_listed en DB si eBay confirme le succès
-	// quantity_sold remis à 0 : on vient de redéfinir la quantité disponible sur eBay,
-	// la baseline repart de zéro (sinon la formule mismatch quantity_listed-quantity_sold serait fausse)
-	if (isset($result['Ack']) && ($result['Ack'] === 'Success' || $result['Ack'] === 'Warning')) {
-		$this->db->query("UPDATE " . DB_PREFIX . "product_marketplace 
-						  SET quantity_listed = " . (int)$total_quantity . ", quantity_sold = 0, last_sync = NOW() 
-						  WHERE product_id = " . (int)$product_id . " AND marketplace_id = " . (int)$marketplace_account_id);
+	$success = isset($result['Ack']) && ($result['Ack'] === 'Success' || $result['Ack'] === 'Warning');
+	$error   = $success ? '' : json_encode($result);
+
+	$row = $this->getProductMarketplaceRow($marketplace_item_id);
+	if ($row) {
+		$row['error'] = $error;
+		$row['to_update'] = $success ? 0 : 9;
+		$this->editProductMarketplace($row);
+	}
+
+	if ($success) {
+		$this->resetSyncState($product_id);
 	}
 
 	return $result;
@@ -794,14 +741,13 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				'quantity_sold' => $result['SellingStatus']['QuantitySold'],
 				'specifics' => $specifics,
 				'status' => isset($result['ListingDetails']['EndingReason'])?0:1,
-				'date_added' => date('Y-m-d H:i:s', strtotime($result['ListingDetails']['StartTime'])), // Conversion ici
-				'date_ended' => isset($result['ListingDetails']['EndingReason'])?date('Y-m-d H:i:s', strtotime($result['ListingDetails']['EndTime'])):'NULL', // Conversion ici
+				'date_added' => date('Y-m-d H:i:s', strtotime($result['ListingDetails']['StartTime'])),
+				'date_ended' => isset($result['ListingDetails']['EndingReason'])?date('Y-m-d H:i:s', strtotime($result['ListingDetails']['EndTime'])):'NULL',
 				'error' => '',
+				'to_update' => 0,
 				'ebay_image_count' => $ebay_image_count,
 				'product_id' => $item['product_id'],
 				'marketplace_id' => $item['marketplace_id']
-
-
 			);
 		//	//print("<pre>".print_r ($marketplace_item ,true )."</pre>");
 			
@@ -819,6 +765,8 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				'date_added' => $item['date_added'], // Conversion ici
 				'date_ended' => $item['date_ended'], // Conversion ici
 				'error' => json_encode($result),
+				'to_update' => 9,
+				'ebay_image_count' => $item['ebay_image_count'],
 				'product_id' => $item['product_id'],
 				'marketplace_id' => $item['marketplace_id']
 
@@ -1051,6 +999,25 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
+	 * Bulk load existing marketplace data for multiple products in one query
+	 * Returns a map of product_id => row
+	 */
+	public function getBulkMarketplaceExistingData(array $product_ids, int $marketplace_id = 1): array {
+		if (empty($product_ids)) {
+			return [];
+		}
+		$ids_sql = implode(',', array_map('intval', $product_ids));
+		$query = $this->db->query("SELECT product_id, category_id, condition_id, specifics, ebay_image_count
+			FROM " . DB_PREFIX . "product_marketplace
+			WHERE product_id IN (" . $ids_sql . ") AND marketplace_id = " . (int)$marketplace_id);
+		$map = [];
+		foreach ($query->rows as $row) {
+			$map[(int)$row['product_id']] = $row;
+		}
+		return $map;
+	}
+
+	/**
 	 * Get marketplace item details
 	 */
 	public function getMarketplaceItem($product_id, $marketplace_id = 1) {
@@ -1146,8 +1113,8 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	public function resetSyncState(int $product_id, int $marketplace_id = 1): void {
 		$this->db->query("
 			UPDATE " . DB_PREFIX . "product_marketplace 
-			SET last_import = NULL, to_update = 0, ebay_image_count = 0, 
-			sync_error = NULL, sync_error_details = NULL, price = NULL, quantity_listed = NULL, quantity_sold = NULL, category_id = NULL, condition_id = NULL, specifics = NULL
+			SET last_import = NULL, ebay_image_count = NULL, image_backup_count = NULL, oc_max_width = NULL, backup_max_width = NULL,
+			error = NULL,  price = NULL, quantity_listed = NULL, quantity_sold = NULL, category_id = NULL, condition_id = NULL, specifics = NULL
 			WHERE product_id = " . (int)$product_id . "
 			AND marketplace_id = " . (int)$marketplace_id . "
 		");
@@ -1283,5 +1250,26 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	public function updateMarketplaceCategory(int $product_id, int $category_id, int $marketplace_id = 1): void {
 		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `category_id` = '" . (int)$category_id . "' WHERE `product_id` = '" . (int)$product_id . "' AND `marketplace_id` = '" . (int)$marketplace_id . "'");
 	}
-}
 
+        /**
+         * Sweep ended eBay listings after a complete import run.
+         * Marks status=0 / date_ended=NOW() for rows that were NOT updated during this import
+         * (i.e. not in eBay's ActiveList → listing ended or expired).
+         *
+         * @param int    $marketplace_account_id
+         * @param string $started_at   ISO datetime string captured by frontend when the sync started
+         * @return int   Number of rows marked as ended
+         */
+        public function sweepEndedListings(int $marketplace_account_id, string $started_at): int {
+                $safe_started = $this->db->escape($started_at);
+                $this->db->query("
+                        UPDATE `" . DB_PREFIX . "product_marketplace`
+                        SET `status` = 0, `date_ended` = NOW()
+                        WHERE `marketplace_id` = 1
+                        AND `marketplace_account_id` = '" . (int)$marketplace_account_id . "'
+                        AND `status` = 1
+                        AND (`last_import` IS NULL OR `last_import` < '" . $safe_started . "')
+                ");
+                return $this->db->countAffected();
+        }
+}

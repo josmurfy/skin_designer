@@ -3876,21 +3876,21 @@ $(document).on('click', '.btn-rotate-product-image', function() {
         success: function(json) {
             $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right"></i> Rotation 90\u00b0');
             if (json.error) { alert('Erreur rotation: ' + json.error); return; }
-            var ts = '?t=' + Date.now();
-            var $thumb = $('#' + thumbId);
-            // Refresh full-size preview first (always has an absolute URL via HTTP_CATALOG)
-            var $container = $thumb.closest('.actual-image-container');
-            var $preview   = $container.find('img.actual-image-preview');
-            if ($preview.length) {
-                $preview.attr('src', $preview.attr('src').split('?')[0] + ts);
-            }
-            // Refresh thumb only when it has a root-relative or absolute URL (not bare filename)
-            if ($thumb.length) {
-                var s = $thumb.attr('src') || '';
-                if (s.indexOf('http') === 0 || s.indexOf('/') === 0) {
-                    $thumb.attr('src', s.split('?')[0] + ts);
+            // Delay to let the server finish flushing the rotated file to disk
+            setTimeout(function() {
+                var ts = '?t=' + Date.now();
+                var $thumb = $('#' + thumbId);
+                // Refresh thumb using the fresh URL returned by PHP (cache already regenerated)
+                if ($thumb.length && json.thumb_url) {
+                    $thumb.attr('src', json.thumb_url + ts);
                 }
-            }
+                // Refresh full-size preview (always absolute URL via HTTP_CATALOG)
+                var $container = $thumb.length ? $thumb.closest('.actual-image-container') : $btn.closest('.actual-image-container');
+                var $preview   = $container.find('img.actual-image-preview');
+                if ($preview.length) {
+                    $preview.attr('src', $preview.attr('src').split('?')[0] + ts);
+                }
+            }, 30);
         },
         error: function(xhr) {
             $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right"></i> Rotation 90\u00b0');

@@ -164,7 +164,12 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
         foreach ($data['cards'] as &$card) {
             $bilanKey = ($card['card_number'] ?? '') . '|||' . ($card['set_name'] ?? '');
             $card['has_sold']          = !empty($soldBilanMap[$bilanKey]);
-            $card['ebay_sales_rendered'] = $this->renderSoldBilanHtml($soldBilanMap[$bilanKey] ?? []);
+            $card['ebay_sales_rendered'] = $this->renderSoldBilanHtml(
+                $soldBilanMap[$bilanKey] ?? [],
+                (float)($card['ungraded'] ?? 0),
+                (float)($card['grade_9']  ?? 0),
+                (float)($card['grade_10'] ?? 0)
+            );
         }
         unset($card);
         $data['total'] = $this->model_shopmanager_card_card_import_price->getTotalCardPrices(array_merge($filters, ['filter_has_sold' => '1']));
@@ -475,6 +480,10 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/card/card_import_price');
         $this->load->model('shopmanager/ebay');
 
+        // Libère le verrou session avant les appels eBay lents
+        if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+        error_log('[fetchMarketPrices] START ids=' . implode(',', $ids));
+
         $rows = $this->model_shopmanager_card_card_import_price->getCardsByIds($ids);
         $rowsById = [];
         foreach ($rows as $row) {
@@ -556,6 +565,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             }
 
             $market = $this->fetchMarketPricesByKeyword($keyword);
+            error_log('[fetchMarketPrices] id=' . $cardRawId . ' keyword="' . $keyword . '" success=' . json_encode(!empty($market['success'])));
 
             if (!empty($market['rate_limited'])) {
                 $rateLimited = true;
@@ -668,6 +678,12 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
 
         $this->load->model('shopmanager/ebay');
 
+        // Libère le verrou session avant les appels eBay lents (sinon toutes les requêtes AJAX parallèles bloquent)
+        if (session_status() === PHP_SESSION_ACTIVE) { session_write_close(); }
+
+        $t0_total = microtime(true);
+        error_log('[fetchPreviewMarketPrices] START cards=' . count($cards));
+
         $results = [];
         $processed = 0;
         $errors = 0;
@@ -709,7 +725,10 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                 continue;
             }
 
+            $t0 = microtime(true);
+            error_log('[fetchPreviewMarketPrices] idx=' . $rowIndex . ' keyword="' . $keyword . '" → calling fetchMarketPricesByKeyword');
             $market = $this->fetchMarketPricesByKeyword($keyword);
+            error_log('[fetchPreviewMarketPrices] idx=' . $rowIndex . ' done in ' . round((microtime(true) - $t0) * 1000) . 'ms success=' . json_encode(!empty($market['success'])));
 
             if (!empty($market['rate_limited'])) {
                 $rateLimited = true;
@@ -765,6 +784,8 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             $results[$rowIndex] = $result;
             $processed++;
         }
+
+        error_log('[fetchPreviewMarketPrices] END processed=' . $processed . ' errors=' . $errors . ' total_ms=' . round((microtime(true) - $t0_total) * 1000));
 
         $json['success'] = true;
         $json['processed'] = $processed;
@@ -1065,7 +1086,12 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
 
             // ── Col 7: eBay Sales (from oc_card_price_sold) ──────────────────
             $bilanKey = ($card['card_number'] ?? '') . '|||' . ($card['set_name'] ?? $card['set'] ?? '');
-            $html .= '<td>' . $this->renderSoldBilanHtml($soldBilanMap[$bilanKey] ?? []) . '</td>';
+            $html .= '<td>' . $this->renderSoldBilanHtml(
+                $soldBilanMap[$bilanKey] ?? [],
+                (float)($card['ungraded'] ?? 0),
+                (float)($card['grade_9']  ?? 0),
+                (float)($card['grade_10'] ?? 0)
+            ) . '</td>';
 
             // ── Col 8: merge inline ───────────────────────────────────────────
             $html .= '<td class="preview-merge-col" style="padding:1px;vertical-align:middle;text-align:center;"></td>';
@@ -1170,7 +1196,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
      * Distinguishes AUC/BIN and graded/ungraded.
      * Shows grading recommendation if a grade 7+ entry exists.
      */
-    private function renderSoldBilanHtml(array $soldRows): string {
+    private function renderSoldBilanHtml(array $soldRows, float $costRaw = 0.0, float $costG9 = 0.0, float $costG10 = 0.0): string {
         if (empty($soldRows)) {
             return '<span class="text-muted" style="font-size:11px;">—</span>';
         }
@@ -1257,8 +1283,14 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             ];
         };
 
+        // Coût de grading : 37 USD converti en CAD
+        $gradingCostCAD = round((float)$this->currency->convert(37.0, 'USD', 'CAD'), 2);
+        $EBAY_FEE       = 0.13;
+
         // ── Helper: render one summary row ──
-        $statsRow = function(string $badge, ?array $stats, bool $showBids = false): string {
+        // $showProfit = true → affiche (median × (1-fee)) - gradingCostCAD  (graded seulement)
+        // $showProfit = false → cellule vide (non gradée)
+        $statsRow = function(string $badge, ?array $stats, bool $showBids = false, bool $showProfit = false) use ($gradingCostCAD, $EBAY_FEE): string {
             if ($stats === null) return '';
             $fmt    = fn(float $v): string => '$' . number_format($v, 2);
             $dateFn = fn(string $d): string => $d !== ''
@@ -1276,6 +1308,17 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
             } else {
                 $recentCell = '<td style="padding:1px 3px;font-size:9px;color:#888;">' . htmlspecialchars($recentD) . '</td>';
             }
+            // Rentabilité graded : médiane × (1 - frais eBay) - coût grading (37 USD → CAD)
+            if ($showProfit) {
+                $profit    = round($stats['median'] * (1 - $EBAY_FEE) - $gradingCostCAD, 2);
+                $rentSign  = $profit >= 0 ? '+' : '';
+                $rentColor = $profit >= 0 ? '#198754' : '#dc3545';
+                $rentCell  = '<td style="white-space:nowrap;padding:1px 3px;font-size:10px;font-weight:700;color:' . $rentColor . ';">'
+                           . $rentSign . $fmt($profit)
+                           . '</td>';
+            } else {
+                $rentCell = '<td></td>';
+            }
             $countLabel = $stats['count'] . ' vente' . ($stats['count'] > 1 ? 's' : '');
             return '<tr>'
                  . '<td style="white-space:nowrap;padding:1px 4px 1px 0;">' . $badge . '</td>'
@@ -1288,13 +1331,14 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                  . '</td>'
                  . '<td style="padding:1px 3px;color:#888;font-size:9px;">' . $countLabel . '</td>'
                  . $bidsCell
+                 . $rentCell
                  . $recentCell
                  . '</tr>';
         };
 
         // ── Helper: separator row ──
         $sepRow = fn(string $label): string =>
-            '<tr><td colspan="7" style="padding:4px 2px 2px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid #dee2e6;">'
+            '<tr><td colspan="8" style="padding:4px 2px 2px;font-size:9px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid #dee2e6;">'
             . $label . '</td></tr>';
 
         $BIN_badge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#0d6efd;padding:1px 4px;border-radius:3px;">BIN</span>';
@@ -1318,33 +1362,28 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Haut</th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;"></th>'
+                   . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Profit net</th>'
                    . '<th style="padding:0 3px 2px;font-size:9px;color:#888;border-bottom:1px solid #dee2e6;">Récent</th>'
                    . '</tr></thead><tbody>';
 
-            // ── Section 1 : Non gradée ──
+            // ── Section 1 : Non gradée — pas de rentabilité ──
             if ($hasUngraded) {
                 $html .= $sepRow('📦 Non gradée');
-                $html .= $statsRow($BIN_badge, $statsBin, false);
-                $html .= $statsRow($AUC_badge, $statsAuc, true);
+                $html .= $statsRow($BIN_badge, $statsBin, false, false);
+                $html .= $statsRow($AUC_badge, $statsAuc, true,  false);
             }
 
-            // ── Section 2 : Gradée — Enchère (AUC) ──
-            if ($hasAucGraded) {
-                $html .= $sepRow('🏷 Gradée — Enchère (AUC)');
-                foreach ($graded_auc as $gnKey => $entries) {
-                    $gBadge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">Grade ' . htmlspecialchars((string)$gnKey) . '</span>'
-                            . '&#8201;<span style="font-size:9px;font-weight:700;color:#212529;background:#dee2e6;padding:1px 4px;border-radius:3px;">AUC</span>';
-                    $html .= $statsRow($gBadge, $computeStats($entries), true);
+            // ── Sections 2+ : Gradée — groupée PAR GRADE (1→10), AUC puis BIN ──
+            $allGradeKeys = array_unique(array_merge(array_keys($graded_auc), array_keys($graded_bin)));
+            usort($allGradeKeys, fn(string $a, string $b): int => (float)$a <=> (float)$b);
+
+            foreach ($allGradeKeys as $gnKey) {
+                $html .= $sepRow('🏷 Grade ' . htmlspecialchars((string)$gnKey));
+                if (isset($graded_auc[$gnKey])) {
+                    $html .= $statsRow($AUC_badge, $computeStats($graded_auc[$gnKey]), true,  true);
                 }
-            }
-
-            // ── Section 3 : Gradée — Prix fixe (BIN) ──
-            if ($hasBinGraded) {
-                $html .= $sepRow('🏷 Gradée — Prix fixe (BIN)');
-                foreach ($graded_bin as $gnKey => $entries) {
-                    $gBadge = '<span style="font-size:9px;font-weight:700;color:#fff;background:#6f42c1;padding:1px 4px;border-radius:3px;white-space:nowrap;">Grade ' . htmlspecialchars((string)$gnKey) . '</span>'
-                            . '&#8201;<span style="font-size:9px;font-weight:700;color:#fff;background:#0d6efd;padding:1px 4px;border-radius:3px;">BIN</span>';
-                    $html .= $statsRow($gBadge, $computeStats($entries), false);
+                if (isset($graded_bin[$gnKey])) {
+                    $html .= $statsRow($BIN_badge, $computeStats($graded_bin[$gnKey]), false, true);
                 }
             }
 
@@ -1353,8 +1392,7 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
 
         // ── Grading bilan (vaut la peine?) ──
         if (!empty($all_graded)) {
-            $GRADING_COST   = 55.0;
-            $EBAY_FEE       = 0.13;
+            $GRADING_COST   = $gradingCostCAD;  // 37 USD → CAD
             $MIN_NET_PROFIT = 20.0;
 
             $above7 = array_values(array_filter($all_graded, fn(array $e): bool => $e['grade_num'] >= 7.0));
@@ -1480,10 +1518,10 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
 
     private function fetchMarketPricesByKeyword(string $keyword): array {
         $keyword = trim($keyword);
-        $this->clog('[fetchMarketPricesByKeyword] keyword="' . $keyword . '"');
+        
 
         if (strlen($keyword) < 3) {
-            $this->clog('[fetchMarketPricesByKeyword] SKIP: keyword too short');
+           
             return [
                 'success' => false,
                 'keyword' => $keyword,
@@ -1502,17 +1540,14 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                 'condition_type' => 'all',
                 'category_id' => '261328',
             ];
-            $this->clog('[fetchMarketPricesByKeyword] searchOptions=' . json_encode($searchOptions));
+          
 
             $marketData = $this->model_shopmanager_ebay->searchAndClassifyPresentItems($keyword, $searchOptions, 1);
-            $this->clog('[fetchMarketPricesByKeyword] marketData error="' . ($marketData['error'] ?? '') . '" total=' . ($marketData['total'] ?? '?') . ' items_count=' . count($marketData['items'] ?? []));
-            $this->clog('[fetchMarketPricesByKeyword] buckets=' . json_encode($marketData['buckets'] ?? []));
 
             $apiError = (string)($marketData['error'] ?? '');
             $manualUrls = $this->model_shopmanager_ebay->buildManualEbayUrls($keyword);
 
             if ($this->isApiRateLimitedMessage($apiError)) {
-                $this->clog('[fetchMarketPricesByKeyword] RATE LIMITED: ' . $apiError);
                 return [
                     'success' => false,
                     'keyword' => $keyword,
@@ -1572,11 +1607,9 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
                 'ebay_price_list_graded_url'   => $buyNowGraded['url'] ?? '',
                 'ebay_price_list_graded_grade' => $buyNowGraded['grade'] ?? '',
             ];
-            $this->clog('[fetchMarketPricesByKeyword] RESULT: price_sold=' . ($result['price_sold'] ?? 'null') . ' price_list=' . ($result['price_list'] ?? 'null') . ' sold_graded=' . ($result['price_sold_graded'] ?? 'null') . ' api_error="' . $apiError . '"');
             return $result;
         } catch (\Throwable $e) {
             $error = 'Exception: ' . $e->getMessage();
-            $this->clog('[fetchMarketPricesByKeyword] EXCEPTION: ' . $error);
 
             return [
                 'success' => false,
@@ -1618,11 +1651,5 @@ class CardImportPrice extends \Opencart\System\Engine\Controller {
         $this->response->setOutput(json_encode($data));
     }
 
-    /**
-     * Debug logger — writes to storage_phoenixliquidation/logs/card_import.log
-     */
-    private function clog(string $msg): void {
-        $logFile = '/home/n7f9655/public_html/storage_phoenixliquidation/logs/card_import.log';
-        file_put_contents($logFile, '[' . date('Y-m-d H:i:s') . '] ' . $msg . "\n", FILE_APPEND | LOCK_EX);
-    }
+
 }

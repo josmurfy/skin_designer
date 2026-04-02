@@ -351,7 +351,7 @@ public function getOrders(array $data = []): array {
                     foreach($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account){
                         if(isset($marketplace_account['marketplace_item_id'])){
                             //print("<pre>".print_r ($marketplace_account,true )."</pre>");
-                          $result = $this->model_shopmanager_ebay->editQuantity($marketplace_account['marketplace_item_id'], $quantity_total_final,null,$product_id,$marketplace_account_id,$marketplace_account['site_setting']);
+                          $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
                           //print("<pre>".print_r ($result,true )."</pre>");
                           //$result=[]; 
                         /*  if(isset($result['Errors']) && $result['Ack']=='Failure'){
@@ -477,7 +477,7 @@ public function getOrders(array $data = []): array {
 
             foreach($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account){
                 if(isset($marketplace_account['marketplace_item_id'])){
-                    $result = $this->model_shopmanager_ebay->editQuantity($marketplace_account['marketplace_item_id'], $quantity_total_final,null,$product_id,$marketplace_account_id,$marketplace_account['site_setting']);
+                    $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
                 }
             }
         }

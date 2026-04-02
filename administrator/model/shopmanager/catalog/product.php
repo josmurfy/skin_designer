@@ -3689,6 +3689,11 @@ public function getTotalProducts(array $data = []): int {
 		  WHERE language_id='".$language_id."' AND product_id = '" . (int)$product_id . "'");
 }
 
+	public function editProductSpecificsAllLanguages($product_id, $product_specific) {
+		$this->db->query("UPDATE " . DB_PREFIX . "product_description SET specifics = " . (isset($product_specific)? "'".$this->db->escape($product_specific)."'" :'null') . "
+		  WHERE product_id = '" . (int)$product_id . "'");
+	}
+
 public function editProductError($product_id, $json_error) {
 	$this->db->query("UPDATE " . DB_PREFIX . "product SET error = " . (isset($json_error)? "'".$this->db->escape($json_error)."'" :'') . "
 	  WHERE product_id = '" . (int)$product_id . "'");

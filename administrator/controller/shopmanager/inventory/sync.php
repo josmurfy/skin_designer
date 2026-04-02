@@ -588,13 +588,35 @@ class Sync extends \Opencart\System\Engine\Controller {
             // force_refresh = GetItem API call per item (~2s each) → batch petit pour éviter 502
             $batch_size = $force_refresh ? 3 : 20;
             $marketplace_account_id = isset($this->request->get['account_id']) ? (int)$this->request->get['account_id'] : 1;
+            // Timestamp captured by frontend when the sync run started — used to sweep ended listings
+            $started_at = isset($this->request->get['started_at']) ? trim($this->request->get['started_at']) : '';
             $limit = 200; // eBay allows up to 200 per page for GetMyeBaySelling
 
             file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Page: $page, Account: $marketplace_account_id\n", FILE_APPEND);
 
-            // Use GetMyeBaySelling instead - more efficient for bulk sync
-            $response = $this->model_shopmanager_ebay->getMyeBaySellingBulk($page, $marketplace_account_id);
-            
+            // Cache GetMyeBaySelling response to avoid redundant API calls when paginating within the same page
+            // For a page of 200 items with batch_size=20, this cuts 10 API calls down to 1
+            $cache_file = DIR_CACHE . 'ebay_import_' . $marketplace_account_id . '_p' . $page . '.json';
+            $cache_ttl = 300; // 5 minutes
+            if ($offset > 0 && file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_ttl) {
+                $response = json_decode(file_get_contents($cache_file), true) ?: [];
+            } else {
+                $response = $this->model_shopmanager_ebay->getMyeBaySellingBulk($page, $marketplace_account_id);
+                // Only cache successful responses — never cache eBay error responses
+                $is_success = !empty($response) && (!isset($response['Ack']) || $response['Ack'] === 'Success' || $response['Ack'] === 'Warning');
+                if ($is_success) {
+                    file_put_contents($cache_file, json_encode($response));
+                }
+            }
+
+            // Detect eBay API-level failures (Ack: Failure) and surface them instead of silently returning 0 items
+            if (!empty($response['Ack']) && $response['Ack'] === 'Failure') {
+                $ebay_error = $response['Errors']['ShortMessage'] ?? 'eBay API error';
+                $ebay_code  = $response['Errors']['ErrorCode'] ?? '';
+                file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - eBay API Failure (code $ebay_code): $ebay_error\n", FILE_APPEND);
+                throw new \Exception("eBay API error ($ebay_code): $ebay_error");
+            }
+
             file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - API response received\n", FILE_APPEND);
 
             // Check if we have products (GetMyeBaySelling uses different structure)
@@ -637,6 +659,16 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $batch = array_slice($items, $offset, $batch_size);
                 $processed = 0;
 
+                // Pre-load existing marketplace data for all batch items in one query (avoids N+1 SELECTs)
+                $batch_product_ids = [];
+                foreach ($batch as $_item) {
+                    $_sku = isset($_item['SKU']) ? trim($_item['SKU']) : '';
+                    if (!empty($_sku) && is_numeric($_sku)) {
+                        $batch_product_ids[] = (int)$_sku;
+                    }
+                }
+                $existing_data_map = $this->model_shopmanager_marketplace->getBulkMarketplaceExistingData($batch_product_ids, 1);
+
                 // Process each item in the batch
                 foreach ($batch as $item) {
                     // // Stop after 10 products for testing
@@ -677,8 +709,8 @@ class Sync extends \Opencart\System\Engine\Controller {
                         continue;
                     }
 
-                    // Check if we already have category, condition, and specifics in database
-                    $existing_data = $this->model_shopmanager_marketplace->getMarketplaceExistingData($product_id, 1, null);
+                    // Use pre-loaded existing data map (populated before loop in one bulk query)
+                    $existing_data = $existing_data_map[$product_id] ?? null;
 
                     // Only call GetItem if we don't have complete data already
                     $item_details = null;
@@ -780,6 +812,19 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $page_complete = ($next_offset >= $total_items_on_page);
                 $completed = $page_complete && ($page >= $total_pages);
 
+                // Clean up cache file once the page is fully processed
+                if ($page_complete && isset($cache_file) && file_exists($cache_file)) {
+                    @unlink($cache_file);
+                }
+
+                // Sweep ended eBay listings: when the full import is done, mark status=0 for items
+                // that were not seen in this run (not in eBay's ActiveList → ended/expired listings)
+                if ($completed && !empty($started_at)) {
+                    $swept = $this->model_shopmanager_marketplace->sweepEndedListings($marketplace_account_id, $started_at);
+                    file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Sweep ended listings: $swept rows marked status=0\n", FILE_APPEND);
+                    $json['swept'] = $swept;
+                }
+
                 file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Batch done: processed=$processed, offset=$offset, next=$next_offset, page_complete=" . ($page_complete?'true':'false') . ", completed=" . ($completed?'true':'false') . "\n", FILE_APPEND);
 
                 $json['success'] = true;
@@ -850,22 +895,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             }
             
             
-            // Update quantity on eBay
-            $response = $this->model_shopmanager_ebay->editQuantity(
-                $marketplace_item_id, 
-                $new_quantity, 
-                null,
-                $product_id, 
-                $marketplace_account_id,
-                $site_settings
-            );
-
-            // Update local quantity_listed using model
-          
+            // Update quantity on eBay (state management handled by marketplace layer)
+            $response = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
 
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                $this->model_shopmanager_marketplace->updateMarketplaceQuantityListed($product_id, $new_quantity);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = true;
                 $json['message'] = 'Quantity updated to ' . $new_quantity . ' on eBay';
             } else {
@@ -904,7 +937,7 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $product_id = (int)$this->request->post['product_id'];
 
-            $response = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id);
+            $response = $this->model_shopmanager_marketplace->editQuantity($product_id);
 
             
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
@@ -1136,7 +1169,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $response = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id);
+                $response = $this->model_shopmanager_marketplace->editQuantity($product_id);
 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
                     $this->model_shopmanager_marketplace->resetSyncState($product_id);
@@ -1718,15 +1751,32 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $stats = $this->model_shopmanager_inventory_sync->scanImageBackupCounts($backup_dir);
 
+            // Purge orphan empty dirs (product_id folders not in DB, with no files)
+            $product_dir = $backup_dir . 'data/product/';
+            $orphans_deleted = 0;
+            if (is_dir($product_dir)) {
+                foreach (scandir($product_dir) as $entry) {
+                    if ($entry === '.' || $entry === '..') continue;
+                    $full = $product_dir . $entry . '/';
+                    if (!is_dir($full)) continue;
+                    $all_entries = array_diff(scandir($full) ?: [], ['.', '..']);
+                    if (empty($all_entries)) {
+                        rmdir($full);
+                        $orphans_deleted++;
+                    }
+                }
+            }
+
             $json['success']     = true;
             $json['scanned']     = $stats['scanned'];
             $json['with_images'] = $stats['with_images'];
             $json['empty']       = $stats['empty'];
             $json['not_found']          = $stats['not_found'];
             $json['not_found_samples'] = $stats['not_found_samples'];
+            $json['orphans_deleted'] = $orphans_deleted;
             $json['message']     = sprintf(
-                '%d products scanned — %d with backup images, %d empty dirs, %d not found in backup',
-                $stats['scanned'], $stats['with_images'], $stats['empty'], $stats['not_found']
+                '%d products scanned — %d with backup images, %d empty dirs, %d not found in backup, %d orphan dirs deleted',
+                $stats['scanned'], $stats['with_images'], $stats['empty'], $stats['not_found'], $orphans_deleted
             );
         } catch (\Exception $e) {
             $json['error'] = $e->getMessage();
@@ -1897,17 +1947,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             $transferred++;
         }
 
-        // Update image_backup_count in product_marketplace
-        $new_count = 0;
-        if (is_dir($backup_dir)) {
-            $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-            foreach (scandir($backup_dir) as $f) {
-                if ($f !== '.' && $f !== '..' && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), $allowed_ext)) {
-                    $new_count++;
-                }
-            }
-        }
-        $this->model_shopmanager_marketplace->updateImageBackupCount($product_id, $new_count);
+
+        $this->model_shopmanager_marketplace->resetSyncState($product_id);
 
         $json['success']     = true;
         $json['transferred'] = $transferred;
@@ -1957,18 +1998,9 @@ class Sync extends \Opencart\System\Engine\Controller {
             }
         }
 
-        // Update image_backup_count
-        $new_count = 0;
-        if (is_dir($backup_dir)) {
-            $allowed_ext = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-            foreach (scandir($backup_dir) as $f) {
-                if ($f !== '.' && $f !== '..' && in_array(strtolower(pathinfo($f, PATHINFO_EXTENSION)), $allowed_ext)) {
-                    $new_count++;
-                }
-            }
-        }
-        $this->model_shopmanager_marketplace->updateImageBackupCount($product_id, $new_count);
-
+       
+        
+        $this->model_shopmanager_marketplace->resetSyncState($product_id);
         $json['success'] = true;
         $json['deleted']  = $deleted;
         $json['errors']   = $errors;
@@ -2410,6 +2442,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
 
                 $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
+                if (!empty($marketplace['specifics'])) {
+                    $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
+                }
                 $this->model_shopmanager_marketplace->resetSyncState($product_id);
                 $json['success'] = "Category imported: $ebay_category_id";
             } catch (\Exception $e) {
@@ -2556,6 +2591,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                         }
 
                         $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
+                        if (!empty($marketplace['specifics'])) {
+                            $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
+                        }
                         $this->model_shopmanager_marketplace->resetSyncState($product_id);
                         $success_count++;
                     } catch (\Exception $e) {

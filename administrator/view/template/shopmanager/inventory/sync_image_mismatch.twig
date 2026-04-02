@@ -512,6 +512,7 @@
   var currentBackupProductId  = null;
   var currentPopupBackupCount  = null; // updated after each reloadPopup
   var currentPopupSection      = null; // 'resolution' or null
+  var popupOcModified          = false; // true if OC images were modified → reload tab on close
   var MIN_RES_GOOD = 800, MIN_RES_OK = 500;
 
   function resQuality(w, h) {
@@ -875,6 +876,11 @@
     }
     currentPopupBackupCount = null;
     currentPopupSection     = null;
+    if (popupOcModified) {
+      popupOcModified = false;
+      loadImageMismatchTab({{ image_mismatch_page }}, '{{ image_mismatch_sort }}', '{{ image_mismatch_order }}',
+                           {{ backup_mismatch_page }}, '{{ backup_mismatch_sort }}', '{{ backup_mismatch_order }}');
+    }
   });
 
   // ─── Open Backup Popup ────────────────────────────────────────────────────
@@ -925,9 +931,7 @@
       success: function(json) {
         if (json.error) { alert(json.error); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Retirer OC'); return; }
         reloadPopup(pid);
-        if (confirm('Image retirée. Transférer une image backup vers OpenCart maintenant ?')) {
-          $('#backup-modal-body').find('.btn-popup-xfer-pri').first().trigger('click');
-        }
+
       },
       error: function(xhr) { alert('Erreur AJAX: ' + xhr.status); $btn.prop('disabled', false).html('<i class="fa-solid fa-trash me-1"></i>Retirer OC'); }
     });
@@ -1032,9 +1036,8 @@
       if (done >= items.length) {
         if (errors.length) alert('Erreurs : ' + errors.join(', '));
         reloadPopup(pid);
-        if (confirm('Images retirées. Transférer les images backup vers OpenCart maintenant ?')) {
-          $('#backup-modal-body').find('.btn-popup-xfer-pri').first().trigger('click');
-        }
+       
+
         return;
       }
       var item = items[done++];
@@ -1096,11 +1099,10 @@
     if (!filenames.length) return;
     var useOriginalRoles = false;
     if (allSelected) {
-      if (!confirm('Transf\u00e9rer TOUTES les images backup vers OC en respectant les r\u00f4les ?\n(primaire backup \u2192 primaire OC, secondaire backup \u2192 secondaire OC)')) return;
       useOriginalRoles = true;
     } else {
       var label = baseRole === 'primary' ? 'principal (1\u00e8re) + secondaires (reste)' : 'secondaire';
-      if (!confirm('Transf\u00e9rer ' + filenames.length + ' image(s) \u2014 ' + label + ' ?')) return;
+      
     }
     var pid = currentBackupProductId;
     $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin me-1"></i>En cours\u2026');
@@ -1203,6 +1205,7 @@
           $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate-right me-1"></i>Rotation 90°');
           return;
         }
+        if (source === 'oc') { popupOcModified = true; }
         reloadPopup(pid);
       },
       error: function(xhr) {

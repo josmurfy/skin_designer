@@ -45,6 +45,9 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                             'category_id' => 0,
                             'specifics' => '',
                             'error' => '',
+                            'status' => 1,
+                            'to_update' => 0,
+                            'ebay_image_count' => 0,
                         );
 
                         $this->model_shopmanager_marketplace->addProductMarketplace($data);
@@ -71,7 +74,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
         $this->response->setOutput(json_encode($json, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
     }
 
-    public function editQuantityToMarketplace(): void {
+    public function editQuantity(): void {
 
         $json = [];
 
@@ -98,7 +101,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 
                 if ($product_id && $marketplace_account_id) {
                     // Mise à jour des tarifs dans la base de données
-                    $result = $this->model_shopmanager_marketplace->editQuantityToMarketplace($product_id, $marketplace_account_id);
+                    $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
                     //print("<pre>".print_r ($result,true )."</pre>");
                     if (isset($result['ErrorLanguage'])) {
                         $json['error'] = json_encode($result);
@@ -248,7 +251,12 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                 $this->log->write('[updateListedProduct] product_id=' . $product_id . ' item_id=' . $marketplace_item_id . ' Ack=' . ($result['Ack'] ?? 'N/A') . ' result=' . json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
                 if (isset($result['Ack']) && $result['Ack'] != 'Failure' && !isset($result['error'])) {
-                    $this->model_shopmanager_marketplace->editProductMarketplaceERROR(null, $marketplace_item_id, '');
+                    $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($marketplace_item_id);
+                    if ($_pm_row) {
+                        $_pm_row['error'] = '';
+                        $_pm_row['to_update'] = 0;
+                        $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                    }
 
                     $json['results'][] = [
                         'status' => 'success',
@@ -262,7 +270,12 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                         ? $error_payload
                         : json_encode($error_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-                    $this->model_shopmanager_marketplace->editProductMarketplaceERROR(null, $marketplace_item_id, (string)$error_json);
+                    $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($marketplace_item_id);
+                    if ($_pm_row) {
+                        $_pm_row['error'] = (string)$error_json;
+                        $_pm_row['to_update'] = 9;
+                        $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                    }
 
                     $json['results'][] = [
                         'status' => 'error',
@@ -276,7 +289,12 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                 $error_payload = ['exception' => ['LongMessage' => $e->getMessage()]];
                 $error_json = json_encode($error_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-                $this->model_shopmanager_marketplace->editProductMarketplaceERROR(null, $marketplace_item_id, (string)$error_json);
+                $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($marketplace_item_id);
+                if ($_pm_row) {
+                    $_pm_row['error'] = (string)$error_json;
+                    $_pm_row['to_update'] = 9;
+                    $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                }
 
                 $json['results'][] = [
                     'status' => 'error',

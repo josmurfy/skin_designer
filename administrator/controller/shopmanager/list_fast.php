@@ -1483,7 +1483,10 @@ class ListFast extends \Opencart\System\Engine\Controller {
         $this->load->model('shopmanager/list_fast');
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
-            $this->model_shopmanager_list_fast->editProduct($this->request->get['product_id'], $this->request->post);
+            $this->load->model('shopmanager/catalog/product');
+            $this->model_shopmanager_catalog_product->editProduct((int)$this->request->get['product_id'], $this->request->post);
+            $this->load->model('shopmanager/marketplace');
+            $this->model_shopmanager_marketplace->setToUpdate((int)$this->request->get['product_id']);
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
             $this->response->redirect($this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'], true));
@@ -2173,6 +2176,8 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					}
 				//	//print("<pre>" . print_r($product_info, true) . "</pre>");
 					$this->model_shopmanager_catalog_product->editProduct($product_id,$product_info);
+					$this->load->model('shopmanager/marketplace');
+					$this->model_shopmanager_marketplace->setToUpdate($product_id);
 					
 				}
 

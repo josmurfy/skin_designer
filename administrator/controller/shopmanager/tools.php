@@ -474,6 +474,25 @@ public function create_label($sku = '', $upc ='', $quantity = 1) {
 
             $json['success'] = true;
             $json['message'] = 'Image rotated ' . $degrees . '°';
+
+            // Delete stale thumbnail cache and regenerate a fresh one
+            if (strpos($rel_path, 'image/') === 0) {
+                $image_rel  = substr($rel_path, strlen('image/')); // e.g. catalog/product/.../file.webp
+                $cache_base = DIR_OPENCART . 'image/cache/' . pathinfo($image_rel, PATHINFO_DIRNAME);
+                $basename   = pathinfo($image_rel, PATHINFO_FILENAME);
+                if (is_dir($cache_base)) {
+                    foreach (glob($cache_base . '/' . $basename . '-*') as $stale) {
+                        @unlink($stale);
+                    }
+                }
+                // Flush PHP's file stat cache so resize() sees the deleted files and recreates them
+                clearstatcache();
+                // Regenerate thumbnail at default product dimensions and return new URL
+                $this->load->model('tool/image');
+                $w = (int)$this->config->get('config_image_default_width')  ?: 300;
+                $h = (int)$this->config->get('config_image_default_height') ?: 300;
+                $json['thumb_url'] = $this->model_tool_image->resize($image_rel, $w, $h);
+            }
         } catch (\Exception $e) {
             $json['error'] = 'rotateImage: ' . $e->getMessage();
         }

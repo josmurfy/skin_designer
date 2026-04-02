@@ -155,6 +155,9 @@
         let totalProcessed = 0;
         let currentOffset = 0; // sous-batch offset dans une page eBay
         let isSyncing = true;
+        // Timestamp when this sync run started — passed to all batch calls so the backend
+        // can sweep ended eBay listings (not in ActiveList) once the import is complete
+        const startedAt = new Date().toISOString().slice(0, 19).replace('T', ' ');
 
 
         if (!url) {
@@ -176,7 +179,7 @@
 
 
             $.ajax({
-                url: url + '&page=' + currentPage + '&offset=' + currentOffset + '&account_id=1',
+                url: url + '&page=' + currentPage + '&offset=' + currentOffset + '&account_id=1&started_at=' + encodeURIComponent(startedAt),
                 type: 'GET',
                 dataType: 'json',
                 beforeSend: function() {

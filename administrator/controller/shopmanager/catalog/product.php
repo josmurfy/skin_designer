@@ -2775,38 +2775,29 @@ public function updateUnallocatedQuantity() {
 		$this->load->model('shopmanager/marketplace');
 		$marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
 
-		foreach ($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account) {
+		foreach ($marketplace_accounts_id as $marketplace_account_id => $marketplace_account) {
 			if (isset($marketplace_account['marketplace_item_id'])) {
-		$this->load->model('shopmanager/ebay');
-			$final_quantity = $quantity + $unallocated_quantity;
-		// $result[] = $this->model_shopmanager_ebay->edit($product_id, $final_quantity);
-			$result[] = $this->model_shopmanager_ebay->editQuantity($marketplace_account['marketplace_item_id'], $final_quantity,null,$product_id,$marketplace_account_id,$marketplace_account['site_setting']);
-
+				$result[] = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
 			}
 		}
-			foreach ($result as $key=>$resul) {
-				if (isset($resul['Errors']) && $resul['Ack'] == 'Failure') {
-					$json['error'] = "eBay ERROR: <br>";
-
-					$errors = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($resul['Errors']));
-					foreach ($errors as $key => $value) {
-						if ($key === 'LongMessage') {
-							$json['error'] .= '************ ' . $value . '<br>';
-						}
+		foreach ($result ?? [] as $resul) {
+			if (isset($resul['Errors']) && $resul['Ack'] == 'Failure') {
+				$json['error'] = "eBay ERROR: <br>";
+				$errors = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($resul['Errors']));
+				foreach ($errors as $key => $value) {
+					if ($key === 'LongMessage') {
+						$json['error'] .= '************ ' . $value . '<br>';
 					}
-
 				}
 			}
+		}
 
-		// Retourner une réponse de succès à l'interface
 		$json['success'] = ($lang['text_success'] ?? '');
 
 	} else {
-		// En cas de données manquantes, renvoyer une erreur
 		$json['error'] = 'Des données sont manquantes pour effectuer la mise à jour.';
 	}
 
-	// Retourner la réponse au format JSON
 	$this->response->addHeader('Content-Type: application/json');
 	$this->response->setOutput(json_encode($json));
 }
@@ -2839,37 +2830,28 @@ public function updateQuantity() {
 		$this->load->model('shopmanager/marketplace');
 		$marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
 
-		foreach ($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account) {
+		foreach ($marketplace_accounts_id as $marketplace_account_id => $marketplace_account) {
 			if (isset($marketplace_account['marketplace_item_id'])) {
-		$this->load->model('shopmanager/ebay');
-			$final_quantity = $quantity + $unallocated_quantity;
-		// $result[] = $this->model_shopmanager_ebay->edit($product_id, $final_quantity);
-			$result[] = $this->model_shopmanager_ebay->editQuantity($marketplace_account['marketplace_item_id'], $final_quantity,null,$product_id,$marketplace_account_id,$marketplace_account['site_setting']);
-
+				$result[] = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
 			}
 		}
-			foreach ($result as $key=>$resul) {
-				if (isset($resul['Errors']) && $resul['Ack'] == 'Failure') {
-					$json['error'] = "eBay ERROR: <br>";
-
-					$errors = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($resul['Errors']));
-					foreach ($errors as $key => $value) {
-						if ($key === 'LongMessage') {
-							$json['error'] .= '************ ' . $value . '<br>';
-						}
+		foreach ($result ?? [] as $resul) {
+			if (isset($resul['Errors']) && $resul['Ack'] == 'Failure') {
+				$json['error'] = "eBay ERROR: <br>";
+				$errors = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($resul['Errors']));
+				foreach ($errors as $key => $value) {
+					if ($key === 'LongMessage') {
+						$json['error'] .= '************ ' . $value . '<br>';
 					}
 				}
 			}
+		}
 
-		// Retourner une réponse de succès à l'interface
 		$json['success'] = ($lang['text_success'] ?? '');
 	} else {
-		// En cas de données manquantes, renvoyer une erreur
-
 		$json['error'] = 'Des données sont manquantes pour effectuer la mise à jour.';
 	}
 
-	// Retourner la réponse au format JSON
 	$this->response->addHeader('Content-Type: application/json');
 	$this->response->setOutput(json_encode($json));
 }

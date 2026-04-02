@@ -43,17 +43,18 @@ class Ebay extends \Opencart\System\Engine\Model {
             } else {
                 $error = json_encode($responseArray);
             }
-            $this->model_shopmanager_marketplace->editProductMarketplaceERROR($product['product_id'], $responseArray['ItemID']??NULL,$error);
+        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        if ($_pm_row) {
+            $_pm_row['error'] = $error;
+            $_pm_row['to_update'] = empty($error) ? 0 : 9;
+            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+        }
 
          
 
         return $responseArray;
     }
 
-
-/**
- * Add card listing using Inventory API (supports variation images)
- */
 /**
  * Execute eBay Inventory API operations for ONE batch of variations.
  * Called by addCardListing for both single-batch (≤250) and multi-batch (>250) flows.
@@ -1518,7 +1519,12 @@ private function createInventoryItemGroup($template_data, $headers, $site_settin
             $error = json_encode($responseArray);
         }
 
-        $this->model_shopmanager_marketplace->editProductMarketplaceERROR(null, $responseArray['ItemID']??null,$error);
+        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        if ($_pm_row) {
+            $_pm_row['error'] = $error;
+            $_pm_row['to_update'] = empty($error) ? 0 : 9;
+            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+        }
 
         //$responseArray = json_decode($response, true);
 		return $responseArray;
@@ -1778,7 +1784,12 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
                 $error = json_encode($responseArray);
             }
 
-            $this->model_shopmanager_marketplace->editProductMarketplaceERROR($product['product_id'], $responseArray['ItemID']??$marketplace_item_id,$error);
+            $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? $marketplace_item_id);
+            if ($_pm_row) {
+                $_pm_row['error'] = $error;
+                $_pm_row['to_update'] = empty($error) ? 0 : 9;
+                $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+            }
         }
         return $responseArray;
     }
@@ -1806,7 +1817,12 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             $error = json_encode($responseArray);
         }
 
-        $this->model_shopmanager_marketplace->editProductMarketplaceERROR(null, $responseArray['ItemID']??null, $error);
+        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        if ($_pm_row) {
+            $_pm_row['error'] = $error;
+            $_pm_row['to_update'] = empty($error) ? 0 : 9;
+            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+        }
 
         return $responseArray;
     }
@@ -1848,7 +1864,12 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             $error = json_encode($responseArray);
         }
 
-        $this->model_shopmanager_marketplace->editProductMarketplaceERROR(null, $responseArray['ItemID']??null,$error);
+        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        if ($_pm_row) {
+            $_pm_row['error'] = $error;
+            $_pm_row['to_update'] = empty($error) ? 0 : 9;
+            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+        }
 
 		return $responseArray;
     }
@@ -1864,18 +1885,6 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
 		$response	=	$this->makeCurlRequest('https://api.ebay.com/ws/api.dll', $headers, $postFields) ;
 		$responseXml = simplexml_load_string($response);
 		$responseArray = json_decode(json_encode($responseXml), true);
-        $this->load->model('shopmanager/marketplace');
-            
-        if (isset($responseArray['ErrorLanguage'])) {
-            $error = json_encode($responseArray);
-        } elseif (isset($responseArray['Ack']) && $responseArray['Ack'] != 'Failure') {
-            $error = '';
-        } else {
-            $error = json_encode($responseArray);
-        }
-
-        $this->model_shopmanager_marketplace->editProductMarketplaceERROR($product_id, $responseArray['ItemID']??null,$error);
-
 		return $responseArray;
     }
 
@@ -4624,9 +4633,13 @@ private function initializePriceVariants($category_id, $site_setting = []) {
             curl_setopt($ch, CURLOPT_POST, 1);
             curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
         }
-    
+
+        $t0 = microtime(true);
+        error_log('[makeCurlRequest] START url=' . preg_replace('/^(https?:\/\/[^?]+).*/', '$1', $url));
         // Exécuter la requête cURL
         $response = curl_exec($ch);
+        $ms = round((microtime(true) - $t0) * 1000);
+        error_log('[makeCurlRequest] END ms=' . $ms . ' errno=' . curl_errno($ch) . ' httpcode=' . curl_getinfo($ch, CURLINFO_HTTP_CODE));
       //echo "<pre>response: " . print_r($response, true) . "</pre>";
         // Afficher les informations de cURL pour le débogage
         $curlInfo = curl_getinfo($ch);

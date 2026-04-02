@@ -768,7 +768,7 @@ private function generateCardListingSpecifics($NameValueLists = null): string|nu
         
            
 				$shippingProfile = $this->getShippingProfile($product, $site_setting);
-				$this->log->write('ShippingPackageDetails sent (in/lb): L=' . $lenIn . ', W=' . $wdIn . ', H=' . $htIn . ', Weight=' . $Weight . ', profile=' . json_encode($shippingProfile));
+				//$this->log->write('ShippingPackageDetails sent (in/lb): L=' . $lenIn . ', W=' . $wdIn . ', H=' . $htIn . ', Weight=' . $Weight . ', profile=' . json_encode($shippingProfile));
 
 				
 				
@@ -901,7 +901,6 @@ private function generateCardListingSpecifics($NameValueLists = null): string|nu
 				// Si toutes les conditions sont remplies, retourner ce profil
 				if ($categoryMatch && $weightMatch && $dimensionMatch) {
 	//				echo "<br>Correspondance trouvée: Profil $name<br>";
-	  $this->log->write('Profil de livraison sélectionné: ' . $name . ' (ID: ' . $profile['id'] . ')');
 					return ['name' => $name, 'id' => $profile['id']];
 				}
 			}

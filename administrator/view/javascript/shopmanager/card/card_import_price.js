@@ -676,6 +676,7 @@ function finishPreviewFetch(mode) {
 }
 
 function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
+    var CONCURRENCY = 5; // 5 fetches eBay en parallèle
     var total = previewRows.length;
     var modal = new bootstrap.Modal(document.getElementById('fetchProgressModal'));
     var $modalEl = $('#fetchProgressModal');
@@ -715,7 +716,7 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
         previewFetchState.processed = 0;
         previewFetchState.errors = 0;
         previewFetchState.stoppedByRateLimit = false;
-        setFetchProgressSummary('Starting eBay fetch: 0/' + total, 'info');
+        setFetchProgressSummary('Starting eBay fetch: 0/' + total + ' (×' + CONCURRENCY + ' parallèle)', 'info');
     } else {
         setFetchProgressSummary('Resuming eBay fetch: ' + previewFetchState.done + '/' + total, 'info');
         appendFetchProgressLog('info', 'Resume requested. Continuing from item ' + (previewFetchState.nextIndex + 1) + '.');
@@ -723,33 +724,57 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
 
     modal.show();
 
-    function processNext(index) {
-        previewFetchState.nextIndex = index;
+    // ── Moteur de fetch parallèle ─────────────────────────────────────────────
+    var nextToStart  = startIndex || 0;
+    var runningCount = 0;
+    var fetchFinished = false;
 
+    function tryFinish() {
+        if (fetchFinished || runningCount > 0) return;
+        fetchFinished = true;
         if (previewFetchState.stoppedByRateLimit) {
             finishPreviewFetch('rate_limited');
-            return;
-        }
-
-        if (previewFetchState.pauseRequested) {
+        } else if (previewFetchState.pauseRequested) {
             finishPreviewFetch('paused');
-            return;
-        }
-
-        if (index >= total) {
+        } else {
             finishPreviewFetch('completed');
+        }
+    }
+
+    function startBatch() {
+        console.log('[fetch] startBatch running=' + runningCount + ' nextToStart=' + nextToStart + ' total=' + total + ' paused=' + previewFetchState.pauseRequested + ' rateLimit=' + previewFetchState.stoppedByRateLimit);
+        if (fetchFinished) return;
+        if (previewFetchState.stoppedByRateLimit || previewFetchState.pauseRequested) {
+            tryFinish();
             return;
         }
+        while (runningCount < CONCURRENCY && nextToStart < total) {
+            var index = nextToStart++;
+            previewFetchState.nextIndex = nextToStart; // point de reprise = prochain non encore lancé
+            runningCount++;
+            processOne(index);
+        }
+        if (runningCount === 0) {
+            tryFinish();
+        }
+    }
 
+    function processOne(index) {
         var card = previewRows[index];
         var rowIndex = parseInt(card._index, 10);
         var rowLabel = getPreviewRowLabel(card, index + 1);
         var $row = $('#preview-table tr[data-index="' + rowIndex + '"]');
+        var t0 = Date.now();
+        console.log('[fetch] #' + (index + 1) + '/' + total + ' START rowIndex=' + rowIndex + ' running=' + runningCount + ' label=' + rowLabel);
 
-        // Spinner sur la ligne en cours
         $row.find('.market-sold-raw').html('<i class="fa-solid fa-circle-notch fa-spin text-muted"></i>');
 
-        setFetchProgressSummary('<i class="fa-solid fa-circle-notch fa-spin me-1"></i> Fetching ' + (index + 1) + '/' + total + ': ' + rowLabel + '…', 'info');
+        setFetchProgressSummary(
+            '<i class="fa-solid fa-circle-notch fa-spin me-1"></i>'
+            + ' Fetching ' + previewFetchState.processed + '/' + total
+            + ' (' + runningCount + '↑ en cours)…',
+            'info'
+        );
         appendFetchProgressLog('info', 'Fetching: ' + rowLabel);
         if (DEBUG_CARD_IMPORT_FETCH) {
             fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' sending card_index=' + rowIndex + ' to ' + URL_FETCH_PREVIEW_MARKET_PRICES, JSON.parse(JSON.stringify(card)));
@@ -764,6 +789,7 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
             data: JSON.stringify({ cards: [card] }),
             success: function (json) {
                 previewFetchState.processed++;
+                console.log('[fetch] #' + (index + 1) + ' RESPONSE ms=' + (Date.now() - t0) + ' error=' + (json.error || '') + ' running=' + runningCount);
                 if (DEBUG_CARD_IMPORT_FETCH) {
                     fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' response json:', JSON.parse(JSON.stringify(json)));
                 }
@@ -772,67 +798,40 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
                     previewFetchState.errors++;
                     appendFetchProgressLog('error', rowLabel + ' → ' + json.error);
                     fetchDebugWarn('[card_import_fetch] #' + (index + 1) + ' json.error:', json.error);
-                    previewFetchState.nextIndex = index + 1;
-                    if (previewFetchState.pauseRequested) {
-                        finishPreviewFetch('paused');
-                    } else {
-                        processNext(index + 1);
-                    }
-                    return;
-                }
-
-                var rowResult = json.results && json.results[rowIndex] ? json.results[rowIndex] : null;
-                if (DEBUG_CARD_IMPORT_FETCH) {
-                    fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' rowResult (idx=' + rowIndex + '):', rowResult);
-                }
-
-                if (!rowResult) {
-                    previewFetchState.errors++;
-                    appendFetchProgressLog('error', rowLabel + ' → no result returned');
-                    previewFetchState.nextIndex = index + 1;
-                    if (previewFetchState.pauseRequested) {
-                        finishPreviewFetch('paused');
-                    } else {
-                        processNext(index + 1);
-                    }
-                    return;
-                }
-
-                if (rowResult.rate_limited) {
-                    previewFetchState.stoppedByRateLimit = true;
-                    previewFetchState.errors++;
-                    appendFetchProgressLog('warning', rowLabel + ' → ' + (rowResult.error || 'eBay API rate limit reached'));
-                    if (rowResult.manual_urls) { renderManualButtonsToPreviewCells($row, rowResult.manual_urls); }
-                    finishPreviewFetch('rate_limited');
-                    return;
-                }
-
-                if (rowResult.success) {
-                    previewFetchState.done++;
-                    applyMarketPreviewRowResult($row, rowResult);
-                    updateCurrentCardMarketData(rowIndex, rowResult);
-                    appendFetchProgressLog('success', rowLabel + ' → updated');
                 } else {
-                    previewFetchState.errors++;
-                    appendFetchProgressLog('error', rowLabel + ' → ' + (rowResult.error || 'unknown error'));
-                    if (rowResult.manual_urls) { renderManualButtonsToPreviewCells($row, rowResult.manual_urls); }
+                    var rowResult = json.results && json.results[rowIndex] ? json.results[rowIndex] : null;
+                    if (DEBUG_CARD_IMPORT_FETCH) {
+                        fetchDebugLog('[card_import_fetch] #' + (index + 1) + ' rowResult (idx=' + rowIndex + '):', rowResult);
+                    }
+
+                    if (!rowResult) {
+                        previewFetchState.errors++;
+                        appendFetchProgressLog('error', rowLabel + ' → no result returned');
+                    } else if (rowResult.rate_limited) {
+                        previewFetchState.stoppedByRateLimit = true;
+                        previewFetchState.errors++;
+                        appendFetchProgressLog('warning', rowLabel + ' → ' + (rowResult.error || 'eBay API rate limit reached'));
+                        if (rowResult.manual_urls) { renderManualButtonsToPreviewCells($row, rowResult.manual_urls); }
+                    } else if (rowResult.success) {
+                        previewFetchState.done++;
+                        applyMarketPreviewRowResult($row, rowResult);
+                        updateCurrentCardMarketData(rowIndex, rowResult);
+                        appendFetchProgressLog('success', rowLabel + ' → updated');
+                    } else {
+                        previewFetchState.errors++;
+                        appendFetchProgressLog('error', rowLabel + ' → ' + (rowResult.error || 'unknown error'));
+                        if (rowResult.manual_urls) { renderManualButtonsToPreviewCells($row, rowResult.manual_urls); }
+                    }
                 }
 
-                previewFetchState.nextIndex = index + 1;
-
-                if (previewFetchState.pauseRequested) {
-                    finishPreviewFetch('paused');
-                    return;
-                }
-
-                window.setTimeout(function () {
-                    processNext(index + 1);
-                }, 250);
+                runningCount--;
+                startBatch();
             },
             error: function (xhr) {
                 previewFetchState.processed++;
                 previewFetchState.errors++;
                 var isTimeout = (xhr.statusText === 'timeout');
+                console.log('[fetch] #' + (index + 1) + ' AJAX ERROR ms=' + (Date.now() - t0) + ' status=' + xhr.status + ' text=' + xhr.statusText);
                 var raw = isTimeout
                     ? 'Timeout (45s) — eBay API trop lent, carte ignorée'
                     : (xhr.responseText || xhr.statusText || 'AJAX error').substring(0, 250);
@@ -840,21 +839,13 @@ function runPreviewMarketFetch(previewRows, $button, startIndex, resumeMode) {
                     fetchDebugError('[card_import_fetch] #' + (index + 1) + ' AJAX error status=' + xhr.status + ':', raw);
                 }
                 appendFetchProgressLog(isTimeout ? 'warning' : 'error', rowLabel + ' → ' + raw);
-                previewFetchState.nextIndex = index + 1;
-
-                if (previewFetchState.pauseRequested) {
-                    finishPreviewFetch('paused');
-                    return;
-                }
-
-                window.setTimeout(function () {
-                    processNext(index + 1);
-                }, 250);
+                runningCount--;
+                startBatch();
             }
         });
     }
 
-    processNext(startIndex || 0);
+    startBatch();
 }
 
 function fetchMarketPricesPreview(previewRows, forceFetch) {
