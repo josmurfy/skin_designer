@@ -646,4 +646,83 @@ class Card extends \Opencart\System\Engine\Model {
             'quantity'     => $total_qty,
         ];
     }
+
+    /**
+     * Match an eBay sold item against oc_card_set records.
+     *
+     * $sale must contain:
+     *   - 'title'     : eBay listing title (raw string)
+     *   - 'cardNum'   : extracted card number (e.g. "123"), may be empty
+     *   - 'titleYear' : extracted year from title (e.g. "1991-92"), may be empty
+     *
+     * Returns the best matching oc_card_set row, or null.
+     */
+    public function matchSale(array $sale, array $scpCards): ?array {
+        $t       = strtolower($sale['title'] ?? '');
+        $saleNum = strtoupper($sale['cardNum'] ?? '');
+        $saleYr  = $sale['titleYear'] ?? '';
+
+        $yearVariants = [];
+        if ($saleYr) {
+            $yearVariants[] = strtolower($saleYr);
+            if (preg_match('/^(19|20)(\d{2})(?:-(\d{2,4}))?/', $saleYr, $m)) {
+                $yearVariants[] = $m[2];
+                if (!empty($m[3])) $yearVariants[] = substr($m[3], -2);
+            }
+            $yearVariants = array_unique($yearVariants);
+        }
+
+        $normBrand = function(string $b): string {
+            $b = strtolower($b);
+            $b = preg_replace('/o[\.\-]?p[\.\-]?e[\.\-]?e[\.\-]?c[\.\-]?h[\.\-]?e/i', 'opc', $b);
+            $b = preg_replace('/o[\.\-]?p[\.\-]?c/i', 'opc', $b);
+            return preg_replace('/[^a-z0-9]/', '', $b);
+        };
+
+        $candidates = array_filter($scpCards, function($c) use ($saleNum, $saleYr, $yearVariants, $t, $normBrand) {
+            $cNum = strtoupper($c['card_number'] ?? '');
+            if (!$cNum || !$saleNum || $cNum !== $saleNum) return false;
+            if ($c['year'] && $saleYr) {
+                $cy    = strtolower($c['year']);
+                $match = false;
+                foreach ($yearVariants as $v) {
+                    if (str_starts_with($v, $cy) || str_starts_with($cy, $v) || str_contains($v, $cy)) {
+                        $match = true; break;
+                    }
+                }
+                if (!$match) return false;
+            }
+            if ($c['brand']) {
+                $cb = $normBrand($c['brand']);
+                $tb = $normBrand($t);
+                if ($cb && !str_contains($tb, $cb)) {
+                    if (!($cb === 'opc' && str_contains($tb, 'opc'))) return false;
+                }
+            }
+            return true;
+        });
+
+        $candidates = array_values($candidates);
+        if (empty($candidates)) return null;
+
+        // Priority 1: card with no player name (generic match)
+        foreach ($candidates as $c) {
+            if (empty($c['player'])) return $c;
+        }
+        // Priority 2: all significant words in player match title
+        foreach ($candidates as $c) {
+            $words = array_filter(explode(' ', strtolower($c['player'])), fn($w) => strlen($w) > 2);
+            if (!empty($words) && array_reduce($words, fn($carry, $w) => $carry && str_contains($t, $w), true)) {
+                return $c;
+            }
+        }
+        // Priority 3: any significant word in player matches title
+        foreach ($candidates as $c) {
+            $words = array_filter(explode(' ', strtolower($c['player'])), fn($w) => strlen($w) > 2);
+            if (!empty($words) && array_reduce($words, fn($carry, $w) => $carry || str_contains($t, $w), false)) {
+                return $c;
+            }
+        }
+        return null;
+    }
 }

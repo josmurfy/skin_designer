@@ -814,7 +814,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
             $keywordsTried = [];
             $keywordsTried[] = $keyword;
-            $marketData = $this->model_shopmanager_ebay->searchAndClassifyPresentItems($keyword, $searchOptions, 1, $excludeItemId);
+            $marketData = $this->model_shopmanager_ebay->searchAndClassifyActiveItems($keyword, $searchOptions, 1, $excludeItemId);
 
             $this->log->write("[getMarketPrices][ebay_output]\n" . print_r($marketData, true));
             $warnings = ob_get_clean();

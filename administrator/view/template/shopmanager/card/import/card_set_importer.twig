@@ -349,7 +349,7 @@
     function loadList(url) {
         $('#price-list').html('<div class="text-center p-4"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-muted"></i></div>');
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_import_price.list&user_token={{ user_token }}' + url,
+            url: 'index.php?route=shopmanager/card/import/card_set_importer.list&user_token={{ user_token }}' + url,
             type: 'GET',
             success: function(html) {
                 $('#price-list').html(html);
@@ -363,7 +363,7 @@
 
     $('#button-filter').on('click', function() {
         var url = buildFilterUrl();
-        window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_import_price&user_token={{ user_token }}' + url);
+        window.history.pushState({}, null, 'index.php?route=shopmanager/card/import/card_set_importer&user_token={{ user_token }}' + url);
         loadList(url);
     });
 
@@ -378,7 +378,7 @@
         $('#filter-min-price').val('');
         $('#filter-max-price').val('');
         $('#input-limit').val('25');
-        window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_import_price&user_token={{ user_token }}');
+        window.history.pushState({}, null, 'index.php?route=shopmanager/card/import/card_set_importer&user_token={{ user_token }}');
         loadList('');
     });
 
@@ -398,31 +398,31 @@
     // Autocomplete on filter inputs
     $('#filter-title').autocomplete({
         'source': function(request, response) {
-            $.ajax({ url: 'index.php?route=shopmanager/card/card_import_price.autocomplete&user_token={{ user_token }}&field=title&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
+            $.ajax({ url: 'index.php?route=shopmanager/card/import/card_set_importer.autocomplete&user_token={{ user_token }}&field=title&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
         },
         'select': function(item) { $('#filter-title').val(item['label']); }
     });
     $('#filter-category').autocomplete({
         'source': function(request, response) {
-            $.ajax({ url: 'index.php?route=shopmanager/card/card_import_price.autocomplete&user_token={{ user_token }}&field=category&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
+            $.ajax({ url: 'index.php?route=shopmanager/card/import/card_set_importer.autocomplete&user_token={{ user_token }}&field=category&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
         },
         'select': function(item) { $('#filter-category').val(item['label']); }
     });
     $('#filter-year').autocomplete({
         'source': function(request, response) {
-            $.ajax({ url: 'index.php?route=shopmanager/card/card_import_price.autocomplete&user_token={{ user_token }}&field=year&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
+            $.ajax({ url: 'index.php?route=shopmanager/card/import/card_set_importer.autocomplete&user_token={{ user_token }}&field=year&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
         },
         'select': function(item) { $('#filter-year').val(item['label']); }
     });
     $('#filter-set').autocomplete({
         'source': function(request, response) {
-            $.ajax({ url: 'index.php?route=shopmanager/card/card_import_price.autocomplete&user_token={{ user_token }}&field=set_name&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
+            $.ajax({ url: 'index.php?route=shopmanager/card/import/card_set_importer.autocomplete&user_token={{ user_token }}&field=set_name&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
         },
         'select': function(item) { $('#filter-set').val(item['label']); }
     });
     $('#filter-player').autocomplete({
         'source': function(request, response) {
-            $.ajax({ url: 'index.php?route=shopmanager/card/card_import_price.autocomplete&user_token={{ user_token }}&field=player&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
+            $.ajax({ url: 'index.php?route=shopmanager/card/import/card_set_importer.autocomplete&user_token={{ user_token }}&field=player&term=' + encodeURIComponent(request), dataType: 'json', success: function(json) { response($.map(json, function(v) { return { label: v, value: v }; })); } });
         },
         'select': function(item) { $('#filter-player').val(item['label']); }
     });
@@ -465,6 +465,6 @@
     var TEXT_MERGE_PREVIEW_DONE     = 'Lignes fusionnées.';
 
 </script>
-<script src="view/javascript/shopmanager/card/card_import_price.js?v=20260401c"></script>
+<script src="view/javascript/shopmanager/card/import/card_set_importer.js?v=20260401c"></script>
 
 {{ footer }}

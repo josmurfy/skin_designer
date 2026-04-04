@@ -280,6 +280,87 @@ $(function() {
     });
 
     /* ===== Preview row: delete ===== */
+    /* ===== Search in preview eBay titles ===== */
+    $('#button-preview-search').on('click', function() {
+        var term = $('#preview-search-input').val().trim().toLowerCase();
+        if (!term) {
+            $('#preview-search-banner').hide();
+            $('#button-preview-delete-found').hide();
+            return;
+        }
+        var found = 0;
+        // uncheck all first
+        $('#preview-table thead #preview-check-all').prop('checked', false);
+        $('#preview-table tbody tr[data-index]').each(function() {
+            var $tr = $(this);
+            var text = $tr.find('td:nth-child(4)').text().toLowerCase();
+            var $cb = $tr.find('.preview-row-check');
+            if (text.indexOf(term) !== -1) {
+                $cb.prop('checked', true);
+                $tr.addClass('table-info');
+                found++;
+            } else {
+                $cb.prop('checked', false);
+                $tr.removeClass('table-info');
+            }
+        });
+        var banner = '#preview-search-banner';
+        if (found > 0) {
+            var msg = (TEXT_SEARCH_FOUND || '%d rows found').replace('%d', found)
+                    + ' — "' + term + '"';
+            $(banner).text(msg).show();
+            $('#preview-delete-found-label').text(found + ' ×  ' + (typeof button_delete_found !== 'undefined' ? button_delete_found : 'Delete'));
+            $('#button-preview-delete-found').show();
+        } else {
+            var noMsg = (TEXT_SEARCH_NONE || 'No rows found for "%s"').replace('%s', term);
+            $(banner).text(noMsg).show();
+            $('#button-preview-delete-found').hide();
+        }
+    });
+
+    // Clear banner + highlights when input is cleared
+    $('#preview-search-input').on('input', function() {
+        if (!$(this).val()) {
+            $('#preview-search-banner').hide();
+            $('#button-preview-delete-found').hide();
+            $('#preview-table tbody tr[data-index]').removeClass('table-info');
+        }
+    });
+
+    // Also trigger search on Enter key
+    $('#preview-search-input').on('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); $('#button-preview-search').trigger('click'); }
+    });
+
+    // Bulk delete found rows in preview
+    $('#button-preview-delete-found').on('click', function() {
+        var term = $('#preview-search-input').val().trim();
+        showConfirm(TEXT_ERROR || 'Confirm', (TEXT_DELETE_CONFIRM || 'Delete selected?'), function() {
+            $('#preview-table tbody tr[data-index]').each(function() {
+                var $tr = $(this);
+                if ($tr.find('.preview-row-check').is(':checked')) {
+                    var idx = parseInt($tr.data('index'), 10);
+                    var card = currentCards.find(function(c) { return c._index === idx; });
+                    if (card) card._deleted = true;
+                    $tr.remove();
+                }
+            });
+            // Clean orphan group headers
+            $('#preview-table tbody tr.table-secondary').each(function() {
+                var hasVisible = false;
+                $(this).nextAll('tr').each(function() {
+                    if ($(this).hasClass('table-secondary')) return false;
+                    if (!$(this).hasClass('d-none')) { hasVisible = true; return false; }
+                });
+                if (!hasVisible) $(this).remove();
+            });
+            updateMissingBadge();
+            $('#preview-search-banner').hide();
+            $('#preview-search-input').val('');
+            $('#button-preview-delete-found').hide();
+        });
+    });
+
     $(document).on('click', '.btn-preview-delete', function() {
         var $tr  = $(this).closest('tr');
         var idx  = parseInt($tr.data('index'), 10);
@@ -358,6 +439,71 @@ $(function() {
                 $('#save-spinner').hide();
                 showAlert(TEXT_ERROR || 'Error', (TEXT_AJAX_ERROR || 'AJAX error') + ' (' + xhr.status + ')');
             }
+        });
+    });
+
+    /* ===== Search in DB list titles ===== */
+    $('#button-search-title').on('click', function() {
+        var term = $('#search-title-input').val().trim().toLowerCase();
+        if (!term) {
+            $('#search-title-banner').hide();
+            $('#button-delete-found').hide();
+            return;
+        }
+        var found = 0;
+        $('#sold-list input[name="selected[]"]').prop('checked', false);
+        $('#sold-list tbody tr').each(function() {
+            var $tr = $(this);
+            var text = $tr.find('td').eq(3).text().toLowerCase();  // col 4 = title
+            if (text.indexOf(term) !== -1) {
+                $tr.find('input[name="selected[]"]').prop('checked', true);
+                found++;
+            }
+        });
+        if (found > 0) {
+            var msg = (TEXT_SEARCH_FOUND || '%d rows found').replace('%d', found) + ' — "' + term + '"';
+            $('#search-title-banner').text(msg).show();
+            $('#button-delete-found').show();
+        } else {
+            var noMsg = (TEXT_SEARCH_NONE || 'No rows found.').replace('%s', term).replace('%d', 0);
+            $('#search-title-banner').text(noMsg).show();
+            $('#button-delete-found').hide();
+        }
+    });
+
+    $('#search-title-input').on('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); $('#button-search-title').trigger('click'); }
+    });
+
+    $('#search-title-input').on('input', function() {
+        if (!$(this).val()) {
+            $('#search-title-banner').hide();
+            $('#button-delete-found').hide();
+            $('#sold-list input[name="selected[]"]').prop('checked', false);
+        }
+    });
+
+    $('#button-delete-found').on('click', function() {
+        var selected = [];
+        $('#sold-list input[name="selected[]"]:checked').each(function() {
+            selected.push($(this).val());
+        });
+        if (!selected.length) return;
+        showConfirm(TEXT_ERROR || 'Confirm', (TEXT_DELETE_CONFIRM || 'Delete selected?'), function() {
+            $.ajax({
+                url: URL_DELETE, type: 'POST',
+                data: { selected: selected },
+                success: function(json) {
+                    if (json.error) { showAlert(TEXT_ERROR || 'Error', htmlspecialchars(json.error)); return; }
+                    $('#search-title-banner').hide();
+                    $('#search-title-input').val('');
+                    $('#button-delete-found').hide();
+                    if (typeof loadList === 'function') loadList('');
+                },
+                error: function(xhr) {
+                    showAlert(TEXT_ERROR || 'Error', (TEXT_AJAX_ERROR || 'AJAX error') + ' (' + xhr.status + ')');
+                }
+            });
         });
     });
 

@@ -3584,7 +3584,7 @@ private function initializePriceVariants($category_id, $site_setting = []) {
     /**
      * Search eBay items — single Browse API call, no pagination, no enrichment.
      */
-    public function searchPresentItems(string $keyword, array $options = [], int $marketplace_account_id = 1): array {
+    public function searchActiveItems(string $keyword, array $options = [], int $marketplace_account_id = 1): array {
         $limit       = min((int)($options['limit'] ?? 100), 200);
         $page        = max((int)($options['page']  ?? 1), 1);
         $sort        = $options['sort'] ?? 'price_desc';
@@ -3612,7 +3612,7 @@ private function initializePriceVariants($category_id, $site_setting = []) {
 
         $queryParams = [
             'q'            => $keyword,
-            'category_ids' => (string)($options['category_id'] ?? '261328'),
+            'category_ids' => (string)($options['category_id'] ?? '212'),
             'sort'         => $ebaySort,
             'limit'        => min($limit, 200),
             'offset'       => ($page - 1) * $limit,
@@ -3620,8 +3620,11 @@ private function initializePriceVariants($category_id, $site_setting = []) {
 
         $queryParams['auto_correct'] = $autoCorrect;
 
+        $categoryId  = (string)($options['category_id'] ?? '212');
+        $sportAspect = trim((string)($options['sport_aspect'] ?? ''));
+
         if ($condFilter === 'graded') {
-            $aspectParts = ['categoryId:' . (string)($options['category_id'] ?? '261328'), 'Card Condition:{Graded}'];
+            $aspectParts = ['categoryId:' . $categoryId, 'Card Condition:{Graded}'];
 
             if ($grader !== '' && $grader !== 'ALL') {
                 $aspectParts[] = 'Professional Grader:{' . $grader . '}';
@@ -3631,9 +3634,17 @@ private function initializePriceVariants($category_id, $site_setting = []) {
                 $aspectParts[] = 'Grade:{' . $grade . '}';
             }
 
+            if ($sportAspect) {
+                $aspectParts[] = 'Sport:{' . $sportAspect . '}';
+            }
+
             $queryParams['aspect_filter'] = implode(',', $aspectParts);
         } elseif ($condFilter === 'raw') {
-            $queryParams['aspect_filter'] = 'categoryId:' . (string)($options['category_id'] ?? '261328') . ',Card Condition:{Ungraded}';
+            $af = 'categoryId:' . $categoryId . ',Card Condition:{Ungraded}';
+            if ($sportAspect) $af .= ',Sport:{' . $sportAspect . '}';
+            $queryParams['aspect_filter'] = $af;
+        } elseif ($sportAspect) {
+            $queryParams['aspect_filter'] = 'categoryId:' . $categoryId . ',Sport:{' . $sportAspect . '}';
         }
 
         $url = 'https://api.ebay.com/buy/browse/v1/item_summary/search?' . http_build_query($queryParams);
@@ -3646,25 +3657,25 @@ private function initializePriceVariants($category_id, $site_setting = []) {
 
         $response = $this->makeCurlRequest($url, $headers);
         if (!$response) {
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] ERROR: empty response. keyword=\"$keyword\"", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchActiveItems] ERROR: empty response. keyword=\"$keyword\"", FILE_APPEND | LOCK_EX);
             return ['items' => [], 'total' => 0, 'keyword' => $keyword, 'error' => 'Empty response from Browse API', 'auto_corrections' => [], 'warnings' => []];
         }
 
         $data = json_decode($response, true);
         if (!is_array($data)) {
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] ERROR: invalid JSON. keyword=\"$keyword\" raw=" . substr($response, 0, 500) . "", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchActiveItems] ERROR: invalid JSON. keyword=\"$keyword\" raw=" . substr($response, 0, 500) . "", FILE_APPEND | LOCK_EX);
             return ['items' => [], 'total' => 0, 'keyword' => $keyword, 'error' => 'Invalid JSON from Browse API', 'auto_corrections' => [], 'warnings' => []];
         }
         if (isset($data['errors'])) {
             $msg = $data['errors'][0]['longMessage'] ?? $data['errors'][0]['message'] ?? json_encode($data['errors'][0]);
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] API error: $msg. keyword=\"$keyword\"", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchActiveItems] API error: $msg. keyword=\"$keyword\"", FILE_APPEND | LOCK_EX);
             return ['items' => [], 'total' => 0, 'keyword' => $keyword, 'error' => $msg, 'auto_corrections' => $data['autoCorrections'] ?? [], 'warnings' => $data['warnings'] ?? []];
         }
 
         $rawItems = $data['itemSummaries'] ?? [];
         $parsedItems = $this->parseBrowseSummaryItems($rawItems, false, $options);
         if (!empty($rawItems) && empty($parsedItems)) {
-            file_put_contents($ebayLogFile, "$ts [searchPresentItems] WARNING: parsed 0 from non-empty raw. keyword=\"$keyword\" First raw item=" . json_encode($rawItems[0] ?? []) . "", FILE_APPEND | LOCK_EX);
+            file_put_contents($ebayLogFile, "$ts [searchActiveItems] WARNING: parsed 0 from non-empty raw. keyword=\"$keyword\" First raw item=" . json_encode($rawItems[0] ?? []) . "", FILE_APPEND | LOCK_EX);
         }
 
 
@@ -3723,16 +3734,16 @@ private function initializePriceVariants($category_id, $site_setting = []) {
         ];
     }
 
-    public function searchAndClassifyPresentItems(string $keyword, array $searchOptions = [], int $marketplace_account_id = 1, string $excludeItemId = ''): array {
-        $presentAll = $this->searchPresentItems($keyword, $searchOptions, $marketplace_account_id);
+    public function searchAndClassifyActiveItems(string $keyword, array $searchOptions = [], int $marketplace_account_id = 1, string $excludeItemId = ''): array {
+        $activeAll = $this->searchActiveItems($keyword, $searchOptions, $marketplace_account_id);
 
         return [
-            'error' => (string)($presentAll['error'] ?? ''),
-            'total' => (int)($presentAll['total'] ?? 0),
-            'items' => $presentAll['items'] ?? [],
-            'auto_corrections' => $presentAll['auto_corrections'] ?? [],
-            'warnings' => $presentAll['warnings'] ?? [],
-            'buckets' => $this->classifyMarketPriceBuckets($presentAll['items'] ?? [], $excludeItemId),
+            'error' => (string)($activeAll['error'] ?? ''),
+            'total' => (int)($activeAll['total'] ?? 0),
+            'items' => $activeAll['items'] ?? [],
+            'auto_corrections' => $activeAll['auto_corrections'] ?? [],
+            'warnings' => $activeAll['warnings'] ?? [],
+            'buckets' => $this->classifyMarketPriceBuckets($activeAll['items'] ?? [], $excludeItemId),
         ];
     }
 
@@ -4009,9 +4020,15 @@ private function initializePriceVariants($category_id, $site_setting = []) {
 
             $decoded = $decodeJson($rawClean);
             if (is_array($decoded)) {
-                $data = $decoded;
-                $this->log->write('[searchSoldItemsScraper][decoded_ok] url=' . $requestConfig['url'] . ' keys=' . implode(',', array_slice(array_keys($decoded), 0, 12)));
-                break;
+                // Only accept if it contains products/items — skip "not subscribed" or other error wrappers
+                if (isset($decoded['products']) || isset($decoded['items'])) {
+                    $data = $decoded;
+                    $this->log->write('[searchSoldItemsScraper][decoded_ok] url=' . $requestConfig['url'] . ' keys=' . implode(',', array_slice(array_keys($decoded), 0, 12)));
+                    break;
+                }
+                $lastError = 'API no products key: ' . ($decoded['message'] ?? $decoded['error'] ?? json_encode(array_slice($decoded, 0, 3)));
+                $this->log->write('[searchSoldItemsScraper][skip_no_products] url=' . $requestConfig['url'] . ' reason=' . $lastError);
+                continue;
             }
 
             $preview = trim(substr(strip_tags($rawClean), 0, 180));

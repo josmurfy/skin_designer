@@ -176,7 +176,7 @@ class CardMarket extends \Opencart\System\Engine\Model {
                 ]);
             } else {
                 // $this->log->write('[CardMarketModel] branch=present_browse keyword=' . $keyword);
-                $r = $this->model_shopmanager_ebay->searchPresentItems($keyword, [
+                $r = $this->model_shopmanager_ebay->searchActiveItems($keyword, [
                     'sort' => $sort,
                     'limit' => $limit,
                     'page' => $page,

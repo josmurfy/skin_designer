@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']          = 'Importateur de Prix Vendus';
+$_['heading_title']          = 'Importer Cartes Vendues';
 
 // Breadcrumb / nav
 $_['text_home']              = 'Accueil';
@@ -94,6 +94,12 @@ $_['error_invalid_file']     = 'Format de fichier invalide. Veuillez téléverse
 $_['error_empty_file']       = 'Le fichier CSV est vide ou a un format invalide.';
 $_['error_no_data']          = 'Aucun enregistrement sélectionné.';
 $_['error_ajax']             = 'Erreur AJAX survenue.';
+$_['text_search_title']      = 'Chercher dans le titre';
+$_['text_search_placeholder'] = 'Mot à trouver dans le titre eBay...';
+$_['button_search_title']    = 'Chercher';
+$_['button_delete_found']    = 'Supprimer la sélection';
+$_['text_search_found']      = '%d lignes trouvées — cochez celles à supprimer';
+$_['text_search_none']       = 'Aucun titre ne contient ce mot.';
 $_['text_use_filters']       = 'Utilisez les filtres pour afficher les ventes correspondant aux cartes en base.';
 $_['text_bid_singular']      = 'enchère';
 $_['text_bid_plural']        = 'enchères';

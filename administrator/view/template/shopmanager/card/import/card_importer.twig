@@ -455,7 +455,7 @@ $(document).ready(function() {
     // Global variables
     var USER_TOKEN = '{{ user_token|default("")|escape('js') }}';
     var uploadUrl = '{{ upload|raw|escape('js') }}';
-    var saveToDbUrl = 'index.php?route=shopmanager/card/card_importer.saveListings&user_token=' + USER_TOKEN;
+    var saveToDbUrl = 'index.php?route=shopmanager/card/import/card_importer.saveListings&user_token=' + USER_TOKEN;
   var TEXT_GRADING_GROUP_BADGE = '{{ text_grading_group_badge|default('Grading potential')|escape('js') }}';
     var TEXT_BRAND_MISMATCH_BLOCK_SAVE = '{{ text_brand_mismatch_block_save|default('Fix brand mismatch issues in preview before saving.')|escape('js') }}';
     var uploadLoadingModalElement = document.getElementById('uploadLoadingModal');
@@ -980,13 +980,13 @@ $(document).ready(function() {
 
                   $('#btn-save-success-ok').off('click').on('click', function() {
                     successModal.hide();
-                    window.location.href = 'index.php?route=shopmanager/card/card_importer&user_token=' + USER_TOKEN;
+                    window.location.href = 'index.php?route=shopmanager/card/import/card_importer&user_token=' + USER_TOKEN;
                   });
 
                   successModal.show();
                 } else {
                   alert('{{ text_save_success|escape('js') }}');
-                  window.location.href = 'index.php?route=shopmanager/card/card_importer&user_token=' + USER_TOKEN;
+                  window.location.href = 'index.php?route=shopmanager/card/import/card_importer&user_token=' + USER_TOKEN;
                 }
                 }
             },

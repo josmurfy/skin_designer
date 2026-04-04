@@ -99,8 +99,10 @@ $_['text_cards_group']         = 'Cartes';
 $_['text_cards']               = 'Gestion des Cartes';
 $_['text_card_listings']       = 'Annonces de Cartes';
 $_['text_card_importer']       = 'Importateur de Cartes';
-$_['text_card_import']         = 'Importateur de Prix';
-$_['text_card_import_sold']    = 'Importateur Vendus';
+$_['text_import_group']        = 'Import';
+$_['text_card_set_importer']   = 'Importateur de Sets';
+$_['text_card_sold_importer']  = 'Cartes Vendues Importer';
+$_['text_card_price_active']   = 'Cartes Actives Importer';
 $_['text_card_market']         = 'Recherche sur les Marchés';
 $_['text_card_manufacturer']   = 'Fabricants de Cartes';
 

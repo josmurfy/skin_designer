@@ -1,10 +1,10 @@
 <?php
-namespace Opencart\Admin\Controller\Shopmanager\Card;
+namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
 
 class CardImporter extends \Opencart\System\Engine\Controller {
     
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         
@@ -21,7 +21,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         ];
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/card/card_importer', 'user_token=' . $user_token)
+            'href' => $this->url->link('shopmanager/card/import/card_importer', 'user_token=' . $user_token)
         ];
         
         // Language strings for Twig
@@ -112,15 +112,15 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $data['button_ok'] = ($lang['button_ok'] ?? '');
         
         // URLs
-        $data['upload'] = html_entity_decode($this->url->link('shopmanager/card/card_importer.upload', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
-        $data['generate'] = html_entity_decode($this->url->link('shopmanager/card/card_importer.generate', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
+        $data['upload'] = html_entity_decode($this->url->link('shopmanager/card/import/card_importer.upload', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
+        $data['generate'] = html_entity_decode($this->url->link('shopmanager/card/import/card_importer.generate', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
         $data['user_token'] = $user_token;
         
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
         
-        $this->response->setOutput($this->load->view('shopmanager/card/card_importer', $data));
+        $this->response->setOutput($this->load->view('shopmanager/card/import/card_importer', $data));
     }
     
     /**
@@ -128,7 +128,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates request, processes file, returns JSON response
      */
     public function upload(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         
@@ -159,7 +159,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      */
     private function validateUploadRequest(): ?string {
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
             return ($lang['error_permission'] ?? '');
         }
         
@@ -400,14 +400,14 @@ class CardImporter extends \Opencart\System\Engine\Controller {
     }
     
     /**
-     * Lookup card price from oc_card_price (card_import_price module)
+     * Lookup card price from oc_card_set (card_set_importer module)
      * Matches by card_number + player, and by brand if provided.
      * Falls back to $0.99 minimum when no DB match found.
      * @param array $cards Array of card data
      * @return array Cards with sale_price set from DB
      */
     private function lookupAndSetPrices(array $cards): array {
-        $this->load->model('shopmanager/card/card_import_price');
+        $this->load->model('shopmanager/card/import/card_set_importer');
 
         foreach ($cards as &$card) {
             $card_number = trim($card['card_number'] ?? '');
@@ -417,7 +417,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             $category    = trim($card['category']    ?? '');
 
             // Get ALL matching rows first
-            $rows = $this->model_shopmanager_card_card_import_price
+            $rows = $this->model_shopmanager_card_import_card_set_importer
                 ->getPriceRowsByCard($card_number, $player, $brand, $year, $category);
 
             // DEBUG: calculate old CSV price for comparison display
@@ -435,7 +435,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             if (count($rows) > 1) {
                 $candidates = [];
                 foreach ($rows as $row) {
-                    $usd = $this->model_shopmanager_card_card_import_price->getLowestImporterUsdPriceFromRow($row);
+                    $usd = $this->model_shopmanager_card_import_card_set_importer->getLowestImporterUsdPriceFromRow($row);
                     $cad = $this->currency->convert($usd, 'USD', 'CAD');
                     $candidates[] = [
                         'label'    => trim(implode(' · ', array_filter([
@@ -456,7 +456,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             }
 
             $db_price = count($rows) === 1
-                ? $this->model_shopmanager_card_card_import_price->getLowestImporterUsdPriceFromRow($rows[0])
+                ? $this->model_shopmanager_card_import_card_set_importer->getLowestImporterUsdPriceFromRow($rows[0])
                 : 0.0;
 
             if ($db_price >= 0.99) {
@@ -571,7 +571,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates request, generates CSV file, returns download link
      */
     public function generate(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         $this->load->model('shopmanager/card/card_listing');
@@ -609,7 +609,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return string|null Error message or null if valid
      */
     private function validateGenerateRequest(): ?string {
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
             return ($lang['error_permission'] ?? '');
         }
         return null;
@@ -675,7 +675,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'success' => ($lang['text_generate_success'] ?? ''),
             'filename' => $filename,
             'download_url' => $this->url->link(
-                'shopmanager/card/card_importer.download',
+                'shopmanager/card/import/card_importer.download',
                 'file=' . $filename . '&user_token=' . $user_token
             ),
             'total_rows' => count($cards)
@@ -687,12 +687,12 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates file existence and sends file to browser
      */
     public function download(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         
         // Validate permission
-        if (!$this->user->hasPermission('access', 'shopmanager/card/card_importer')) {
+        if (!$this->user->hasPermission('access', 'shopmanager/card/import/card_importer')) {
             $this->response->setOutput('Error: ' . ($lang['error_permission'] ?? ''));
             return;
         }
@@ -726,14 +726,14 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * AJAX endpoint for brand validation
      */
     public function validateManufacturer(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         
         $json = [];
         
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
@@ -763,14 +763,14 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * AJAX endpoint for adding new brand
      */
     public function addManufacturer(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         
         $json = [];
         
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
@@ -805,7 +805,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Returns ungraded + graded auction/list prices in CAD.
      */
     public function getMarketPricesPreview(): void {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         $this->load->model('shopmanager/ebay');
@@ -813,8 +813,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $json = [];
         $startedAt = microtime(true);
 
-        $hasAccessPermission = $this->user->hasPermission('access', 'shopmanager/card/card_importer');
-        $hasModifyPermission = $this->user->hasPermission('modify', 'shopmanager/card/card_importer');
+        $hasAccessPermission = $this->user->hasPermission('access', 'shopmanager/card/import/card_importer');
+        $hasModifyPermission = $this->user->hasPermission('modify', 'shopmanager/card/import/card_importer');
         if (!$hasAccessPermission && !$hasModifyPermission) {
             $cards = $this->request->post['cards'] ?? [];
             $permissionError = ($lang['error_permission'] ?? 'Permission denied');
@@ -991,7 +991,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 'category_id'    => '261328',
             ];
 
-            $marketData = $this->model_shopmanager_ebay->searchAndClassifyPresentItems($keyword, $searchOptions, 1);
+            $marketData = $this->model_shopmanager_ebay->searchAndClassifyActiveItems($keyword, $searchOptions, 1);
             $apiError = (string)($marketData['error'] ?? '');
             $manualUrls = $this->model_shopmanager_ebay->buildManualEbayUrls($keyword);
 
@@ -1082,7 +1082,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
     }
 
     private function getPreviewTable(array $groups): string {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         $this->load->model('shopmanager/card/card_listing');
@@ -1131,7 +1131,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'text_market_manual_graded' => ($lang['text_market_manual_graded'] ?? ''),
             'text_market_manual_sold_graded' => ($lang['text_market_manual_sold_graded'] ?? ''),
             'text_market_apply_raw_buy_now' => ($lang['text_market_apply_raw_buy_now'] ?? ''),
-            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('shopmanager/card/card_importer.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
+            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('shopmanager/card/import/card_importer.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
             'text_already_exists' => ($lang['text_already_exists'] ?? ''),
             'text_placeholder_location' => ($lang['text_placeholder_location'] ?? ''),
             'text_total_prefix' => ($lang['text_total_prefix'] ?? ''),
@@ -1185,7 +1185,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'text_market_checking' => ($lang['text_market_checking'] ?? ''),
             'text_market_api_limit_reached' => ($lang['text_market_api_limit_reached'] ?? ''),
             'text_market_fallback_kept' => ($lang['text_market_fallback_kept'] ?? ''),
-            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('shopmanager/card/card_importer.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
+            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('shopmanager/card/import/card_importer.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
             
             // Preview list table
             'text_already_exists' => ($lang['text_already_exists'] ?? ''),
@@ -1198,8 +1198,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'column_qty' => ($lang['column_qty'] ?? '')*/
         ];
         //error_log('Preview Table Data: ' . print_r($data, true) . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
-       // error_log('view' . $this->load->view('shopmanager/card/card_importer_list', $data)  . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
-        return $this->load->view('shopmanager/card/card_importer_list', $data);
+       // error_log('view' . $this->load->view('shopmanager/card/import/card_importer_list', $data)  . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
+        return $this->load->view('shopmanager/card/import/card_importer_list', $data);
     }
 
     // =====================================================
@@ -1289,7 +1289,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Groups, config data or error
      */
     private function getSaveListingsInput(): array {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $groups = $this->request->post['groups'] ?? [];
         
         if (empty($groups)) {
@@ -1669,7 +1669,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Result array with success/error status
      */
     public function publishToEbay($listing_id = null): array {
-        $lang = $this->load->language('shopmanager/card/card_importer');
+        $lang = $this->load->language('shopmanager/card/import/card_importer');
         $data = $data ?? [];
         $data += $lang;
         

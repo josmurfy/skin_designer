@@ -942,7 +942,7 @@ $(document).ready(function() {
         var groupIndex = $input.data('group-index');
         var cardIndex = $input.data('card-index');
         
-        var ajaxUrl = 'index.php?route=shopmanager/card/card_importer.validateManufacturer&user_token={{ user_token|default("") }}';
+        var ajaxUrl = 'index.php?route=shopmanager/card/import/card_importer.validateManufacturer&user_token={{ user_token|default("") }}';
         console.log('Brand validation AJAX URL:', ajaxUrl);
         console.log('Brand name being validated:', brandName);
         
@@ -1074,7 +1074,7 @@ $(document).ready(function() {
             
             // Add brand via AJAX
             $.ajax({
-                url: 'index.php?route=shopmanager/card/card_importer.addManufacturer&user_token={{ user_token|default("") }}',
+                url: 'index.php?route=shopmanager/card/import/card_importer.addManufacturer&user_token={{ user_token|default("") }}',
                 type: 'POST',
                 data: { name: brandName },
                 dataType: 'json',

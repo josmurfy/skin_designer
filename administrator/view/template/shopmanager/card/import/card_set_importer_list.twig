@@ -19,8 +19,6 @@
             <a href="{{ sort_best_price }}" class="text-decoration-none text-white-50">Meilleur prix</a>
           {% endif %}
         </th>
-        <th style="min-width:180px;">Market eBay</th>
-        <th style="min-width:160px;">{{ column_ebay_sales }}</th>
         <th style="width:80px;">Actions</th>
       </tr>
     </thead>
@@ -38,7 +36,7 @@
           {% else %}{% set row_class = '' %}{% endif %}
           {% set keyword = card.title ?: ((card.set_name ?: '') ~ ' ' ~ (card.player ?: '') ~ ' #' ~ (card.card_number ?: '')) %}
           {% set sold_graded_url = 'https://www.ebay.ca/sch/i.html?_nkw=' ~ keyword|url_encode ~ '&_sacat=261328&LH_Sold=1&Graded=Yes&_sop=3&_udlo=35' %}
-          <tr class="{{ row_class }}" data-card-raw-id="{{ card.card_raw_id }}" data-market-keyword="{{ keyword|e('html_attr') }}">
+          <tr class="{{ row_class }}" data-card-raw-id="{{ card.card_raw_id }}">
 
             {# Col 1 — Checkbox #}
             <td class="text-center"><input type="checkbox" name="selected[]" value="{{ card.card_raw_id }}" class="form-check-input" /></td>
@@ -90,42 +88,7 @@
               {% endif %}
             </td>
 
-            {# Col 6 — Market eBay #}
-            <td sty
-              {% for 
-             
-                {'label': 'Auc. Grad.', 'val': card.eb
-                {'label': 'BIN Raw',   
-                {'label': 'BIN Grad.',  'val': card.ebay_price_list_graded, 'url': card.ebay_price_list_graded_url, 'cls': 'market-list-graded'}
-              ]
-                {% i
-                  {% set clr = (mi.val <= u) ? '#dc3545' : '#28a745' %}
-                  <div style="di
-                    <
-             
-                      {% if mi.url %}
-               
-                      {% else %}
-                        <span st
-                      {% endif %}
-          
-           
-            
-           
-                    
-                    <sp
-                  </div>
-      
-              {% endfor %}
-              <div clas
-                {% if card.ebay_market_checked_at
-              </div>
-            </td>
-
-          
-            <td>{{ card.ebay_sales_rendered|def
-
-            {# Col 8 — Actions #}
+            {# Col 6 — Actions #}
             <td class="text-center
               <button type="button" class="btn btn-sm btn-outline-primar
                 <i class="fa-solid fa-tags"></i>
@@ -137,7 +100,7 @@
         
       {% else %}
         <tr>
-          <td class="text-center py-4 text-muted" colspan="8">
+          <td class="text-center py-4 text-muted" colspan="6">
             <i class="fa-solid fa-in
             {{ text_no_records }}
           </td>

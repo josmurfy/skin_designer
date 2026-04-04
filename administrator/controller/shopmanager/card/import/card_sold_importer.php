@@ -1,21 +1,20 @@
 <?php
-namespace Opencart\Admin\Controller\Shopmanager\Card;
+namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
 
-class CardImportSold extends \Opencart\System\Engine\Controller {
+class CardSoldImporter extends \Opencart\System\Engine\Controller {
 
     // ─── Main page ────────────────────────────────────────────────────────────
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/card_import_sold');
-        $this->load->model('shopmanager/card/card_import_sold');
-        $this->model_shopmanager_card_card_import_sold->ensureTable();
+        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->model('shopmanager/card/import/card_sold_importer');
 
         $data = $lang;
         $data['heading_title'] = $lang['heading_title'];
 
         $data['breadcrumbs'] = [
             ['text' => $lang['text_home'],  'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true)],
-            ['text' => $lang['heading_title'], 'href' => $this->url->link('shopmanager/card/card_import_sold', 'user_token=' . $this->session->data['user_token'], true)],
+            ['text' => $lang['heading_title'], 'href' => $this->url->link('shopmanager/card/import/card_sold_importer', 'user_token=' . $this->session->data['user_token'], true)],
         ];
 
         // Filter params
@@ -55,35 +54,35 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
         if (!$has_filter) {
             $data['list'] = '<div class="p-5 text-center text-muted"><i class="fa-solid fa-filter fa-3x d-block mb-3 opacity-25"></i><p>' . ($lang['text_use_filters'] ?? 'Utilisez les filtres pour afficher les ventes.') . '</p></div>';
         } else {
-            $total   = $this->model_shopmanager_card_card_import_sold->getTotalSoldRecords($queryData);
-            $records = $this->model_shopmanager_card_card_import_sold->getSoldRecords($queryData);
+            $total   = $this->model_shopmanager_card_import_card_sold_importer->getTotalSoldRecords($queryData);
+            $records = $this->model_shopmanager_card_import_card_sold_importer->getSoldRecords($queryData);
             $data['list'] = $this->buildListHtml($records, $lang, $sort, $order, $queryData, $total, $page, $limit);
         }
         $data['filters'] = $filters;
         $data['limit']   = $limit;
-        $data['brands']  = $this->model_shopmanager_card_card_import_sold->getDistinctValues('brand');
-        $data['graders'] = $this->model_shopmanager_card_card_import_sold->getDistinctValues('grader');
+        $data['brands']  = $this->model_shopmanager_card_import_card_sold_importer->getDistinctValues('brand');
+        $data['graders'] = $this->model_shopmanager_card_import_card_sold_importer->getDistinctValues('grader');
 
         // URLs
         $ut = 'user_token=' . $this->session->data['user_token'];
         $data['user_token']   = $this->session->data['user_token'];
-        $data['upload']       = $this->url->link('shopmanager/card/card_import_sold.upload',   $ut, true);
-        $data['save']         = $this->url->link('shopmanager/card/card_import_sold.save',     $ut, true);
-        $data['delete']       = $this->url->link('shopmanager/card/card_import_sold.delete',   $ut, true);
-        $data['truncate']     = $this->url->link('shopmanager/card/card_import_sold.truncate', $ut, true);
+        $data['upload']       = $this->url->link('shopmanager/card/import/card_sold_importer.upload',   $ut, true);
+        $data['save']         = $this->url->link('shopmanager/card/import/card_sold_importer.save',     $ut, true);
+        $data['delete']       = $this->url->link('shopmanager/card/import/card_sold_importer.delete',   $ut, true);
+        $data['truncate']     = $this->url->link('shopmanager/card/import/card_sold_importer.truncate', $ut, true);
 
         $data['header']      = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/card_import_sold', $data));
+        $this->response->setOutput($this->load->view('shopmanager/card/import/card_sold_importer', $data));
     }
 
     // ─── AJAX: list (returns HTML fragment) ──────────────────────────────────
 
     public function list(): void {
-        $lang = $this->load->language('shopmanager/card/card_import_sold');
-        $this->load->model('shopmanager/card/card_import_sold');
+        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->model('shopmanager/card/import/card_sold_importer');
 
         $filters = [
             'filter_title'               => $this->request->get['filter_title']               ?? '',
@@ -120,8 +119,8 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $total   = $this->model_shopmanager_card_card_import_sold->getTotalSoldRecords($queryData);
-        $records = $this->model_shopmanager_card_card_import_sold->getSoldRecords($queryData);
+        $total   = $this->model_shopmanager_card_import_card_sold_importer->getTotalSoldRecords($queryData);
+        $records = $this->model_shopmanager_card_import_card_sold_importer->getSoldRecords($queryData);
 
         $this->response->setOutput(
             $this->buildListHtml($records, $lang, $sort, $order, $queryData, $total, $page, $limit)
@@ -131,10 +130,10 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
     // ─── AJAX: upload CSV → preview ───────────────────────────────────────────
 
     public function upload(): void {
-        $lang = $this->load->language('shopmanager/card/card_import_sold');
+        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_import_sold')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
             $json['error'] = $lang['error_permission'];
             $this->sendJsonResponse($json);
             return;
@@ -198,10 +197,10 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
     // ─── AJAX: save rows to DB ────────────────────────────────────────────────
 
     public function save(): void {
-        $lang = $this->load->language('shopmanager/card/card_import_sold');
+        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_import_sold')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
             $json['error'] = $lang['error_permission'];
             $this->sendJsonResponse($json);
             return;
@@ -221,7 +220,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_import_sold');
+        $this->load->model('shopmanager/card/import/card_sold_importer');
 
         $inserted = 0;
         $skipped  = 0;
@@ -229,7 +228,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
         foreach ($rows as $row) {
             if (!is_array($row)) { $skipped++; continue; }
             try {
-                $this->model_shopmanager_card_card_import_sold->insertSoldRecord($row);
+                $this->model_shopmanager_card_import_card_sold_importer->insertSoldRecord($row);
                 $inserted++;
             } catch (\Throwable $e) {
                 $this->clog('[save] Exception: ' . $e->getMessage());
@@ -248,10 +247,10 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
     // ─── AJAX: delete selected ────────────────────────────────────────────────
 
     public function delete(): void {
-        $lang = $this->load->language('shopmanager/card/card_import_sold');
+        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_import_sold')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
             $json['error'] = $lang['error_permission'];
             $this->sendJsonResponse($json);
             return;
@@ -264,8 +263,8 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_import_sold');
-        $this->model_shopmanager_card_card_import_sold->deleteSoldRecords($selected);
+        $this->load->model('shopmanager/card/import/card_sold_importer');
+        $this->model_shopmanager_card_import_card_sold_importer->deleteSoldRecords($selected);
 
         $json['success'] = true;
         $json['deleted'] = count($selected);
@@ -276,17 +275,17 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
     // ─── AJAX: truncate ─────────────────────────────────────────────────────
 
     public function truncate(): void {
-        $lang = $this->load->language('shopmanager/card/card_import_sold');
+        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_import_sold')) {
+        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
             $json['error'] = $lang['error_permission'];
             $this->sendJsonResponse($json);
             return;
         }
 
-        $this->load->model('shopmanager/card/card_import_sold');
-        $this->model_shopmanager_card_card_import_sold->truncateSold();
+        $this->load->model('shopmanager/card/import/card_sold_importer');
+        $this->model_shopmanager_card_import_card_sold_importer->truncateSold();
 
         $json['success'] = true;
         $json['total']   = 0;
@@ -297,10 +296,10 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
     // ─── AJAX: autocomplete ──────────────────────────────────────────────────
 
     public function autocomplete(): void {
-        $this->load->model('shopmanager/card/card_import_sold');
+        $this->load->model('shopmanager/card/import/card_sold_importer');
         $field  = trim((string)($this->request->get['field'] ?? ''));
         $term   = trim((string)($this->request->get['term']  ?? ''));
-        $values = $this->model_shopmanager_card_card_import_sold->autocompleteField($field, $term);
+        $values = $this->model_shopmanager_card_import_card_sold_importer->autocompleteField($field, $term);
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($values));
     }
@@ -504,7 +503,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
         $buildSortUrl = function(string $field) use ($sort, $order, $queryData, $ut): string {
             $newOrder = ($sort === $field && $order === 'ASC') ? 'DESC' : 'ASC';
             $params   = array_merge(array_filter($queryData, fn($v, $k) => !in_array($k, ['sort','order','start','limit']), ARRAY_FILTER_USE_BOTH));
-            return 'index.php?route=shopmanager/card/card_import_sold.list&' . $ut . '&sort=' . $field . '&order=' . $newOrder . '&limit=' . $queryData['limit'] . '&' . http_build_query($params);
+            return 'index.php?route=shopmanager/card/import/card_sold_importer.list&' . $ut . '&sort=' . $field . '&order=' . $newOrder . '&limit=' . $queryData['limit'] . '&' . http_build_query($params);
         };
 
         $data = [];
@@ -529,7 +528,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             'page'  => $page,
             'limit' => $limit,
             'url'   => $this->url->link(
-                'shopmanager/card/card_import_sold.list',
+                'shopmanager/card/import/card_sold_importer.list',
                 'user_token=' . $this->session->data['user_token'] . $filterUrl . '&sort=' . $sort . '&order=' . $order . '&page={page}',
                 true
             ),
@@ -543,7 +542,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
             ceil($total / $limit)
         );
 
-        return $this->load->view('shopmanager/card/card_import_sold_list', $data);
+        return $this->load->view('shopmanager/card/import/card_sold_importer_list', $data);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────────────
@@ -554,7 +553,7 @@ class CardImportSold extends \Opencart\System\Engine\Controller {
     }
 
     private function clog(string $msg): void {
-        $logFile = '/home/n7f9655/public_html/storage_phoenixliquidation/logs/card_import_sold.log';
+        $logFile = '/home/n7f9655/public_html/storage_phoenixliquidation/logs/card_sold_importer.log';
         file_put_contents($logFile, '[' . date('Y-m-d H:i:s') . '] ' . $msg . "\n", FILE_APPEND | LOCK_EX);
     }
 }

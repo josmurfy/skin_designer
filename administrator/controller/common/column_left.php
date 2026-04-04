@@ -97,27 +97,44 @@ class ColumnLeft extends \Opencart\System\Engine\Controller {
 					'children' => []
 				];
 			}
-			if ($this->user->hasPermission('access', 'shopmanager/card/card_importer')) {
-				$cards_group[] = [
+			
+			$import_group = [];
+			if ($this->user->hasPermission('access', 'shopmanager/card/import/card_importer')) {
+				$import_group[] = [
 					'name'     => $this->language->get('text_card_importer'),
-					'href'     => $this->url->link('shopmanager/card/card_importer', 'user_token=' . $this->session->data['user_token'], true),
+					'href'     => $this->url->link('shopmanager/card/import/card_importer', 'user_token=' . $this->session->data['user_token'], true),
 					'children' => []
 				];
 			}
-			if ($this->user->hasPermission('access', 'shopmanager/card/card_import_price')) {
+			if ($this->user->hasPermission('access', 'shopmanager/card/import/card_set_importer')) {
+				$import_group[] = [
+					'name'     => $this->language->get('text_card_set_importer'),
+					'href'     => $this->url->link('shopmanager/card/import/card_set_importer', 'user_token=' . $this->session->data['user_token'], true),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'shopmanager/card/import/card_sold_importer')) {
+				$import_group[] = [
+					'name'     => $this->language->get('text_card_sold_importer'),
+					'href'     => $this->url->link('shopmanager/card/import/card_sold_importer', 'user_token=' . $this->session->data['user_token'], true),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'shopmanager/card/import/card_price_active')) {
+				$import_group[] = [
+					'name'     => $this->language->get('text_card_price_active'),
+					'href'     => $this->url->link('shopmanager/card/import/card_price_active', 'user_token=' . $this->session->data['user_token'], true),
+					'children' => []
+				];
+			}
+			if ($import_group) {
 				$cards_group[] = [
-					'name'     => $this->language->get('text_card_import'),
-					'href'     => $this->url->link('shopmanager/card/card_import_price', 'user_token=' . $this->session->data['user_token'], true),
-					'children' => []
+					'name'     => $this->language->get('text_import_group'),
+					'href'     => '',
+					'children' => $import_group
 				];
 			}
-			if ($this->user->hasPermission('access', 'shopmanager/card/card_import_sold')) {
-				$cards_group[] = [
-					'name'     => $this->language->get('text_card_import_sold'),
-					'href'     => $this->url->link('shopmanager/card/card_import_sold', 'user_token=' . $this->session->data['user_token'], true),
-					'children' => []
-				];
-			}
+
 			if ($this->user->hasPermission('access', 'shopmanager/card/card_market')) {
 				$cards_group[] = [
 					'name'     => $this->language->get('text_card_market'),

@@ -54,19 +54,30 @@
 
     <!-- PREVIEW CARD (shown after upload) -->
     <div class="card mb-3" id="preview-container">
-      <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <span>
           <i class="fa-solid fa-eye me-2"></i>{{ text_preview_title }}
           <span id="preview-count-badge" class="badge bg-primary ms-2" style="display:none;"></span>
           <span id="preview-missing-badge" class="missing-badge ms-2" style="display:none;"></span>
         </span>
-        <div class="d-flex align-items-center gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <!-- Search in eBay title -->
+          <div class="input-group input-group-sm" style="width:260px;">
+            <input type="text" id="preview-search-input" class="form-control" placeholder="{{ text_search_placeholder }}">
+            <button type="button" id="button-preview-search" class="btn btn-outline-secondary">
+              <i class="fa-solid fa-magnifying-glass"></i> {{ button_search_title }}
+            </button>
+          </div>
+          <button type="button" id="button-preview-delete-found" class="btn btn-sm btn-danger" style="display:none;">
+            <i class="fa-regular fa-trash-can me-1"></i><span id="preview-delete-found-label">{{ button_delete_found }}</span>
+          </button>
           <button type="button" id="button-save-to-db" class="btn btn-success" style="display:none;">
             <i class="fa-solid fa-database me-1"></i>{{ button_save_to_db }}
             <span id="save-spinner" style="display:none;"><i class="fa-solid fa-spinner fa-spin ms-1"></i></span>
           </button>
         </div>
       </div>
+      <div id="preview-search-banner" class="alert alert-info rounded-0 border-0 mb-0 px-3 py-2 small" style="display:none;"></div>
       <div class="alert alert-warning rounded-0 border-0 mb-0 px-3 py-2" style="display:none;" id="preview-warning-missing">
         <i class="fa-solid fa-triangle-exclamation me-2"></i>
         <strong>{{ text_missing_card_number }}:</strong> Some rows are highlighted in <span class="badge bg-danger">red</span> — they are missing a card number. You can edit the field before saving.
@@ -185,9 +196,20 @@
       <!-- Records list -->
       <div class="col col-lg-9 col-md-12">
         <div class="card mb-3">
-          <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <span><i class="fa-solid fa-list me-2"></i>{{ text_records_list }}</span>
-            <div class="d-flex gap-2">
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              <!-- Search in title -->
+              <div class="input-group input-group-sm" style="width:280px;">
+                <input type="text" id="search-title-input" class="form-control" placeholder="{{ text_search_placeholder }}">
+                <button type="button" id="button-search-title" class="btn btn-outline-primary">
+                  <i class="fa-solid fa-magnifying-glass"></i> {{ button_search_title }}
+                </button>
+              </div>
+              <!-- Delete found (hidden until search hits) -->
+              <button type="button" id="button-delete-found" class="btn btn-sm btn-danger" style="display:none;">
+                <i class="fa-regular fa-trash-can me-1"></i><span id="delete-found-label">{{ button_delete_found }}</span>
+              </button>
               <button type="button" id="button-delete-selected" class="btn btn-sm btn-danger">
                 <i class="fa-regular fa-trash-can me-1"></i>{{ button_delete_selected }}
               </button>
@@ -196,6 +218,8 @@
               </button>
             </div>
           </div>
+          <!-- Search result banner -->
+          <div id="search-title-banner" class="alert alert-info rounded-0 border-0 mb-0 px-3 py-2 small" style="display:none;"></div>
           <div id="sold-list" class="card-body p-0">
             {{ list }}
           </div>
@@ -298,7 +322,7 @@
     function loadList(extraParams) {
         $('#sold-list').html('<div class="text-center p-4"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-muted"></i></div>');
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_import_sold.list&user_token={{ user_token }}' + (extraParams || buildFilterUrl()),
+            url: 'index.php?route=shopmanager/card/import/card_sold_importer.list&user_token={{ user_token }}' + (extraParams || buildFilterUrl()),
             type: 'GET',
             success: function(html) {
                 $('#sold-list').html(html);
@@ -311,7 +335,7 @@
     }
 
     $('#button-filter').on('click', function() {
-        window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_import_sold&user_token={{ user_token }}' + buildFilterUrl());
+        window.history.pushState({}, null, 'index.php?route=shopmanager/card/import/card_sold_importer&user_token={{ user_token }}' + buildFilterUrl());
         loadList('');
     });
 
@@ -320,7 +344,7 @@
         $('#filter-brand, #filter-grader').val('');
         $('#filter-missing-card-number').prop('checked', false);
         $('#input-limit').val('25');
-        window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_import_sold&user_token={{ user_token }}');
+        window.history.pushState({}, null, 'index.php?route=shopmanager/card/import/card_sold_importer&user_token={{ user_token }}');
         loadList('');
     });
 
@@ -336,7 +360,7 @@
         $('#' + inputId).on('input', function() {
             var term = $(this).val();
             if (term.length < 1) { $('#' + ulId).removeClass('show').empty(); return; }
-            $.getJSON('index.php?route=shopmanager/card/card_import_sold.autocomplete&user_token={{ user_token }}&field=' + field + '&term=' + encodeURIComponent(term), function(values) {
+            $.getJSON('index.php?route=shopmanager/card/import/card_sold_importer.autocomplete&user_token={{ user_token }}&field=' + field + '&term=' + encodeURIComponent(term), function(values) {
                 var ul = $('#' + ulId);
                 ul.empty();
                 values.forEach(function(v) {
@@ -379,8 +403,10 @@
     var TEXT_NO_DATA          = '{{ error_no_data|escape("js") }}';
     var TEXT_AJAX_ERROR       = '{{ error_ajax|escape("js") }}';
     var TEXT_MISSING_CARD_NR  = '{{ text_missing_card_number|escape("js") }}';
+    var TEXT_SEARCH_FOUND     = '{{ text_search_found|escape("js") }}';
+    var TEXT_SEARCH_NONE      = '{{ text_search_none|escape("js") }}';
 
 </script>
-<script src="view/javascript/shopmanager/card/card_import_sold.js?v=20260330a"></script>
+<script src="view/javascript/shopmanager/card/import/card_sold_importer.js?v=20260330a"></script>
 
 {{ footer }}

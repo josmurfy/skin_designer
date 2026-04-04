@@ -1,6 +1,6 @@
 <?php
 // Heading
-$_['heading_title']          = 'Sold Price Importer';
+$_['heading_title']          = 'Sold Card Importer';
 
 // Breadcrumb / nav
 $_['text_home']              = 'Home';
@@ -98,3 +98,9 @@ $_['text_use_filters']       = 'Use filters to display sold records matching pri
 $_['text_bid_singular']      = 'bid';
 $_['text_bid_plural']        = 'bids';
 $_['column_ungraded']        = 'Ungraded';
+$_['text_search_title']      = 'Search in title';
+$_['text_search_placeholder'] = 'Word to find in eBay title...';
+$_['button_search_title']    = 'Search';
+$_['button_delete_found']    = 'Delete selected';
+$_['text_search_found']      = '%d rows matched — check the ones to delete';
+$_['text_search_none']       = 'No title contains that word.';

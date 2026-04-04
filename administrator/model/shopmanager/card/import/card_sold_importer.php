@@ -1,55 +1,13 @@
 <?php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+namespace Opencart\Admin\Model\Shopmanager\Card\Import;
 
-class CardImportSold extends \Opencart\System\Engine\Model {
+class CardSoldImporter extends \Opencart\System\Engine\Model {
 
-    private bool $tableEnsured = false;
-
-    // ─── Ensure table exists ─────────────────────────────────────────────────
-
-    public function ensureTable(): void {
-        if ($this->tableEnsured) return;
-        $this->tableEnsured = true;
-
-        $this->db->query("
-            CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "card_price_sold` (
-                `card_price_sold_id` INT(11)        NOT NULL AUTO_INCREMENT,
-                `title`         VARCHAR(255)   NOT NULL DEFAULT '',
-                `category`      VARCHAR(100)   NOT NULL DEFAULT '',
-                `year`          VARCHAR(20)    NOT NULL DEFAULT '',
-                `brand`         VARCHAR(100)   NOT NULL DEFAULT '',
-                `set_name`      VARCHAR(255)   NOT NULL DEFAULT '',
-                `subset`        VARCHAR(255)   NOT NULL DEFAULT '',
-                `player`        VARCHAR(255)   NOT NULL DEFAULT '',
-                `card_number`   VARCHAR(50)    NOT NULL DEFAULT '',
-                `attributes`    VARCHAR(255)   NOT NULL DEFAULT '',
-                `team`          VARCHAR(100)   NOT NULL DEFAULT '',
-                `variation`     VARCHAR(255)   NOT NULL DEFAULT '',
-                `grader`        VARCHAR(50)    NOT NULL DEFAULT '',
-                `grade`         VARCHAR(20)    NOT NULL DEFAULT '',
-                `price`         DECIMAL(10,2)  NOT NULL DEFAULT 0.00,
-                `currency`      VARCHAR(10)    NOT NULL DEFAULT 'CAD',
-                `type_listing`  VARCHAR(50)    NOT NULL DEFAULT '',
-                `bids`          INT(11)        NOT NULL DEFAULT 0,
-                `total_sold`    INT(11)        NOT NULL DEFAULT 1,
-                `ebay_item_id`  VARCHAR(100)   NOT NULL DEFAULT '',
-                `front_image`   TEXT,
-                `status`        TINYINT(1)     NOT NULL DEFAULT 1,
-                `date_sold`     DATE           DEFAULT NULL,
-                `date_added`    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                PRIMARY KEY (`card_price_sold_id`),
-                KEY `idx_card_number`  (`card_number`),
-                KEY `idx_player`       (`player`(100)),
-                KEY `idx_year_brand`   (`year`, `brand`),
-                KEY `idx_date_sold`    (`date_sold`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        ");
-    }
 
     // ─── READ ────────────────────────────────────────────────────────────────
 
     public function getSoldRecords(array $data = []): array {
-        $this->ensureTable();
+        
 
         $sql  = 'SELECT * FROM ' . DB_PREFIX . 'card_price_sold';
         $where = $this->buildWhere($data);
@@ -75,7 +33,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
     }
 
     public function getTotalSoldRecords(array $data = []): int {
-        $this->ensureTable();
+        
 
         $sql   = 'SELECT COUNT(*) AS total FROM ' . DB_PREFIX . 'card_price_sold';
         $where = $this->buildWhere($data);
@@ -88,7 +46,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
     // ─── WRITE ───────────────────────────────────────────────────────────────
 
     public function insertSoldRecord(array $row): int {
-        $this->ensureTable();
+        
 
         $dateSold = trim((string)($row['date_sold'] ?? ''));
         $dateSoldSql = ($dateSold !== '' && $dateSold !== '0000-00-00')
@@ -133,7 +91,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
 
     public function deleteSoldRecords(array $ids): void {
         if (empty($ids)) return;
-        $this->ensureTable();
+        
         $ids = array_map('intval', $ids);
         $this->db->query(
             'DELETE FROM ' . DB_PREFIX . 'card_price_sold WHERE card_price_sold_id IN (' . implode(',', $ids) . ')'
@@ -141,14 +99,14 @@ class CardImportSold extends \Opencart\System\Engine\Model {
     }
 
     public function truncateSold(): void {
-        $this->ensureTable();
+        
         $this->db->query('TRUNCATE TABLE ' . DB_PREFIX . 'card_price_sold');
     }
 
     // ─── AUTOCOMPLETE ────────────────────────────────────────────────────────
 
     public function autocompleteField(string $field, string $term): array {
-        $this->ensureTable();
+        
 
         $allowed = ['title','category','year','brand','set_name','player','card_number','grader'];
         if (!in_array($field, $allowed)) return [];
@@ -166,7 +124,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
     // ─── Distinct values for dropdowns ───────────────────────────────────────
 
     public function getDistinctValues(string $field): array {
-        $this->ensureTable();
+        
         $allowed = ['brand','currency','grader','type_listing'];
         if (!in_array($field, $allowed)) return [];
 
@@ -189,7 +147,7 @@ class CardImportSold extends \Opencart\System\Engine\Model {
      */
     public function getSoldBilanForCards(array $cards): array {
         if (empty($cards)) return [];
-        $this->ensureTable();
+        
 
         $conditions = [];
         foreach ($cards as $card) {
