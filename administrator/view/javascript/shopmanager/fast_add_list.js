@@ -326,7 +326,7 @@ function confirmLocation(productId, newLocation) {
 
     // Appel AJAX pour sauvegarder les données sur le serveur si nécessaire
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateProductLocation&user_token=' + user_token,
+        url: 'index.php?route=shopmanager/catalog/product.updateLocation&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,

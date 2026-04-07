@@ -1838,7 +1838,7 @@ function handleSyncQtyAll() {
         appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_PROCESSING, productId), 'info');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/marketplace.editQuantityToMarketplace&user_token=' + user_token,
+            url: 'index.php?route=shopmanager/marketplace.editQuantity&user_token=' + user_token,
             type: 'POST',
             data: {
                 product_id: productId,

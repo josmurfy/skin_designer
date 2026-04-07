@@ -220,7 +220,7 @@ function ChangeCategory(category_id) {
 
     if ($.isNumeric(categoryId)) {
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.getCategoryDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
+            url: 'index.php?route=shopmanager/catalog/category.getDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
             dataType: 'json',
             success: function(json) {
                 if (!json.erreur) {

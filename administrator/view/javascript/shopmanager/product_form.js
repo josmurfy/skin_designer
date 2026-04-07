@@ -3311,7 +3311,7 @@ function endListing(product_id, marketplace_item_id, marketplace_account_id, mar
     var btn = $('#end-listing-btn-' + product_id + '-' + marketplace_account_id);
     btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
     $.ajax({
-        url: 'index.php?route=shopmanager/ebay.delete&user_token=' + user_token,
+        url: 'index.php?route=shopmanager/ebay.endListing&user_token=' + user_token,
         type: 'POST',
         dataType: 'json',
         data: {

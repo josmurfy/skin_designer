@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html dir="{{ direction }}" lang="{{ lang }}">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>{{ title }}</title>
+  <base href="{{ base }}"/>
+  {% if description %}
+    <meta name="description" content="{{ description }}"/>
+  {% endif %}
+  {% if keywords %}
+    <meta name="keywords" content="{{ keywords }}"/>
+  {% endif %}
+  <script src="{{ jquery }}" type="text/javascript"></script>
+  <link href="{{ bootstrap }}" type="text/css" rel="stylesheet" media="screen"/>
+  <link href="{{ icons }}" rel="stylesheet" type="text/css"/>
+  <link href="{{ stylesheet }}" type="text/css" rel="stylesheet"/>
+  <script src="catalog/view/javascript/common.js" type="text/javascript"></script>
+  {% if icon %}
+    <link rel="icon" href="{{ icon }}" type="image/png">
+  {% endif %}
+  {% for style in styles %}
+    <link href="{{ style.href }}" type="text/css" rel="{{ style.rel }}" media="{{ style.media }}"/>
+  {% endfor %}
+  {% for script in scripts %}
+    <script src="{{ script.href }}" type="text/javascript"></script>
+  {% endfor %}
+  {% for link in links %}
+    <link href="{{ link.href }}" rel="{{ link.rel }}"/>
+  {% endfor %}
+  {% for analytic in analytics %}
+    {{ analytic }}
+  {% endfor %}
+</head>
+<body>
+<div id="container">
+  <div id="alert"></div>
+  <nav id="top">
+    <div class="container">
+      <div class="row">
+        <div class="col-4">
+          <ul class="list-inline">
+            <li class="list-inline-item me-3">{{ currency }}</li>
+            <li class="list-inline-item">{{ language }}</li>
+          </ul>
+        </div>
+        <div class="col text-end">
+          <ul class="list-inline">
+            <li class="list-inline-item"><a href="{{ contact }}"><i class="fa-solid fa-phone"></i> <span class="d-none d-lg-inline">{{ telephone }}</span></a></li>
+            <li class="list-inline-item">
+              <div class="dropdown">
+                <a href="#" class="dropdown-toggle" data-bs-toggle="dropdown"><i class="fa-solid fa-user"></i> <span class="d-none d-lg-inline">{{ text_account }}</span> <i class="fa-solid fa-caret-down"></i></a>
+                <ul class="dropdown-menu dropdown-menu-right">
+                  {% if not logged %}
+                    <li><a href="{{ register }}" class="dropdown-item">{{ text_register }}</a></li>
+                    <li><a href="{{ login }}" class="dropdown-item">{{ text_login }}</a></li>
+                  {% else %}
+                    <li><a href="{{ account }}" class="dropdown-item">{{ text_account }}</a></li>
+                    <li><a href="{{ order }}" class="dropdown-item">{{ text_order }}</a></li>
+                    <li><a href="{{ transaction }}" class="dropdown-item">{{ text_transaction }}</a></li>
+                    <li><a href="{{ download }}" class="dropdown-item">{{ text_download }}</a></li>
+                    <li><a href="{{ logout }}" class="dropdown-item">{{ text_logout }}</a></li>
+                  {% endif %}
+                </ul>
+              </div>
+            </li>
+            <li class="list-inline-item"><a href="{{ wishlist }}" id="wishlist-total" title="{{ text_wishlist }}"><i class="fa-solid fa-heart"></i> <span class="d-none d-lg-inline">{{ text_wishlist }}</span></a></li>
+            <li class="list-inline-item"><a href="{{ shopping_cart }}" title="{{ text_shopping_cart }}"><i class="fa-solid fa-cart-shopping"></i> <span class="d-none d-lg-inline">{{ text_shopping_cart }}</span></a></li>
+            <li class="list-inline-item"><a href="{{ checkout }}" title="{{ text_checkout }}"><i class="fa-solid fa-share"></i> <span class="d-none d-lg-inline">{{ text_checkout }}</span></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <header>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-3 col-lg-4">
+          <div id="logo">
+            {% if logo %}
+              <a href="{{ home }}"><img src="{{ logo }}" title="{{ name }}" alt="{{ name }}" class="img-fluid"/></a>
+            {% else %}
+              <h1><a href="{{ home }}">{{ name }}</a></h1>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-md-5">{{ search }}</div>
+        <div id="cart" class="col-md-4 col-lg-3 mb-2">{{ cart }}</div>
+      </div>
+    </div>
+  </header>
+
+{% if debug_logger_catalog_enable %}
+<!-- Debug Logger v1.4.3 catalog -->
+<link rel="stylesheet" href="{{ debug_logger_catalog_asset_base }}stylesheet/debug_logger.css">
+<button id="dl-btn-trigger" type="button">&#x1F41B; Debug</button>
+<div id="dl-overlay"></div>
+<div id="dl-modal">
+  <div id="dl-modal-head">
+    <span>&#x1F41B;</span>
+    <h5>Report a Problem</h5>
+    <button id="dl-modal-close" type="button">&#x2715;</button>
+  </div>
+  <div id="dl-modal-body">
+    <div class="dl-field">
+      <label>Page</label>
+      <div class="dl-url-val" id="dl-url-display"></div>
+    </div>
+    <div class="dl-field">
+      <label>Severity</label>
+      <select id="dl-severity">
+        <option value="bug">&#x1F41B; Bug</option>
+        <option value="warning">&#x26A0; Warning</option>
+        <option value="info">&#x2139; Info</option>
+      </select>
+    </div>
+    <div class="dl-field">
+      <label>Comment</label>
+      <textarea id="dl-comment" rows="3" placeholder="Describe the issue..."></textarea>
+    </div>
+  </div>
+  <div id="dl-modal-foot">
+    <button class="btn-dl-cancel" id="dl-btn-cancel" type="button">Cancel</button>
+    <button class="btn-dl-save" id="dl-btn-save" type="button">Save</button>
+  </div>
+</div>
+<div id="dl-toast"></div>
+<script>
+window.DL_CONFIG = {
+  saveUrl:        {{ debug_logger_catalog_save_url_json }},
+  captureConsole: {{ debug_logger_capture_console ? true : false }},
+  captureNetwork: {{ debug_logger_capture_network ? true : false }},
+  requireComment: {{ debug_logger_require_comment ? true : false }},
+  severityBug:     {{ debug_logger_severity_bug ? true : false }},
+  severityWarning: {{ debug_logger_severity_warning ? true : false }},
+  severityInfo:    {{ debug_logger_severity_info ? true : false }}
+};
+</script>
+<script src="{{ debug_logger_catalog_asset_base }}javascript/debug_logger.js"></script>
+{% endif %}
+
+  <main>
+    {{ menu }}

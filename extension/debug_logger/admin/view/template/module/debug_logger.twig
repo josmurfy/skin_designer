@@ -1,0 +1,225 @@
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <a href="{{ cancel }}" class="btn btn-light"><i class="fa-solid fa-reply"></i> {{ button_cancel }}</a>
+        <button type="submit" form="form-debug-logger" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> {{ button_save }}</button>
+      </div>
+      <h1><i class="fa-solid fa-bug" style="color:#f59e0b"></i> {{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+        <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> {{ error_warning }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> {{ success }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+
+    <div class="row">
+      <!-- ── LEFT COLUMN: settings ─────────────────────────────────── -->
+      <div class="col-lg-8">
+
+        <form id="form-debug-logger" action="{{ action }}" method="post" enctype="multipart/form-data">
+
+          <!-- General -->
+          <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-toggle-on"></i> {{ text_general }}</div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">{{ entry_status }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_status" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_status" value="1" id="input-status" {% if module_debug_logger_status %}checked{% endif %}>
+                    <label class="form-check-label" for="input-status">{{ text_enabled }}</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Display -->
+          <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-eye"></i> {{ text_display }}</div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">{{ entry_admin_enable }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_admin_enable" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_admin_enable" value="1" id="input-admin-enable" {% if module_debug_logger_admin_enable %}checked{% endif %}>
+                    <label class="form-check-label" for="input-admin-enable">{{ text_show_admin }}</label>
+                  </div>
+                  <div class="form-text">{{ help_admin_enable }}</div>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">{{ entry_catalog_enable }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_catalog_enable" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_catalog_enable" value="1" id="input-catalog-enable" {% if module_debug_logger_catalog_enable %}checked{% endif %}>
+                    <label class="form-check-label" for="input-catalog-enable">{{ text_show_catalog }}</label>
+                  </div>
+                  <div class="form-text">{{ help_catalog_enable }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Capture behaviour -->
+          <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-radar"></i> {{ text_capture }}</div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">{{ entry_capture_console }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_capture_console" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_console" value="1" id="input-capture-console" {% if module_debug_logger_capture_console %}checked{% endif %}>
+                    <label class="form-check-label" for="input-capture-console">{{ text_enabled }}</label>
+                  </div>
+                  <div class="form-text">{{ help_capture_console }}</div>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">{{ entry_capture_network }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_capture_network" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_network" value="1" id="input-capture-network" {% if module_debug_logger_capture_network %}checked{% endif %}>
+                    <label class="form-check-label" for="input-capture-network">{{ text_enabled }}</label>
+                  </div>
+                  <div class="form-text">{{ help_capture_network }}</div>
+                </div>
+              </div>
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label">{{ entry_require_comment }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_require_comment" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_require_comment" value="1" id="input-require-comment" {% if module_debug_logger_require_comment %}checked{% endif %}>
+                    <label class="form-check-label" for="input-require-comment">{{ text_enabled }}</label>
+                  </div>
+                  <div class="form-text">{{ help_require_comment }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Severity levels -->
+          <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-layer-group"></i> {{ text_severity }}</div>
+            <div class="card-body">
+              <div class="form-text mb-3">{{ help_severity }}</div>
+              <div class="row mb-2">
+                <label class="col-sm-4 col-form-label">🐛 {{ entry_severity_bug }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_severity_bug" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_bug" value="1" id="input-sev-bug" {% if module_debug_logger_severity_bug %}checked{% endif %}>
+                  </div>
+                </div>
+              </div>
+              <div class="row mb-2">
+                <label class="col-sm-4 col-form-label">⚠️ {{ entry_severity_warning }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_severity_warning" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_warning" value="1" id="input-sev-warning" {% if module_debug_logger_severity_warning %}checked{% endif %}>
+                  </div>
+                </div>
+              </div>
+              <div class="row mb-2">
+                <label class="col-sm-4 col-form-label">ℹ️ {{ entry_severity_info }}</label>
+                <div class="col-sm-8">
+                  <div class="form-check form-switch mt-2">
+                    <input type="hidden" name="module_debug_logger_severity_info" value="0">
+                    <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_info" value="1" id="input-sev-info" {% if module_debug_logger_severity_info %}checked{% endif %}>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Data management -->
+          <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-database"></i> {{ text_data }}</div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <label class="col-sm-4 col-form-label" for="input-max-reports">{{ entry_max_reports }}</label>
+                <div class="col-sm-4">
+                  <input type="number" min="0" max="99999" step="1" class="form-control" id="input-max-reports" name="module_debug_logger_max_reports" value="{{ module_debug_logger_max_reports }}" placeholder="500">
+                  <div class="form-text">{{ help_max_reports }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </form>
+      </div>
+
+      <!-- ── RIGHT COLUMN: stats & actions ─────────────────────────── -->
+      <div class="col-lg-4">
+
+        <!-- Stats card -->
+        <div class="card mb-3" style="border-color:#334155;background:#1e293b;color:#e2e8f0">
+          <div class="card-header" style="background:#0f172a;border-color:#334155">
+            <i class="fa-solid fa-chart-bar" style="color:#f59e0b"></i> {{ text_stats }}
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between mb-2">
+              <span style="color:#94a3b8">{{ text_total_reports }}</span>
+              <strong>{{ total_reports }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span style="color:#94a3b8">⏳ {{ text_open_reports }}</span>
+              <strong style="color:#f59e0b">{{ total_open }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span style="color:#94a3b8">👤 {{ text_from_admin }}</span>
+              <strong style="color:#818cf8">{{ total_admin }}</strong>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span style="color:#94a3b8">🛒 {{ text_from_catalog }}</span>
+              <strong style="color:#4ade80">{{ total_catalog }}</strong>
+            </div>
+            <hr style="border-color:#334155">
+            <div class="d-grid gap-2">
+              <a href="{{ view_reports }}" class="btn btn-sm btn-outline-light" target="_blank">
+                <i class="fa-solid fa-list-ul"></i> {{ button_view_reports }}
+              </a>
+              {% if total_reports > 0 %}
+              <a href="{{ clear_url }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ text_confirm_clear }}')">
+                <i class="fa-solid fa-trash"></i> {{ button_clear_all }}
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Info card -->
+        <div class="card mb-3" style="border-color:#1e3a5f;background:#0d1b2e;color:#93c5fd">
+          <div class="card-body" style="font-size:.82rem">
+            <p><i class="fa-solid fa-circle-info"></i> <strong>{{ text_info_title }}</strong></p>
+            <ul class="ps-3 mb-0" style="color:#7dd3fc">
+              <li>{{ text_info_1 }}</li>
+              <li>{{ text_info_2 }}</li>
+              <li>{{ text_info_3 }}</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /row -->
+  </div>
+</div>
+{{ footer }}
