@@ -12,7 +12,7 @@ var CPA_CATEGORY_EBAY_TERM = {
     'FOOTBALL':   'football',
     'SOCCER':     'soccer',
     'TENNIS':     'tennis',
-    'GOLF':       'golf',
+    'GOLF':       'golf', 
 };
 
 // --- Sport filter: show only sets of the selected category ---------------- //
