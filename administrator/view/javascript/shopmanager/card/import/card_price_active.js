@@ -258,7 +258,7 @@ $(function() {
         $('#cpa-check-all').prop('checked', false);
         $('table tbody tr[id^="row-"]').each(function() {
             var $tr = $(this);
-            var text = $tr.find('td').eq(2).text().toLowerCase(); // col 3 = title
+            var text = $tr.find('td').eq(3).text().toLowerCase(); // td[0]=checkbox td[1]=img td[2]=card td[3]=title
             if (text.indexOf(term) !== -1) {
                 $tr.find('.cpa-row-check').prop('checked', true);
                 found++;

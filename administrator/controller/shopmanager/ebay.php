@@ -208,7 +208,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
                //print("<pre>".print_r ($data,true )."</pre>");
                 
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->add($product_id,$quantity,$site_id);
+                $result=$this->model_shopmanager_ebay->addListing($product_id,$quantity,$site_id);
            //print("<pre>".print_r ($result,true )."</pre>");
               
 
@@ -270,7 +270,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
             //print("<pre>".print_r ($post,true )."</pre>");
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->edit($product_id);
+                $result=$this->model_shopmanager_ebay->editListing($product_id);
                //print("<pre>".print_r ($result,true )."</pre>");
               
 

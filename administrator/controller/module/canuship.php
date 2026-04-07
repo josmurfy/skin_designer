@@ -21,7 +21,7 @@ class ControllerModuleCanuship extends Controller {
 
             $this->model_setting_setting->editSetting('canuship', $this->request->post);
             $this->session->data['success'] = $this->language->get('text_success');
-            $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL'));
+            $this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL'));
         }
 
         //Fetch the data from the language and assign to the module.
@@ -65,23 +65,23 @@ class ControllerModuleCanuship extends Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+            'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
         );
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_module'),
-            'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL')
+            'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL')
         );
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('module/canuship', 'token=' . $this->session->data['token'], 'SSL')
+            'href' => $this->url->link('module/canuship', 'user_token=' . $this->session->data['token'], 'SSL')
         );
 
-        $data['action'] = $this->url->link('module/canuship', 'token=' . $this->session->data['token'], 'SSL');
-        $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL');
-        $data['keygen'] = $this->url->link('module/canuship/keygen', 'token=' . $this->session->data['token'], 'SSL');
-        $data['clear'] = $this->url->link('module/canuship/clear', 'token=' . $this->session->data['token'], 'SSL');
+        $data['action'] = $this->url->link('module/canuship', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['keygen'] = $this->url->link('module/canuship/keygen', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['clear'] = $this->url->link('module/canuship/clear', 'user_token=' . $this->session->data['token'], 'SSL');
 
         if (isset($this->request->post['canuship_status'])) {
             $data['canuship_status'] = $this->request->post['canuship_status'];
@@ -173,7 +173,7 @@ class ControllerModuleCanuship extends Controller {
         $this->model_setting_setting->editSetting('canuship', $data);
 
         //Redirect to the canuship module page settings
-        $this->response->redirect($this->url->link('module/canuship', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->response->redirect($this->url->link('module/canuship', 'user_token=' . $this->session->data['token'], 'SSL'));
     }
 
     /**
@@ -191,7 +191,7 @@ class ControllerModuleCanuship extends Controller {
         fclose($handle);
 
         $this->session->data['success'] = $this->language->get('text_cleared');
-        $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL'));
     }
 
     /**

@@ -38,7 +38,7 @@ class ControllerModuleCartproductfeed extends Controller {
 			else
 				$this->db->query('INSERT ' . DB_PREFIX . "setting (`key`, `value`) VALUES ('cart_product_feed_token', '$strRapidCartToken');");
 
-			$this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
+			$this->redirect($this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL'));
 		}
 
 		//This is how the language gets pulled through from the language file.
@@ -113,25 +113,25 @@ class ControllerModuleCartproductfeed extends Controller {
 
    		$this->data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_home'),
-			'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => false
    		);
 
    		$this->data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_module'),
-			'href'      => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		
    		$this->data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('heading_title'),
-			'href'      => $this->url->link('module/cartproductfeed', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('module/cartproductfeed', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		
-		$this->data['action'] = $this->url->link('module/cartproductfeed', 'token=' . $this->session->data['token'], 'SSL');
+		$this->data['action'] = $this->url->link('module/cartproductfeed', 'user_token=' . $this->session->data['token'], 'SSL');
 		
-		$this->data['cancel'] = $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL');
+		$this->data['cancel'] = $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL');
 
 	
 		//This code handles the situation where you have multiple instances of this module, for different layouts.

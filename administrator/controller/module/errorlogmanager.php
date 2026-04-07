@@ -52,15 +52,15 @@ class ControllerModuleErrorlogManager extends Controller {
         $data['breadcrumbs']   = array();
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL'),
+            'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL'),
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_module'),
-            'href' => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'),
+            'href' => $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL'),
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('module/'.$this->moduleNameSmall, 'token=' . $this->session->data['token'], 'SSL'),
+            'href' => $this->url->link('module/'.$this->moduleNameSmall, 'user_token=' . $this->session->data['token'], 'SSL'),
         );
 
         $languageVariables = array(
@@ -117,8 +117,8 @@ class ControllerModuleErrorlogManager extends Controller {
  
         $data['languages']              = $this->model_localisation_language->getLanguages();
         $data['token']                  = $this->session->data['token'];
-        $data['action']                 = $this->url->link('module/'.$this->moduleNameSmall, 'token=' . $this->session->data['token'], 'SSL');
-        $data['cancel']                 = $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL');
+        $data['action']                 = $this->url->link('module/'.$this->moduleNameSmall, 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['cancel']                 = $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL');
         $data['moduleSettings']			= $this->model_setting_setting->getSetting($this->moduleNameSmall);
 		
 		$data['moduleData']				= isset($data['moduleSettings'][$this->moduleNameSmall]) ? $data['moduleSettings'][$this->moduleNameSmall] : array ();
@@ -142,14 +142,14 @@ class ControllerModuleErrorlogManager extends Controller {
 		$data['column_left']			= $this->load->controller('common/column_left');
 		$data['footer']					= $this->load->controller('common/footer');
 
-        $data['initURL'] = $this->url->link('module/errorlogmanager/init', 'token=' . $this->session->data['token'], 'SSL');
-        $data['updateURL'] = $this->url->link('module/errorlogmanager/update', 'token=' . $this->session->data['token'], 'SSL');
-        $data['refreshURL'] = $this->url->link('module/errorlogmanager/clear_db', 'token=' . $this->session->data['token'], 'SSL');
-        $data['getURL'] = $this->url->link('module/errorlogmanager/get_errors', 'token=' . $this->session->data['token'], 'SSL');
-        $data['recentlyChangedURL'] = $this->url->link('module/errorlogmanager/recently_changed', 'token=' . $this->session->data['token'], 'SSL');
-        $data['requestQuoteURL'] = $this->url->link('module/errorlogmanager/request_quote', 'token=' . $this->session->data['token'], 'SSL');
-        $data['clearErrorURL'] = $this->url->link('module/errorlogmanager/clear_error', 'token=' . $this->session->data['token'], 'SSL');
-        $data['getMsgURL'] = $this->url->link('module/errorlogmanager/get_msg', 'token=' . $this->session->data['token'], 'SSL');
+        $data['initURL'] = $this->url->link('module/errorlogmanager/init', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['updateURL'] = $this->url->link('module/errorlogmanager/update', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['refreshURL'] = $this->url->link('module/errorlogmanager/clear_db', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['getURL'] = $this->url->link('module/errorlogmanager/get_errors', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['recentlyChangedURL'] = $this->url->link('module/errorlogmanager/recently_changed', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['requestQuoteURL'] = $this->url->link('module/errorlogmanager/request_quote', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['clearErrorURL'] = $this->url->link('module/errorlogmanager/clear_error', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['getMsgURL'] = $this->url->link('module/errorlogmanager/get_msg', 'user_token=' . $this->session->data['token'], 'SSL');
 
         $data['extensions'] = $this->getExtensions();
 		

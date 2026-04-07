@@ -190,7 +190,7 @@ class ControllerEbayMapEbayScheduleProduct extends Controller {
 
 		if (isset($this->request->get['account_id'])) {
 			$url .= '&account_id=' . $this->request->get['account_id'];
-			$data['clear_product_filter'] 	= $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] .'&account_id=' . $this->request->get['account_id']. '&status=product_scheduling', true);
+			$data['clear_product_filter'] 	= $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] .'&account_id=' . $this->request->get['account_id']. '&status=product_scheduling', true);
 		}
 
 		if ($order == 'ASC') {
@@ -203,9 +203,9 @@ class ControllerEbayMapEbayScheduleProduct extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_oc_cat_name'] = $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&sort=name' . $url, true);
-		$data['sort_ebay_category_id'] = $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&sort=sort_order' . $url, true);
-		$data['sort_ebay_category_name'] = $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&sort=name' . $url, true);
+		$data['sort_oc_cat_name'] = $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&sort=name' . $url, true);
+		$data['sort_ebay_category_id'] = $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&sort=sort_order' . $url, true);
+		$data['sort_ebay_category_name'] = $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&sort=name' . $url, true);
 
 		$url = '';
 
@@ -244,16 +244,16 @@ class ControllerEbayMapEbayScheduleProduct extends Controller {
 		}
 
 		if(isset($this->request->get['account_id'])){
-			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&status=product_scheduling&account_id=' .$this->request->get['account_id'] , true));
+			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&status=product_scheduling&account_id=' .$this->request->get['account_id'] , true));
 		}else{
-			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'], true));
+			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'], true));
 		}
 
 		$pagination = new Pagination();
 		$pagination->total = $eBayProductTotal;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

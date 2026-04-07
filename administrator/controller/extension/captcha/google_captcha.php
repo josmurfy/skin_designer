@@ -14,7 +14,7 @@ class ControllerExtensionCaptchaGoogleCaptcha extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=captcha', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=captcha', true));
 		}
 
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -53,22 +53,22 @@ class ControllerExtensionCaptchaGoogleCaptcha extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=captcha', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=captcha', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/captcha/google_captcha', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/captcha/google_captcha', 'user_token=' . $this->session->data['token'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/captcha/google_captcha', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/captcha/google_captcha', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=captcha', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=captcha', true);
 
 		if (isset($this->request->post['google_captcha_key'])) {
 			$data['google_captcha_key'] = $this->request->post['google_captcha_key'];

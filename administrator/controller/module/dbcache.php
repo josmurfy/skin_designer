@@ -99,12 +99,12 @@ class ControllerModuleDBCache extends Controller
 			}
 						
 			if ($this->request->post['apply']) {
-				$this->response->redirect($this->url->link($this->path.$this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true));
+				$this->response->redirect($this->url->link($this->path.$this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true));
 			} else {
 				if (version_compare(VERSION, '2.3', '<')) {
-					$this->response->redirect($this->url->link('extension/'.$this->folder, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'], true));
+					$this->response->redirect($this->url->link('extension/'.$this->folder, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'], true));
 				}  else {
-					$this->response->redirect($this->url->link((version_compare(VERSION, '3', '>=') ? 'marketplace' : 'extension').'/extension', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].'&type='.$this->folder, true));
+					$this->response->redirect($this->url->link((version_compare(VERSION, '3', '>=') ? 'marketplace' : 'extension').'/extension', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].'&type='.$this->folder, true));
 				}
 			}
 		}
@@ -168,30 +168,30 @@ class ControllerModuleDBCache extends Controller
 		
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'], true));
+			'href' => $this->url->link('common/dashboard', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'], true));
 		
 		if (version_compare(VERSION, '2.3', '<')) {
 			$data['breadcrumbs'][] = array(
 				'text' => $this->language->get('text_'.$this->folder),
-				'href' => $this->url->link('extension/'.$this->folder, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'], true));
+				'href' => $this->url->link('extension/'.$this->folder, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'], true));
 
 			$data['breadcrumbs'][] = array(
 				'text' => $data['heading_title'],
-				'href' => $this->url->link($this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true));
+				'href' => $this->url->link($this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true));
 			
-			$data['mainaction'] = $this->url->link($this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), 'SSL');
-			$data['maincancel'] = $this->url->link('extension/'.$this->folder, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'], 'SSL');
+			$data['mainaction'] = $this->url->link($this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), 'SSL');
+			$data['maincancel'] = $this->url->link('extension/'.$this->folder, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'], 'SSL');
 		} else {
 			$data['breadcrumbs'][] = array(
 				'text' => $this->language->get('text_extension'),
-				'href' => $this->url->link((version_compare(VERSION, '3', '>=') ? 'marketplace' : 'extension').'/extension', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'] . '&type='.$this->folder, true));
+				'href' => $this->url->link((version_compare(VERSION, '3', '>=') ? 'marketplace' : 'extension').'/extension', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'] . '&type='.$this->folder, true));
 						
 			$data['breadcrumbs'][] = array(
 				'text' => $data['heading_title'],
-				'href' => $this->url->link('extension/'.$this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true));
+				'href' => $this->url->link('extension/'.$this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true));
 			
-			$data['mainaction'] = $this->url->link('extension/'.$this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true);
-			$data['maincancel'] = $this->url->link((version_compare(VERSION, '3', '>=') ? 'marketplace' : 'extension').'/extension', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'token=').$data['token'].'&type='.$this->folder, true);
+			$data['mainaction'] = $this->url->link('extension/'.$this->folder.'/'.$this->extension, (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].(!empty($module_id) ? '&module_id='.$module_id : ''), true);
+			$data['maincancel'] = $this->url->link((version_compare(VERSION, '3', '>=') ? 'marketplace' : 'extension').'/extension', (version_compare(VERSION, '3', '>=') ? 'user_token=' : 'user_token=').$data['token'].'&type='.$this->folder, true);
 		}
 
 		$this->load->model('setting/store');		
@@ -380,7 +380,7 @@ class ControllerModuleDBCache extends Controller
 		$this->session->data['success'] = $this->language->get('message_clear_success');
 		
 		$route = (isset($this->request->get['dbcache_redirect']) ? $this->request->get['dbcache_redirect'] : 'common/dashboard');
-		$token = (version_compare(VERSION, '3', '>=') ? 'user_token='.$this->session->data['user_token'] : 'token='.$this->session->data['token']);
+		$token = (version_compare(VERSION, '3', '>=') ? 'user_token='.$this->session->data['user_token'] : 'user_token='.$this->session->data['token']);
 		
 		$this->response->redirect($this->url->link($route, $token, true));
     }

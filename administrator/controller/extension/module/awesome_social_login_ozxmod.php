@@ -26,9 +26,9 @@ class ControllerExtensionModuleAwesomeSocialLoginOzxmod extends Controller {
 			$this->session->data['success'] = $this->language->get('text_success');
 
 			if($oc_version >= 2.302) {
-				$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token']. '&type=module', 'SSL'));
+				$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token']. '&type=module', 'SSL'));
 			}else{
-				$this->response->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
+				$this->response->redirect($this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL'));
 			}
 		}
 
@@ -110,28 +110,28 @@ class ControllerExtensionModuleAwesomeSocialLoginOzxmod extends Controller {
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_home'),
-			'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => false
    		);
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_module'),
-			'href'      => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('heading_title'),
-			'href'      => $this->url->link('module/awesome_social_login_ozxmod', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('module/awesome_social_login_ozxmod', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 
 		if($oc_version >= 2.302) {
-			$data['action'] = $this->url->link('extension/module/awesome_social_login_ozxmod', 'token=' . $this->session->data['token']. '&type=module', 'SSL');
-			$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token']. '&type=module', 'SSL');
+			$data['action'] = $this->url->link('extension/module/awesome_social_login_ozxmod', 'user_token=' . $this->session->data['token']. '&type=module', 'SSL');
+			$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token']. '&type=module', 'SSL');
 		}else{
-			$data['action'] = $this->url->link('module/awesome_social_login_ozxmod', 'token=' . $this->session->data['token'], 'SSL');
-			$data['cancel'] = $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL');
+			$data['action'] = $this->url->link('module/awesome_social_login_ozxmod', 'user_token=' . $this->session->data['token'], 'SSL');
+			$data['cancel'] = $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL');
 		}
 
 		$data['modules'] = array();

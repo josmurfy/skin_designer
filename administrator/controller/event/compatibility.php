@@ -26,7 +26,7 @@ class ControllerEventCompatibility extends Controller {
 		$part = explode('/', $route);
 			
 		if (isset($part[0]) && isset($data['back'])) {
-			$data['back'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=' . $part[0], true);
+			$data['back'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=' . $part[0], true);
 		}
 	}
 }

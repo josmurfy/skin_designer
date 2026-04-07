@@ -201,7 +201,7 @@ class ControllerExtensionModuleElfsightPinterestFeed extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('marketplace/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+			$this->response->redirect($this->url->link('marketplace/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
 		}
 
 		$params = json_encode([
@@ -222,9 +222,9 @@ class ControllerExtensionModuleElfsightPinterestFeed extends Controller {
 			$data['error_warning'] = '';
 		}
 
-		$data['action'] = $this->url->link('extension/module/elfsight_pinterest_feed', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/module/elfsight_pinterest_feed', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('marketplace/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 
 		if (isset($this->request->post['module_elfsight_pinterest_feed_status'])) {
 			$data['module_elfsight_pinterest_feed_status'] = $this->request->post['module_elfsight_pinterest_feed_status'];

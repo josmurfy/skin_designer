@@ -62,7 +62,7 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -118,7 +118,7 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -176,7 +176,7 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -279,16 +279,16 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['add'] = $this->url->link('social_autopilot/template/add', 'token=' . $this->session->data['token'] . $url, true);
-		$data['delete'] = $this->url->link('social_autopilot/template/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['add'] = $this->url->link('social_autopilot/template/add', 'user_token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('social_autopilot/template/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['templates'] = array();
 
@@ -320,7 +320,7 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 				'status'         => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
 				'default'        => ($result['default'] ? $this->language->get('text_yes') : $this->language->get('text_no')),
 				'date_added'     => date($this->language->get('date_format_short'), strtotime($result['date_added'])),
-				'edit'           => $this->url->link('social_autopilot/template/edit', 'token=' . $this->session->data['token'] . '&template_id=' . $result['template_id'] . $url, true)
+				'edit'           => $this->url->link('social_autopilot/template/edit', 'user_token=' . $this->session->data['token'] . '&template_id=' . $result['template_id'] . $url, true)
 			);
 		}
 
@@ -413,12 +413,12 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_name'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . '&sort=t.name' . $url, true);
-		$data['sort_template_category_id'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . '&sort=t.template_category_id' . $url, true);
-		$data['sort_status'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . '&sort=t.status' . $url, true);
-		$data['sort_default'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . '&sort=t.default' . $url, true);
-		$data['sort_date_added'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . '&sort=t.date_added' . $url, true);
-		$data['sort_date_modified'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . '&sort=t.date_modified' . $url, true);
+		$data['sort_name'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . '&sort=t.name' . $url, true);
+		$data['sort_template_category_id'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . '&sort=t.template_category_id' . $url, true);
+		$data['sort_status'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . '&sort=t.status' . $url, true);
+		$data['sort_default'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . '&sort=t.default' . $url, true);
+		$data['sort_date_added'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . '&sort=t.date_added' . $url, true);
+		$data['sort_date_modified'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . '&sort=t.date_modified' . $url, true);
 
 		$url = '';
 
@@ -458,7 +458,7 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 		$pagination->total = $template_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -604,21 +604,21 @@ class ControllerSocialAutoPilotTemplate extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
 		if (!isset($this->request->get['template_id'])) {
-			$data['action'] = $this->url->link('social_autopilot/template/add', 'token=' . $this->session->data['token'] . $url, true);
+			$data['action'] = $this->url->link('social_autopilot/template/add', 'user_token=' . $this->session->data['token'] . $url, true);
 		} else {
-			$data['action'] = $this->url->link('social_autopilot/template/edit', 'token=' . $this->session->data['token'] . '&template_id=' . $this->request->get['template_id'] . $url, true);
+			$data['action'] = $this->url->link('social_autopilot/template/edit', 'user_token=' . $this->session->data['token'] . '&template_id=' . $this->request->get['template_id'] . $url, true);
 		}
 
-		$data['cancel'] = $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'] . $url, true);
+		$data['cancel'] = $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		if (isset($this->request->get['template_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
 			$template_info = $this->model_social_autopilot_template->getTemplate($this->request->get['template_id']);

@@ -13,7 +13,7 @@ class ModelExtensionModuleEasyconnectiveinstaller extends Model
 
         if (VERSION < 3) {
             $token = $this->session->data['token'];
-            $token_link = 'token=' . $this->session->data['token'];
+            $token_link = 'user_token=' . $this->session->data['token'];
         } else {
             $token = $this->session->data['user_token'];
             $token_link = 'user_token=' . $this->session->data['user_token'];

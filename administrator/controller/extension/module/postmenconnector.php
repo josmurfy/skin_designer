@@ -31,7 +31,7 @@ class ControllerExtensionModulePostmenconnector extends Controller {
 			$data['success']=$this->language->get('text_success');
 			$data['postment_masking_api_key']=$this->request->post['postmenconnector_maskingapikey'];
 			$data['exportorder']=true;
-			//$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+			//$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
 			 }
 		}
 		
@@ -98,12 +98,12 @@ class ControllerExtensionModulePostmenconnector extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_order_id'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&sort=order_id' . $url, true);
-		$data['sort_date_added'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&sort=date_added' . $url, true);
-		$data['sort_customer'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&sort=customer' . $url, true);
-		$data['sort_status'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&sort=status' . $url, true);
-		$data['sort_total'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&sort=total' . $url, true);
-		$data['sort_order_status'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&sort=order_status' . $url, true);
+		$data['sort_order_id'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&sort=order_id' . $url, true);
+		$data['sort_date_added'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&sort=date_added' . $url, true);
+		$data['sort_customer'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&sort=customer' . $url, true);
+		$data['sort_status'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&sort=status' . $url, true);
+		$data['sort_total'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&sort=total' . $url, true);
+		$data['sort_order_status'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&sort=order_status' . $url, true);
 
 		
 		
@@ -124,7 +124,7 @@ class ControllerExtensionModulePostmenconnector extends Controller {
 		$pagination->total = $order_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 		
@@ -132,7 +132,7 @@ class ControllerExtensionModulePostmenconnector extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 		//set url for resend
-		$data['order_resend_url'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'] . '&action=order_resend' . $url, true);
+		$data['order_resend_url'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'] . '&action=order_resend' . $url, true);
 		
 		
 		//reult from table
@@ -179,22 +179,22 @@ class ControllerExtensionModulePostmenconnector extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/module/postmenconnector', 'token=' . $this->session->data['token'].'&type=module', true);
+		$data['action'] = $this->url->link('extension/module/postmenconnector', 'user_token=' . $this->session->data['token'].'&type=module', true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 
 		if (isset($this->request->post['postmenconnector_apikey'])) {
 			$data['postmenconnector_apikey'] = $this->request->post['postmenconnector_apikey'];

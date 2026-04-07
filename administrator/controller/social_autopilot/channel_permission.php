@@ -65,7 +65,7 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -114,7 +114,7 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -163,7 +163,7 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -246,15 +246,15 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('social_autopilot/channel', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('social_autopilot/channel', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['delete'] = $this->url->link('social_autopilot/channel_permission/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('social_autopilot/channel_permission/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['channel_permissions'] = array();
 
@@ -275,11 +275,11 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 
 		foreach ($results as $result) {
 			if ($result['status']) {
-				$disable = $this->url->link('social_autopilot/channel_permission/disable', 'token=' . $this->session->data['token'] . '&permission_id=' . $result['permission_id'] . $url, true);
+				$disable = $this->url->link('social_autopilot/channel_permission/disable', 'user_token=' . $this->session->data['token'] . '&permission_id=' . $result['permission_id'] . $url, true);
 				$enable  = false;
 			} else {
 				$disable = false;
-				$enable = $this->url->link('social_autopilot/channel_permission/enable', 'token=' . $this->session->data['token'] . '&permission_id=' . $result['permission_id'] . $url, true);
+				$enable = $this->url->link('social_autopilot/channel_permission/enable', 'user_token=' . $this->session->data['token'] . '&permission_id=' . $result['permission_id'] . $url, true);
 			}
 
 			$data['channel_permissions'][] = array(
@@ -383,13 +383,13 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_channel_id'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=c.name' . $url, true);
-		$data['sort_name'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=cp.name' . $url, true);
-		$data['sort_id'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=cp.id' . $url, true);
-		$data['sort_access_token'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=cp.access_token' . $url, true);
-		$data['sort_status'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=cp.status' . $url, true);
-		$data['sort_date_added'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=cp.date_added' . $url, true);
-		$data['sort_date_expire'] = $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'] . '&sort=cp.date_expire' . $url, true);
+		$data['sort_channel_id'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=c.name' . $url, true);
+		$data['sort_name'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=cp.name' . $url, true);
+		$data['sort_id'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=cp.id' . $url, true);
+		$data['sort_access_token'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=cp.access_token' . $url, true);
+		$data['sort_status'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=cp.status' . $url, true);
+		$data['sort_date_added'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=cp.date_added' . $url, true);
+		$data['sort_date_expire'] = $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'] . '&sort=cp.date_expire' . $url, true);
 
 		$url = '';
 
@@ -421,7 +421,7 @@ class ControllerSocialAutoPilotChannelPermission extends Controller {
 		$pagination->total = $channel_permission_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('social_autopilot/channel', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('social_autopilot/channel', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

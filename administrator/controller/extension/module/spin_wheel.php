@@ -38,11 +38,11 @@ class ControllerExtensionModuleSpinWheel extends Controller {
 			
 			if(isset($this->request->post['save_stay']) && $this->request->post['save_stay'] == 1){
 				if(isset($this->request->get['module_id'])){
-					$this->response->redirect($this->url->link('extension/module/spin_wheel', 'token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'] . '&type=module', true));
+					$this->response->redirect($this->url->link('extension/module/spin_wheel', 'user_token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'] . '&type=module', true));
 				}
 			}else{
 
-				$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+				$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
 			}	
 		}
 
@@ -161,26 +161,26 @@ class ControllerExtensionModuleSpinWheel extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_module'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title2'),
-			'href' => $this->url->link('extension/module/spin_wheel', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/module/spin_wheel', 'user_token=' . $this->session->data['token'], true)
 		);
 		
 		if(isset($this->request->get['module_id']) && $this->request->get['module_id']){
-			$data['action'] = $this->url->link('extension/module/spin_wheel', 'token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true);				
+			$data['action'] = $this->url->link('extension/module/spin_wheel', 'user_token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true);				
 		}else{
-			$data['action'] = $this->url->link('extension/module/spin_wheel', 'token=' . $this->session->data['token'], true);				
+			$data['action'] = $this->url->link('extension/module/spin_wheel', 'user_token=' . $this->session->data['token'], true);				
 		}
 		
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 			
 		$data['token'] = $this->session->data['token'];
 	

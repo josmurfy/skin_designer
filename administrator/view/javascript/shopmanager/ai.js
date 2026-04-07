@@ -2461,7 +2461,7 @@ if (typeof aiResponse === 'object' && aiResponse !== null) {
         }
     } 
 }
-async function aiSuggestDescription(specificsRow, form, fieldName = 'product') {
+async function aiSuggestCategoryDescription(specificsRow, form, fieldName = 'category') {
     var Button = $('#ai-suggest-description-category-btn');
 
     // Désactiver le bouton et afficher l'état de génération
@@ -2475,22 +2475,16 @@ async function aiSuggestDescription(specificsRow, form, fieldName = 'product') {
         return;
     }
 
-    // Liste des champs à exclure
+    // Liste des champs à exclure (category-specific)
     var excludeSelectors = [
         '#language2 input, #language2 select, #language2 textarea',
         '#specifics-language-2 input, #specifics-language-2 select, #specifics-language-2 textarea',
-        '[name^="' + fieldName + '_description[2]"]',
-        '[name="weight"]', '[name="weight_oz"]', '[name="length"]', '[name="width"]', '[name="height"]',
-        '[name="upc"]', '[name="sku"]', '[name="marketplace_item_id"]', '[name^="price_ebay"]',
-        '[name="quantity"]', '[name="location"]', '[name="unallocated_quantity"]',
-        '[name="conditions_json1"]', '[name="price"]', '[name="shipping_cost"]', '[name="price_with_shipping"]',
-        '[name="files"]', '[name="shipping_carrier"]', '[name="user_token"]',
-        '[name^="checkbox"]', '[name^="hidden_"]', '[name="tax_class_id"]',
-        '[name="minimum"]', '[name="subtract"]', '[name="stock_status_id"]', '[name="shipping"]',
-        '[name="date_available"]', '[name="status"]', '[name="sort_order"]',
-        '[name="filter"]', '[name="' + fieldName + '_store[]"]',
-        '[name="download"]', '[name="related"]', '[name="option"]', '[name="points"]',
-        '[name^="' + fieldName + '_reward"]', '[name^="' + fieldName + '_layout"]'
+        '[name^="category_description[2]"]',
+        '[name="user_token"]',
+        '[name^="checkbox"]', '[name^="hidden_"]',
+        '[name="status"]', '[name="sort_order"]',
+        '[name="filter"]', '[name="category_store[]"]',
+        '[name^="category_layout"]'
     ];
 
     // Récupérer les valeurs du formulaire
@@ -2506,14 +2500,13 @@ async function aiSuggestDescription(specificsRow, form, fieldName = 'product') {
         }
     });
 
-
-    // Déterminer le nom de la catégorie
-    var categoryInput = formElement.querySelector('input[name="' + fieldName + '_description[1][name]"]');
+    // Déterminer le nom de la catégorie + path
+    var categoryInput = formElement.querySelector('input[name="category_description[1][name]"]');
     var categoryName = categoryInput ? categoryInput.value.trim() : '';
 
-    if (fieldName.trim() === 'category') {
-        var categoryPathInput = formElement.querySelector('input[name="path"]');
-        var categoryPath = categoryPathInput ? categoryPathInput.value.replace('Search by category >', '').trim() : '';
+    var categoryPathInput = formElement.querySelector('input[name="path"]');
+    var categoryPath = categoryPathInput ? categoryPathInput.value.replace('Search by category >', '').trim() : '';
+    if (categoryPath) {
         categoryName = categoryName + ' From: ' + categoryPath;
     }
 
@@ -2521,15 +2514,15 @@ async function aiSuggestDescription(specificsRow, form, fieldName = 'product') {
         console.error('Error: Category name not found');
         return;
     }
-console.log("AI fieldName: ", fieldName);
+
     // Générer la requête AI
     var prompt = getAiPromptForDescription(JSON.stringify(formData), categoryName);
-    var data = buildAiData(prompt, "Provide a " + fieldName + " description for product to sell.", 500, 0.7);
+    var data = buildAiData(prompt, "Provide a category description. Return the value only in json {'description': } ", 500, 0.7);
 
     try {
         const aiResponse = await fetchAi(data);
-        console.log("AI Response Type:", typeof aiResponse);
-        console.log("AI Response:", aiResponse);
+        console.log("AI Category Response Type:", typeof aiResponse);
+        console.log("AI Category Response:", aiResponse);
         
         // Extraire le texte selon le type de réponse
         let extractedText = '';
@@ -2542,17 +2535,20 @@ console.log("AI fieldName: ", fieldName);
         if (typeof aiResponse === 'string') {
             extractedText = aiResponse.trim();
         } else if (Array.isArray(aiResponse)) {
-            // Si c'est un tableau, fusionner tous les éléments
             if (aiResponse.length > 0) {
                 extractedText = aiResponse.join('\n').trim();
-                console.log("AI Response is array, joined all elements");
             } else {
                 console.error("Error: AI response array is empty", aiResponse);
                 return;
             }
         } else if (typeof aiResponse === 'object' && aiResponse !== null) {
-            // Chercher le texte dans différentes propriétés possibles
-            if (aiResponse.description) {
+            // Support bracket-notation keys (e.g. "category_description[1][description]")
+            var bracketKey = 'category_description[' + specificsRow + '][description]';
+            if (aiResponse[bracketKey]) {
+                extractedText = aiResponse[bracketKey];
+            } else if (aiResponse.category_description) {
+                extractedText = aiResponse.category_description;
+            } else if (aiResponse.description) {
                 extractedText = aiResponse.description;
             } else if (aiResponse.html) {
                 extractedText = aiResponse.html;
@@ -2563,8 +2559,17 @@ console.log("AI fieldName: ", fieldName);
             } else if (aiResponse.success) {
                 extractedText = aiResponse.success;
             } else {
-                console.error("Error: AI response object does not contain expected properties", aiResponse);
-                return;
+                // Fallback: search all keys for one containing "[description]"
+                for (var key in aiResponse) {
+                    if (key.indexOf('[description]') !== -1) {
+                        extractedText = aiResponse[key];
+                        break;
+                    }
+                }
+                if (!extractedText) {
+                    console.error("Error: AI response object does not contain expected properties", aiResponse);
+                    return;
+                }
             }
         } else {
             console.error("Error: AI response is not a string, array, or object", typeof aiResponse, aiResponse);
@@ -2576,7 +2581,7 @@ console.log("AI fieldName: ", fieldName);
             return;
         }
 
-        var textareaId = `${fieldName}-description-1-${specificsRow}`;
+        var textareaId = 'category-description-1-' + specificsRow;
         var aiResultElement = document.getElementById(textareaId);
 
         if (!aiResultElement) {
@@ -2591,27 +2596,17 @@ console.log("AI fieldName: ", fieldName);
                
                // Vérifier si c'est déjà du HTML (commence par <)
                if (typeof formattedTextJson === 'string' && formattedTextJson.trim().startsWith('<')) {
-                   // C'est déjà du HTML, l'utiliser directement
                    formattedHtml = formattedTextJson.trim();
-                   console.log('Formatted text is HTML string:', formattedHtml.substring(0, 50) + '...');
                } else {
                    // Essayer de parser comme JSON
                    let formattedTextObj = JSON.parse(formattedTextJson);
-                   console.log('Formatted Text Type:', typeof formattedTextObj, formattedTextObj);
                    
-                   // Gérer les différents types de réponse
                    if (Array.isArray(formattedTextObj)) {
-                       // Si c'est un tableau, prendre le premier élément
                        formattedHtml = formattedTextObj[0];
-                       console.log('Formatted text is array, extracted:', formattedHtml);
                    } else if (typeof formattedTextObj === 'string') {
-                       // Si c'est déjà une chaîne
                        formattedHtml = formattedTextObj;
-                       console.log('Formatted text is string:', formattedHtml);
                    } else if (formattedTextObj && formattedTextObj.html) {
-                       // Si c'est un objet avec propriété html
                        formattedHtml = formattedTextObj.html.trim();
-                       console.log('Formatted text is object with html property:', formattedHtml);
                    } else {
                        console.error("Invalid response format: missing 'html' field or unrecognized format");
                        return;
@@ -2625,18 +2620,22 @@ console.log("AI fieldName: ", fieldName);
                
                // Nettoyer les backslashes d'échappement
                formattedHtml = formattedHtml.replace(/\\'/g, "'").replace(/\\"/g, '"').replace(/\\\\/g, '\\');
-               console.log('Cleaned backslashes from formatted HTML');
            
                aiResultElement.value = formattedHtml;
            
+               // Set EN description in summernote + translate to FR
                if (aiResultElement.classList.contains('summernote')) {
                    $(`#${textareaId}`).summernote('code', formattedHtml);
-                  // getTranslate(formattedHtml, 2, 'Fr', specificsRow, 'summernote', fieldName);
+                   getTranslate(formattedHtml, 2, 'Fr', specificsRow, 'summernote', 'category');
                }
-           
-               if (typeof generateInfo === 'function') {
-                   generateInfo();
-               }
+
+               // Generate meta for EN immediately
+               generateCategoryMeta(1, specificsRow);
+               // Generate meta for FR after translation completes
+               setTimeout(function() {
+                   generateCategoryMeta(2, specificsRow);
+               }, 5000);
+
            } catch (error) {
                console.error("Error parsing formattedTextJson:", error);
            }
@@ -2654,6 +2653,49 @@ console.log("AI fieldName: ", fieldName);
 
     } catch (error) {
         console.error('Error:', error);
+    }
+}
+
+// Generate meta_title, meta_description, meta_keyword for a category language
+// Uses the name and description fields of that language (same logic as product generateMetaTag)
+function generateCategoryMeta(languageId, descriptionRow) {
+    var nameEl = document.querySelector('input[name="category_description[' + languageId + '][name]"]');
+    var descEl = document.getElementById('category-description-' + languageId + '-' + descriptionRow);
+    
+    if (!nameEl) return;
+    
+    var name = nameEl.value.trim();
+    // Get description text (strip HTML from summernote)
+    var descHtml = '';
+    if (descEl && descEl.classList.contains('summernote')) {
+        descHtml = $('#category-description-' + languageId + '-' + descriptionRow).summernote('code');
+    } else if (descEl) {
+        descHtml = descEl.value;
+    }
+    var descText = descHtml.replace(/<\/?[^>]+(>|$)/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    
+    // meta_title = category name
+    var metaTitleRow = descriptionRow + 1;
+    var metaTitleEl = document.getElementById('category-description-' + languageId + '-' + metaTitleRow);
+    if (metaTitleEl) {
+        metaTitleEl.value = name;
+    }
+    
+    // meta_description = description text (truncated to 160 chars)
+    var metaDescRow = descriptionRow + 2;
+    var metaDescEl = document.getElementById('category-description-' + languageId + '-' + metaDescRow);
+    if (metaDescEl) {
+        metaDescEl.value = descText.substring(0, 160);
+    }
+    
+    // meta_keyword = words from name, comma-separated
+    var metaKeywordRow = descriptionRow + 3;
+    var metaKeywordEl = document.getElementById('category-description-' + languageId + '-' + metaKeywordRow);
+    if (metaKeywordEl) {
+        var keywords = name.replace(/[.,;:'"\{\}\[\]\(\)@%$&\-]/g, '');
+        keywords = keywords.split(/\s+/).join(',');
+        if (keywords.endsWith(',')) keywords = keywords.slice(0, -1);
+        metaKeywordEl.value = keywords;
     }
 }
 

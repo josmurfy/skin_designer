@@ -95,15 +95,18 @@
 <script type="text/javascript" src="view/javascript/codemirror/mode/htmlmixed/htmlmixed.js"></script>
 <script type="text/javascript" src="view/javascript/codemirror/addon/edit/matchbrackets.js"></script>
 <script type="text/javascript"><!--
-// Initialize codemirrror
-var codemirror = CodeMirror.fromTextArea(document.querySelector('.codemirror'), {
-    mode: 'text/xml',
-    lineNumbers: true,
-    lineWrapping: true,
-    readOnly: true,
-    autofocus: false,
-    theme: 'monokai'
-});
-
-codemirror.setSize('100%', '600px');
+// Initialize codemirror
+var codemirror = null;
+var _cmEl = document.querySelector('.codemirror');
+if (_cmEl) {
+    codemirror = CodeMirror.fromTextArea(_cmEl, {
+        mode: 'text/xml',
+        lineNumbers: true,
+        lineWrapping: true,
+        readOnly: true,
+        autofocus: false,
+        theme: 'monokai'
+    });
+    codemirror.setSize('100%', '600px');
+}
 //--></script>

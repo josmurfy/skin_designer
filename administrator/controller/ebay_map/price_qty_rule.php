@@ -81,7 +81,7 @@
  				$url .= '&page=' . $this->request->get['page'];
  			}
 
- 			$this->response->redirect($this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url, true));
+ 			$this->response->redirect($this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url, true));
      }
 
      $this->getForm();
@@ -146,7 +146,7 @@
        $url .= '&page=' . $this->request->get['page'];
       }
 
-      $this->response->redirect($this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url, true));
+      $this->response->redirect($this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url, true));
      }
 
      $this->getForm();
@@ -213,7 +213,7 @@
        $url .= '&page=' . $this->request->get['page'];
      }
 
-	   $this->response->redirect($this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url, true));
+	   $this->response->redirect($this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url, true));
  		}
 
  		$this->getList();
@@ -348,17 +348,17 @@
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('text_home'),
-      'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+      'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
     );
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('heading_title'),
-      'href' => $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url, true)
+      'href' => $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url, true)
     );
 
-    $data['add'] = $this->url->link('ebay_map/price_qty_rule/addRule', 'token=' . $this->session->data['token'] . $url, true);
+    $data['add'] = $this->url->link('ebay_map/price_qty_rule/addRule', 'user_token=' . $this->session->data['token'] . $url, true);
 
-    $data['delete'] = $this->url->link('ebay_map/price_qty_rule/deleteRule', 'token=' . $this->session->data['token'] . $url, true);
+    $data['delete'] = $this->url->link('ebay_map/price_qty_rule/deleteRule', 'user_token=' . $this->session->data['token'] . $url, true);
 
     $filter_data = array(
       'filter_value'	        => $filter_value,
@@ -419,7 +419,7 @@
         'operation_type' => $operation_type,
         'rule_for'       => $rule_for,
         'status'         => $status,
-        'edit'           => $this->url->link('ebay_map/price_qty_rule/editRule&rule_id=' . $result['id'], 'token=' . $this->session->data['token'], true)
+        'edit'           => $this->url->link('ebay_map/price_qty_rule/editRule&rule_id=' . $result['id'], 'user_token=' . $this->session->data['token'], true)
       );
     }
 
@@ -491,14 +491,14 @@
       $url .= '&page=' . $this->request->get['page'];
     }
 
-    $data['sort_rule_for'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=rule_for' . $url, true);
-    $data['sort_min'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=min' . $url, true);
-    $data['sort_max'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=max' . $url, true);
-    $data['sort_portation'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=portation' . $url, true);
-    $data['sort_operation'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=operation' . $url, true);
-    $data['sort_operation_type'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=operation_type' . $url, true);
-    $data['sort_value'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=value' . $url, true);
-    $data['sort_status'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . '&sort=status' . $url, true);
+    $data['sort_rule_for'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=rule_for' . $url, true);
+    $data['sort_min'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=min' . $url, true);
+    $data['sort_max'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=max' . $url, true);
+    $data['sort_portation'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=portation' . $url, true);
+    $data['sort_operation'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=operation' . $url, true);
+    $data['sort_operation_type'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=operation_type' . $url, true);
+    $data['sort_value'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=value' . $url, true);
+    $data['sort_status'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . '&sort=status' . $url, true);
 
     $url = '';
 
@@ -548,7 +548,7 @@
 		$pagination->total = $rule_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -642,36 +642,36 @@
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('text_home'),
-      'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+      'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
     );
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('heading_title'),
-      'href' => $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url, true)
+      'href' => $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url, true)
     );
 
     if (!isset($this->request->get['rule_id'])) {
       $data['breadcrumbs'][] = array(
         'text' => $this->language->get('text_add'),
-        'href' => $this->url->link('ebay_map/price_qty_rule/addRule', 'token=' . $this->session->data['token'] . $url, true)
+        'href' => $this->url->link('ebay_map/price_qty_rule/addRule', 'user_token=' . $this->session->data['token'] . $url, true)
       );
     } else {
       $data['breadcrumbs'][] = array(
         'text' => $this->language->get('text_edit'),
-        'href' => $this->url->link('ebay_map/price_qty_rule/editRule&rule_id=' . $this->request->get['rule_id'], 'token=' . $this->session->data['token'] . $url, true)
+        'href' => $this->url->link('ebay_map/price_qty_rule/editRule&rule_id=' . $this->request->get['rule_id'], 'user_token=' . $this->session->data['token'] . $url, true)
       );
     }
 
     if (!isset($this->request->get['rule_id'])) {
-			$data['action'] = $this->url->link('ebay_map/price_qty_rule/addRule', 'token=' . $this->session->data['token'] . $url, true);
+			$data['action'] = $this->url->link('ebay_map/price_qty_rule/addRule', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		} else {
 
-    	$data['action'] = $this->url->link('ebay_map/price_qty_rule/editRule', 'token=' . $this->session->data['token'] . '&rule_id=' . $this->request->get['rule_id'] . $url, true);
+    	$data['action'] = $this->url->link('ebay_map/price_qty_rule/editRule', 'user_token=' . $this->session->data['token'] . '&rule_id=' . $this->request->get['rule_id'] . $url, true);
 
 		}
 
-    $data['cancel'] = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'], true);
+    $data['cancel'] = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'], true);
 
     if (isset($this->request->get['rule_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
       $this->load->model('ebay_map/price_qty_rule');

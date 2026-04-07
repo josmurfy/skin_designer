@@ -11,6 +11,9 @@
   <input type="hidden" id="url_sync_marketplace" value="index.php?route=shopmanager/inventory/sync.importMarketplace&user_token={{ user_token }}" />
   <input type="hidden" id="url_force_refresh_marketplace" value="index.php?route=shopmanager/inventory/sync.importMarketplace&force_refresh=1&user_token={{ user_token }}" />
   <input type="hidden" id="url_scan_image_backup" value="index.php?route=shopmanager/inventory/sync.scanImageBackupCounts&user_token={{ user_token }}" />
+  <input type="hidden" id="url_not_imported_tab" value="{{ url_not_imported_tab }}" />
+  <input type="hidden" id="url_to_update_tab" value="{{ url_to_update_tab }}" />
+  <input type="hidden" id="url_not_synced_tab" value="{{ url_not_synced_tab }}" />
 
   <div class="page-header">
     <div class="container-fluid">
@@ -51,41 +54,51 @@
       </div>
     </div>
 
-    {# Inventory Stats #}
-    <div class="row mb-3">
-      <div class="col-md-3">
-        <div class="card border-success stat-card" style="cursor: default;">
-          <div class="card-body text-center">
-            <h2 class="text-success stat-number">{{ analytics_data.total_listed_ebay }}</h2>
-            <p class="text-muted mb-0">{{ text_listed_ebay }}</p>
+    {# Inventory Stats — 5 cards on one line #}
+    <div class="row mb-3 g-2">
+      <div class="col">
+        <div class="card border-success stat-card h-100" style="cursor: default;">
+          <div class="card-body text-center py-3">
+            <h2 class="text-success stat-number mb-1">{{ analytics_data.total_listed_ebay }}</h2>
+            <p class="text-muted mb-0 small">{{ text_listed_ebay }}</p>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card border-warning stat-card" data-tab="not-listed" style="cursor: pointer;" onclick="document.getElementById('not-listed-tab').click();">
-          <div class="card-body text-center">
-            <h2 class="text-warning stat-number">{{ analytics_data.not_listed_count }}</h2>
-            <p class="text-muted mb-0">{{ text_not_listed_qty }}</p>
+      <div class="col">
+        <div class="card border-warning stat-card h-100" style="cursor: pointer;" onclick="document.getElementById('not-listed-tab').click();">
+          <div class="card-body text-center py-3">
+            <h2 class="text-warning stat-number mb-1">{{ analytics_data.not_listed_count }}</h2>
+            <p class="text-muted mb-0 small">{{ text_not_listed_qty }}</p>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card border-danger stat-card" data-tab="errors" style="cursor: pointer;" onclick="document.getElementById('errors-tab').click();">
-          <div class="card-body text-center">
-            <h2 class="text-danger stat-number">{{ analytics_data.error_count }}</h2>
-            <p class="text-muted mb-0">{{ text_marketplace_errors }}</p>
+      <div class="col">
+        <div class="card border-danger stat-card h-100" style="cursor: pointer;" onclick="document.getElementById('errors-tab').click();">
+          <div class="card-body text-center py-3">
+            <h2 class="text-danger stat-number mb-1">{{ analytics_data.error_count }}</h2>
+            <p class="text-muted mb-0 small">{{ text_marketplace_errors }}</p>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
-        <div class="card border-info stat-card" data-tab="not-synced" style="cursor: pointer;" onclick="document.getElementById('not-synced-tab').click();">
-          <div class="card-body text-center">
-            <h2 class="text-info stat-number">{{ analytics_data.not_synced_count }}</h2>
-            <p class="text-muted mb-0">{{ text_not_synced }}</p>
+      <div class="col">
+        <div class="card border-info stat-card h-100" style="cursor: pointer;" onclick="document.getElementById('not-imported-tab').click();">
+          <div class="card-body text-center py-3">
+            <h2 class="text-info stat-number mb-1">{{ analytics_data.not_imported_count }}</h2>
+            <p class="text-muted mb-0 small">{{ text_not_imported }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card border-secondary stat-card h-100" style="cursor: pointer;" onclick="document.getElementById('to-update-tab').click();">
+          <div class="card-body text-center py-3">
+            <h2 class="text-secondary stat-number mb-1">{{ analytics_data.to_update_count }}</h2>
+            <p class="text-muted mb-0 small"><i class="fa-solid fa-upload"></i> {{ text_to_update_ebay }}</p>
           </div>
         </div>
       </div>
     </div>
+
+    {# To Update + Pending Row — removed (merged above) #}
 
     {# Detailed Mismatch Stats #}
     {# Row 1: Price, Quantity, Specifics #}
@@ -203,6 +216,22 @@
               <li class="nav-item" role="presentation">
                 <button class="nav-link" id="image-mismatch-tab" data-bs-toggle="tab" data-bs-target="#image-mismatch" type="button" role="tab">
                   <i class="fa-solid fa-images text-warning"></i> {{ tab_image_mismatch }}
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="not-imported-tab" data-bs-toggle="tab" data-bs-target="#not-imported-tab-pane" type="button" role="tab">
+                  <i class="fa-solid fa-file-import text-info"></i> {{ tab_not_imported }}
+                  {% if analytics_data.not_imported_count > 0 %}
+                    <span class="badge bg-info ms-1">{{ analytics_data.not_imported_count }}</span>
+                  {% endif %}
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="to-update-tab" data-bs-toggle="tab" data-bs-target="#to-update-tab-pane" type="button" role="tab">
+                  <i class="fa-solid fa-upload text-secondary"></i> {{ tab_to_update }}
+                  {% if analytics_data.to_update_count > 0 %}
+                    <span class="badge bg-secondary ms-1">{{ analytics_data.to_update_count }}</span>
+                  {% endif %}
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -358,57 +387,7 @@
 
               {# Products Not Synced #}
               <div class="tab-pane fade" id="not-synced" role="tabpanel">
-                {% if analytics_data.products_not_synced|length > 0 %}
-                  <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                      <thead>
-                        <tr>
-                          <th>{{ column_product }}</th>
-                          <th>{{ column_ebay_id }}</th>
-                          <th class="text-end">{{ column_quantity }}</th>
-                          <th>{{ text_last_sync }}</th>
-                          <th class="text-center">{{ column_actions }}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for product in analytics_data.products_not_synced %}
-                          <tr>
-                            <td>{{ product.name }}</td>
-                            <td>
-                              {% if product.marketplace_item_id %}
-                                <a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary"><i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}</a>
-                              {% else %}
-                                <span class="text-muted">{{ text_not_listed }}</span>
-                              {% endif %}
-                            </td>
-                            <td class="text-end">{{ product.quantity }} + {{ product.unallocated_quantity }}</td>
-                            <td>
-                              {% if product.last_sync and product.last_sync != '0000-00-00 00:00:00' %}
-                                <span class="badge bg-warning">{{ product.last_sync|date('Y-m-d H:i') }}</span>
-                              {% else %}
-                                <span class="badge bg-danger">{{ text_never_synced }}</span>
-                              {% endif %}
-                            </td>
-                            <td class="text-center">
-                              <button class="btn btn-sm btn-warning sync-product-btn" 
-                                      data-product-id="{{ product.product_id }}" 
-                                      data-product-name="{{ product.name }}"
-                                      data-bs-toggle="tooltip" 
-                                      title="{{ button_sync_ebay }}">
-                                <i class="fa-solid fa-sync"></i> Sync
-                              </button>
-                              <a href="index.php?route=shopmanager/catalog/product.edit&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ text_edit_product }}">
-                                <i class="fa-solid fa-edit"></i>
-                              </a>
-                            </td>
-                          </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                  </div>
-                {% else %}
-                  <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ text_all_synced }}</div>
-                {% endif %}
+                {{ not_synced_content }}
               </div>
 
               {# Quantity Mismatch #}
@@ -553,6 +532,16 @@
                 {{ image_mismatch_content }}
               </div>
 
+              {# Not Imported — listed on eBay but never synced back #}
+              <div class="tab-pane fade" id="not-imported-tab-pane" role="tabpanel">
+                {{ not_imported_content }}
+              </div>
+
+              {# To Update — local changes pending push to eBay #}
+              <div class="tab-pane fade" id="to-update-tab-pane" role="tabpanel">
+                {{ to_update_content }}
+              </div>
+
               {# Slow Moving Products #}
               <div class="tab-pane fade" id="slow-moving" role="tabpanel">
                 {% if analytics_data.bottom_products|length > 0 %}
@@ -615,6 +604,7 @@ var TEXT_CONFIRM_SYNC_PRODUCT = '{{ text_confirm_sync_product|escape('js') }}';
 var TEXT_CONFIRM_REFRESH_ALL  = '{{ text_confirm_refresh_all|escape('js') }}';
 var TEXT_CONFIRM_FORCE_REFRESH = '{{ text_confirm_force_refresh|escape('js') }}';
 var TEXT_CONFIRM_SCAN_BACKUP   = '{{ text_scan_backup_confirm|escape('js') }}';
+var TEXT_CONFIRM_IMPORT_NON_SELECTED = '{{ text_confirm_import_non_selected|escape('js') }}';
 </script>
 
 {{ footer }}

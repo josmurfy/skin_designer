@@ -21,7 +21,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 		
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
 		}
 		
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -84,31 +84,31 @@ class ControllerExtensionModuleSEO extends Equotix {
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_home'),
-			'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], true)
+			'href'      => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], true)
    		);
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_module'),
-			'href'      => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true)
+			'href'      => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true)
    		);
 		
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('heading_title'),
-			'href'      => $this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true)
+			'href'      => $this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true)
    		);
 		
-		$data['action'] = $this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true);
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['action'] = $this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 		$data['token'] = $this->session->data['token'];
-		$data['clear_product'] = $this->url->link('extension/module/seo/clearproduct', 'token=' . $this->session->data['token'], true);
-		$data['clear_category'] = $this->url->link('extension/module/seo/clearcategory', 'token=' . $this->session->data['token'], true);
-		$data['clear_manufacturer'] = $this->url->link('extension/module/seo/clearmanufacturer', 'token=' . $this->session->data['token'], true);
-		$data['clear_information'] = $this->url->link('extension/module/seo/clearinformation', 'token=' . $this->session->data['token'], true);
-		$data['clear_related'] = $this->url->link('extension/module/seo/clearrelated', 'token=' . $this->session->data['token'], true);
-		$data['generate_product'] = $this->url->link('extension/module/seo/generateproduct', 'token=' . $this->session->data['token'], true);
-		$data['generate_category'] = $this->url->link('extension/module/seo/generatecategory', 'token=' . $this->session->data['token'], true);
-		$data['generate_manufacturer'] = $this->url->link('extension/module/seo/generatemanufacturer', 'token=' . $this->session->data['token'], true);
-		$data['generate_information'] = $this->url->link('extension/module/seo/generateinformation', 'token=' . $this->session->data['token'], true);
+		$data['clear_product'] = $this->url->link('extension/module/seo/clearproduct', 'user_token=' . $this->session->data['token'], true);
+		$data['clear_category'] = $this->url->link('extension/module/seo/clearcategory', 'user_token=' . $this->session->data['token'], true);
+		$data['clear_manufacturer'] = $this->url->link('extension/module/seo/clearmanufacturer', 'user_token=' . $this->session->data['token'], true);
+		$data['clear_information'] = $this->url->link('extension/module/seo/clearinformation', 'user_token=' . $this->session->data['token'], true);
+		$data['clear_related'] = $this->url->link('extension/module/seo/clearrelated', 'user_token=' . $this->session->data['token'], true);
+		$data['generate_product'] = $this->url->link('extension/module/seo/generateproduct', 'user_token=' . $this->session->data['token'], true);
+		$data['generate_category'] = $this->url->link('extension/module/seo/generatecategory', 'user_token=' . $this->session->data['token'], true);
+		$data['generate_manufacturer'] = $this->url->link('extension/module/seo/generatemanufacturer', 'user_token=' . $this->session->data['token'], true);
+		$data['generate_information'] = $this->url->link('extension/module/seo/generateinformation', 'user_token=' . $this->session->data['token'], true);
 		
 		if (isset($this->request->post['seo_related_limit'])) {
 			$data['seo_related_limit'] = $this->request->post['seo_related_limit']; 
@@ -141,7 +141,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 			
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -155,7 +155,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -169,7 +169,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -183,7 +183,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -197,7 +197,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -242,7 +242,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -287,7 +287,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -332,7 +332,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -377,7 +377,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 			
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/module/seo', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('extension/module/seo', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$this->index();
 		}
@@ -453,7 +453,7 @@ class ControllerExtensionModuleSEO extends Equotix {
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
 		$pagination->text = $this->language->get('text_pagination');
-		$pagination->url = $this->url->link('extension/module/seo/allseo', 'token=' . $this->session->data['token'] . '&page={page}', true);
+		$pagination->url = $this->url->link('extension/module/seo/allseo', 'user_token=' . $this->session->data['token'] . '&page={page}', true);
 
 		$json['pagination'] = $pagination->render();
 		

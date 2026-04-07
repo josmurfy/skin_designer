@@ -5,7 +5,7 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 	public function __construct($registory) {
 		parent::__construct($registory);
 		if (!$this->config->get('ebay_connector_syncproduct_status')) {
-			$this->response->redirect($this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true));
 		}
 		$this->registry->set('Ebaysyncproducts', new Ebaysyncproducts($this->registry));
 		$this->load->model('ebay_map/export_product_to_ebay');
@@ -17,7 +17,7 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 	public function index() {
 
 		if (!$this->config->get('ebay_connector_syncproduct_status')) {
-			$this->response->redirect($this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true));
 		}
 
     $data = array();
@@ -34,12 +34,12 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 
 		$data['breadcrumbs'][] = array(
 		 'text' => $this->language->get('text_home'),
-		 'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+		 'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 		 'text' => $this->language->get('heading_title'),
-		 'href' => $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'], true)
+		 'href' => $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		if (isset($this->request->get['page'])) {
@@ -54,10 +54,10 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
 
-		$data['clear_product_filter'] = $this->url->link('ebay_map/ebay_sync_products', 'token=' . $this->session->data['token'], true);
-		$data['action'] = $this->url->link('ebay_map/ebay_sync_products/setMap', 'token=' . $this->session->data['token'], true);
+		$data['clear_product_filter'] = $this->url->link('ebay_map/ebay_sync_products', 'user_token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('ebay_map/ebay_sync_products/setMap', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('ebay_map/ebay_account', 'token=' . $data['token'], true);
+		$data['cancel'] = $this->url->link('ebay_map/ebay_account', 'user_token=' . $data['token'], true);
 
 		if(!isset($data['product_attributes'])) {
 			$data['product_attributes'] = array();
@@ -78,7 +78,7 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 
 		$data['account_ebay_sync_products'] = $this->load->view('ebay_map/ebay_sync_products', $data);
 		$data['account_ebay_sync_products_all'] = $this->load->view('ebay_map/ebay_sync_products_all', $data);
-		$data['link'] = html_entity_decode($this->url->link('ebay_map/ebay_sync_products', 'token=' . $this->session->data['token'], true));
+		$data['link'] = html_entity_decode($this->url->link('ebay_map/ebay_sync_products', 'user_token=' . $this->session->data['token'], true));
 		$data['source_product_id'] = isset($this->request->get['source_product_id']) ? (int) $this->request->get['source_product_id'] : '';
 
 		if (isset($this->error['warning'])) {
@@ -130,7 +130,7 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 			$this->session->data['success'] = $this->language->get('text_success_delete_category');
 
 		}
-		$this->response->redirect($this->url->link('ebay_map/ebay_sync_products', 'token=' . $this->session->data['token'], true));
+		$this->response->redirect($this->url->link('ebay_map/ebay_sync_products', 'user_token=' . $this->session->data['token'], true));
 	}
 
 	public function getVariations($product_id, $returnVariations = false) {
@@ -331,7 +331,7 @@ class ControllerEbayMapEbaySyncProducts extends Controller {
 		$pagination->total = $total_sync_product;
 		$pagination->page = $page;
 		$pagination->limit = $limit;
-		$pagination->url = $this->url->link('ebay_map/ebay_sync_products', 'token=' . $this->session->data['token'] . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/ebay_sync_products', 'user_token=' . $this->session->data['token'] . '&page={page}', true);
 
 		$result['pagination'] = $pagination->render();
 

@@ -97,7 +97,7 @@
                     <div class="row mb-3">
                       <label class="col-sm-2 col-form-label" for="category-description-{{ language.language_id }}-{{ specifics_row }}">{{ entry_description }}</label>
                       <div class="col-sm-10 text-end">
-                        <button id="ai-suggest-description-category-btn" type="button" onclick="aiSuggestDescription({{ specifics_row }},'form-category','category');" data-bs-toggle="tooltip" title="{{ button_ai_description_category }}" class="btn btn-primary">
+                        <button id="ai-suggest-description-category-btn" type="button" onclick="aiSuggestCategoryDescription({{ specifics_row }},'form-category','category');" data-bs-toggle="tooltip" title="{{ button_ai_description_category }}" class="btn btn-primary">
                           {% set row_description = specifics_row %}
                           <i class="fa-solid fa-robot"></i> <i class="fa-solid fa-question"></i>
                         </button>

@@ -51,12 +51,12 @@ class ControllerAbandonedCartsCoupons extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . $url, 'SSL')
+			'href' => $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . $url, 'SSL')
 		);
 
 
@@ -135,12 +135,12 @@ class ControllerAbandonedCartsCoupons extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_name'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . '&sort=name' . $url, 'SSL');
-		$data['sort_code'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . '&sort=code' . $url, 'SSL');
-		$data['sort_discount'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . '&sort=discount' . $url, 'SSL');
-		$data['sort_date_start'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . '&sort=date_start' . $url, 'SSL');
-		$data['sort_date_end'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . '&sort=date_end' . $url, 'SSL');
-		$data['sort_status'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . '&sort=status' . $url, 'SSL');
+		$data['sort_name'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . '&sort=name' . $url, 'SSL');
+		$data['sort_code'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . '&sort=code' . $url, 'SSL');
+		$data['sort_discount'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . '&sort=discount' . $url, 'SSL');
+		$data['sort_date_start'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . '&sort=date_start' . $url, 'SSL');
+		$data['sort_date_end'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . '&sort=date_end' . $url, 'SSL');
+		$data['sort_status'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . '&sort=status' . $url, 'SSL');
 
 		$url = '';
 
@@ -156,7 +156,7 @@ class ControllerAbandonedCartsCoupons extends Controller {
 		$pagination->total = $coupon_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
+		$pagination->url = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
 
 		$data['pagination'] = $pagination->render();
 

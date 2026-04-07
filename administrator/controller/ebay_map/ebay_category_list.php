@@ -42,7 +42,7 @@ class ControllerEbayMapEbayCategoryList extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -128,21 +128,21 @@ class ControllerEbayMapEbayCategoryList extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
 		$this->load->model('ebay_map/ebay_account');
 
 		$data['ebay_accounts'] = $this->model_ebay_map_ebay_account->getEbayAccount();
 
-		$data['clear'] = $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'], true);
+		$data['clear'] = $this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'], true);
 
-		$data['delete'] = $this->url->link('ebay_map/ebay_category_list/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('ebay_map/ebay_category_list/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['token'] = $this->session->data['token'];
 
@@ -177,7 +177,7 @@ class ControllerEbayMapEbayCategoryList extends Controller {
 				'ebay_category_name'      => $result['ebay_category_name'],
 				'ebay_category_level'     => $result['ebay_category_level'],
 				'ebay_site_name'     			=> $ebay_site_name,
-				// 'delete'      => $this->url->link('catalog/category/delete', 'token=' . $this->session->data['token'] . '&category_id=' . $result['category_id'] . $url, true)
+				// 'delete'      => $this->url->link('catalog/category/delete', 'user_token=' . $this->session->data['token'] . '&category_id=' . $result['category_id'] . $url, true)
 			);
 		}
 
@@ -235,9 +235,9 @@ class ControllerEbayMapEbayCategoryList extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_ebay_category_name'] = $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'] . '&sort=ebay_category_name' . $url, true);
-		$data['sort_ebay_category_id'] = $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'] . '&sort=ebay_category_id' . $url, true);
-		$data['sort_ebay_category_level'] = $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'] . '&sort=ebay_category_level' . $url, true);
+		$data['sort_ebay_category_name'] = $this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'] . '&sort=ebay_category_name' . $url, true);
+		$data['sort_ebay_category_id'] = $this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'] . '&sort=ebay_category_id' . $url, true);
+		$data['sort_ebay_category_level'] = $this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'] . '&sort=ebay_category_level' . $url, true);
 
 		$url = '';
 
@@ -269,7 +269,7 @@ class ControllerEbayMapEbayCategoryList extends Controller {
 		$pagination->total = $ebay_category_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/ebay_category_list', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/ebay_category_list', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

@@ -38,7 +38,7 @@ class ControllerDesignMenu extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -70,7 +70,7 @@ class ControllerDesignMenu extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -104,7 +104,7 @@ class ControllerDesignMenu extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -147,16 +147,16 @@ class ControllerDesignMenu extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['add'] = $this->url->link('design/menu/add', 'token=' . $this->session->data['token'] . $url, true);
-		$data['delete'] = $this->url->link('design/menu/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['add'] = $this->url->link('design/menu/add', 'user_token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('design/menu/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['menus'] = array();
 
@@ -179,7 +179,7 @@ class ControllerDesignMenu extends Controller {
 				'type'       => $result['type'],
 				'status'     => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
 				'sort_order' => $result['sort_order'],
-				'edit'       => $this->url->link('design/menu/edit', 'token=' . $this->session->data['token'] . '&menu_id=' . $result['menu_id'] . $url, true)
+				'edit'       => $this->url->link('design/menu/edit', 'user_token=' . $this->session->data['token'] . '&menu_id=' . $result['menu_id'] . $url, true)
 			);
 		}
 
@@ -232,11 +232,11 @@ class ControllerDesignMenu extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_name'] = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . '&sort=md.name' . $url, true);
-		$data['sort_store'] = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . '&sort=m.store' . $url, true);
-		$data['sort_type'] = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . '&sort=m.type' . $url, true);
-		$data['sort_sort_order'] = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . '&sort=m.sort_order' . $url, true);
-		$data['sort_status'] = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . '&sort=m.status' . $url, true);
+		$data['sort_name'] = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . '&sort=md.name' . $url, true);
+		$data['sort_store'] = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . '&sort=m.store' . $url, true);
+		$data['sort_type'] = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . '&sort=m.type' . $url, true);
+		$data['sort_sort_order'] = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . '&sort=m.sort_order' . $url, true);
+		$data['sort_status'] = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . '&sort=m.status' . $url, true);
 		
 		$url = '';
 
@@ -252,7 +252,7 @@ class ControllerDesignMenu extends Controller {
 		$pagination->total = $menu_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -322,21 +322,21 @@ class ControllerDesignMenu extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
 		if (!isset($this->request->get['menu_id'])) {
-			$data['action'] = $this->url->link('design/menu/add', 'token=' . $this->session->data['token'] . $url, true);
+			$data['action'] = $this->url->link('design/menu/add', 'user_token=' . $this->session->data['token'] . $url, true);
 		} else {
-			$data['action'] = $this->url->link('design/menu/edit', 'token=' . $this->session->data['token'] . '&menu_id=' . $this->request->get['menu_id'] . $url, true);
+			$data['action'] = $this->url->link('design/menu/edit', 'user_token=' . $this->session->data['token'] . '&menu_id=' . $this->request->get['menu_id'] . $url, true);
 		}
 
-		$data['cancel'] = $this->url->link('design/menu', 'token=' . $this->session->data['token'] . $url, true);
+		$data['cancel'] = $this->url->link('design/menu', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		if (isset($this->request->get['menu_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
 			$menu_info = $this->model_design_menu->getMenu($this->request->get['menu_id']);

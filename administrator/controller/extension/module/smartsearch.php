@@ -142,7 +142,7 @@ class ControllerExtensionModuleSmartsearch extends Controller {
 			$pagination->page = $filters['page'];
 			$pagination->limit = $filters['limit'];
 			$pagination->text = $data['text_pagination'];
-			$pagination->url = $this->url->link('extension/' . $this->type . '/' . $this->name, (version_compare(VERSION, '3.0', '<') ? 'token=' : 'user_token=') . $data['token'] . '&page={page}', 'SSL');
+			$pagination->url = $this->url->link('extension/' . $this->type . '/' . $this->name, (version_compare(VERSION, '3.0', '<') ? 'user_token=' : 'user_token=') . $data['token'] . '&page={page}', 'SSL');
 			
 			$data['settings'][] = array(
 				'type'		=> 'html',

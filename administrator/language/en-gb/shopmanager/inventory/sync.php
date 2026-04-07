@@ -50,6 +50,7 @@ $_['button_print_report'] = 'Print Report';
 $_['button_update_quantity'] = 'Update Quantity';
 $_['button_import_from_ebay'] = 'Import from eBay';
 $_['button_refresh_item'] = 'Refresh';
+$_['button_import_non_selected'] = 'Import Non-selected';
 
 // Tooltips
 $_['tooltip_import_from_ebay'] = 'Import ALL products data from eBay (5000+ items, takes several minutes)';
@@ -101,6 +102,8 @@ $_['text_listed_ebay'] = 'Listed on eBay';
 $_['text_not_listed_qty'] = 'NOT Listed (qty > 0)';
 $_['text_marketplace_errors'] = 'Marketplace Errors';
 $_['text_not_synced'] = 'Not Synced';
+$_['text_not_imported'] = 'Not Imported';
+$_['text_to_update_ebay'] = 'To Update on eBay';
 $_['text_quantity_mismatch'] = 'Quantity Mismatch';
 $_['text_price_mismatch'] = 'Price Mismatch';
 $_['text_specifics_mismatch'] = 'Specifics Mismatch';
@@ -117,7 +120,14 @@ $_['tab_qty_mismatch'] = 'Qty Mismatch';
 $_['tab_specifics_mismatch'] = 'Specifics Mismatch';
 $_['tab_condition_mismatch'] = 'Condition Mismatch';
 $_['tab_category_mismatch'] = 'Category Mismatch';
+$_['tab_not_imported']    = 'Not Imported';
+$_['tab_to_update']       = 'To Update';
 $_['tab_slow_moving'] = 'Slow Moving';
+$_['text_not_imported_info'] = 'These products are listed on eBay but have never been imported (no last_import date). They may be missing local sync data.';
+$_['text_to_update_info']   = 'These products have local changes pending to be pushed to eBay (to_update = 1).';
+$_['text_no_not_imported']  = 'No products waiting for import!';
+$_['text_no_to_update']     = 'No products pending update on eBay!';
+$_['text_no_not_synced']    = 'All products are up to date!';
 
 // Table Headers
 $_['text_products_errors'] = 'Products with Marketplace Errors';
@@ -145,6 +155,7 @@ $_['text_error_stats'] = 'Error Statistics (%s types found)';
 $_['text_products_info'] = 'These products have different quantities on eBay vs local inventory (Quantity + Unallocated)';
 $_['text_print_all'] = 'Print All (%s)';
 $_['text_not_listed_info'] = 'These products have stock but are NOT listed on eBay marketplace';
+$_['text_deselect_all'] = 'Deselect All';
 
 // Mismatch pages
 $_['text_mismatch_found'] = '%s mismatch(es) found';
@@ -174,6 +185,7 @@ $_['text_confirm_sync_all']     = 'This will synchronize all products with eBay.
 $_['text_error_sync_url']       = 'Error: Sync URL not configured';
 $_['text_confirm_sync_product'] = 'Sync product "%s" to eBay marketplace?';
 $_['text_confirm_refresh_all']  = 'Refresh ALL data from eBay (price, quantity, specifics, dates)?';
+$_['text_confirm_import_non_selected'] = 'Import non-selected products now? GetItem will run only for selected products.';
 
 // Image mismatch
 $_['tab_image_mismatch']      = 'Image Count Mismatch';

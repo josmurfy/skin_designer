@@ -51,6 +51,7 @@ $_['button_update_quantity'] = 'Actualizar cantidad';
 $_['button_import_from_ebay'] = 'Importar desde eBay';
 $_['button_refresh_item'] = 'Actualizar';
 $_['button_refresh'] = 'Actualizar';
+$_['button_import_non_selected'] = 'Importar no seleccionados';
 
 // Tooltips
 $_['tooltip_import_from_ebay'] = 'Importar TODOS los datos de productos de eBay (5000+ artículos, tarda varios minutos)';
@@ -99,6 +100,8 @@ $_['text_listed_ebay'] = 'Listado en eBay';
 $_['text_not_listed_qty'] = 'NO listado (cant. > 0)';
 $_['text_marketplace_errors'] = 'Errores en Marketplace';
 $_['text_not_synced'] = 'No sincronizado';
+$_['text_not_imported'] = 'No importado';
+$_['text_to_update_ebay'] = 'Por actualizar en eBay';
 $_['text_quantity_mismatch'] = 'Discrepancia de cantidad';
 $_['text_price_mismatch'] = 'Discrepancia de precio';
 $_['text_specifics_mismatch'] = 'Discrepancia de especificidades';
@@ -115,7 +118,14 @@ $_['tab_qty_mismatch'] = 'Discrepancia de cant.';
 $_['tab_specifics_mismatch'] = 'Discrepancia de especificidades';
 $_['tab_condition_mismatch'] = 'Discrepancia de condición';
 $_['tab_category_mismatch'] = 'Discrepancia de categoría';
+$_['tab_not_imported']    = 'No importado';
+$_['tab_to_update']       = 'Por actualizar';
 $_['tab_slow_moving'] = 'Movimiento lento';
+$_['text_not_imported_info'] = 'Estos productos están listados en eBay pero nunca han sido importados (sin fecha last_import).';
+$_['text_to_update_info']   = 'Estos productos tienen cambios locales pendientes de enviar a eBay (to_update = 1).';
+$_['text_no_not_imported']  = '¡No hay productos esperando importación!';
+$_['text_no_to_update']     = '¡No hay productos pendientes de actualización en eBay!';
+$_['text_no_not_synced']    = '¡Todos los productos están al día!';
 
 $_['text_products_errors'] = 'Productos con errores en Marketplace';
 $_['text_products_not_listed'] = 'Productos NO listados en eBay (cantidad > 0)';
@@ -142,6 +152,7 @@ $_['text_error_stats'] = 'Estadísticas de errores (%s tipos encontrados)';
 $_['text_products_info'] = 'Estos productos tienen cantidades diferentes en eBay vs inventario local (Cantidad + No asignado)';
 $_['text_print_all'] = 'Imprimir todo (%s)';
 $_['text_not_listed_info'] = 'Estos productos tienen stock pero NO están listados en el Marketplace eBay';
+$_['text_deselect_all'] = 'Deseleccionar todo';
 
 $_['text_mismatch_found'] = '%s discrepancia(s) encontrada(s)';
 $_['text_no_mismatch_found'] = 'No se encontraron discrepancias de %s.';
@@ -169,6 +180,7 @@ $_['text_confirm_sync_all']     = '¿Esto sincronizará todos los productos con 
 $_['text_error_sync_url']       = 'Error: URL de sincronización no configurada';
 $_['text_confirm_sync_product'] = '¿Sincronizar el producto "%s" en el marketplace de eBay?';
 $_['text_confirm_refresh_all']  = '¿Actualizar TODOS los datos desde eBay (precio, cantidad, especificaciones, fechas)?';
+$_['text_confirm_import_non_selected'] = '¿Importar ahora los productos no seleccionados? GetItem se ejecutará solo para los productos seleccionados.';
 
 // Discrepancia de imágenes
 $_['tab_image_mismatch']       = 'Discrepancia Imágenes';

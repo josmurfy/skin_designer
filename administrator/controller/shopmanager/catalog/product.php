@@ -1538,7 +1538,7 @@ class Product extends \Opencart\System\Engine\Controller {
 					'product_id' => $existing_product['product_id'],
 					'condition_id' => $existing_product['condition_id'],
 					'upc' => $existing_product['upc'],
-					'url' => $existing_product['has_specifics'] ? $this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $existing_product['product_id'] . $url, true) : $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . '&upc='.$existing_product['upc'].'&product_id=' . $existing_product['product_id']. '&condition_id=' . $existing_product['condition_id'] . $url, true)
+					'url' => $existing_product['has_specifics'] ? $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $existing_product['product_id'] . $url, true) : $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . '&upc='.$existing_product['upc'].'&product_id=' . $existing_product['product_id']. '&condition_id=' . $existing_product['condition_id'] . $url, true)
 				];
 			}
 		}
@@ -1734,7 +1734,7 @@ class Product extends \Opencart\System\Engine\Controller {
 				// La catégorie n'a pas de specifics définis -> rediriger vers l'édition
 				$this->response->redirect(
 					$this->url->link(
-						'shopmanager/catalog/category/edit',
+						'shopmanager/catalog/category.form',
 						'user_token=' . $this->session->data['user_token'] .
 						'&category_id=' . $data['category_id'] .
 						'&product_id=' . $data['product_id'],
@@ -1749,7 +1749,7 @@ class Product extends \Opencart\System\Engine\Controller {
 				// Pas de specifics pour la langue principale -> rediriger vers l'édition
 				$this->response->redirect(
 					$this->url->link(
-						'shopmanager/catalog/category/edit',
+						'shopmanager/catalog/category.form',
 						'user_token=' . $this->session->data['user_token'] .
 						'&category_id=' . $data['category_id'] .
 						'&product_id=' . $data['product_id'],
@@ -2731,6 +2731,10 @@ public function trfUnallocatedQuantity() {
 		// Mettre à jour la localisation du produit
 		$this->model_shopmanager_catalog_product->updateLocation($product_id, $new_location);
 
+		// Marquer le produit pour mise à jour sur eBay
+		$this->load->model('shopmanager/marketplace');
+		$this->model_shopmanager_marketplace->setToUpdate($product_id);
+
 		// Retourner une réponse de succès à l'interface
 		$json['success'] = ($lang['text_success'] ?? '');
 	} else {
@@ -2772,7 +2776,9 @@ public function updateUnallocatedQuantity() {
 
 		$this->model_shopmanager_catalog_product->updateUnallocatedQuantity($product_id, $unallocated_quantity); // Remettre unallocated_quantity à 0
 
+		// Marquer le produit pour mise à jour sur eBay
 		$this->load->model('shopmanager/marketplace');
+		$this->model_shopmanager_marketplace->setToUpdate($product_id);
 		$marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
 
 		foreach ($marketplace_accounts_id as $marketplace_account_id => $marketplace_account) {
@@ -2827,7 +2833,9 @@ public function updateQuantity() {
 		// Mettre à jour la quantité du produit dans la base de données
 		$this->model_shopmanager_catalog_product->updateQuantity($product_id, $quantity);
 
+		// Marquer le produit pour mise à jour sur eBay
 		$this->load->model('shopmanager/marketplace');
+		$this->model_shopmanager_marketplace->setToUpdate($product_id);
 		$marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
 
 		foreach ($marketplace_accounts_id as $marketplace_account_id => $marketplace_account) {
@@ -2909,6 +2917,10 @@ public function editMadeInCountry()
 
 	if ($product_id) {
 		$results = $this->model_shopmanager_catalog_product->editMadeInCountry($product_id, $made_in_country_id);
+
+		// Marquer le produit pour mise à jour sur eBay
+		$this->load->model('shopmanager/marketplace');
+		$this->model_shopmanager_marketplace->setToUpdate($product_id);
 
 		$json['success'] = ($lang['text_success'] ?? '');
 	} else {

@@ -91,12 +91,12 @@ class ControllerPriceRulesPriceRules extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
     if (isset($this->request->post['selected'])) {
@@ -164,13 +164,13 @@ class ControllerPriceRulesPriceRules extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['add_rules'] = $this->url->link('price_rules/price_rules/add', 'token=' . $this->session->data['token'] . $url, true);
+		$data['add_rules'] = $this->url->link('price_rules/price_rules/add', 'user_token=' . $this->session->data['token'] . $url, true);
 
-		$data['add_csv'] = $this->url->link('price_rules/price_rules/csv', 'token=' . $this->session->data['token'] . $url, true);
+		$data['add_csv'] = $this->url->link('price_rules/price_rules/csv', 'user_token=' . $this->session->data['token'] . $url, true);
 
-    $data['clear'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'], true);
+    $data['clear'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'], true);
 
-    $data['delete'] = $this->url->link('price_rules/price_rules/delete', 'token=' . $this->session->data['token'] . $url, true);
+    $data['delete'] = $this->url->link('price_rules/price_rules/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data = array_merge($data, $this->_buildSortingLink($url));
 
@@ -194,7 +194,7 @@ class ControllerPriceRulesPriceRules extends Controller {
 		$pagination->total = $rules_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -220,19 +220,19 @@ class ControllerPriceRulesPriceRules extends Controller {
 
 	  $data = array();
 
-		$data['sort_price_from'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=price_from' . $url, true);
+		$data['sort_price_from'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=price_from' . $url, true);
 
-	 	$data['sort_price_to'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=price_to' . $url, true);
+	 	$data['sort_price_to'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=price_to' . $url, true);
 
-	 	$data['sort_price_value'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=price_value' . $url, true);
+	 	$data['sort_price_value'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=price_value' . $url, true);
 
-	 	$data['sort_price_type'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=price_type' . $url, true);
+	 	$data['sort_price_type'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=price_type' . $url, true);
 
-	 	$data['sort_price_opration'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=price_opration' . $url, true);
+	 	$data['sort_price_opration'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=price_opration' . $url, true);
 
-	 	$data['sort_price_status'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=price_status' . $url, true);
+	 	$data['sort_price_status'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=price_status' . $url, true);
 
-	 	$data['sort_order'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . '&sort=p.sort_order' . $url, true);
+	 	$data['sort_order'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . '&sort=p.sort_order' . $url, true);
 
 		return $data;
 
@@ -267,24 +267,24 @@ class ControllerPriceRulesPriceRules extends Controller {
 					 }
 			 }
 
-			 $this->response->redirect($this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true));
+			 $this->response->redirect($this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true));
 	 }
 
 	 $data['breadcrumbs'] = array();
 
 	 $data['breadcrumbs'][] = array(
 		 'text' => $this->language->get('text_home'),
-		 'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+		 'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 	 );
 
 	 $data['breadcrumbs'][] = array(
 		 'text' => $this->language->get('heading_title'),
-		 'href' => $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true)
+		 'href' => $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true)
 	 );
 
 	 $data['breadcrumbs'][] = array(
 		 'text' => $this->language->get('heading_title_csv'),
-		 'href' => $this->url->link('price_rules/price_rules/csv', 'token=' . $this->session->data['token'] . $url, true)
+		 'href' => $this->url->link('price_rules/price_rules/csv', 'user_token=' . $this->session->data['token'] . $url, true)
 	 );
 
    if(isset($this->error['error_csv_file']) && $this->error['error_csv_file']) {
@@ -295,9 +295,9 @@ class ControllerPriceRulesPriceRules extends Controller {
 		 $data['warning'] = $this->error['warning'];
 	 }
 
-	 $data['action'] = $this->url->link('price_rules/price_rules/csv', 'token=' . $this->session->data['token'] . $url, true);
+	 $data['action'] = $this->url->link('price_rules/price_rules/csv', 'user_token=' . $this->session->data['token'] . $url, true);
 
-	 $data['cancel'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true);
+	 $data['cancel'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true);
 
 	 $data['header'] = $this->load->controller('common/header');
 	 $data['column_left'] = $this->load->controller('common/column_left');
@@ -385,7 +385,7 @@ public function _buildRuleListFormat($url,$results = array()){
         'price_type'      => $price_type,
         'price_opration'  => $price_opration,
         'price_status'     => $result['price_status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
-        'edit'       => $this->url->link('price_rules/price_rules/edit', 'token=' . $this->session->data['token'] . '&id=' . $result['id'] . $url, true)
+        'edit'       => $this->url->link('price_rules/price_rules/edit', 'user_token=' . $this->session->data['token'] . '&id=' . $result['id'] . $url, true)
       );
     }
     return $rules;
@@ -415,7 +415,7 @@ public function _buildRuleListFormat($url,$results = array()){
 			 }
      }
 
-     $this->response->redirect($this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true));
+     $this->response->redirect($this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true));
    }
     $this->ruleForm();
   }
@@ -444,7 +444,7 @@ public function _buildRuleListFormat($url,$results = array()){
 			 }
 		 }
 
-		 $this->response->redirect($this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true));
+		 $this->response->redirect($this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true));
 	 }
 		$this->ruleForm();
 	}
@@ -470,24 +470,24 @@ public function _buildRuleListFormat($url,$results = array()){
 
      $data['breadcrumbs'][] = array(
        'text' => $this->language->get('text_home'),
-       'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+       'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
      );
 
      $data['breadcrumbs'][] = array(
        'text' => $this->language->get('heading_title'),
-       'href' => $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true)
+       'href' => $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true)
      );
 
 		 if(isset($this->request->get['id']) && $this->request->get['id']) {
 				$data['breadcrumbs'][] = array(
 	         'text' => $data['heading_title'],
-	         'href' =>  $this->url->link('price_rules/price_rules/edit', 'token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'] . $url, true)
+	         'href' =>  $this->url->link('price_rules/price_rules/edit', 'user_token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'] . $url, true)
 	      );
 		 } else {
 
 			 $data['breadcrumbs'][] = array(
 	        'text' => $data['heading_title'],
-	        'href' => $this->url->link('price_rules/price_rules/add', 'token=' .  $this->session->data['token'] . $url, true)
+	        'href' => $this->url->link('price_rules/price_rules/add', 'user_token=' .  $this->session->data['token'] . $url, true)
 	     );
 		 }
 
@@ -538,12 +538,12 @@ public function _buildRuleListFormat($url,$results = array()){
      }
 
 		 if(isset($this->request->get['id']) && $this->request->get['id']) {
-			   $data['action'] = $this->url->link('price_rules/price_rules/edit', 'token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'] . $url, true);
+			   $data['action'] = $this->url->link('price_rules/price_rules/edit', 'user_token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'] . $url, true);
 		 } else {
-			  $data['action'] = $this->url->link('price_rules/price_rules/add', 'token=' . $this->session->data['token'] . $url, true);
+			  $data['action'] = $this->url->link('price_rules/price_rules/add', 'user_token=' . $this->session->data['token'] . $url, true);
 		 }
 
-     $data['cancel'] = $this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true);
+     $data['cancel'] = $this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true);
 
      $data['header'] = $this->load->controller('common/header');
      $data['column_left'] = $this->load->controller('common/column_left');
@@ -572,7 +572,7 @@ public function _buildRuleListFormat($url,$results = array()){
 				}
 			}
 
-			$this->response->redirect($this->url->link('price_rules/price_rules', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('price_rules/price_rules', 'user_token=' . $this->session->data['token'] . $url, true));
 
  		}
  		$this->getList();

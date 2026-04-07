@@ -213,23 +213,23 @@ class ControllerExtensionModuleTawkto extends Controller {
 
         $data['breadcrumbs'][] = array(
             'text'      => $this->language->get('text_home'),
-            'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'href'      => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], 'SSL'),
             'separator' => false
         );
 
         $data['breadcrumbs'][] = array(
             'text'      => $this->language->get('text_extension'),
-            'href'      => $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL'),
+            'href'      => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL'),
             'separator' => ' :: '
         );
 
         $data['breadcrumbs'][] = array(
             'text'      => $this->language->get('heading_title'),
-            'href'      => $this->url->link('extension/module/tawkto', 'token=' . $this->session->data['token'], 'SSL'),
+            'href'      => $this->url->link('extension/module/tawkto', 'user_token=' . $this->session->data['token'], 'SSL'),
             'separator' => ' :: '
         );
 
-        $data['cancel'] = $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL');
+        $data['cancel'] = $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL');
 
         $data['heading_title'] = $this->language->get('heading_title');
         $data['button_cancel'] = $this->language->get('button_cancel');

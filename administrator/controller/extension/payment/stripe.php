@@ -1012,7 +1012,7 @@ class ControllerExtensionPaymentStripe extends Controller {
 		
 		$this->session->data['connect_success'] = 'Connection complete!';
 		
-		$token = (version_compare(VERSION, '3.0', '<')) ? 'token=' . $this->session->data['token'] : 'user_token=' . $this->session->data['user_token'];
+		$token = (version_compare(VERSION, '3.0', '<')) ? 'user_token=' . $this->session->data['token'] : 'user_token=' . $this->session->data['user_token'];
 		$this->response->redirect(str_replace('&amp;', '&', $this->url->link('extension/' . $this->type . '/' . $this->name, $token, 'SSL')));
 	}
 	

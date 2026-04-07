@@ -21,7 +21,7 @@ class ControllerExtensionShippingZones extends Controller {
 					
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL'));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL'));
 		}
 				
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -51,25 +51,25 @@ class ControllerExtensionShippingZones extends Controller {
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_home'),
-			'href'      => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => false
    		);
 
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('text_shipping'),
-			'href'      => $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		
    		$data['breadcrumbs'][] = array(
        		'text'      => $this->language->get('heading_title'),
-			'href'      => $this->url->link('extension/shipping/zones', 'token=' . $this->session->data['token'], 'SSL'),
+			'href'      => $this->url->link('extension/shipping/zones', 'user_token=' . $this->session->data['token'], 'SSL'),
       		'separator' => ' :: '
    		);
 		
-		$data['action'] = $this->url->link('extension/shipping/zones', 'token=' . $this->session->data['token'], 'SSL');
+		$data['action'] = $this->url->link('extension/shipping/zones', 'user_token=' . $this->session->data['token'], 'SSL');
 		
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL');
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL');
 	
 						
 		

@@ -14,7 +14,7 @@ class ControllerExtensionFeedGoogleBase extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=feed', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=feed', true));
 		}
 
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -44,22 +44,22 @@ class ControllerExtensionFeedGoogleBase extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=feed', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=feed', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/feed/google_base', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/feed/google_base', 'user_token=' . $this->session->data['token'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/feed/google_base', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/feed/google_base', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=feed', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=feed', true);
 
 		$data['token'] = $this->session->data['token'];
 
@@ -188,7 +188,7 @@ class ControllerExtensionFeedGoogleBase extends Controller {
 		$pagination->total = $category_total;
 		$pagination->page = $page;
 		$pagination->limit = 10;
-		$pagination->url = $this->url->link('extension/feed/google_base/category', 'token=' . $this->session->data['token'] . '&page={page}', true);
+		$pagination->url = $this->url->link('extension/feed/google_base/category', 'user_token=' . $this->session->data['token'] . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

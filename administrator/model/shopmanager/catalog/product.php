@@ -4007,13 +4007,16 @@ public function editProductError($product_id, $json_error) {
 				$description .= '<li>No specific features available.</li>';
 			} else {
 				foreach ($product_description['specifics'] as $specific) {
+					if (!isset($specific['Name']) || $specific['Name'] === null) {
+						continue;
+					}
 					$spec_name = trim($specific['Name']);
 					$values = [];
 					if (isset($specific['Value'])) {
 						$values = is_array($specific['Value']) ? $specific['Value'] : [$specific['Value']];
 					}
 					if (!empty($values) && !($values[0] == '' && count($values) == 1)) {
-						$valueList = array_filter($values, fn($v) => trim($v) != '');
+						$valueList = array_filter($values, fn($v) => trim((string)$v) != '');
 						$description .= '<li><b>' . $spec_name . ':</b> ' . implode(', ', $valueList) . '</li>';
 					}
 				}

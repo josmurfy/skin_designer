@@ -16,24 +16,24 @@ class ControllerExtensionPaymentCardConnect extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true));
 		}
 
 		$data['breadcrumbs'] = array();
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/payment/cardconnect', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/payment/cardconnect', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['heading_title']                 = $this->language->get('heading_title');
@@ -87,9 +87,9 @@ class ControllerExtensionPaymentCardConnect extends Controller {
 		$data['button_save']                   = $this->language->get('button_save');
 		$data['button_cancel']                 = $this->language->get('button_cancel');
 
-		$data['action'] = $this->url->link('extension/payment/cardconnect', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/payment/cardconnect', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true);
 
 		if (isset($this->request->post['cardconnect_merchant_id'])) {
 			$data['cardconnect_merchant_id'] = $this->request->post['cardconnect_merchant_id'];

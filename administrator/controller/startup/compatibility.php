@@ -23,7 +23,7 @@ class ControllerStartupCompatibility extends Controller {
 					$route = '/' . $part[2];
 				}
 				
-				$this->response->redirect('extension/extension' . $route, 'token=' . $this->session->data['token'], true);	
+				$this->response->redirect('extension/extension' . $route, 'user_token=' . $this->session->data['token'], true);	
 			}
 		}
 	}

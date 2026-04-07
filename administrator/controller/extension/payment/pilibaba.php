@@ -22,24 +22,24 @@ class ControllerExtensionPaymentPilibaba extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true));
 		}
 
 		$data['breadcrumbs'] = array();
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/payment/pilibaba', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/payment/pilibaba', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['heading_title']         = $this->language->get('heading_title');
@@ -84,9 +84,9 @@ class ControllerExtensionPaymentPilibaba extends Controller {
 		$data['button_cancel']         = $this->language->get('button_cancel');
 		$data['button_register']       = $this->language->get('button_register');
 
-		$data['action'] = $this->url->link('extension/payment/pilibaba', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/payment/pilibaba', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true);
 
 		if (isset($this->request->post['pilibaba_merchant_number'])) {
 			$data['pilibaba_merchant_number'] = $this->request->post['pilibaba_merchant_number'];
@@ -199,7 +199,7 @@ class ControllerExtensionPaymentPilibaba extends Controller {
 		$data['order_statuses'] = $this->model_localisation_order_status->getOrderStatuses();
 
 		if ($this->config->get('config_weight_class_id') != '2') {
-			$data['error_weight'] = sprintf($this->language->get('error_weight'), $this->url->link('setting/setting', 'token=' . $this->session->data['token'], true));
+			$data['error_weight'] = sprintf($this->language->get('error_weight'), $this->url->link('setting/setting', 'user_token=' . $this->session->data['token'], true));
 		} else {
 			$data['error_weight'] = '';
 		}
@@ -266,7 +266,7 @@ class ControllerExtensionPaymentPilibaba extends Controller {
 
 						$this->session->data['success'] = $this->language->get('text_register_success');
 
-						$json['redirect'] = $this->url->link('extension/payment/pilibaba', 'token=' . $this->session->data['token'], true);
+						$json['redirect'] = $this->url->link('extension/payment/pilibaba', 'user_token=' . $this->session->data['token'], true);
 					} else {
 						$json['error'] = $response['message'];
 					}
@@ -320,7 +320,7 @@ class ControllerExtensionPaymentPilibaba extends Controller {
 				$data['button_tracking']   = $this->language->get('button_tracking');
 				$data['button_barcode']    = $this->language->get('button_barcode');
 
-				$data['barcode'] = $this->url->link('extension/payment/pilibaba/barcode', 'token=' . $this->session->data['token'] . '&order_id=' . $this->request->get['order_id'], true);
+				$data['barcode'] = $this->url->link('extension/payment/pilibaba/barcode', 'user_token=' . $this->session->data['token'] . '&order_id=' . $this->request->get['order_id'], true);
 
 				$data['order_id'] = $this->request->get['order_id'];
 

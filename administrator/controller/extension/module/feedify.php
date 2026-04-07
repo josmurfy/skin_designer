@@ -43,7 +43,7 @@ class ControllerExtensionModuleFeedify extends Controller{
 	}
 
 	private function getUrl($queryParams){
-		$url = $this->url->link('extension/module/feedify', 'token=' . $this->session->data['token'] . '&' . $queryParams, '');
+		$url = $this->url->link('extension/module/feedify', 'user_token=' . $this->session->data['token'] . '&' . $queryParams, '');
 		return str_replace('&amp;', '&', $url);
 	}
 
@@ -74,7 +74,7 @@ class ControllerExtensionModuleFeedify extends Controller{
 		$data['feedify_host_name'] = $feedify_host_name;
 		$data['module_route'] = 'extension/module/feedify';
 		$data['token'] = $token = $this->session->data['token'];
-		$data['main_url'] = $main_url = $this->url->link('extension/module/feedify/success', 'token=' . $this->session->data['token']);
+		$data['main_url'] = $main_url = $this->url->link('extension/module/feedify/success', 'user_token=' . $this->session->data['token']);
 
 		if (isset($this->request->server['HTTPS']) && (($this->request->server['HTTPS'] == 'on') || ($this->request->server['HTTPS'] == '1'))) {
 			$data['redirect_url'] = $redirect_url = HTTPS_SERVER.'index.php?route=extension/module/feedify/success&token='.$token;
@@ -93,7 +93,7 @@ class ControllerExtensionModuleFeedify extends Controller{
 		$data['feedify_license_code'] = 1;
 		$data['feedify_status'] = 1;			
 		$this->model_setting_setting->editSetting('feedify', $data);
-		$this->response->redirect($this->url->link('extension/module/feedify', 'token=' . $this->session->data['token'], 'SSL'));
+		$this->response->redirect($this->url->link('extension/module/feedify', 'user_token=' . $this->session->data['token'], 'SSL'));
 	}
 
 	private function handleCallbackPage(){
@@ -209,17 +209,17 @@ class ControllerExtensionModuleFeedify extends Controller{
 		$data['breadcrumbs'] = array();
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home') ,
-			'href' => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL') ,
+			'href' => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], 'SSL') ,
 			'separator' => false
 		);
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_module') ,
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'].'&type=module', 'SSL') ,
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'].'&type=module', 'SSL') ,
 			'separator' => ' :: '
 		);
 		$data['breadcrumbs'][] = array(
 			'text' => $headingTitle ,
-			'href' => $this->url->link('extension/module/feedify', 'token=' . $this->session->data['token'], 'SSL') ,
+			'href' => $this->url->link('extension/module/feedify', 'user_token=' . $this->session->data['token'], 'SSL') ,
 			'separator' => ' :: '
 		);
 		$data['heading_title'] = $headingTitle;

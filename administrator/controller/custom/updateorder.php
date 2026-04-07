@@ -22,7 +22,7 @@ class ControllerCustomUpdateOrder extends Controller {
 
             $this->session->data['success'] = $this->language->get('text_success');
 
-            $this->response->redirect($this->url->link('custom/updateorder', 'token=' . $this->session->data['token'], true));
+            $this->response->redirect($this->url->link('custom/updateorder', 'user_token=' . $this->session->data['token'], true));
         }
 
         $this->getForm();
@@ -64,16 +64,16 @@ class ControllerCustomUpdateOrder extends Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
         );
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('custom/updateorder', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('custom/updateorder', 'user_token=' . $this->session->data['token'], true)
         );
 
-        $data['action'] = $this->url->link('custom/updateorder/update', 'token=' . $this->session->data['token'], true);
-        $data['cancel'] = $this->url->link('custom/updateorder', 'token=' . $this->session->data['token'], true);
+        $data['action'] = $this->url->link('custom/updateorder/update', 'user_token=' . $this->session->data['token'], true);
+        $data['cancel'] = $this->url->link('custom/updateorder', 'user_token=' . $this->session->data['token'], true);
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');

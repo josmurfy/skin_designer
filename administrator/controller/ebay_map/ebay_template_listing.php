@@ -46,7 +46,7 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -75,7 +75,7 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -108,7 +108,7 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -217,17 +217,17 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['clear'] = $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'], true);
+		$data['clear'] = $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'], true);
 
-		$data['delete'] = $this->url->link('ebay_map/ebay_template_listing/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('ebay_map/ebay_template_listing/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['token'] = $this->session->data['token'];
 
@@ -266,11 +266,11 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
         'ebay_site_name'          => $ebay_site_name,
 				'create_date'          		=> $result['create_date'],
 				'modify_date'          		=> $result['modify_date'],
-				'edit'          					=> $this->url->link('ebay_map/ebay_template_listing/edit', 'token=' . $this->session->data['token'] . '&template_id=' . $result['id'] . $url, true)
+				'edit'          					=> $this->url->link('ebay_map/ebay_template_listing/edit', 'user_token=' . $this->session->data['token'] . '&template_id=' . $result['id'] . $url, true)
 			);
 		}
 
-    $data['add_template']   =  $this->url->link('ebay_map/ebay_template_listing/add', 'token=' . $this->session->data['token'], true);
+    $data['add_template']   =  $this->url->link('ebay_map/ebay_template_listing/add', 'user_token=' . $this->session->data['token'], true);
 
 		if (isset($this->error['warning'])) {
 			$data['error_warning'] = $this->error['warning'];
@@ -330,10 +330,10 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_condition_value']   = $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . '&sort=pcv.value' . $url, true);
-		$data['sort_condition_name']    = $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . '&sort=pc.name' . $url, true);
-		$data['sort_ebay_category_name']= $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . '&sort=ecat.ebay_category_name' . $url, true);
-		$data['sort_oc_category_name']  = $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . '&sort=oc_category_name' . $url, true);
+		$data['sort_condition_value']   = $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . '&sort=pcv.value' . $url, true);
+		$data['sort_condition_name']    = $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . '&sort=pc.name' . $url, true);
+		$data['sort_ebay_category_name']= $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . '&sort=ecat.ebay_category_name' . $url, true);
+		$data['sort_oc_category_name']  = $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . '&sort=oc_category_name' . $url, true);
 
 		$url = '';
 
@@ -369,7 +369,7 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 		$pagination->total = $condition_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -422,26 +422,26 @@ class ControllerEbayMapEbayTemplateListing extends Controller {
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('text_home'),
-      'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+      'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
     );
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('heading_title'),
-      'href' => $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] . $url, true)
+      'href' => $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] . $url, true)
     );
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('heading_title_add'),
-      'href' => $this->url->link('ebay_map/ebay_template_listing/add', 'token=' . $this->session->data['token'] . $url, true)
+      'href' => $this->url->link('ebay_map/ebay_template_listing/add', 'user_token=' . $this->session->data['token'] . $url, true)
     );
 
     if (!isset($this->request->get['template_id'])) {
-      $data['action'] = $this->url->link('ebay_map/ebay_template_listing/add', 'token=' . $this->session->data['token'] . $url, true);
+      $data['action'] = $this->url->link('ebay_map/ebay_template_listing/add', 'user_token=' . $this->session->data['token'] . $url, true);
     } else {
-      $data['action'] = $this->url->link('ebay_map/ebay_template_listing/edit', 'token=' . $this->session->data['token'] . '&template_id=' . $this->request->get['template_id'] .$url, true);
+      $data['action'] = $this->url->link('ebay_map/ebay_template_listing/edit', 'user_token=' . $this->session->data['token'] . '&template_id=' . $this->request->get['template_id'] .$url, true);
     }
 
-    $data['cancel'] = $this->url->link('ebay_map/ebay_template_listing', 'token=' . $this->session->data['token'] , true);
+    $data['cancel'] = $this->url->link('ebay_map/ebay_template_listing', 'user_token=' . $this->session->data['token'] , true);
 
     $data['token'] 	= $this->session->data['token'];
 

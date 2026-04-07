@@ -58,7 +58,7 @@ class ControllerSocialAutoPilotTask extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -141,15 +141,15 @@ class ControllerSocialAutoPilotTask extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['delete'] = $this->url->link('social_autopilot/task/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('social_autopilot/task/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['tasks'] = array();
 
@@ -290,10 +290,10 @@ class ControllerSocialAutoPilotTask extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_channel'] = $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . '&sort=st.channel_id' . $url, true);
-		$data['sort_status'] = $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . '&sort=st.success_rate' . $url, true);
-		$data['sort_date_added'] = $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . '&sort=st.date_added' . $url, true);
-		$data['sort_date_modified'] = $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . '&sort=st.date_modified' . $url, true);
+		$data['sort_channel'] = $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . '&sort=st.channel_id' . $url, true);
+		$data['sort_status'] = $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . '&sort=st.success_rate' . $url, true);
+		$data['sort_date_added'] = $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . '&sort=st.date_added' . $url, true);
+		$data['sort_date_modified'] = $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . '&sort=st.date_modified' . $url, true);
 
 		$url = '';
 
@@ -325,7 +325,7 @@ class ControllerSocialAutoPilotTask extends Controller {
 		$pagination->total = $task_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

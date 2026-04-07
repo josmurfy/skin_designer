@@ -49,6 +49,7 @@ $_['button_print_report'] = 'Imprimer rapport';
 $_['button_update_quantity'] = 'Mettre à jour quantité';
 $_['button_import_from_ebay'] = 'Importer d\'eBay';
 $_['button_refresh_item'] = 'Rafraîchir';
+$_['button_import_non_selected'] = 'Importer non sélectionnés';
 
 // Tooltips
 $_['tooltip_import_from_ebay'] = 'Importer TOUTES les données produits d\'eBay (5000+ items, prend plusieurs minutes)';
@@ -100,6 +101,8 @@ $_['text_listed_ebay'] = 'Listé sur eBay';
 $_['text_not_listed_qty'] = 'NON Listé (qté > 0)';
 $_['text_marketplace_errors'] = 'Erreurs marketplace';
 $_['text_not_synced'] = 'Non synchronisés';
+$_['text_not_imported'] = 'Non importés';
+$_['text_to_update_ebay'] = 'À mettre à jour sur eBay';
 $_['text_quantity_mismatch'] = 'Différence de quantité';
 $_['text_price_mismatch'] = 'Différence de prix';
 $_['text_specifics_mismatch'] = 'Différence caractéristiques';
@@ -116,7 +119,14 @@ $_['tab_qty_mismatch'] = 'Diff. Qté';
 $_['tab_specifics_mismatch'] = 'Diff. Caract.';
 $_['tab_condition_mismatch'] = 'Diff. Condition';
 $_['tab_category_mismatch'] = 'Diff. Catégorie';
+$_['tab_not_imported']    = 'Non importés';
+$_['tab_to_update']       = 'À mettre à jour';
 $_['tab_slow_moving'] = 'Lents';
+$_['text_not_imported_info'] = 'Ces produits sont listés sur eBay mais n\'ont jamais été importés (pas de date last_import).';
+$_['text_to_update_info']   = 'Ces produits ont des modifications locales en attente d\'envoi vers eBay (to_update = 1).';
+$_['text_no_not_imported']  = 'Aucun produit en attente d\'importation!';
+$_['text_no_to_update']     = 'Aucun produit en attente de mise à jour sur eBay!';
+$_['text_no_not_synced']    = 'Tous les produits sont à jour!';
 
 // Table Headers
 $_['text_products_errors'] = 'Produits avec erreurs marketplace';
@@ -144,6 +154,7 @@ $_['text_error_stats'] = 'Statistiques d\'erreurs (%s types trouvés)';
 $_['text_products_info'] = 'Ces produits ont des quantités différentes sur eBay vs inventaire local (Quantité + Non alloué)';
 $_['text_print_all'] = 'Tout imprimer (%s)';
 $_['text_not_listed_info'] = 'Ces produits ont du stock mais ne sont PAS listés sur eBay marketplace';
+$_['text_deselect_all'] = 'Tout désélectionner';
 
 // Mismatch pages
 $_['text_mismatch_found'] = '%s différence(s) trouvée(s)';
@@ -176,6 +187,7 @@ $_['text_confirm_sync_all']     = 'Ceci synchronisera tous les produits avec eBa
 $_['text_error_sync_url']       = 'Erreur : URL de synchronisation non configurée';
 $_['text_confirm_sync_product'] = 'Synchroniser le produit "%s" sur le marketplace eBay ?';
 $_['text_confirm_refresh_all']  = 'Rafraîchir TOUTES les données depuis eBay (prix, quantité, spécificités, dates) ?';
+$_['text_confirm_import_non_selected'] = 'Importer maintenant les produits non sélectionnés ? GetItem sera exécuté uniquement pour les produits sélectionnés.';
 
 // Écart nombre d'images
 $_['tab_image_mismatch']       = 'Écart Images';

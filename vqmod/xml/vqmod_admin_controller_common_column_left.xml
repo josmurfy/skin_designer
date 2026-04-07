@@ -21,7 +21,7 @@
 				if ($this->user->hasPermission('access', 'cfgeoip/block_ip')) {
 					$system[] = array(
 						'name'	   => $this->language->get('text_block_ip'),
-						'href'     => $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'], true),
+						'href'     => $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'], true),
 						'children' => array()		
 					);	
 				}

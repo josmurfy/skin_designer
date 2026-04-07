@@ -7,14 +7,14 @@ class ControllerAbandonedCartsMenu extends Controller {
 		
 		$data['total_abandoned_carts'] = $this->model_abandoned_carts_abandoned_carts->getTotalAbandonedCartsPeoples();
 
-		$data['dashboard'] = $this->url->link('abandoned_carts/dashboard', 'token=' . $this->session->data['token'], 'SSL');
-		$data['control_panel'] = $this->url->link('abandoned_carts/control_panel', 'token=' . $this->session->data['token'], 'SSL');
-		$data['abandoned_carts'] = $this->url->link('abandoned_carts/abandonedcarts', 'token=' . $this->session->data['token'], 'SSL');
-		$data['abandoned_carts_history'] = $this->url->link('abandoned_carts/abandonedcarts_history', 'token=' . $this->session->data['token'], 'SSL');
-		$data['mail_template'] = $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'], 'SSL');
-		$data['coupons'] = $this->url->link('abandoned_carts/coupons', 'token=' . $this->session->data['token'], 'SSL');
+		$data['dashboard'] = $this->url->link('abandoned_carts/dashboard', 'user_token=' . $this->session->data['token'], 'SSL');
+		$data['control_panel'] = $this->url->link('abandoned_carts/control_panel', 'user_token=' . $this->session->data['token'], 'SSL');
+		$data['abandoned_carts'] = $this->url->link('abandoned_carts/abandonedcarts', 'user_token=' . $this->session->data['token'], 'SSL');
+		$data['abandoned_carts_history'] = $this->url->link('abandoned_carts/abandonedcarts_history', 'user_token=' . $this->session->data['token'], 'SSL');
+		$data['mail_template'] = $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'], 'SSL');
+		$data['coupons'] = $this->url->link('abandoned_carts/coupons', 'user_token=' . $this->session->data['token'], 'SSL');
 		
-		$data['setting'] = $this->url->link('abandoned_carts/setting', 'token=' . $this->session->data['token'], 'SSL');
+		$data['setting'] = $this->url->link('abandoned_carts/setting', 'user_token=' . $this->session->data['token'], 'SSL');
 		
 		$data['tab_dashboard'] = $this->language->get('tab_dashboard');
 		$data['tab_control_panel'] = $this->language->get('tab_control_panel');

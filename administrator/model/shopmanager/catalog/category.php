@@ -200,27 +200,22 @@ class Category extends \Opencart\System\Engine\Model {
 		if (empty($keywords_parent)) {
 			$this->load->model('setting/store');
 			$parent_descriptions = $this->model_shopmanager_catalog_category->getDescriptions($data['parent_id']);
-			
-			foreach ($parent_descriptions as $language_id => $description) {
-				foreach ($this->model_setting_store->getStores() as $result) {
-					$parent_keyword = preg_replace('/-+/', '-', $parent_keyword);
-					$parent_keyword = trim($parent_keyword, '-');
-					
-					// Créer le SEO URL pour le parent
-					$this->model_design_seo_url->addSeoUrl('path', $path_parent, $parent_keyword, $store_id, $language_id);
-					$keywords_parent[$store_id][$language_id] = $parent_keyword;
-				}
-			}
-			
-			// Ajouter store_id 0 (default store)
+
 			foreach ($parent_descriptions as $language_id => $description) {
 				$parent_keyword = strtolower(str_replace([' ', '&', '/'], ['-', 'and', '-'], $description['name']));
 				$parent_keyword = preg_replace('/[^a-z0-9\-]/', '', $parent_keyword);
 				$parent_keyword = preg_replace('/-+/', '-', $parent_keyword);
 				$parent_keyword = trim($parent_keyword, '-');
-				
+
+				// Default store (store_id 0)
 				$this->model_design_seo_url->addSeoUrl('path', $path_parent, $parent_keyword, 0, $language_id);
 				$keywords_parent[0][$language_id] = $parent_keyword;
+
+				// Additional stores
+				foreach ($this->model_setting_store->getStores() as $store) {
+					$this->model_design_seo_url->addSeoUrl('path', $path_parent, $parent_keyword, (int)$store['store_id'], $language_id);
+					$keywords_parent[(int)$store['store_id']][$language_id] = $parent_keyword;
+				}
 			}
 		}
 	}

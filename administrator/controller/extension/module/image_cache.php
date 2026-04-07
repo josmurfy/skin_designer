@@ -41,7 +41,7 @@ class ControllerExtensionModuleImageCache extends Controller
 
             $this->session->data['success'] = $this->language->get('text_success');
 
-            $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'], true));
+            $this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], true));
         }
 
         $data['heading_title'] = $this->language->get('heading_title');
@@ -95,23 +95,23 @@ class ControllerExtensionModuleImageCache extends Controller
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
         );
 
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_extension'),
-            'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'], true)
+            'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], true)
         );
 
         if (!isset($this->request->get['module_id'])) {
             $data['breadcrumbs'][] = array(
                 'text' => $this->language->get('heading_title'),
-                'href' => $this->url->link('extension/module/image_cache', 'token=' . $this->session->data['token'], true)
+                'href' => $this->url->link('extension/module/image_cache', 'user_token=' . $this->session->data['token'], true)
             );
         } else {
             $data['breadcrumbs'][] = array(
                 'text' => $this->language->get('heading_title'),
-                'href' => $this->url->link('extension/module/image_cache', 'token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true)
+                'href' => $this->url->link('extension/module/image_cache', 'user_token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true)
             );
         }
 
@@ -119,15 +119,15 @@ class ControllerExtensionModuleImageCache extends Controller
         $data['input_fields'] = $this->createAndGetFormInputs();
 
         if (!isset($this->request->get['module_id'])) {
-            $data['action'] = $this->url->link('extension/module/image_cache', 'token=' . $this->session->data['token'], true);
+            $data['action'] = $this->url->link('extension/module/image_cache', 'user_token=' . $this->session->data['token'], true);
         } else {
-            $data['action'] = $this->url->link('extension/module/image_cache', 'token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true);
+            $data['action'] = $this->url->link('extension/module/image_cache', 'user_token=' . $this->session->data['token'] . '&module_id=' . $this->request->get['module_id'], true);
         }
 
-        $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'], true);
+        $data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], true);
 
-        $data['action_cache_start'] = $this->urlToAjax($this->url->link('extension/module/image_cache/ajaxCacheImageStart', 'token=' . $this->session->data['token'], true));
-        $data['action_save_last_state'] = $this->urlToAjax($this->url->link('extension/module/image_cache/ajaxSaveLastState', 'token=' . $this->session->data['token'], true));
+        $data['action_cache_start'] = $this->urlToAjax($this->url->link('extension/module/image_cache/ajaxCacheImageStart', 'user_token=' . $this->session->data['token'], true));
+        $data['action_save_last_state'] = $this->urlToAjax($this->url->link('extension/module/image_cache/ajaxSaveLastState', 'user_token=' . $this->session->data['token'], true));
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');

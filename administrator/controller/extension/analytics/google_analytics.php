@@ -14,7 +14,7 @@ class ControllerExtensionAnalyticsGoogleAnalytics extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=analytics', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=analytics', true));
 		}
 		
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -46,22 +46,22 @@ class ControllerExtensionAnalyticsGoogleAnalytics extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=analytics', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=analytics', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/analytics/google_analytics', 'token=' . $this->session->data['token'] . '&store_id=' . $this->request->get['store_id'], true)
+			'href' => $this->url->link('extension/analytics/google_analytics', 'user_token=' . $this->session->data['token'] . '&store_id=' . $this->request->get['store_id'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/analytics/google_analytics', 'token=' . $this->session->data['token'] . '&store_id=' . $this->request->get['store_id'], true);
+		$data['action'] = $this->url->link('extension/analytics/google_analytics', 'user_token=' . $this->session->data['token'] . '&store_id=' . $this->request->get['store_id'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=analytics', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=analytics', true);
 		
 		$data['token'] = $this->session->data['token'];
 				

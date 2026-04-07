@@ -655,15 +655,16 @@ window.reinitImagePreview = function() {
     initImagePreview();
     
     // Réinitialiser drag-and-drop
-    const uploadUrl = 'index.php?route=shopmanager/catalog/product.editImage';
+    const uploadUrl = 'index.php?route=shopmanager/tools.uploadImagesFiles&type=pri';
     initImageDragAndDrop(uploadUrl, function(response, container, productId) {
         // Success callback
-        if (response.success && response.thumb && response.popup) {
+        if (response.success && response.product_images && response.product_images.primary) {
+            const imgData = response.product_images.primary;
             const thumbnail = container.querySelector('.img-thumbnail, .thumbnail-actual-image');
             const fullImage = container.querySelector('.fullsize-actual-image, .actual-image-preview');
             
-            if (thumbnail) thumbnail.src = response.thumb + '?t=' + Date.now();
-            if (fullImage) fullImage.src = response.popup + '?t=' + Date.now();
+            if (thumbnail && imgData.thumb) thumbnail.src = imgData.thumb + '?t=' + Date.now();
+            if (fullImage && imgData.fullsize) fullImage.src = imgData.fullsize + '?t=' + Date.now();
             
             // Recheck resolution après upload
             if (thumbnail) {
@@ -1964,15 +1965,16 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Initialiser drag & drop
     if (typeof initImageDragAndDrop === 'function') {
-        const uploadUrl = 'index.php?route=shopmanager/catalog/product.editImage';
+        const uploadUrl = 'index.php?route=shopmanager/tools.uploadImagesFiles&type=pri';
         initImageDragAndDrop(uploadUrl, function(response, container, productId) {
             // Success callback
-            if (response.success && response.thumb && response.popup) {
+            if (response.success && response.product_images && response.product_images.primary) {
+                const imgData = response.product_images.primary;
                 const thumbnail = container.querySelector('.img-thumbnail, .thumbnail-actual-image');
                 const fullImage = container.querySelector('.fullsize-actual-image, .actual-image-preview');
                 
-                if (thumbnail) thumbnail.src = response.thumb + '?t=' + Date.now();
-                if (fullImage) fullImage.src = response.popup + '?t=' + Date.now();
+                if (thumbnail && imgData.thumb) thumbnail.src = imgData.thumb + '?t=' + Date.now();
+                if (fullImage && imgData.fullsize) fullImage.src = imgData.fullsize + '?t=' + Date.now();
                 
                 // Recheck resolution après upload
                 if (thumbnail) {

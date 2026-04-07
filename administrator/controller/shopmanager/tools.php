@@ -59,6 +59,10 @@ class Tools extends \Opencart\System\Engine\Controller {
                 //	$this->model_shopmanager_tools->clearProductIDImages($product_id);
                 //	$this->model_shopmanager_tools->transferTempImages($product_id,$product_search);
                 }
+
+                // Marquer le produit pour mise à jour sur eBay (sourcecode upload)
+                $this->load->model('shopmanager/marketplace');
+                $this->model_shopmanager_marketplace->setToUpdate((int)$product_id);
     
             }else{
     
@@ -95,6 +99,10 @@ class Tools extends \Opencart\System\Engine\Controller {
                             ),
                             'secondary' => array()
                         );
+
+                        // Marquer le produit pour mise à jour sur eBay
+                        $this->load->model('shopmanager/marketplace');
+                        $this->model_shopmanager_marketplace->setToUpdate((int)$product_id);
                     } else {
                         $json['error'] = 'No file uploaded';
                     }

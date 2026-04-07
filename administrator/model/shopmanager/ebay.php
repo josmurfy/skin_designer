@@ -5,7 +5,7 @@ class Ebay extends \Opencart\System\Engine\Model {
 
     private $conditionsCache = [];
 
-    public function add($product, $quantity = 0,$site_setting=[],$marketplace_account_id=null) {
+    public function addListing($product, $quantity = 0,$site_setting=[],$marketplace_account_id=null) {
 
        
         // Charger les modèles nécessaires
@@ -860,6 +860,8 @@ private function buildRelistItemRequest($marketplace_item_id,$site_setting = [])
 
     private function buildReviseItemRequest($marketplace_item_id,$category_id, $productDescriptionEbay, $quantity='',$site_setting = []) {
 
+        // Strip <ProductListingDetails> from template — eBay uses UPC to override PrimaryCategory, we want to keep ours
+        $productDescriptionEbay = preg_replace('/<ProductListingDetails>.*?<\/ProductListingDetails>/s', '', $productDescriptionEbay);
 
         return '<?xml version="1.0" encoding="utf-8"?>
             <ReviseItemRequest xmlns="urn:ebay:apis:eBLBaseComponents">
@@ -871,9 +873,6 @@ private function buildRelistItemRequest($marketplace_item_id,$site_setting = [])
                     <PrimaryCategory>
                         <CategoryID>' . $category_id . '</CategoryID>
                     </PrimaryCategory>
-                    <ProductListingDetails>
-                        <IncludePrefilledItemInformation>false</IncludePrefilledItemInformation>
-                    </ProductListingDetails>
                     ' . $productDescriptionEbay . $quantity . '
                 </Item>
             </ReviseItemRequest>';
@@ -1747,35 +1746,105 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
 
     
    
-    public function edit($product, $updquantity = 0, $site_setting = [], $marketplace_accounts = []) {
+    public function editListing($product, $updquantity = 0, $site_setting = [], $marketplace_accounts = []) {
+        $this->log->write('[edit() START] product_id=' . ($product['product_id'] ?? 'NULL') . ' category_id=' . ($product['category_id'] ?? 'NULL') . ' qty=' . $updquantity . ' accounts=' . count($marketplace_accounts));
         $this->load->model('shopmanager/ebaytemplate');
         $this->load->model('shopmanager/catalog/product');
         $this->load->model('localisation/currency');
+        $this->log->write('[edit() currency key] ' . ($site_setting['Currency']['Currency'] ?? 'MISSING'));
         $currency_info = $this->model_localisation_currency->getCurrencyByCode($site_setting['Currency']['Currency']);
         
        // $product['price'] = $product['price'] * $currency_info['value'];
         
         $responseArray = [];
         
+
         foreach ($marketplace_accounts as $marketplace_id => $marketplace) {
             $marketplace_item_id = (int)$marketplace['marketplace_item_id'];
             $marketplace_account_id = (int)$marketplace['marketplace_account_id'];
             $quantity = is_numeric($updquantity) ? "<Quantity>$updquantity</Quantity>" : '';
             $site_setting = $marketplace['site_setting'];
-            
+
             $productDescriptionEbay = $this->model_shopmanager_ebaytemplate->getEbayTemplate($product, $site_setting, $marketplace_account_id);
             $postFields = $this->buildReviseItemRequest($marketplace_item_id, $product['category_id'], $productDescriptionEbay, $quantity, $site_setting);
+            $this->log->write('[edit() postFields product_id=' . $product['product_id'] . '] ' . $postFields);
             $headers = $this->buildEbayHeaders("ReviseItem", 1371, $marketplace_account_id);
             $response = $this->makeCurlRequest('https://api.ebay.com/ws/api.dll', $headers, $postFields);
             $responseXml = simplexml_load_string($response);
             $responseArray = json_decode(json_encode($responseXml), true);
-            
+            $this->log->write('[edit() RESPONSE product_id=' . $product['product_id'] . '] Ack=' . ($responseArray['Ack'] ?? 'NULL') . ' Error=' . json_encode($responseArray['Errors'] ?? []));
+
+            // Vérifier si eBay a changé la catégorie (ErrorCode 21917164)
+            $retryWithoutUPC = false;
+            if (isset($responseArray['Errors'])) {
+                foreach ($responseArray['Errors'] as $err) {
+                    if (
+                        (isset($err['ErrorCode']) && $err['ErrorCode'] == '21917164') ||
+                        (isset($err[0]['ErrorCode']) && $err[0]['ErrorCode'] == '21917164')
+                    ) {
+                        $upc = '';
+                        // Cherche l'UPC dans ItemSpecifics si dispo
+                        if (isset($product['upc']) && !empty($product['upc'])) {
+                            $upc = $product['upc'];
+                        } elseif (isset($product['item_specifics']) && is_array($product['item_specifics'])) {
+                            foreach ($product['item_specifics'] as $spec) {
+                                if (
+                                    (isset($spec['name']) && strtolower($spec['name']) == 'upc') ||
+                                    (isset($spec['Name']) && strtolower($spec['Name']) == 'upc')
+                                ) {
+                                    $upc = $spec['value'] ?? $spec['Value'] ?? '';
+                                    break;
+                                }
+                            }
+                        }
+                        if (!empty($upc)) {
+                            $catalog_epid = $this->findProductIDByGTIN($upc);
+                            $this->log->write('[edit() CATALOG LOOKUP] UPC=' . $upc . ' => eBay catalog productId=' . print_r($catalog_epid, true));
+                        } else {
+                            $this->log->write('[edit() CATALOG LOOKUP] UPC not found in product data.');
+                        }
+
+                        // Appel GetItem pour logguer la vraie catégorie eBay imposée
+                        $item_id = $responseArray['ItemID'] ?? $marketplace_item_id;
+                        $cat_details = $this->getItemDetails($item_id, $marketplace_account_id);
+                        if ($cat_details && isset($cat_details['category_id'])) {
+                            $this->log->write('[edit() GETITEM CATEGORY] item_id=' . $item_id . ' => eBay PrimaryCategoryID=' . $cat_details['category_id']);
+                        } else {
+                            $this->log->write('[edit() GETITEM CATEGORY] item_id=' . $item_id . ' => No category found in GetItem response');
+                        }
+
+                        // Supprimer l'annonce eBay (endListing) puis republier avec les mêmes données
+                        $this->log->write('[edit() ENDLISTING] Ending item_id=' . $marketplace_item_id . ' à cause de l\'erreur 21917164...');
+                        $endResult = $this->endListing($marketplace_item_id, $marketplace_account_id, $site_setting);
+                        $this->log->write('[edit() ENDLISTING RESULT] ' . json_encode($endResult));
+                        $this->log->write('[edit() ADD] Republishing product_id=' . $product['product_id'] . '...');
+                        $addResult = $this->addListing($product, $updquantity, $site_setting, $marketplace_account_id);
+                        $this->log->write('[edit() ADD RESULT] ' . json_encode($addResult));
+
+                    }
+
+                    // Warning 21920277 : eBay a renommé des item specifics automatiquement
+                    if (
+                        (isset($err['ErrorCode']) && $err['ErrorCode'] == '21920277') ||
+                        (isset($err[0]['ErrorCode']) && $err[0]['ErrorCode'] == '21920277')
+                    ) {
+                        $this->log->write('[edit() WARNING 21920277] product_id=' . $product['product_id'] . ' item_id=' . $marketplace_item_id . ' — eBay a renommé des item specifics. Appel GetItem pour voir les noms actuels...');
+                        $renamed_details = $this->getItemDetails($marketplace_item_id, $marketplace_account_id);
+                        if ($renamed_details && isset($renamed_details['item_specifics'])) {
+                            $this->log->write('[edit() WARNING 21920277 SPECIFICS ACTUELS] ' . json_encode($renamed_details['item_specifics']));
+                        } else {
+                            $this->log->write('[edit() WARNING 21920277 SPECIFICS] Impossible de récupérer les specifics via GetItem.');
+                        }
+                    }
+                }
+            }
+
             $responseArray['marketplace_id'] = $marketplace_id;
             $responseArray['marketplace_account_id'] = $marketplace_account_id;
             $responseArray['product_id'] = $product['product_id'];
             $this->editPrice($marketplace_item_id, $product['price'],$product['made_in_country_id'] ,$site_setting,$marketplace_account_id);
             $this->load->model('shopmanager/marketplace');
-            
+
             if (isset($responseArray['ErrorLanguage'])) {
                 $error = json_encode($responseArray);
             } elseif (isset($responseArray['Ack']) && $responseArray['Ack'] != 'Failure') {
@@ -1788,6 +1857,9 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             if ($_pm_row) {
                 $_pm_row['error'] = $error;
                 $_pm_row['to_update'] = empty($error) ? 0 : 9;
+                if (empty($error) && !empty($product['category_id'])) {
+                    $_pm_row['category_id'] = (int)$product['category_id'];
+                }
                 $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
             }
         }

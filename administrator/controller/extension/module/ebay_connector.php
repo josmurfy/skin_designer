@@ -109,7 +109,7 @@ class ControllerExtensionModuleEbayConnector extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
 		}
 
 		$data['text_sync_process_category'] = sprintf($this->language->get('text_sync_process_category'), $this->config->get('ebay_connector_category_row') ? $this->config->get('ebay_connector_category_row') : 100);
@@ -118,22 +118,22 @@ class ControllerExtensionModuleEbayConnector extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/module/ebay_connector', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/module/ebay_connector', 'user_token=' . $this->session->data['token'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/module/ebay_connector', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/module/ebay_connector', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 
 		if(!file_exists(DIR_APPLICATION.'../vendor/autoload.php')){
  		  $data['is_installed_composer'] = $this->language->get('error_install_composer');
@@ -348,7 +348,7 @@ class ControllerExtensionModuleEbayConnector extends Controller {
 						}
         }else{
 						$json['error'] = $this->session->data['invalid_warning'] = $this->language->get('error_invalid_details');
-        		$json['redirect'] = str_replace('&amp;', '&', $this->url->link('extension/module/ebay_connector', 'token=' . $this->session->data['token'], true));
+        		$json['redirect'] = str_replace('&amp;', '&', $this->url->link('extension/module/ebay_connector', 'user_token=' . $this->session->data['token'], true));
         }
 		}
 

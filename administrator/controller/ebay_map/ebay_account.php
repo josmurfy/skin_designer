@@ -48,7 +48,7 @@ class ControllerEbayMapEbayAccount extends Controller {
 
 			$url = $this->ocwebkul->_setUrlVars();
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -104,19 +104,19 @@ class ControllerEbayMapEbayAccount extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['add_account'] = $this->url->link('ebay_map/ebay_account/getForm', 'token=' . $this->session->data['token'] . $url, true);
+		$data['add_account'] = $this->url->link('ebay_map/ebay_account/getForm', 'user_token=' . $this->session->data['token'] . $url, true);
 
-		$data['delete'] = $this->url->link('ebay_map/ebay_account/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('ebay_map/ebay_account/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
-		$data['clear_filter'] = $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'], true);
+		$data['clear_filter'] = $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'], true);
 
 		$data['token'] 	= $this->session->data['token'];
 
@@ -143,7 +143,7 @@ class ControllerEbayMapEbayAccount extends Controller {
 					'account_id' 		=> $result['id'],
 					'store_name'    => $result['ebay_connector_store_name'],
 					'ebay_user_id'  => $result['ebay_connector_ebay_user_id'],
-					'edit'  				=> $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&account_id=' . $result['id'] . $url, true),
+					'edit'  				=> $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&account_id=' . $result['id'] . $url, true),
 				);
 			}
 		}
@@ -191,9 +191,9 @@ class ControllerEbayMapEbayAccount extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_account_id'] = $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . '&sort=id' . $url, true);
-		$data['sort_ebay_store_name'] = $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . '&sort=ebay_connector_store_name' . $url, true);
-		$data['sort_ebay_user_id'] = $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . '&sort=ebay_connector_ebay_user_id' . $url, true);
+		$data['sort_account_id'] = $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . '&sort=id' . $url, true);
+		$data['sort_ebay_store_name'] = $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . '&sort=ebay_connector_store_name' . $url, true);
+		$data['sort_ebay_user_id'] = $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . '&sort=ebay_connector_ebay_user_id' . $url, true);
 
 		$url = $this->__manageUrlFilterWithotPageVar();
 
@@ -201,7 +201,7 @@ class ControllerEbayMapEbayAccount extends Controller {
 		$pagination->total = $eBayTotalAccount;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -234,7 +234,7 @@ class ControllerEbayMapEbayAccount extends Controller {
 
 			$url = $this->ocwebkul->_setUrlVars();
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -253,7 +253,7 @@ class ControllerEbayMapEbayAccount extends Controller {
 
 		if(empty($response)) {
 			$this->session->data['error_warning'] = $this->language->get('error_wrong_account_id');
-			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'], true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'], true));
 		}
 
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateAccount()) {
@@ -264,7 +264,7 @@ class ControllerEbayMapEbayAccount extends Controller {
 
 			$url = $this->ocwebkul->_setUrlVars();
 
-			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -321,21 +321,21 @@ class ControllerEbayMapEbayAccount extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
 		if (!isset($this->request->get['account_id'])) {
-			$data['action'] = $this->url->link('ebay_map/ebay_account/add', 'token=' . $this->session->data['token'] . $url, true);
+			$data['action'] = $this->url->link('ebay_map/ebay_account/add', 'user_token=' . $this->session->data['token'] . $url, true);
 		} else {
-			$data['action'] = $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&account_id=' . $this->request->get['account_id'] .$url, true);
+			$data['action'] = $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&account_id=' . $this->request->get['account_id'] .$url, true);
 		}
 
-		$data['cancel'] = $this->url->link('ebay_map/ebay_account', 'token=' . $this->session->data['token'] , true);
+		$data['cancel'] = $this->url->link('ebay_map/ebay_account', 'user_token=' . $this->session->data['token'] , true);
 
 		$data['token'] 	= $this->session->data['token'];
 

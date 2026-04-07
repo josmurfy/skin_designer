@@ -2,7 +2,7 @@
 /* 
  * OpenCart Canada Post Shipping Module
  * Version: 1.6
- * Author: Olivier Labbé
+ * Author: Olivier Labbï¿½
  * Email: olivier.labbe@votreespace.net
  * Web: http://www.votreespace.net
  * Description: Connects with Canada Post sellonline server to provide a
@@ -24,7 +24,7 @@ class ControllerShippingCanadaPost extends Controller {
 					
 			$this->session->data['success'] = $this->language->get('text_success');
 						
-			$this->response->redirect($this->url->link('extension/shipping', 'token=' . $this->session->data['token'], 'SSL'));
+			$this->response->redirect($this->url->link('extension/shipping', 'user_token=' . $this->session->data['token'], 'SSL'));
 		}
 				
 		$data['text_enabled'] = $this->language->get('text_enabled');
@@ -84,22 +84,22 @@ class ControllerShippingCanadaPost extends Controller {
 		
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_shipping'),
-			'href' => $this->url->link('extension/shipping', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('extension/shipping', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 		
    	$data['breadcrumbs'][] = array(
-       		'href' => $this->url->link('shipping/canadapost', 'token=' . $this->session->data['token'], 'SSL'),
+       		'href' => $this->url->link('shipping/canadapost', 'user_token=' . $this->session->data['token'], 'SSL'),
        		'text' => $this->language->get('heading_title'),
      );
 		
-		$data['action'] = $this->url->link('shipping/canadapost', 'token=' . $this->session->data['token'], 'SSL');
+		$data['action'] = $this->url->link('shipping/canadapost', 'user_token=' . $this->session->data['token'], 'SSL');
 
-		$data['cancel'] = $this->url->link('extension/shipping', 'token=' . $this->session->data['token'], 'SSL');
+		$data['cancel'] = $this->url->link('extension/shipping', 'user_token=' . $this->session->data['token'], 'SSL');
 
 		if (isset($this->request->post['canadapost_server'])) {
 			$data['canadapost_server'] = $this->request->post['canadapost_server'];

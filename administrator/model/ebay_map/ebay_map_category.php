@@ -268,7 +268,7 @@ class ModelEbayMapEbayMapCategory extends Model {
 					$this->db->query("INSERT INTO ".DB_PREFIX."wk_ebaysync_categories SET `opencart_category_id` = '".(int)$data['opencart_category']."', `ebay_category_id` = '".(int)$data['ebay_category']."', `ebay_category_name` = '".$this->db->escape($ebay_category_name)."', `pro_condition_attr` = '".$this->db->escape($ConditionAttribute)."', `variations_enabled` = '".$VariationsEnabled."', `added_date` = NOW(), `account_id` = '".(int)$data['account_id']."' ");
 
 					$this->session->data['success'] = $result['success'] = $this->language->get('text_success_map_category');
-					$result['redirect'] 				= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&status=account_category_map&account_id=' .$data['account_id'] , true));
+					$result['redirect'] 				= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&status=account_category_map&account_id=' .$data['account_id'] , true));
 
 	           	}else{
 	           		$result['warning'] = $this->language->get('error_ebay_connection');

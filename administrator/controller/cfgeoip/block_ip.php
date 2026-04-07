@@ -32,12 +32,12 @@ class ControllerCfgeoipBlockIp extends Controller {
 
 			$data['breadcrumbs'][] = array(
 				'text' => $this->language->get('text_home'),
-				'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+				'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 			);
 
 			$data['breadcrumbs'][] = array(
 				'text' => $this->language->get('heading_title'),
-				'href' => $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'], true)
+				'href' => $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'], true)
 			);
 			
 			$data['heading_title'] = $this->language->get('heading_title');
@@ -58,7 +58,7 @@ class ControllerCfgeoipBlockIp extends Controller {
 			
 			$data['button_cancel'] = $this->language->get('button_cancel');
 
-			$data['cancel'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'], true);
+			$data['cancel'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'], true);
 
 			$data['token'] = $this->session->data['token'];
 
@@ -142,7 +142,7 @@ class ControllerCfgeoipBlockIp extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -245,15 +245,15 @@ class ControllerCfgeoipBlockIp extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 		
-		$data['delete'] = $this->url->link('cfgeoip/block_ip/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('cfgeoip/block_ip/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		
 		$data['blocked_ips'] = array();
@@ -285,7 +285,7 @@ class ControllerCfgeoipBlockIp extends Controller {
 				'subdivision_name' => $result['subdivision_name'],
 				'subdivision_iso_code'=> $result['subdivision_iso_code'],
 				'access_date'     => date($this->language->get('date_format_short'), strtotime($result['access_date'])),
-				'view'           => $this->url->link('cfgeoip/block_ip/info', 'token=' . $this->session->data['token'] . '&block_ip_id=' . $result['id'] . $url, true)
+				'view'           => $this->url->link('cfgeoip/block_ip/info', 'user_token=' . $this->session->data['token'] . '&block_ip_id=' . $result['id'] . $url, true)
 			);
 		}
 		
@@ -373,12 +373,12 @@ class ControllerCfgeoipBlockIp extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_user_ip'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . '&sort=user_ip' . $url, true);
-		$data['sort_country_iso_code'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . '&sort=country_iso_code' . $url, true);
-		$data['sort_country_name'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . '&sort=country_name' . $url, true);
-		$data['sort_subdivision_name'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . '&sort=subdivision_name' . $url, true);
-		$data['sort_subdivision_iso_code'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . '&sort=subdivision_iso_code' . $url, true);
-		$data['sort_access_date'] = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . '&sort=access_date' . $url, true);
+		$data['sort_user_ip'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . '&sort=user_ip' . $url, true);
+		$data['sort_country_iso_code'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . '&sort=country_iso_code' . $url, true);
+		$data['sort_country_name'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . '&sort=country_name' . $url, true);
+		$data['sort_subdivision_name'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . '&sort=subdivision_name' . $url, true);
+		$data['sort_subdivision_iso_code'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . '&sort=subdivision_iso_code' . $url, true);
+		$data['sort_access_date'] = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . '&sort=access_date' . $url, true);
 
 		$url = '';
 
@@ -418,7 +418,7 @@ class ControllerCfgeoipBlockIp extends Controller {
 		$pagination->total = $blocked_ip_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('cfgeoip/block_ip', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('cfgeoip/block_ip', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

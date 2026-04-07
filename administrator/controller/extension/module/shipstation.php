@@ -16,7 +16,7 @@ class ControllerExtensionModuleShipstation extends Controller {
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validate()) {
             $this->model_setting_setting->editSetting('shipstation', $this->request->post);
             $this->session->data['success'] = $this->language->get('text_success');
-            $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL'));
+            $this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL'));
         }
         //Fetch the data from the language setting file and assign to module.
         $data['heading_title'] = $this->language->get('heading_title');
@@ -54,20 +54,20 @@ class ControllerExtensionModuleShipstation extends Controller {
         $data['breadcrumbs'] = array();
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+            'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('text_home'),
-            'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL')
+            'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL')
         );
         $data['breadcrumbs'][] = array(
             'text' => $this->language->get('heading_title'),
-            'href' => $this->url->link('extension/module/shipstation', 'token=' . $this->session->data['token'], 'SSL')
+            'href' => $this->url->link('extension/module/shipstation', 'user_token=' . $this->session->data['token'], 'SSL')
         );
-        $data['action'] = $this->url->link('extension/module/shipstation', 'token=' . $this->session->data['token'], 'SSL');
-        $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'], 'SSL');
-        $data['keygen'] = $this->url->link('extension/module/shipstation/keygen', 'token=' . $this->session->data['token'], 'SSL');
-        $data['clear'] = $this->url->link('extension/module/shipstation/clear', 'token=' . $this->session->data['token'], 'SSL');
+        $data['action'] = $this->url->link('extension/module/shipstation', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['keygen'] = $this->url->link('extension/module/shipstation/keygen', 'user_token=' . $this->session->data['token'], 'SSL');
+        $data['clear'] = $this->url->link('extension/module/shipstation/clear', 'user_token=' . $this->session->data['token'], 'SSL');
 
         if (isset($this->request->post['shipstation_status'])) {
             $data['shipstation_status'] = $this->request->post['shipstation_status'];
@@ -148,7 +148,7 @@ class ControllerExtensionModuleShipstation extends Controller {
         );
         $this->model_setting_setting->editSetting('shipstation', $data);
         //Redirect to the shipstation module page settings
-        $this->response->redirect($this->url->link('extension/module/shipstation', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->response->redirect($this->url->link('extension/module/shipstation', 'user_token=' . $this->session->data['token'], 'SSL'));
     }
 
     /**
@@ -162,7 +162,7 @@ class ControllerExtensionModuleShipstation extends Controller {
         $handle = fopen($file, 'w+');
         fclose($handle);
         $this->session->data['success'] = $this->language->get('text_cleared');
-        $this->response->redirect($this->url->link('extension/extension/module', 'token=' . $this->session->data['token'], 'SSL'));
+        $this->response->redirect($this->url->link('extension/extension/module', 'user_token=' . $this->session->data['token'], 'SSL'));
     }
 
     /**

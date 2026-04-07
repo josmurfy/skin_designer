@@ -38,7 +38,7 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+			$this->response->redirect($this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url, 'SSL'));
 		}
 
 		$this->getForm();
@@ -70,7 +70,7 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+			$this->response->redirect($this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url, 'SSL'));
 		}
 
 		$this->getForm();
@@ -104,7 +104,7 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+			$this->response->redirect($this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url, 'SSL'));
 		}
 
 		$this->getList();
@@ -147,16 +147,16 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url, 'SSL')
+			'href' => $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url, 'SSL')
 		);
 
-		$data['add'] = $this->url->link('abandoned_carts/abandoned_template/add', 'token=' . $this->session->data['token'] . $url, 'SSL');
-		$data['delete'] = $this->url->link('abandoned_carts/abandoned_template/delete', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$data['add'] = $this->url->link('abandoned_carts/abandoned_template/add', 'user_token=' . $this->session->data['token'] . $url, 'SSL');
+		$data['delete'] = $this->url->link('abandoned_carts/abandoned_template/delete', 'user_token=' . $this->session->data['token'] . $url, 'SSL');
 
 		$data['abandoned_templates'] = array();
 
@@ -176,7 +176,7 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 				'abandoned_template_id' => $result['abandoned_template_id'],
 				'title'          => $result['title'],
 				'status'     => ($result['status']) ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
-				'edit'			 => $this->url->link('abandoned_carts/abandoned_template/edit', 'token=' . $this->session->data['token'] . '&abandoned_template_id=' . $result['abandoned_template_id'] . $url, 'SSL')
+				'edit'			 => $this->url->link('abandoned_carts/abandoned_template/edit', 'user_token=' . $this->session->data['token'] . '&abandoned_template_id=' . $result['abandoned_template_id'] . $url, 'SSL')
 			);
 		}
 
@@ -226,8 +226,8 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_title'] = $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . '&sort=atd.title' . $url, 'SSL');
-		$data['sort_status'] = $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . '&sort=at.sort_status' . $url, 'SSL');
+		$data['sort_title'] = $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . '&sort=atd.title' . $url, 'SSL');
+		$data['sort_status'] = $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . '&sort=at.sort_status' . $url, 'SSL');
 
 		$url = '';
 
@@ -243,7 +243,7 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 		$pagination->total = $abandoned_template_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
+		$pagination->url = $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
 
 		$data['pagination'] = $pagination->render();
 
@@ -332,21 +332,21 @@ class Controllerabandonedcartsabandonedtemplate extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url, 'SSL')
+			'href' => $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url, 'SSL')
 		);
 
 		if (!isset($this->request->get['abandoned_template_id'])) {
-			$data['action'] = $this->url->link('abandoned_carts/abandoned_template/add', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			$data['action'] = $this->url->link('abandoned_carts/abandoned_template/add', 'user_token=' . $this->session->data['token'] . $url, 'SSL');
 		} else {
-			$data['action'] = $this->url->link('abandoned_carts/abandoned_template/edit', 'token=' . $this->session->data['token'] . '&abandoned_template_id=' . $this->request->get['abandoned_template_id'] . $url, 'SSL');
+			$data['action'] = $this->url->link('abandoned_carts/abandoned_template/edit', 'user_token=' . $this->session->data['token'] . '&abandoned_template_id=' . $this->request->get['abandoned_template_id'] . $url, 'SSL');
 		}
 
-		$data['cancel'] = $this->url->link('abandoned_carts/abandoned_template', 'token=' . $this->session->data['token'] . $url, 'SSL');
+		$data['cancel'] = $this->url->link('abandoned_carts/abandoned_template', 'user_token=' . $this->session->data['token'] . $url, 'SSL');
 
 		if (isset($this->request->get['abandoned_template_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
 			$abandoned_template_info = $this->model_abandoned_carts_abandoned_carts->getAbandonedTemplate($this->request->get['abandoned_template_id']);

@@ -16,7 +16,7 @@ class ControllerExtensionModuleWebpush extends Controller {
             $this->model_setting_setting->editSetting('module_webpush', $this->request->post);
             $appId = $this->request->post['module_webpush_appId'];
             $this->session->data['success'] = $this->language->get('text_success');
-            $this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+            $this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
         }
 
         $data['heading_title'] = $this->language->get('heading_title');
@@ -67,24 +67,24 @@ class ControllerExtensionModuleWebpush extends Controller {
 
         $data['breadcrumbs'][] = array(
             'text'      => $this->language->get('text_home'),
-            'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], 'SSL'),
+            'href'      => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], 'SSL'),
             'separator' => false
         );
 
         $data['breadcrumbs'][] = array(
             'text'      => $this->language->get('text_module'),
-            'href'      => $this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'),
+            'href'      => $this->url->link('extension/module', 'user_token=' . $this->session->data['token'], 'SSL'),
             'separator' => ' :: '
         );
 
         $data['breadcrumbs'][] = array(
             'text'      => $this->language->get('heading_title'),
-            'href'      => $this->url->link('extension/module/webpush', 'token=' . $this->session->data['token'], 'SSL'),
+            'href'      => $this->url->link('extension/module/webpush', 'user_token=' . $this->session->data['token'], 'SSL'),
             'separator' => ' :: '
         );
 
-        $data['action'] = $this->url->link('extension/module/webpush', 'token=' . $this->session->data['token'], true);
-        $data['cancel'] = $this->url->link('marketplace/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+        $data['action'] = $this->url->link('extension/module/webpush', 'user_token=' . $this->session->data['token'], true);
+        $data['cancel'] = $this->url->link('marketplace/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 
         if (isset($this->request->post['module_webpush_appId'])) {
             $data['module_webpush_appId'] = $this->request->post['module_webpush_appId'];
@@ -138,7 +138,7 @@ class ControllerExtensionModuleWebpush extends Controller {
             'id' => 'menu-webpush',
             'icon' => 'fa fa-bell',
             'name' => 'OneSignal',
-            'href' => $this->url->link('extension/module/webpush','token='.$this->session->data['token'],true),
+            'href' => $this->url->link('extension/module/webpush','user_token='.$this->session->data['token'],true),
             'children' => array()
         ];
     }

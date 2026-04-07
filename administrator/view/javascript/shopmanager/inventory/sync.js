@@ -18,6 +18,7 @@
         initRefreshButton();
         initExportButton();
         initSyncMarketplaceButton();
+        initNotSyncedBulkImport();
         initUpdateEbayQuantityButtons();
         initSyncProductButtons();
         initPrintReportButtons();
@@ -145,8 +146,11 @@
     /**
      * Démarre la synchronisation marketplace page par page
      */
-    function startMarketplaceSync(forceRefresh) {
+    function startMarketplaceSync(forceRefresh, options) {
         forceRefresh = forceRefresh || false;
+        options = options || {};
+        const selectedProductIds = Array.isArray(options.selectedProductIds) ? options.selectedProductIds : [];
+        const onlySelectedGetItem = !!options.onlySelectedGetItem;
         const urlInput = forceRefresh ? '#url_force_refresh_marketplace' : '#url_sync_marketplace';
         const url = $(urlInput).val();
         const userToken = $('#user_token').val();
@@ -168,7 +172,7 @@
 
         // Show progress container
         $('#sync-progress-container').removeClass('d-none');
-        $('#button-sync-marketplace, #button-force-refresh').prop('disabled', true);
+        $('#button-sync-marketplace, #button-force-refresh, #button-import-not-synced-non-selected').prop('disabled', true);
         $('#sync-progress-bar').css('width', '0%').text('0%')
             .removeClass('bg-danger bg-success').addClass('progress-bar-animated');
 
@@ -178,8 +182,18 @@
             }
 
 
+            let requestUrl = url + '&page=' + currentPage + '&offset=' + currentOffset + '&account_id=1&started_at=' + encodeURIComponent(startedAt);
+
+            if (selectedProductIds.length > 0) {
+                requestUrl += '&selected_product_ids=' + encodeURIComponent(selectedProductIds.join(','));
+            }
+
+            if (onlySelectedGetItem) {
+                requestUrl += '&only_selected_getitem=1';
+            }
+
             $.ajax({
-                url: url + '&page=' + currentPage + '&offset=' + currentOffset + '&account_id=1&started_at=' + encodeURIComponent(startedAt),
+                url: requestUrl,
                 type: 'GET',
                 dataType: 'json',
                 beforeSend: function() {
@@ -212,7 +226,7 @@
                                 .css('width', '100%')
                                 .text('100%');
                             $('#sync-message').text(`Synchronization complete! Total: ${totalProcessed} products updated`);
-                            $('#button-sync-marketplace, #button-force-refresh').prop('disabled', false);
+                            $('#button-sync-marketplace, #button-force-refresh, #button-import-not-synced-non-selected').prop('disabled', false);
                             showSuccessMessage(`eBay sync completed: ${totalProcessed} products updated`);
                             
                             // Refresh analytics data after 2 seconds
@@ -239,7 +253,7 @@
                         $('#sync-progress-bar').removeClass('progress-bar-animated')
                             .addClass('bg-danger');
                         $('#sync-message').text('Error: ' + (response.error || 'Unknown error'));
-                        $('#button-sync-marketplace, #button-force-refresh').prop('disabled', false);
+                        $('#button-sync-marketplace, #button-force-refresh, #button-import-not-synced-non-selected').prop('disabled', false);
                         showErrorMessage(response.error || 'Sync failed');
                         isSyncing = false;
                     }
@@ -250,7 +264,7 @@
                     $('#sync-progress-bar').removeClass('progress-bar-animated')
                         .addClass('bg-danger');
                     $('#sync-message').text('Network error occurred');
-                    $('#button-sync-marketplace, #button-force-refresh').prop('disabled', false);
+                    $('#button-sync-marketplace, #button-force-refresh, #button-import-not-synced-non-selected').prop('disabled', false);
                     showErrorMessage('Failed to sync with marketplace. Check console for details.');
                     isSyncing = false;
                 }
@@ -259,6 +273,55 @@
 
         // Start first page
         syncPage();
+    }
+
+    /**
+     * Not Synced tab: select all + import non-selected,
+     * while forcing GetItem only on selected products.
+     */
+    function initNotSyncedBulkImport() {
+        function refreshNotSyncedSelectionUi() {
+            const total = $('.ns-cb').length;
+            const selected = $('.ns-cb:checked').length;
+
+            $('#ns-count').text(selected + ' selected');
+            $('#button-ns-deselect').prop('disabled', selected === 0);
+
+            $('#ns-check-all')
+                .prop('indeterminate', selected > 0 && selected < total)
+                .prop('checked', total > 0 && selected === total);
+        }
+
+        $(document).on('change', '#ns-check-all', function() {
+            $('.ns-cb').prop('checked', this.checked);
+            refreshNotSyncedSelectionUi();
+        });
+
+        $(document).on('change', '.ns-cb', function() {
+            refreshNotSyncedSelectionUi();
+        });
+
+        $(document).on('click', '#button-ns-deselect', function() {
+            $('.ns-cb, #ns-check-all').prop('checked', false).prop('indeterminate', false);
+            refreshNotSyncedSelectionUi();
+        });
+
+        $(document).on('click', '#button-import-not-synced-non-selected', function() {
+            const selectedIds = $('.ns-cb:checked').map(function() {
+                return parseInt(this.value, 10) || 0;
+            }).get().filter(function(id) { return id > 0; });
+
+            if (!confirm(TEXT_CONFIRM_IMPORT_NON_SELECTED)) {
+                return;
+            }
+
+            startMarketplaceSync(false, {
+                selectedProductIds: selectedIds,
+                onlySelectedGetItem: selectedIds.length > 0
+            });
+        });
+
+        refreshNotSyncedSelectionUi();
     }
 
     /**
@@ -801,6 +864,270 @@
                 showErrorMessage('Error: ' + error);
             }
         });
+    });
+
+    /* =========================================================
+     * NOT IMPORTED — checkboxes + bulk publish
+     * ========================================================= */
+    function niRefreshToolbar() {
+        var n = $('.ni-cb:checked').length;
+        if (n > 0) {
+            $('#ni-toolbar').css('display', 'block');
+            $('#ni-count').text(n + ' selected');
+        } else {
+            $('#ni-toolbar').hide();
+        }
+        // keep header checkbox in sync
+        var total = $('.ni-cb').length;
+        $('#ni-check-all')
+            .prop('indeterminate', n > 0 && n < total)
+            .prop('checked', total > 0 && n === total);
+    }
+
+    // Select all
+    $(document).on('change', '#ni-check-all', function() {
+        $('.ni-cb').prop('checked', this.checked);
+        niRefreshToolbar();
+    });
+
+    // Individual checkbox
+    $(document).on('change', '.ni-cb', function() {
+        niRefreshToolbar();
+    });
+
+    // Deselect all
+    $(document).on('click', '#ni-btn-deselect', function() {
+        $('.ni-cb, #ni-check-all').prop('checked', false).prop('indeterminate', false);
+        niRefreshToolbar();
+    });
+
+    // Import selected via GetItem (Not Imported tab)
+    $(document).on('click', '#ni-btn-import', function() {
+        var ids = $('.ni-cb:checked').map(function() { return this.value; }).get();
+        if (!ids.length) return;
+        if (!confirm('Run GetItem on ' + ids.length + ' product(s) to import their eBay data?')) return;
+
+        var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Importing...');
+
+        $.ajax({
+            url: 'index.php?route=shopmanager/inventory/sync.bulkGetItemNotImported&user_token=' + $('#user_token').val(),
+            type: 'POST',
+            data: { product_ids: ids },
+            dataType: 'json',
+            success: function(json) {
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-download"></i> Import from eBay (GetItem)');
+
+                // Reset previous result colors for selected rows.
+                $.each(ids, function(i, id) {
+                    $('#tbl-not-imported tr[data-product-id="' + id + '"]')
+                        .removeClass('table-success table-danger')
+                        .find('.row-error-msg').remove();
+                });
+
+                if (json.success) {
+                    showSuccessMessage(json.message);
+
+                    var importedIds = Array.isArray(json.imported_ids) ? json.imported_ids : [];
+                    var failedIds = (json.failed_ids && typeof json.failed_ids === 'object' && !Array.isArray(json.failed_ids)) ? json.failed_ids : {};
+
+                    $.each(importedIds, function(i, id) {
+                        var $row = $('#tbl-not-imported tr[data-product-id="' + id + '"]');
+                        $row.addClass('table-success');
+                        setTimeout(function() {
+                            $row.fadeOut(250, function() { $(this).remove(); });
+                        }, 350);
+                    });
+
+                    $.each(failedIds, function(id, errorMsg) {
+                        var $row = $('#tbl-not-imported tr[data-product-id="' + id + '"]');
+                        $row.addClass('table-danger');
+                        $row.find('td:eq(2)')
+                            .css({'white-space': 'normal', 'overflow': 'visible'})
+                            .append('<br><small class="row-error-msg text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> ' + $('<div>').text(errorMsg).html() + '</small>');
+                    });
+
+                    $('.ni-cb, #ni-check-all').prop('checked', false).prop('indeterminate', false);
+                    setTimeout(niRefreshToolbar, 650);
+                } else {
+                    $.each(ids, function(i, id) {
+                        $('#tbl-not-imported tr[data-product-id="' + id + '"]').addClass('table-danger');
+                    });
+                    showErrorMessage(json.error || 'GetItem import failed');
+                }
+            },
+            error: function(xhr) {
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-download"></i> Import from eBay (GetItem)');
+                $.each(ids, function(i, id) {
+                    $('#tbl-not-imported tr[data-product-id="' + id + '"]')
+                        .removeClass('table-success')
+                        .addClass('table-danger');
+                });
+                showErrorMessage('AJAX error: ' + xhr.responseText.substring(0, 200));
+            }
+        });
+    });
+
+    /* =========================================================
+     * PAGINATION — Not Imported / To Update / Not Synced tabs
+     * ========================================================= */
+    function loadTabPage(url, page, containerSelector, resetCheckboxSelector) {
+        $.ajax({
+            url: url + '&page=' + page,
+            type: 'GET',
+            success: function(html) {
+                $(containerSelector).html(html);
+                if (resetCheckboxSelector) {
+                    $(resetCheckboxSelector).prop('checked', false).prop('indeterminate', false);
+                }
+            },
+            error: function(xhr) {
+                showErrorMessage('Pagination error: ' + xhr.status);
+            }
+        });
+    }
+
+    $(document).on('click', '.load-not-imported-page', function(e) {
+        e.preventDefault();
+        var page = $(this).data('page');
+        var url  = $('#url_not_imported_tab').val();
+        loadTabPage(url, page, '#not-imported-tab-pane', '.ni-cb, #ni-check-all');
+        if (typeof niRefreshToolbar === 'function') setTimeout(niRefreshToolbar, 200);
+    });
+
+    $(document).on('click', '.load-to-update-page', function(e) {
+        e.preventDefault();
+        var page = $(this).data('page');
+        var url  = $('#url_to_update_tab').val();
+        loadTabPage(url, page, '#to-update-tab-pane', '.tu-cb, #tu-check-all');
+        if (typeof tuRefreshToolbar === 'function') setTimeout(tuRefreshToolbar, 200);
+    });
+
+    $(document).on('click', '.load-not-synced-page', function(e) {
+        e.preventDefault();
+        var page = $(this).data('page');
+        var url  = $('#url_not_synced_tab').val();
+        loadTabPage(url, page, '#not-synced', '.ns-cb, #ns-check-all');
+    });
+
+    /* =========================================================
+     * TO UPDATE — checkboxes + bulk update listing
+     * ========================================================= */
+    function tuRefreshToolbar() {
+        var n = $('.tu-cb:checked').length;
+        if (n > 0) {
+            $('#tu-toolbar').css('display', 'block');
+            $('#tu-count').text(n + ' selected');
+        } else {
+            $('#tu-toolbar').hide();
+        }
+        var total = $('.tu-cb').length;
+        $('#tu-check-all')
+            .prop('indeterminate', n > 0 && n < total)
+            .prop('checked', total > 0 && n === total);
+    }
+
+    // Select all
+    $(document).on('change', '#tu-check-all', function() {
+        $('.tu-cb').prop('checked', this.checked);
+        tuRefreshToolbar();
+    });
+
+    // Individual checkbox
+    $(document).on('change', '.tu-cb', function() {
+        tuRefreshToolbar();
+    });
+
+    // Deselect all
+    $(document).on('click', '#tu-btn-deselect', function() {
+        $('.tu-cb, #tu-check-all').prop('checked', false).prop('indeterminate', false);
+        tuRefreshToolbar();
+    });
+
+    // Update selected — one product per request to avoid 502 timeout
+    $(document).on('click', '#tu-btn-update', function() {
+        var ids = $('.tu-cb:checked').map(function() { return this.value; }).get();
+        if (!ids.length) return;
+        if (!confirm('Update ' + ids.length + ' product(s) on eBay?')) return;
+
+        var $btn = $(this).prop('disabled', true);
+        var total = ids.length;
+        var done  = 0;
+
+        // Reset previous colors
+        $.each(ids, function(i, id) {
+            $('#tbl-to-update tr[data-product-id="' + id + '"]')
+                .removeClass('table-success table-danger')
+                .find('.row-error-msg').remove();
+        });
+
+        function updateNext(index) {
+            if (index >= ids.length) {
+                // All done
+                $btn.prop('disabled', false).html('<i class="fa-solid fa-rotate"></i> Update Selected on eBay');
+                $('.tu-cb, #tu-check-all').prop('checked', false).prop('indeterminate', false);
+                setTimeout(tuRefreshToolbar, 400);
+                return;
+            }
+
+            var id = ids[index];
+            $btn.html('<i class="fa-solid fa-spinner fa-spin"></i> Updating ' + (index + 1) + '/' + total + '...');
+
+            $.ajax({
+                url: 'index.php?route=shopmanager/inventory/sync.bulkUpdateToEbay&user_token=' + $('#user_token').val(),
+                type: 'POST',
+                data: { product_id: id },
+                dataType: 'json',
+                timeout: 110000,
+                success: function(json) {
+                    var $row = $('#tbl-to-update tr[data-product-id="' + id + '"]');
+                    if (json.success) {
+                        $row.addClass('table-success');
+                        setTimeout(function() {
+                            $row.fadeOut(250, function() { $(this).remove(); });
+                        }, 350);
+                    } else {
+                        var errorMsg = json.error || 'Update failed';
+                        $row.addClass('table-danger');
+                        $row.find('td:eq(2)')
+                            .css({'white-space': 'normal', 'overflow': 'visible'})
+                            .append('<br><small class="row-error-msg text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> ' + $('<div>').text(errorMsg).html() + '</small>');
+                    }
+                    updateNext(index + 1);
+                },
+                error: function(xhr) {
+                    var $row = $('#tbl-to-update tr[data-product-id="' + id + '"]');
+                    $row.addClass('table-danger');
+                    var explanation;
+                    if (xhr.status === 502) {
+                        explanation = 'Server timeout (502)';
+                    } else if (xhr.status === 200) {
+                        // PHP emitted noise (warning/echo) that corrupted the JSON
+                        var raw = $.trim(xhr.responseText || '');
+                        // Try to find embedded JSON error message
+                        try {
+                            var m = raw.match(/\{[\s\S]*\}/);
+                            if (m) {
+                                var parsed = JSON.parse(m[0]);
+                                explanation = parsed.error || parsed.message || null;
+                            }
+                        } catch(e) {}
+                        if (!explanation) {
+                            // Strip HTML and show raw PHP output (first 400 chars)
+                            var stripped = $('<div>').html(raw).text().trim().replace(/\s+/g, ' ').substring(0, 400);
+                            explanation = stripped || 'AJAX error 200 (corrupted response)';
+                        }
+                    } else {
+                        explanation = 'AJAX error ' + xhr.status;
+                    }
+                    $row.find('td:eq(2)')
+                        .css({'white-space': 'normal', 'overflow': 'visible'})
+                        .append('<br><small class="row-error-msg text-danger fw-bold"><i class="fa-solid fa-triangle-exclamation"></i> ' + $('<div>').text(explanation).html() + '</small>');
+                    updateNext(index + 1);
+                }
+            });
+        }
+
+        updateNext(0);
     });
 
 })();

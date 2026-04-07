@@ -37,15 +37,15 @@ class ControllerToolDebugLog extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('tool/debug_log', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('tool/debug_log', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
-		$data['clear'] = $this->url->link('tool/debug_log/clear', 'token=' . $this->session->data['token'], 'SSL');
+		$data['clear'] = $this->url->link('tool/debug_log/clear', 'user_token=' . $this->session->data['token'], 'SSL');
 
 		$data['log'] = '';
 
@@ -102,6 +102,6 @@ class ControllerToolDebugLog extends Controller {
 			$this->session->data['success'] = $this->language->get('text_success');
 		}
 
-		$this->response->redirect($this->url->link('tool/debug_log', 'token=' . $this->session->data['token'], 'SSL'));
+		$this->response->redirect($this->url->link('tool/debug_log', 'user_token=' . $this->session->data['token'], 'SSL'));
 	}
 }

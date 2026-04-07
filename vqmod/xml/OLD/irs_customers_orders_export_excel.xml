@@ -19,7 +19,7 @@
     <file path="admin/controller/customer/customer.php"> 
 		<operation>
 			<search position="before"><![CDATA[$data['stores'] = $this->model_setting_store->getStores();]]></search>
-			<add><![CDATA[$data['export'] = $this->url->link('customer/customer/export', 'token=' . $this->session->data['token'] . $url, 'SSL');
+			<add><![CDATA[$data['export'] = $this->url->link('customer/customer/export', 'user_token=' . $this->session->data['token'] . $url, 'SSL');
 			$data['customersordersexportfree_status']=$this->config->get('customersordersexportfree_status');
 				$data['button_export'] = $this->language->get('button_export');]]></add>
 		</operation>        
@@ -323,9 +323,9 @@ $sql = "SELECT c.customer_id, CONCAT(c.firstname, ' ', c.lastname) AS name, c.em
   
     <file path="admin/controller/sale/order.php">
 		<operation>
-			<search position="before"><![CDATA[$data['invoice'] = $this->url->link('sale/order/invoice', 'token=' . $this->session->data['token'], true);]]></search>
+			<search position="before"><![CDATA[$data['invoice'] = $this->url->link('sale/order/invoice', 'user_token=' . $this->session->data['token'], true);]]></search>
 			<add><![CDATA[
-				$data['export'] = $this->url->link('sale/order/export', 'token=' . $this->session->data['token'] . $url, true);
+				$data['export'] = $this->url->link('sale/order/export', 'user_token=' . $this->session->data['token'] . $url, true);
 				$data['customersordersexportfree_status']=$this->config->get('customersordersexportfree_status');
 				$data['button_export'] = $this->language->get('button_export');
 			]]></add>

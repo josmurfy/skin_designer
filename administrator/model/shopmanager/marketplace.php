@@ -488,9 +488,6 @@ public function editProductMarketplace($data = []) {
 		AND `marketplace_id` = '" . (int)$data['marketplace_id'] . "'
 	");
 
-	if ($this->db->countAffected() === 0) {
-		$this->addProductMarketplace($data);
-	}
 }
 
 public function getProductMarketplaceRow($marketplace_item_id) {
@@ -573,7 +570,7 @@ public function addToMarketplace($product_id, $marketplace_account_id=null, $mar
 		unset($product['marketplace_accounts_id']);
 		//print("<pre>" . print_r($marketplace_name, true) . "</pre>");
 		$result = $this->{"model_shopmanager_" .
-			strtolower($marketplace_name)}->add($product,$quantity,$site_setting,$marketplace_account_id);
+			strtolower($marketplace_name)}->addListing($product,$quantity,$site_setting,$marketplace_account_id);
 		
 		$result['quantity_listed'] = $quantity;
 		$result['quantity_sold'] = 0;
@@ -652,7 +649,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 //print("<pre>" . print_r($site_setting, true) . "</pre>");
 	$quantity = $product['quantity']+$product['unallocated_quantity'];
 	unset($product['marketplace_accounts_id']);
-	$result = $this->model_shopmanager_ebay->edit($product,$quantity,$site_setting,$marketplace_accounts);
+$result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_setting,$marketplace_accounts);
 
 	
 	$result['quantity_listed'] = $quantity;
@@ -1028,6 +1025,25 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	}
 
 	/**
+	 * Update marketplace record with data fetched from GetItem (Not Imported flow).
+	 * Only touches category_id, condition_id, specifics, ebay_image_count, last_import.
+	 * Price/quantity/status are left untouched.
+	 */
+	public function updateFromGetItem($product_id, $category_id, $condition_id, $specifics, $image_count) {
+		$category_sql  = $category_id  ? (int)$category_id  : 'NULL';
+		$condition_sql = $condition_id ? (int)$condition_id : 'NULL';
+		$specifics_sql = $specifics    ? "'" . $this->db->escape($specifics) . "'" : 'NULL';
+		$this->db->query("UPDATE " . DB_PREFIX . "product_marketplace
+						  SET category_id = " . $category_sql . ",
+						      condition_id = " . $condition_sql . ",
+						      specifics = " . $specifics_sql . ",
+						      ebay_image_count = " . (int)$image_count . ",
+						      last_import = NOW(),
+						      date_modified = NOW()
+						  WHERE product_id = " . (int)$product_id . " AND marketplace_id = 1");
+	}
+
+	/**
 	 * Update marketplace price
 	 */
 	public function updateMarketplacePrice($product_id, $price) {
@@ -1157,6 +1173,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	 * @return void
 	 */
 	public function updateMarketplaceListings(int $product_id): void {
+		$this->log->write('[updateMarketplaceListings] START product_id=' . $product_id);
 		try {
 			// Get all active marketplace listings with account settings
 			$query = $this->db->query("
@@ -1175,6 +1192,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 			");
 			
 			$marketplace_items = $query->rows;
+			$this->log->write('[updateMarketplaceListings] items found=' . count($marketplace_items));
 			
 			if (!empty($marketplace_items)) {
 				// Load required models
@@ -1188,6 +1206,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 				foreach ($marketplace_items as $item) {
 					// Only update eBay listings (marketplace_id = 1 for eBay)
 					if ($item['marketplace_id'] == 1 && !empty($item['marketplace_item_id'])) {
+						$this->log->write('[updateMarketplaceListings] calling edit() for item_id=' . $item['marketplace_item_id']);
 						try {
 							// Decode site_setting JSON
 							$site_setting = json_decode($item['site_setting'] ?? '[]', true);
@@ -1206,26 +1225,21 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 							$quantity = ($product['quantity'] ?? 0) + ($product['unallocated_quantity'] ?? 0);
 							
 							// Call eBay edit function with proper parameters
-							$this->model_shopmanager_ebay->edit(
+							$this->model_shopmanager_ebay->editListing(
 								$product,
 								$quantity,
 								$site_setting,
 								$marketplace_accounts
 							);
-							
-							//$this->log->write('eBay listing updated successfully for product_id: ' . $product_id . ', item_id: ' . $item['marketplace_item_id']);
-						} catch (\Exception $e) {
-							// Log error but don't fail the save
-							$this->log->write('Error updating eBay listing for product_id: ' . $product_id . ' - ' . $e->getMessage());
-							error_log('[ShopManager][updateMarketplaceListings][item] product_id=' . (int)$product_id . ', marketplace_item_id=' . (string)($item['marketplace_item_id'] ?? '') . ', account_id=' . (int)($item['marketplace_account_id'] ?? 0) . ', error=' . $e->getMessage());
+							$this->log->write('[updateMarketplaceListings] editListing() completed for item_id=' . $item['marketplace_item_id']);
+						} catch (\Throwable $e) {
+							$this->log->write('[updateMarketplaceListings] ERROR product_id=' . $product_id . ' - ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 						}
 					}
 				}
 			}
-		} catch (\Exception $e) {
-			// Log error but don't fail the product save
-			$this->log->write('Error in updateMarketplaceListings: ' . $e->getMessage());
-			error_log('[ShopManager][updateMarketplaceListings][fatal] product_id=' . (int)$product_id . ', error=' . $e->getMessage());
+		} catch (\Throwable $e) {
+			$this->log->write('[updateMarketplaceListings] FATAL product_id=' . $product_id . ' - ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
 		}
 	}
 
@@ -1241,6 +1255,14 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 
 	public function setToUpdate(int $product_id, int $marketplace_id = 1): void {
 		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `to_update` = 1 WHERE `product_id` = '" . (int)$product_id . "' AND `marketplace_id` = '" . (int)$marketplace_id . "'");
+	}
+
+	/**
+	 * Mark a product_marketplace row as error (to_update=9) with an error message.
+	 * Used when the server-side response was corrupted but we know the update failed.
+	 */
+	public function setMarketplaceError(int $product_id, string $error, int $marketplace_id = 1): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "product_marketplace` SET `error` = '" . $this->db->escape($error) . "', `to_update` = 9 WHERE `product_id` = '" . (int)$product_id . "' AND `marketplace_id` = '" . (int)$marketplace_id . "'");
 	}
 
 	public function clearMarketplaceCategory(int $product_id, int $marketplace_id = 1): void {

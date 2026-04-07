@@ -385,7 +385,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 						
 						if($category_leaf ==1){
 						//print("<pre>".print_r ('getform:2631',true )."</pre>");
-							$this->response->redirect($this->url->link('shopmanager/catalog/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
+							$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
 						}else{
 							$this->error['category']= ($lang['error_category_not_leaf'] ?? '');
 						}
@@ -536,7 +536,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 		if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-			$this->response->redirect($this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
+			$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
 		}
 
 		if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -1247,7 +1247,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			$data['action'] = $this->url->link('shopmanager/catalog/product/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
 		
 		} else {
-			$data['action'] = $this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
+			$data['action'] = $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
 			$data['upload_images_action'] = $this->url->link('shopmanager/tools/uploadImagesFiles', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
 
 		}
@@ -1527,7 +1527,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					'product_id' => $existing_product['product_id'],
 					'condition_id' => $existing_product['condition_id'],
 					'upc' => $existing_product['upc'],
-					'url' => $existing_product['has_specifics'] ? $this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $existing_product['product_id'] . $url, true) : $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . '&upc='.$existing_product['upc'].'&product_id=' . $existing_product['product_id']. '&condition_id=' . $existing_product['condition_id'] . $url, true)
+					'url' => $existing_product['has_specifics'] ? $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $existing_product['product_id'] . $url, true) : $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . '&upc='.$existing_product['upc'].'&product_id=' . $existing_product['product_id']. '&condition_id=' . $existing_product['condition_id'] . $url, true)
 				);
 			}
 		//	//print("<pre>".print_r ($data['existing_products'],true )."</pre>");
@@ -1738,7 +1738,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 				
 				if($category_leaf ==1){
 				//	//print("<pre>".print_r ('getform:2631',true )."</pre>");
-					$this->response->redirect($this->url->link('shopmanager/catalog/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
+					$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
 				}else{
 					$this->error['category']= ($lang['error_category_not_leaf'] ?? '');
 				}
@@ -1759,7 +1759,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		}elseif(!is_array($category_specific_info[1]['specifics'])){
 			//print("<pre>".print_r ('getform:2652',true )."</pre>");
-			$this->response->redirect($this->url->link('shopmanager/catalog/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
+			$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
 		}
 
 		
@@ -1792,7 +1792,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					}
 				}else{
 				//	//print("<pre>".print_r ('getform:2683',true )."</pre>");
-					//$this->response->redirect($this->url->link('shopmanager/catalog/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
+					//$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
 				}
 		
 				
@@ -2305,7 +2305,7 @@ error_reporting(E_ALL);
 		$url .= '&updated=yes';
 		unset($this->request->post);
 		$this->session->data['success'] = ($lang['text_success'] ?? '');
-		$this->response->redirect($this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . $url, true));
+		$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . $url, true));
 	}
 
 	$this->getForm();
@@ -2723,7 +2723,7 @@ public function generateProductSpecifics() {
                                 }
                             }else{
                                 //print("<pre>".print_r ('generate specific:3251',true )."</pre>");
-                            //	$this->response->redirect($this->url->link('shopmanager/catalog/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $category_id. '&product_id='.$product_id, true));
+                            //	$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $category_id. '&product_id='.$product_id, true));
                             }
                     
                             
@@ -3112,7 +3112,7 @@ public function process_search_field_fast_list($data) {
 		//	//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 		if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-			$this->response->redirect($this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
+			$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
 		}
 
 		if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -3924,7 +3924,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 		//	//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 		if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-			$this->response->redirect($this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
+			$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
 		}
 
 		if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -4540,7 +4540,7 @@ public function getSearchData() {
 				'total_specifics_count' => $result['total_specifics_count'],
 				'status' => $result['status'] ? ($lang['text_enabled'] ?? '') : ($lang['text_disabled'] ?? ''),
 				'edit' => $this->url->link(
-					'shopmanager/catalog/product/edit', 
+					'shopmanager/catalog/product.form', 
 					'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'] . 
 					($result['upc'] == '' || $result['has_specifics'] ? '' : '&product_search=true'), 
 					true

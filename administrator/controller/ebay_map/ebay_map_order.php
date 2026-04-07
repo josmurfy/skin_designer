@@ -112,8 +112,8 @@ class ControllerEbayMapEbayMapOrder extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['export_to_ebay'] = $this->url->link('ebay_map/ebay_map_order/edit', 'token=' . $this->session->data['token'] . $url, true);
-		$data['delete'] = $this->url->link('ebay_map/ebay_map_order/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['export_to_ebay'] = $this->url->link('ebay_map/ebay_map_order/edit', 'user_token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('ebay_map/ebay_map_order/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 
 		$data['map_orders'] = array();
@@ -194,7 +194,7 @@ class ControllerEbayMapEbayMapOrder extends Controller {
 
 		if (isset($this->request->get['account_id'])) {
 			$url .= '&account_id=' . $this->request->get['account_id'];
-			$data['clear_order_filter'] 	= $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] .'&account_id=' . $this->request->get['account_id']. '&status=account_order_map', true);
+			$data['clear_order_filter'] 	= $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] .'&account_id=' . $this->request->get['account_id']. '&status=account_order_map', true);
 		}
 
 		if ($order == 'ASC') {
@@ -207,9 +207,9 @@ class ControllerEbayMapEbayMapOrder extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_oc_cat_name'] = $this->url->link('ebay_map/ebay_map_order', 'token=' . $this->session->data['token'] . '&sort=name' . $url, true);
-		$data['sort_ebay_category_id'] = $this->url->link('ebay_map/ebay_map_order', 'token=' . $this->session->data['token'] . '&sort=sort_order' . $url, true);
-		$data['sort_ebay_category_name'] = $this->url->link('ebay_map/ebay_map_order', 'token=' . $this->session->data['token'] . '&sort=name' . $url, true);
+		$data['sort_oc_cat_name'] = $this->url->link('ebay_map/ebay_map_order', 'user_token=' . $this->session->data['token'] . '&sort=name' . $url, true);
+		$data['sort_ebay_category_id'] = $this->url->link('ebay_map/ebay_map_order', 'user_token=' . $this->session->data['token'] . '&sort=sort_order' . $url, true);
+		$data['sort_ebay_category_name'] = $this->url->link('ebay_map/ebay_map_order', 'user_token=' . $this->session->data['token'] . '&sort=name' . $url, true);
 
 		$url = '';
 
@@ -248,16 +248,16 @@ class ControllerEbayMapEbayMapOrder extends Controller {
 		}
 
 		if(isset($this->request->get['account_id'])){
-			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&status=account_order_map&account_id=' .$this->request->get['account_id'] , true));
+			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&status=account_order_map&account_id=' .$this->request->get['account_id'] , true));
 		}else{
-			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'], true));
+			$data['redirect'] 	= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'], true));
 		}
 
 		$pagination = new Pagination();
 		$pagination->total = $order_mapped;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -403,7 +403,7 @@ class ControllerEbayMapEbayMapOrder extends Controller {
 													$product_string = implode(',', $value);
 													$json['step'][] = array(
 														'text' 							=> sprintf($this->language->get('text_sync_process_order'),$count),
-														'url'  							=> str_replace('&amp;', '&', $this->url->link('ebay_map/ebay_map_order/start_syncronize', 'token=' . $this->session->data['token'].'&account_id='.$this->request->get['account_id'], true)),
+														'url'  							=> str_replace('&amp;', '&', $this->url->link('ebay_map/ebay_map_order/start_syncronize', 'user_token=' . $this->session->data['token'].'&account_id='.$this->request->get['account_id'], true)),
 														'process_data' 			=> $product_string,
 														'page_no' 					=> $pagenumber,
 														'order_count'				=> $count,
@@ -559,7 +559,7 @@ class ControllerEbayMapEbayMapOrder extends Controller {
 			if($result)
 				$json['success']				= $this->language->get('text_success_order_delete');
 				$this->session->data['success'] = $this->language->get('text_success_order_delete');
-				$json['redirect'] 				= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'token=' . $this->session->data['token'] . '&status=account_order_map&account_id=' .$this->request->get['account_id'] , true));
+				$json['redirect'] 				= html_entity_decode($this->url->link('ebay_map/ebay_account/edit', 'user_token=' . $this->session->data['token'] . '&status=account_order_map&account_id=' .$this->request->get['account_id'] , true));
 		}
 		if(isset($this->error['warning'])){
 			$json['error_permission']	=	$this->language->get('error_permission');

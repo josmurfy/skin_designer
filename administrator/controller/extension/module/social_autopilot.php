@@ -56,7 +56,7 @@ class ControllerExtensionModuleSocialAutoPilot extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true));
 		}
 
 		$data['heading_title'] = $this->language->get('heading_title') . ' ' . $this->version;
@@ -155,23 +155,23 @@ class ControllerExtensionModuleSocialAutoPilot extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text'      => $this->language->get('text_home'),
-			'href'      => $this->url->link('common/home', 'token=' . $this->session->data['token'], true)
+			'href'      => $this->url->link('common/home', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text'      => $this->language->get('text_extension'),
-			'href'      => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true)
+			'href'      => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text'      => $this->language->get('heading_title'),
-			'href'      => $this->url->link('extension/module/social_autopilot', 'token=' . $this->session->data['token'], true)
+			'href'      => $this->url->link('extension/module/social_autopilot', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		// Actions
-		$data['action'] = $this->url->link('extension/module/social_autopilot', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/module/social_autopilot', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=module', true);
 
 		// Extension settings
 		if (isset($this->request->post['social_autopilot_status'])) {
@@ -278,31 +278,31 @@ class ControllerExtensionModuleSocialAutoPilot extends Controller {
 		if ($this->user->hasPermission('access', 'extension/module/social_autopilot')) {
 			$menu[] = array(
 				'name'	   => $this->language->get('menu_setting'),
-				'href'     => $this->url->link('extension/module/social_autopilot', 'token=' . $this->session->data['token'], true),
+				'href'     => $this->url->link('extension/module/social_autopilot', 'user_token=' . $this->session->data['token'], true),
 				'children' => array()
 			);
 
 			$menu[] = array(
 				'name'	  => $this->language->get('menu_channel'),
-				'href'     => $this->url->link('social_autopilot/channel_permission', 'token=' . $this->session->data['token'], true),
+				'href'     => $this->url->link('social_autopilot/channel_permission', 'user_token=' . $this->session->data['token'], true),
 				'children' => array()
 			);
 
 			$menu[] = array(
 				'name'	  => $this->language->get('menu_template'),
-				'href'     => $this->url->link('social_autopilot/template', 'token=' . $this->session->data['token'], true),
+				'href'     => $this->url->link('social_autopilot/template', 'user_token=' . $this->session->data['token'], true),
 				'children' => array()
 			);
 
 			$menu[] = array(
 				'name'	  => $this->language->get('menu_scheduled_post'),
-				'href'     => $this->url->link('social_autopilot/scheduled_post', 'token=' . $this->session->data['token'], true),
+				'href'     => $this->url->link('social_autopilot/scheduled_post', 'user_token=' . $this->session->data['token'], true),
 				'children' => array()
 			);
 
 			$menu[] = array(
 				'name'	  => $this->language->get('menu_task'),
-				'href'     => $this->url->link('social_autopilot/task', 'token=' . $this->session->data['token'], true),
+				'href'     => $this->url->link('social_autopilot/task', 'user_token=' . $this->session->data['token'], true),
 				'children' => array()
 			);
 

@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8"?>
+<modification>
+    <name>Debug Logger — PhoenixLiquidation</name>
+    <code>debug_logger</code>
+    <version>1.0.0</version>
+    <author>PhoenixLiquidation</author>
+    <link></link>
+
+    <!--
+    =====================================================================
+    PARTIE 1 — Controller : ajout de debugSave() et debugView()
+    Route save : index.php?route=common/header.debugSave&user_token=...
+    Route view : index.php?route=common/header.debugView&user_token=...
+    =====================================================================
+    -->
+    <file path="admin/controller/common/header.php">
+        <operation>
+            <search><![CDATA[
+		return $this->load->view('common/header', $data);
+	}
+            ]]></search>
+            <add position="after"><![CDATA[
+
+	// ===================================================================
+	// DEBUG LOGGER v1.0 — OCMOD: debug_logger
+	// ===================================================================
+
+	/**
+	 * debugSave — enregistre un rapport de bug
+	 * POST index.php?route=common/header.debugSave&user_token=...
+	 */
+	public function debugSave(): void {
+		$this->response->addHeader('Content-Type: application/json');
+
+		// Vérification sécurité token
+		if (
+			!isset($this->request->get['user_token'])
+			|| !isset($this->session->data['user_token'])
+			|| $this->request->get['user_token'] !== $this->session->data['user_token']
+		) {
+			$this->response->setOutput(json_encode(['error' => 'Unauthorized']));
+			return;
+		}
+
+		// Auto-création de la table si elle n'existe pas
+		$this->db->query("
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "debug_report` (
+				`id`          INT(11)       NOT NULL AUTO_INCREMENT,
+				`url`         TEXT          NOT NULL,
+				`console_log` MEDIUMTEXT    DEFAULT NULL,
+				`comment`     TEXT          DEFAULT NULL,
+				`admin_user`  VARCHAR(255)  DEFAULT '',
+				`severity`    VARCHAR(20)   DEFAULT 'bug',
+				`status`      TINYINT(1)    DEFAULT 0,
+				`date_added`  DATETIME      NOT NULL,
+				PRIMARY KEY (`id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+		");
+
+		$url         = isset($this->request->post['url'])
+			? $this->db->escape(substr($this->request->post['url'], 0, 2048))
+			: '';
+		$console_log = isset($this->request->post['console_log'])
+			? $this->db->escape(substr($this->request->post['console_log'], 0, 65535))
+			: '';
+		$comment     = isset($this->request->post['comment'])
+			? $this->db->escape(substr($this->request->post['comment'], 0, 4096))
+			: '';
+		$severity    = in_array($this->request->post['severity'] ?? 'bug', ['bug', 'warning', 'info'])
+			? $this->request->post['severity']
+			: 'bug';
+		$admin_user  = $this->user->isLogged()
+			? $this->db->escape($this->user->getUserName())
+			: '';
+
+		$this->db->query("
+			INSERT INTO `" . DB_PREFIX . "debug_report` SET
+				`url`         = '" . $url . "',
+				`console_log` = '" . $console_log . "',
+				`comment`     = '" . $comment . "',
+				`admin_user`  = '" . $admin_user . "',
+				`severity`    = '" . $severity . "',
+				`date_added`  = NOW()
+		");
+
+		$this->response->setOutput(json_encode([
+			'success' => true,
+			'id'      => $this->db->getLastId()
+		]));
+	}
+
+	/**
+	 * debugView — liste des rapports de bug (page HTML autonome)
+	 * GET index.php?route=common/header.debugView&user_token=...
+	 */
+	public function debugView(): void {
+		// Vérification sécurité token
+		if (
+			!isset($this->request->get['user_token'])
+			|| !isset($this->session->data['user_token'])
+			|| $this->request->get['user_token'] !== $this->session->data['user_token']
+		) {
+			$this->response->redirect($this->url->link('common/login'));
+			return;
+		}
+
+		// Auto-création de la table si elle n'existe pas
+		$this->db->query("
+			CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "debug_report` (
+				`id`          INT(11)       NOT NULL AUTO_INCREMENT,
+				`url`         TEXT          NOT NULL,
+				`console_log` MEDIUMTEXT    DEFAULT NULL,
+				`comment`     TEXT          DEFAULT NULL,
+				`admin_user`  VARCHAR(255)  DEFAULT '',
+				`severity`    VARCHAR(20)   DEFAULT 'bug',
+				`status`      TINYINT(1)    DEFAULT 0,
+				`date_added`  DATETIME      NOT NULL,
+				PRIMARY KEY (`id`)
+			) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+		");
+
+		$token = $this->session->data['user_token'];
+
+		// Actions (résoudre / supprimer)
+		if (
+			isset($this->request->get['action'])
+			&& isset($this->request->get['report_id'])
+		) {
+			$report_id = (int)$this->request->get['report_id'];
+			$action    = $this->request->get['action'];
+
+			if ($action === 'resolve') {
+				$this->db->query("UPDATE `" . DB_PREFIX . "debug_report` SET `status` = 1 WHERE `id` = " . $report_id);
+			} elseif ($action === 'reopen') {
+				$this->db->query("UPDATE `" . DB_PREFIX . "debug_report` SET `status` = 0 WHERE `id` = " . $report_id);
+			} elseif ($action === 'delete') {
+				$this->db->query("DELETE FROM `" . DB_PREFIX . "debug_report` WHERE `id` = " . $report_id);
+			} elseif ($action === 'clear_all') {
+				$this->db->query("DELETE FROM `" . DB_PREFIX . "debug_report`");
+			}
+
+			$this->response->redirect($this->url->link('common/header.debugView', 'user_token=' . $token));
+			return;
+		}
+
+		// Filtre statut
+		$filter_status = isset($this->request->get['filter_status'])
+			? (int)$this->request->get['filter_status']
+			: -1;
+		$where = $filter_status >= 0 ? " WHERE `status` = " . $filter_status : '';
+
+		$results = $this->db->query(
+			"SELECT * FROM `" . DB_PREFIX . "debug_report`" . $where . " ORDER BY `id` DESC LIMIT 300"
+		)->rows;
+
+		$total_open   = (int)$this->db->query("SELECT COUNT(*) AS n FROM `" . DB_PREFIX . "debug_report` WHERE `status` = 0")->row['n'];
+		$total_closed = (int)$this->db->query("SELECT COUNT(*) AS n FROM `" . DB_PREFIX . "debug_report` WHERE `status` = 1")->row['n'];
+
+		$sev_icons  = ['bug' => '🐛', 'warning' => '⚠️', 'info' => 'ℹ️'];
+		$sev_colors = ['bug' => '#ef4444', 'warning' => '#f59e0b', 'info' => '#06b6d4'];
+
+		$base = $this->url->link('common/header.debugView', 'user_token=' . $token);
+
+		// ── HTML page ──────────────────────────────────────────────────
+		$h = '<!DOCTYPE html><html lang="fr"><head>';
+		$h .= '<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+		$h .= '<title>🐛 Debug Reports — PhoenixLiquidation</title>';
+		$h .= '<link rel="stylesheet" href="view/stylesheet/bootstrap.css">';
+		$h .= '<link rel="stylesheet" href="view/stylesheet/fonts/fontawesome/css/all.min.css">';
+		$h .= '<style>...CSS OMITTED FOR BREVITY...</style></head><body>';
+
+		$h .= '<div class="page-header"><span style="font-size:2rem;">🐛</span><h1>Debug Reports</h1></div>';
+		$h .= '<a href="javascript:history.back()" class="back-link"><i class="fa-solid fa-arrow-left"></i>&nbsp; Retour au panneau admin</a>';
+
+		// Filtre bar
+		$h .= '<div class="filter-bar">';
+		$h .= '<a href="' . htmlspecialchars($base) . '" class="filter-btn' . ($filter_status < 0 ? ' active' : '') . '">Tous (' . ($total_open + $total_closed) . ')</a>';
+		$h .= '<a href="' . htmlspecialchars($base . '&filter_status=0') . '" class="filter-btn' . ($filter_status === 0 ? ' active' : '') . '">⏳ Ouverts (' . $total_open . ')</a>';
+		$h .= '<a href="' . htmlspecialchars($base . '&filter_status=1') . '" class="filter-btn' . ($filter_status === 1 ? ' active' : '') . '">✓ Résolus (' . $total_closed . ')</a>';
+		$h .= '<span class="stats">Affichage : ' . count($results) . ' rapport(s)</span>';
+		if ($total_open + $total_closed > 0) {
+			$h .= '<a href="' . htmlspecialchars($base . '&action=clear_all&report_id=0') . '" class="clear-all" onclick="return confirm(\'Supprimer TOUS les rapports ?\')">🗑 Tout supprimer</a>';
+		}
+		$h .= '</div>';
+
+		if (empty($results)) {
+			$h .= '<div class="empty">Aucun rapport trouvé. 🎉</div>';
+		} else {
+			foreach ($results as $row) {
+				$sev   = htmlspecialchars($row['severity']);
+				$color = $sev_colors[$row['severity']] ?? '#6b7280';
+				$icon  = $sev_icons[$row['severity']] ?? '•';
+				$res   = $row['status'] == 1;
+
+				$h .= '<div class="card-r' . ($res ? ' resolved' : '') . '">';
+
+				// Meta row
+				$h .= '<div class="meta">';
+				$h .= '<span style="color:var(--muted);font-size:.75rem;">#' . (int)$row['id'] . '</span>';
+				$h .= '<span class="badge" style="background:' . $color . '">' . $icon . ' ' . $sev . '</span>';
+				$h .= $res
+					? '<span class="badge" style="background:#16a34a;">✓ Résolu</span>'
+					: '<span class="badge" style="background:#374151;">⏳ Ouvert</span>';
+				$h .= '<span style="color:var(--muted);font-size:.75rem;margin-left:auto;">';
+				$h .= htmlspecialchars($row['date_added']);
+				if ($row['admin_user']) {
+					$h .= ' — <strong style="color:#e2e8f0;">' . htmlspecialchars($row['admin_user']) . '</strong>';
+				}
+				$h .= '</span></div>';
+
+				// URL
+				$h .= '<div class="url"><i class="fa-solid fa-link" style="font-size:.7rem;"></i>&nbsp;';
+				$h .= htmlspecialchars($row['url']) . '</div>';
+
+				// Comment
+				if (trim($row['comment'])) {
+					$h .= '<div class="comment">' . nl2br(htmlspecialchars($row['comment'])) . '</div>';
+				}
+
+				// Console log
+				if (trim($row['console_log'])) {
+					$h .= '<div class="console-wrap">';
+					$h .= '<div class="console-label">Erreurs console :</div>';
+					$h .= '<pre class="console-pre">' . htmlspecialchars($row['console_log']) . '</pre>';
+					$h .= '</div>';
+				}
+
+				// Actions
+				$h .= '<div class="actions">';
+				if (!$res) {
+					$h .= '<a href="' . htmlspecialchars($base . '&action=resolve&report_id=' . (int)$row['id']) . '" class="btn-a btn-resolve">✓ Résoudre</a>';
+				} else {
+					$h .= '<a href="' . htmlspecialchars($base . '&action=reopen&report_id=' . (int)$row['id']) . '" class="btn-a btn-reopen">↩ Réouvrir</a>';
+				}
+				$h .= '<a href="' . htmlspecialchars($base . '&action=delete&report_id=' . (int)$row['id']) . '" class="btn-a btn-delete" onclick="return confirm(\'Supprimer ce rapport ?\')">✕ Supprimer</a>';
+				$h .= '</div>';
+
+				$h .= '</div>'; // .card-r
+			}
+		}
+
+		$h .= '</body></html>';
+
+		$this->response->setOutput($h);
+	}
+]]></add>
+        </operation>
+    </file>
+
+    <!--
+    =====================================================================
+    PARTIE 2 — Header Twig : bouton 🐛 dans la navbar
+    Injecteur avant <li id="nav-logout"> (déjà dans {% if logged %})
+    =====================================================================
+    -->
+    <file path="admin/view/template/common/header.twig">
+        <operation>
+            <search><![CDATA[
+          <li id="nav-logout" class="nav-item"><a href="{{ logout }}" class="nav-link"><i class="fa-solid fa-sign-out"></i> <span class="d-none d-md-inline">{{ text_logout }}</span></a></li>
+        </ul>
+      {% endif %}
+    </div>
+  </header>]]></search>
+    <add position="before"><![CDATA[
+          <li id="nav-debug" class="nav-item">
+            <a href="#" id="btn-debug-logger" class="nav-link" title="Signaler un problème" style="color: #fff; background-color: #f59e0b; border-radius: 4px; padding: 5px 10px; display: inline-flex; align-items: center;">
+              <i class="fa-solid fa-bug" style="color: #fff; margin-right: 5px;"></i> Debug
+            </a>
+          </li>
+]]></add>
+        </operation>
+
+        <!--
+        =====================================================================
+        PARTIE 3 — Modal + CSS + JS injectés après </header>
+        =====================================================================
+        -->
+        <operation>
+            <search><![CDATA[
+  </header>]]></search>
+            <add position="after"><![CDATA[
+
+{% if logged %}
+<!-- ============================================================
+     DEBUG LOGGER v1.0 — OCMOD debug_logger (PhoenixLiquidation)
+     ============================================================ -->
+<style>
+/* ...CSS OMITTED FOR BREVITY... */
+</style>
+
+<!-- ...HTML & JS OMITTED FOR BREVITY... -->
+{% endif %}
+]]></add>
+        </operation>
+    </file>
+
+</modification>

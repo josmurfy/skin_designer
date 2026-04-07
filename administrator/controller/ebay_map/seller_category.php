@@ -53,21 +53,21 @@ class ControllerEbayMapSellerCategory extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-    $data['action'] = $this->url->link('ebay_map/seller_category/exportToEbay', 'token=' . $this->session->data['token'], true);
+    $data['action'] = $this->url->link('ebay_map/seller_category/exportToEbay', 'user_token=' . $this->session->data['token'], true);
 
     if (isset($this->request->get['id'])) {
-      $data['action'] = $this->url->link('ebay_map/seller_category/exportToEbay', 'token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'], true);
+      $data['action'] = $this->url->link('ebay_map/seller_category/exportToEbay', 'user_token=' . $this->session->data['token'] . '&id=' . $this->request->get['id'], true);
     }
 
-    $data['cancel'] = $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'], true);
+    $data['cancel'] = $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'], true);
 
     $errorr_arr = array(
       'warning',
@@ -177,12 +177,12 @@ class ControllerEbayMapSellerCategory extends Controller {
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('text_home'),
-      'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+      'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
     );
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('heading_title'),
-      'href' => $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'] . $url, true)
+      'href' => $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'] . $url, true)
     );
 
     $data['token'] = $this->session->data['token'];
@@ -321,9 +321,9 @@ class ControllerEbayMapSellerCategory extends Controller {
       $url .= '&page=' . $this->request->get['page'];
     }
 
-    $data['sort_category_name'] = $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'] . $url . '&sort=ebay_category_name', true);
-    $data['sort_category_id'] = $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'] . $url . '&sort=wec.ebay_category_id', true);
-    $data['sort_category_level'] = $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'] . $url . '&sort=ebay_category_level', true);
+    $data['sort_category_name'] = $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'] . $url . '&sort=ebay_category_name', true);
+    $data['sort_category_id'] = $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'] . $url . '&sort=wec.ebay_category_id', true);
+    $data['sort_category_level'] = $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'] . $url . '&sort=ebay_category_level', true);
 
     $url = '';
 
@@ -359,7 +359,7 @@ class ControllerEbayMapSellerCategory extends Controller {
 		$pagination->total = $total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/seller_category', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/seller_category', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

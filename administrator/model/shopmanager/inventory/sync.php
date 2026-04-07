@@ -400,8 +400,8 @@ class Sync extends \Opencart\System\Engine\Model {
      *
      * @return array
      */
-    public function getProductsNotSynced(): array {
-        $query = $this->db->query("
+    public function getProductsNotSynced(array $data = []): array {
+        $sql = "
             SELECT 
                 p.product_id,
                 p.sku,
@@ -423,9 +423,31 @@ class Sync extends \Opencart\System\Engine\Model {
             AND (pm.last_import IS NULL OR pm.last_import < DATE_SUB(NOW(), INTERVAL 7 DAY))
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             ORDER BY pm.last_sync ASC
-        ");
+        ";
 
-        return $query->rows;
+        if (isset($data['start']) && isset($data['limit'])) {
+            $sql .= " LIMIT " . (int)$data['start'] . ", " . (int)$data['limit'];
+        }
+
+        return $this->db->query($sql)->rows;
+    }
+
+    public function getTotalNotSynced(): int {
+        $query = $this->db->query("
+            SELECT COUNT(DISTINCT p.product_id) as total
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+            WHERE p.quantity > 0
+            AND p.status = 1
+            AND pm.marketplace_id = 1
+            AND pm.status = 1
+            AND pm.marketplace_item_id IS NOT NULL
+            AND pm.marketplace_item_id != ''
+            AND (pm.last_sync IS NULL OR pm.last_sync < DATE_SUB(NOW(), INTERVAL 7 DAY))
+            AND (pm.last_import IS NULL OR pm.last_import < DATE_SUB(NOW(), INTERVAL 7 DAY))
+        ");
+        return (int)$query->row['total'];
     }
 
     /**
@@ -471,6 +493,122 @@ class Sync extends \Opencart\System\Engine\Model {
     }
 
     /**
+     * Get count of products listed on eBay but never imported (last_import is null/empty)
+     */
+    public function getTotalNotImported(): int {
+        $query = $this->db->query("
+            SELECT COUNT(DISTINCT pm.product_id) as total
+            FROM " . DB_PREFIX . "product_marketplace pm
+            INNER JOIN " . DB_PREFIX . "product p ON p.product_id = pm.product_id
+            WHERE pm.marketplace_id = 1
+            AND pm.marketplace_item_id IS NOT NULL
+            AND pm.marketplace_item_id != ''
+            AND pm.marketplace_item_id != '0'
+            AND (pm.last_import IS NULL OR pm.last_import = '0000-00-00 00:00:00')
+        ");
+        return (int)$query->row['total'];
+    }
+
+    /**
+     * Get count of products with to_update = 1 (local changes pending push to eBay)
+     */
+    public function getTotalToUpdate(): int {
+        $query = $this->db->query("
+            SELECT COUNT(DISTINCT pm.product_id) as total
+            FROM " . DB_PREFIX . "product_marketplace pm
+            WHERE pm.marketplace_id = 1
+            AND pm.to_update = 1
+        ");
+        return (int)$query->row['total'];
+    }
+
+    /**
+     * Get products listed on eBay but never imported (last_import NULL or 0000-00-00)
+     */
+    public function getNotImported(array $data = []): array {
+        $sql = "
+            SELECT
+                p.product_id,
+                p.sku,
+                p.upc,
+                p.location,
+                pd.name,
+                pm.marketplace_item_id,
+                pm.marketplace_account_id
+            FROM " . DB_PREFIX . "product_marketplace pm
+            INNER JOIN " . DB_PREFIX . "product p ON p.product_id = pm.product_id
+            INNER JOIN " . DB_PREFIX . "product_description pd ON pd.product_id = p.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
+            WHERE pm.marketplace_id = 1
+            AND pm.marketplace_item_id IS NOT NULL
+            AND pm.marketplace_item_id != ''
+            AND pm.marketplace_item_id != '0'
+            AND (pm.last_import IS NULL OR pm.last_import = '0000-00-00 00:00:00')
+        ";
+
+        $sort  = $data['sort']  ?? 'product_id';
+        $order = $data['order'] ?? 'ASC';
+        $allowed_sorts = ['product_id', 'name', 'location'];
+        if (!in_array($sort, $allowed_sorts)) $sort = 'product_id';
+        if ($order != 'ASC' && $order != 'DESC') $order = 'ASC';
+
+        if ($sort == 'name') {
+            $sql .= " ORDER BY pd.name " . $order;
+        } elseif ($sort == 'location') {
+            $sql .= " ORDER BY p.location " . $order;
+        } else {
+            $sql .= " ORDER BY p.product_id " . $order;
+        }
+
+        if (isset($data['start']) && isset($data['limit'])) {
+            $sql .= " LIMIT " . (int)$data['start'] . ", " . (int)$data['limit'];
+        }
+
+        return $this->db->query($sql)->rows;
+    }
+
+    /**
+     * Get products with to_update = 1 pending push to eBay
+     */
+    public function getToUpdate(array $data = []): array {
+        $sql = "
+            SELECT
+                p.product_id,
+                p.sku,
+                p.upc,
+                p.location,
+                pd.name,
+                pm.marketplace_item_id,
+                pm.marketplace_account_id,
+                pm.last_sync
+            FROM " . DB_PREFIX . "product_marketplace pm
+            INNER JOIN " . DB_PREFIX . "product p ON p.product_id = pm.product_id
+            INNER JOIN " . DB_PREFIX . "product_description pd ON pd.product_id = p.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
+            WHERE pm.marketplace_id = 1
+            AND pm.to_update = 1
+        ";
+
+        $sort  = $data['sort']  ?? 'product_id';
+        $order = $data['order'] ?? 'ASC';
+        $allowed_sorts = ['product_id', 'name', 'location'];
+        if (!in_array($sort, $allowed_sorts)) $sort = 'product_id';
+        if ($order != 'ASC' && $order != 'DESC') $order = 'ASC';
+
+        if ($sort == 'name') {
+            $sql .= " ORDER BY pd.name " . $order;
+        } elseif ($sort == 'location') {
+            $sql .= " ORDER BY p.location " . $order;
+        } else {
+            $sql .= " ORDER BY p.product_id " . $order;
+        }
+
+        if (isset($data['start']) && isset($data['limit'])) {
+            $sql .= " LIMIT " . (int)$data['start'] . ", " . (int)$data['limit'];
+        }
+
+        return $this->db->query($sql)->rows;
+    }
+
+    /**
      * Get Products with Quantity Mismatch
      * Compare eBay quantity_listed vs (product.quantity + product.unallocated_quantity)
      *
@@ -499,7 +637,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND (pm.quantity_listed - pm.quantity_sold) != (p.quantity + p.unallocated_quantity)
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
         ";
@@ -591,7 +730,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND ABS(p.price - pm.price) > 0.01
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
         ";
@@ -677,7 +817,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (pd.specifics IS NOT NULL AND pm.specifics IS NOT NULL AND pd.specifics != pm.specifics)
@@ -1161,7 +1302,8 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND ABS(p.price - pm.price) > 0.01
         ");
         
@@ -1179,7 +1321,8 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND (pm.quantity_listed - pm.quantity_sold) != (p.quantity + p.unallocated_quantity)
         ");
         
@@ -1198,7 +1341,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (pd.specifics IS NOT NULL AND pm.specifics IS NOT NULL AND pd.specifics != pm.specifics)
@@ -1230,7 +1374,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             AND (
                 (p.condition_id IS NOT NULL AND pm.condition_id IS NOT NULL AND p.condition_id != pm.condition_id)
@@ -1281,7 +1426,8 @@ class Sync extends \Opencart\System\Engine\Model {
             FROM " . DB_PREFIX . "product p
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND (
                 (p.condition_id IS NOT NULL AND pm.condition_id IS NOT NULL AND p.condition_id != pm.condition_id)
                 OR (p.condition_id IS NULL AND pm.condition_id IS NOT NULL)
@@ -1351,7 +1497,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             LEFT JOIN " . DB_PREFIX . "category_description ecd ON (pm.category_id = ecd.category_id AND ecd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             GROUP BY p.product_id
             HAVING (
@@ -1393,6 +1540,72 @@ class Sync extends \Opencart\System\Engine\Model {
     }
     
     /**
+     * Return ALL marketplace products with last_import set — no mismatch filter.
+     * Used by the controller to PHP-filter with the full logic (condition 1 + condition 2).
+     */
+    public function getAllCategoryMismatchCandidates(): array {
+        $sql = "
+            SELECT 
+                p.product_id,
+                p.sku,
+                p.upc,
+                p.location,
+                pd.name,
+                COALESCE(
+                    (SELECT pc2.category_id 
+                     FROM " . DB_PREFIX . "product_to_category pc2
+                     LEFT JOIN " . DB_PREFIX . "category c2 ON pc2.category_id = c2.category_id
+                     WHERE pc2.product_id = p.product_id AND c2.leaf = 1
+                     LIMIT 1),
+                    (SELECT pc3.category_id 
+                     FROM " . DB_PREFIX . "product_to_category pc3
+                     WHERE pc3.product_id = p.product_id
+                     LIMIT 1)
+                ) as local_category_id,
+                COALESCE(
+                    (SELECT c2.leaf 
+                     FROM " . DB_PREFIX . "product_to_category pc2
+                     LEFT JOIN " . DB_PREFIX . "category c2 ON pc2.category_id = c2.category_id
+                     WHERE pc2.product_id = p.product_id AND c2.leaf = 1
+                     LIMIT 1),
+                    (SELECT c3.leaf 
+                     FROM " . DB_PREFIX . "product_to_category pc3
+                     LEFT JOIN " . DB_PREFIX . "category c3 ON pc3.category_id = c3.category_id
+                     WHERE pc3.product_id = p.product_id
+                     LIMIT 1)
+                ) as leaf,
+                COALESCE(
+                    (SELECT cd2.name 
+                     FROM " . DB_PREFIX . "product_to_category pc2
+                     LEFT JOIN " . DB_PREFIX . "category c2 ON pc2.category_id = c2.category_id
+                     LEFT JOIN " . DB_PREFIX . "category_description cd2 ON c2.category_id = cd2.category_id AND cd2.language_id = '" . (int)$this->config->get('config_language_id') . "'
+                     WHERE pc2.product_id = p.product_id AND c2.leaf = 1
+                     LIMIT 1),
+                    (SELECT cd3.name 
+                     FROM " . DB_PREFIX . "product_to_category pc3
+                     LEFT JOIN " . DB_PREFIX . "category_description cd3 ON pc3.category_id = cd3.category_id AND cd3.language_id = '" . (int)$this->config->get('config_language_id') . "'
+                     WHERE pc3.product_id = p.product_id
+                     LIMIT 1)
+                ) as local_category_name,
+                pm.marketplace_item_id,
+                pm.category_id as ebay_category_id,
+                ecd.name as ebay_category_name
+            FROM " . DB_PREFIX . "product p
+            INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
+            LEFT JOIN " . DB_PREFIX . "product_to_category pc ON (p.product_id = pc.product_id)
+            INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+            LEFT JOIN " . DB_PREFIX . "category_description ecd ON (pm.category_id = ecd.category_id AND ecd.language_id = '" . (int)$this->config->get('config_language_id') . "')
+            WHERE pm.marketplace_id = 1
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
+            AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
+            GROUP BY p.product_id
+            ORDER BY p.product_id ASC
+        ";
+        return $this->db->query($sql)->rows;
+    }
+
+    /**
      * Get total count of category mismatches
      *
      * @return int
@@ -1401,22 +1614,33 @@ class Sync extends \Opencart\System\Engine\Model {
         $query = $this->db->query("
             SELECT COUNT(*) as total
             FROM (
-                SELECT p.product_id
+                SELECT p.product_id,
+                    COALESCE(
+                        (SELECT pc2.category_id
+                         FROM " . DB_PREFIX . "product_to_category pc2
+                         LEFT JOIN " . DB_PREFIX . "category c2 ON pc2.category_id = c2.category_id
+                         WHERE pc2.product_id = p.product_id AND c2.leaf = 1
+                         LIMIT 1),
+                        (SELECT pc3.category_id
+                         FROM " . DB_PREFIX . "product_to_category pc3
+                         WHERE pc3.product_id = p.product_id
+                         LIMIT 1)
+                    ) as local_category_id,
+                    pm.category_id as ebay_category_id
                 FROM " . DB_PREFIX . "product p
-                LEFT JOIN " . DB_PREFIX . "product_to_category pc ON (p.product_id = pc.product_id)
-                LEFT JOIN " . DB_PREFIX . "category c ON (pc.category_id = c.category_id)
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
-                AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
-                AND (
-                    (pc.category_id IS NOT NULL AND pm.category_id IS NOT NULL AND pc.category_id != pm.category_id)
-                    OR (pc.category_id IS NULL AND pm.category_id IS NOT NULL)
-                    OR (pc.category_id IS NOT NULL AND pm.category_id IS NULL)
-                )
+                AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+                AND (p.quantity + p.unallocated_quantity) >= 0
                 GROUP BY p.product_id
+                HAVING (
+                    (local_category_id IS NOT NULL AND ebay_category_id IS NOT NULL AND local_category_id != ebay_category_id)
+                    OR (local_category_id IS NULL AND ebay_category_id IS NOT NULL)
+                    OR (local_category_id IS NOT NULL AND ebay_category_id IS NULL)
+                )
             ) as subquery
         ");
-        
+
         return (int)$query->row['total'];
     }
 
@@ -1456,7 +1680,8 @@ class Sync extends \Opencart\System\Engine\Model {
             INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
             WHERE pm.marketplace_id = 1
-            AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+            AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+            AND (p.quantity + p.unallocated_quantity) >= 0
             AND pm.ebay_image_count > 0
             HAVING oc_image_count != pm.ebay_image_count
         ";
@@ -1512,7 +1737,8 @@ class Sync extends \Opencart\System\Engine\Model {
                 FROM " . DB_PREFIX . "product p
                 INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
                 WHERE pm.marketplace_id = 1
-                AND (pm.last_sync IS NOT NULL AND pm.last_sync != '0000-00-00 00:00:00')
+                AND (pm.last_import IS NOT NULL AND pm.last_import != '0000-00-00 00:00:00')
+                AND (p.quantity + p.unallocated_quantity) >= 0
                 AND pm.ebay_image_count > 0
                 HAVING oc_image_count != ebay_count
             ) as subquery

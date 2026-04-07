@@ -14,7 +14,7 @@ class ControllerExtensionPaymentPPPro extends Controller {
 
 			$this->session->data['success'] = $this->language->get('text_success');
 
-			$this->response->redirect($this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true));
+			$this->response->redirect($this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true));
 		}
 
 		$data['heading_title'] = $this->language->get('heading_title');
@@ -73,22 +73,22 @@ class ControllerExtensionPaymentPPPro extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_extension'),
-			'href' => $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true)
+			'href' => $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('extension/payment/pp_pro', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('extension/payment/pp_pro', 'user_token=' . $this->session->data['token'], true)
 		);
 
-		$data['action'] = $this->url->link('extension/payment/pp_pro', 'token=' . $this->session->data['token'], true);
+		$data['action'] = $this->url->link('extension/payment/pp_pro', 'user_token=' . $this->session->data['token'], true);
 
-		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=payment', true);
+		$data['cancel'] = $this->url->link('extension/extension', 'user_token=' . $this->session->data['token'] . '&type=payment', true);
 
 		if (isset($this->request->post['pp_pro_username'])) {
 			$data['pp_pro_username'] = $this->request->post['pp_pro_username'];

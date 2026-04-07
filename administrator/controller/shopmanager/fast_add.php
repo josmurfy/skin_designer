@@ -1743,7 +1743,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 								
 								if($category_leaf ==1){
 								//	//print("<pre>".print_r ('getform:2631',true )."</pre>");
-									$this->response->redirect($this->url->link('shopmanager/catalog/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
+									$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
 								}else{
 									$this->error['category']= ($lang['error_category_not_leaf'] ?? '');
 								}
@@ -2166,7 +2166,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 				$product_id=$this->model_shopmanager_catalog_product->addProduct($this->request->post);
 
 				$this->session->data['success'] = ($lang['text_success'] ?? '');
-				$result=$this->model_shopmanager_ebay->add($product_id, 0);
+$result=$this->model_shopmanager_ebay->addListing($product_id, 0);
 		
 			//	//print("<pre>" . print_r($result, true) . "</pre>");
 

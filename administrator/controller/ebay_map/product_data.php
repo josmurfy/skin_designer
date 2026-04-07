@@ -72,7 +72,7 @@ class ControllerEbayMapProductData extends Controller {
   			$url .= '&page=' . $this->request->get['page'];
   		}
 
-      $this->response->redirect($this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . $url, true));
+      $this->response->redirect($this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . $url, true));
     }
     $this->getForm();
   }
@@ -133,7 +133,7 @@ class ControllerEbayMapProductData extends Controller {
   			$url .= '&page=' . $this->request->get['page'];
   		}
 
-      $this->response->redirect($this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . $url, true));
+      $this->response->redirect($this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . $url, true));
     }
 
     $this->getForm();
@@ -152,7 +152,7 @@ class ControllerEbayMapProductData extends Controller {
 
       }
 
-      $this->response->redirect($this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'], true));
+      $this->response->redirect($this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'], true));
     }
 
     $this->getList();
@@ -232,20 +232,20 @@ class ControllerEbayMapProductData extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
-    $data['action'] = $this->url->link('ebay_map/product_data/add', 'token=' . $this->session->data['token'], true);
+    $data['action'] = $this->url->link('ebay_map/product_data/add', 'user_token=' . $this->session->data['token'], true);
 
     if (isset($this->request->get['product_id'])) {
-      $data['action'] = $this->url->link('ebay_map/product_data/edit&product_id=' . $this->request->get['product_id'], 'token=' . $this->session->data['token'] . $url, true);
+      $data['action'] = $this->url->link('ebay_map/product_data/edit&product_id=' . $this->request->get['product_id'], 'user_token=' . $this->session->data['token'] . $url, true);
     }
 
-    $data['cancel'] = $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . $url, true);
+    $data['cancel'] = $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . $url, true);
 
     $data['token'] = $this->session->data['token'];
     $data['ebay_conditions'] = $this->Ebayconnector->_getProductConditions();
@@ -478,17 +478,17 @@ class ControllerEbayMapProductData extends Controller {
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('text_home'),
-      'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+      'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
     );
 
     $data['breadcrumbs'][] = array(
       'text' => $this->language->get('heading_title'),
-      'href' => $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . $url, true)
+      'href' => $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . $url, true)
     );
     $data['token'] = $this->session->data['token'];
-    $data['add'] = $this->url->link('ebay_map/product_data/add', 'token=' . $this->session->data['token'] . $url, true);
+    $data['add'] = $this->url->link('ebay_map/product_data/add', 'user_token=' . $this->session->data['token'] . $url, true);
 
-    $data['delete'] = $this->url->link('ebay_map/product_data/delete', 'token=' . $this->session->data['token'] . $url, true);
+    $data['delete'] = $this->url->link('ebay_map/product_data/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
     $filter_data = array(
       'filter_product'      => $filter_product,
@@ -536,7 +536,7 @@ class ControllerEbayMapProductData extends Controller {
         'image'           => $image,
         'categories'      => $product_categories,
         'auction_status'  => isset($auction['auction_status']) && $auction['auction_status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled'),
-        'edit'            => $this->url->link('ebay_map/product_data/edit&product_id=' . $result['product_id'], 'token=' . $this->session->data['token'], true)
+        'edit'            => $this->url->link('ebay_map/product_data/edit&product_id=' . $result['product_id'], 'user_token=' . $this->session->data['token'], true)
       );
     }
     if (isset($this->session->data['success'])) {
@@ -592,12 +592,12 @@ class ControllerEbayMapProductData extends Controller {
       $url .= '&page=' . $this->request->get['page'];
     }
 
-    $data['sort_product'] = $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . '&sort=pd.name' . $url, true);
-    $data['sort_model'] = $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . '&sort=p.model' . $url, true);
+    $data['sort_product'] = $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . '&sort=pd.name' . $url, true);
+    $data['sort_model'] = $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . '&sort=p.model' . $url, true);
 
-    $data['sort_quantity'] = $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . '&sort=p.quantity' . $url, true);
+    $data['sort_quantity'] = $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . '&sort=p.quantity' . $url, true);
 
-    $data['sort_price'] = $this->url->link('ebay_map/product_data', 'token=' . $this->session->data['token'] . '&sort=p.price' . $url, true);
+    $data['sort_price'] = $this->url->link('ebay_map/product_data', 'user_token=' . $this->session->data['token'] . '&sort=p.price' . $url, true);
 
     $url = '';
 
@@ -633,7 +633,7 @@ class ControllerEbayMapProductData extends Controller {
 		$pagination->total = $total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('ebay_map/price_qty_rule', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('ebay_map/price_qty_rule', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 

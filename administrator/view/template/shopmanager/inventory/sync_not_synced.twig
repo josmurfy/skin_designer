@@ -1,0 +1,83 @@
+{# Not Synced Tab — Products listed on eBay but not synced in 7+ days #}
+
+{% if not_synced|length > 0 %}
+
+  {# Toolbar — always in DOM, shown via JS when rows are checked #}
+  <div id="ns-toolbar" class="mb-2 p-2 bg-light border rounded">
+    <span id="ns-count" class="me-3 text-muted small fw-bold">0 selected</span>
+    <button type="button" id="button-import-not-synced-non-selected" class="btn btn-sm btn-warning me-2">
+      <i class="fa-solid fa-download"></i> {{ button_import_non_selected }}
+    </button>
+    <button type="button" id="button-ns-deselect" class="btn btn-sm btn-outline-secondary">
+      <i class="fa-solid fa-times"></i> {{ text_deselect_all }}
+    </button>
+  </div>
+
+  <div class="table-responsive">
+    <table id="tbl-not-synced" class="table table-bordered table-hover table-sm" style="font-size: 11px;">
+      <thead class="table-light">
+        <tr>
+          <th style="width:32px; text-align:center;">
+            <input type="checkbox" id="ns-check-all" title="Select all">
+          </th>
+          <th style="width:70px;">{{ column_product_id }}</th>
+          <th>{{ column_product }}</th>
+          <th style="width:90px;">{{ column_sku }}</th>
+          <th style="width:150px;">{{ column_ebay_id }}</th>
+          <th style="width:60px;" class="text-center">{{ column_quantity }}</th>
+          <th style="width:120px;">{{ text_last_sync }}</th>
+          <th style="width:60px;" class="text-center">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in not_synced %}
+          <tr data-product-id="{{ product.product_id }}">
+            <td class="text-center">
+              <input type="checkbox" class="ns-cb" value="{{ product.product_id }}">
+            </td>
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ product.name }}">{{ product.name }}</td>
+            <td><code>{{ product.sku }}</code></td>
+            <td>
+              <a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary">
+                <i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}
+              </a>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-secondary">{{ (product.quantity + product.unallocated_quantity) }}</span>
+            </td>
+            <td>
+              {% if product.last_sync and product.last_sync != '0000-00-00 00:00:00' %}
+                <small>{{ product.last_sync|date('Y-m-d H:i') }}</small>
+              {% else %}
+                <span class="badge bg-danger">{{ text_never_synced }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-xs btn-primary btn-sm" title="{{ text_edit_product }}">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if not_synced_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-2">
+      <small class="text-muted">{{ not_synced_start }}–{{ not_synced_end }} / {{ not_synced_total }}</small>
+      <nav><ul class="pagination pagination-sm mb-0">
+        {% for p in 1..not_synced_num_pages %}
+          <li class="page-item {{ p == not_synced_page ? 'active' : '' }}">
+            <a class="page-link load-not-synced-page" href="#" data-page="{{ p }}">{{ p }}</a>
+          </li>
+        {% endfor %}
+      </ul></nav>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ text_no_not_synced }}</div>
+{% endif %}

@@ -151,7 +151,7 @@
 			if ($this->user->hasPermission('access', 'tool/debug_log')) {
 				$tool[] = array(
 					'name'	   => $this->language->get('text_debug_log'),
-					'href'     => $this->url->link('tool/debug_log', 'token=' . $this->session->data['token'], true),
+					'href'     => $this->url->link('tool/debug_log', 'user_token=' . $this->session->data['token'], true),
 					'children' => array()		
 				);
 			}

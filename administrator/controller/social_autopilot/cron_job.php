@@ -56,7 +56,7 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -106,7 +106,7 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -156,7 +156,7 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url, true));
+			$this->response->redirect($this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url, true));
 		}
 
 		$this->getList();
@@ -239,16 +239,16 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
-		$data['add'] = $this->url->link('social_autopilot/cron_job/add', 'token=' . $this->session->data['token'] . $url, true);
-		$data['delete'] = $this->url->link('social_autopilot/cron_job/delete', 'token=' . $this->session->data['token'] . $url, true);
+		$data['add'] = $this->url->link('social_autopilot/cron_job/add', 'user_token=' . $this->session->data['token'] . $url, true);
+		$data['delete'] = $this->url->link('social_autopilot/cron_job/delete', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		$data['cron_jobs'] = array();
 
@@ -275,7 +275,7 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 				'status'         => ($result['status'] ? $this->language->get('text_enabled') : $this->language->get('text_disabled')),
 				'date_added'     => date($this->language->get('date_format_short'), strtotime($result['date_added'])),
 				'date_modified'  => date($this->language->get('date_format_short'), strtotime($result['date_modified'])),
-				'edit'           => $this->url->link('social_autopilot/cron_job/edit', 'token=' . $this->session->data['token'] . '&cron_job_id=' . $result['cron_job_id'] . $url, true)
+				'edit'           => $this->url->link('social_autopilot/cron_job/edit', 'user_token=' . $this->session->data['token'] . '&cron_job_id=' . $result['cron_job_id'] . $url, true)
 			);
 		}
 
@@ -353,10 +353,10 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_name'] = $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . '&sort=cj.name' . $url, true);
-		$data['sort_status'] = $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . '&sort=cj.status' . $url, true);
-		$data['sort_date_added'] = $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . '&sort=cj.date_added' . $url, true);
-		$data['sort_date_modified'] = $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . '&sort=cj.date_modified' . $url, true);
+		$data['sort_name'] = $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . '&sort=cj.name' . $url, true);
+		$data['sort_status'] = $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . '&sort=cj.status' . $url, true);
+		$data['sort_date_added'] = $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . '&sort=cj.date_added' . $url, true);
+		$data['sort_date_modified'] = $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . '&sort=cj.date_modified' . $url, true);
 
 		$url = '';
 
@@ -388,7 +388,7 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 		$pagination->total = $cron_job_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url . '&page={page}', true);
+		$pagination->url = $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', true);
 
 		$data['pagination'] = $pagination->render();
 
@@ -515,21 +515,21 @@ class ControllerSocialAutoPilotCronJob extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url, true)
+			'href' => $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url, true)
 		);
 
 		if (!isset($this->request->get['template_id'])) {
-			$data['action'] = $this->url->link('social_autopilot/cron_job/add', 'token=' . $this->session->data['token'] . $url, true);
+			$data['action'] = $this->url->link('social_autopilot/cron_job/add', 'user_token=' . $this->session->data['token'] . $url, true);
 		} else {
-			$data['action'] = $this->url->link('social_autopilot/cron_job/edit', 'token=' . $this->session->data['token'] . '&template_id=' . $this->request->get['template_id'] . $url, true);
+			$data['action'] = $this->url->link('social_autopilot/cron_job/edit', 'user_token=' . $this->session->data['token'] . '&template_id=' . $this->request->get['template_id'] . $url, true);
 		}
 
-		$data['cancel'] = $this->url->link('social_autopilot/cron_job', 'token=' . $this->session->data['token'] . $url, true);
+		$data['cancel'] = $this->url->link('social_autopilot/cron_job', 'user_token=' . $this->session->data['token'] . $url, true);
 
 		if (isset($this->request->get['cron_job_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
 			$cron_job_info = $this->model_social_autopilot_cron_job->getCronJob($this->request->get['cron_job_id']);

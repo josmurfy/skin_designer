@@ -11,12 +11,12 @@ class ControllerDesignLanguage extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('design/theme', 'token=' . $this->session->data['token'], true)
+			'href' => $this->url->link('design/theme', 'user_token=' . $this->session->data['token'], true)
 		);
 
 		$data['heading_title'] = $this->language->get('heading_title');

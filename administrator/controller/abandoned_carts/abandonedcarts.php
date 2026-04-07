@@ -113,12 +113,12 @@ class ControllerAbandonedCartsAbandonedCarts extends Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('text_home'),
-			'href' => $this->url->link('common/dashboard', 'token=' . $this->session->data['token'], 'SSL')
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['token'], 'SSL')
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => $this->language->get('heading_title'),
-			'href' => $this->url->link('abandoned_carts/dashboard', 'token=' . $this->session->data['token'] . $url, 'SSL')
+			'href' => $this->url->link('abandoned_carts/dashboard', 'user_token=' . $this->session->data['token'] . $url, 'SSL')
 		);
 		
 		if (isset($this->error['warning'])) {
@@ -298,7 +298,7 @@ class ControllerAbandonedCartsAbandonedCarts extends Controller {
 		}
 		
 		
-		$data['reload_action'] = str_replace('&amp;', '&', $this->url->link('abandoned_carts/abandonedcarts/getCarts', 'token=' . $this->session->data['token']. $url, 'SSL'));
+		$data['reload_action'] = str_replace('&amp;', '&', $this->url->link('abandoned_carts/abandonedcarts/getCarts', 'user_token=' . $this->session->data['token']. $url, 'SSL'));
 		
 		$data['text_products'] = $this->language->get('text_products');
 		$data['text_view'] = $this->language->get('text_view');
@@ -480,7 +480,7 @@ class ControllerAbandonedCartsAbandonedCarts extends Controller {
 		$pagination->total = $abandoned_carts_total;
 		$pagination->page = $page;
 		$pagination->limit = $this->config->get('config_limit_admin');
-		$pagination->url = $this->url->link('abandoned_carts/abandonedcarts/getCarts', 'token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
+		$pagination->url = $this->url->link('abandoned_carts/abandonedcarts/getCarts', 'user_token=' . $this->session->data['token'] . $url . '&page={page}', 'SSL');
 
 		$data['pagination'] = $pagination->render();
 
@@ -601,7 +601,7 @@ class ControllerAbandonedCartsAbandonedCarts extends Controller {
 			
 			// $this->session->data['success'] = $this->language->get('text_success_send');
 			
-			// $json['success'] = str_replace('&amp;', '&', $this->url->link('abandoned_carts/abandonedcarts', 'token=' . $this->session->data['token'] . $url, 'SSL'));
+			// $json['success'] = str_replace('&amp;', '&', $this->url->link('abandoned_carts/abandonedcarts', 'user_token=' . $this->session->data['token'] . $url, 'SSL'));
 			$json['success'] = $this->language->get('text_success_send');
 		}else{
 			$json['error'] = $this->language->get('error_not_found_product');
