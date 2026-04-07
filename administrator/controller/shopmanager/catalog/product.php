@@ -1074,7 +1074,6 @@ class Product extends \Opencart\System\Engine\Controller {
 
 	$this->document->addScript('view/javascript/shopmanager/bootstrap_helper.js');
 	$this->document->addScript('view/javascript/shopmanager/ai.js');
-	$this->document->addScript('view/javascript/shopmanager/translate.js');
 	$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
 	$this->document->addScript('view/javascript/shopmanager/alert_popup.js');
 	$this->document->addScript('view/javascript/shopmanager/ebay.js');

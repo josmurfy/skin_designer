@@ -196,3 +196,7 @@ $_['text_invalid_qty']            = 'Please enter a valid quantity.';
 // JS text vars
 $_['text_invalid_upc']        = 'Please enter a valid 12 or 13 digit UPC.';
 $_['text_category_not_found'] = 'Category not found or the path is missing.';
+
+// Buttons
+$_['button_save']              = 'Save';
+$_['button_cancel']            = 'Cancel';

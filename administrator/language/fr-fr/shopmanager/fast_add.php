@@ -196,3 +196,7 @@ $_['text_invalid_upc']        = 'Veuillez entrer un UPC valide à 12 ou 13 chiff
 $_['text_category_not_found'] = 'Catégorie non trouvée ou le chemin est manquant.';
 
 $_['entry_unallocated_quantity'] = 'Quantité non allouée';
+
+// Boutons
+$_['button_save']              = 'Sauvegarder';
+$_['button_cancel']            = 'Annuler';

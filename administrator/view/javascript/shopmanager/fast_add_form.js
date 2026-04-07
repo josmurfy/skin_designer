@@ -58,7 +58,7 @@ $('input[name="category"]').autocomplete({
     'source': function(request, response) {
         var user_token = document.querySelector('input[name="user_token"]').value;
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
+            url: 'index.php?route=shopmanager/catalog/category.autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {
@@ -76,6 +76,10 @@ $('input[name="category"]').autocomplete({
         $('#product-category' + item['value']).remove();
 
         $('#product-category').append('<div id="product-category' + item['value'] + '"><i class="fa-solid fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="product_category[]" value="' + item['value'] + '" /></div>');
+
+        // Charger les conditions et mettre à jour le category_id
+        var user_token = document.querySelector('input[name="user_token"]').value;
+        loadCategoryDetails(item['value'], user_token);
     }
 });
 
@@ -106,29 +110,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const upcInput = document.getElementById('input-upc');
     var user_token = document.querySelector('input[name="user_token"]').value;
 
-
     if (upcInput) {
         upcInput.addEventListener('change', function () {
             const upc = upcInput.value.trim();
 
             if (!upc) return;
 
-            fetch('index.php?route=shopmanager/ebay.getCategoryId&upc=' + encodeURIComponent(upc) + '&user_token=' + user_token)
+            var fetchUrl = 'index.php?route=shopmanager/ebay.getCategoryId&upc=' + encodeURIComponent(upc) + '&user_token=' + user_token;
+
+            fetch(fetchUrl)
                 .then(response => response.json())
                 .then(json => {
-                 
                         if (json.success) {
                             const category_id = json.category_id;
                             const currentCategoryId = $('#category_id').val();
                             document.querySelector('input[name="category_id"]').value = '';
-                           
-    
+
                             if (currentCategoryId != category_id) {
                                 checkFormStatus();
                                 ChangeCategory(category_id);
                                 loadCategoryDetails(category_id, user_token);
-                            } else {
-
                             }
                         } else {
                             console.warn(json.error);

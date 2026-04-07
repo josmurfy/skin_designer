@@ -942,7 +942,6 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$this->document->addScript('view/javascript/shopmanager/ebay.js');
         $this->document->addScript('view/javascript/shopmanager/catalog/product_form.js');
         $this->document->addScript('view/javascript/shopmanager/ai.js');
-		$this->document->addScript('view/javascript/shopmanager/translate.js');
 		$this->document->addScript('view/javascript/shopmanager/ocr.js');
 		$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
 		$this->document->addScript('view/javascript/shopmanager/alert_popup.js');

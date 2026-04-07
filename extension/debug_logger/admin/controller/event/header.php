@@ -19,8 +19,8 @@ class Header extends \Opencart\System\Engine\Controller {
 
         if ($enabled && isset($this->session->data['user_token'])) {
             $tok = $this->session->data['user_token'];
-            $save_url    = $this->url->link('extension/debug_logger/module/debug_logger.debugSave', 'user_token=' . $tok);
-            $reports_url = $this->url->link('extension/debug_logger/module/debug_logger.reports', 'user_token=' . $tok);
+            $save_url    = $this->url->link('extension/debug_logger/module/debug_logger.debugSave', 'user_token=' . $tok, true);
+            $reports_url = $this->url->link('extension/debug_logger/module/debug_logger.reports', 'user_token=' . $tok, true);
             $data['debug_logger_save_url_json'] = json_encode($save_url);
             $data['debug_logger_reports_url']   = $reports_url;
         } else {

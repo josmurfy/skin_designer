@@ -1152,6 +1152,7 @@ class FastAdd extends \Opencart\System\Engine\Controller {
     protected function getForm() {
         $this->document->addScript('view/javascript/shopmanager/fast_add_form.js');
         $this->document->addScript('view/javascript/shopmanager/condition.js');
+        $lang = $this->load->language('shopmanager/fast_add');
         $data['heading_title'] = ($lang['heading_title'] ?? '');
 
         $data['button_save'] = ($lang['button_save'] ?? '');

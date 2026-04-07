@@ -14,11 +14,8 @@ class Condition extends \Opencart\System\Engine\Controller {
             $this->load->model('shopmanager/condition');
             $this->load->model('localisation/language');
 
-            //   $current_language = $this->config->get('config_language'); 
-           //print("<pre>".print_r ($current_language,true )."</pre>");
-       
-               $languages = $this->model_localisation_language->getLanguageByCode('en');
-               $language_id = $languages['language_id'];
+               $languages = $this->model_localisation_language->getLanguageByCode('en-gb');
+               $language_id = $languages['language_id'] ?? 1;
             // Récupérer les conditions pour la catégorie donnée
             //print("<pre>" . print_r(value: '21:CONDITION.php') . "</pre>");
             $conditions = $this->model_shopmanager_condition->getConditionDetails($category_id);

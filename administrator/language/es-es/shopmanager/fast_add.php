@@ -192,3 +192,7 @@ $_['text_invalid_qty']            = 'Por favor ingrese una cantidad válida.';
 // Claves JS
 $_['text_invalid_upc']        = 'Por favor ingrese un UPC válido de 12 o 13 dígitos.';
 $_['text_category_not_found'] = 'Categoría no encontrada o la ruta es incorrecta.';
+
+// Botones
+$_['button_save']              = 'Guardar';
+$_['button_cancel']            = 'Cancelar';
