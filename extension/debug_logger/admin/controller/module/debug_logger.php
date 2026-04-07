@@ -135,14 +135,16 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
 
         $screenshot = '';
         $is_pro = $this->model_extension_debug_logger_module_debug_logger_license->isPro();
-        if (
-            $is_pro
-            && $this->config->get('module_debug_logger_capture_screenshot')
-            && !empty($this->request->post['screenshot'])
-        ) {
-            $ss = (string)$this->request->post['screenshot'];
-            if (strpos($ss, 'data:image/') === 0 && strlen($ss) < 2097152) {
-                $screenshot = $ss;
+        if ($is_pro && $this->config->get('module_debug_logger_capture_screenshot')) {
+            if (!empty($this->request->post['screenshot'])) {
+                $ss = (string)$this->request->post['screenshot'];
+                if (strpos($ss, 'data:image/') === 0 && strlen($ss) < 2097152) {
+                    $screenshot = $ss;
+                } else {
+                    $this->log->write('Debug Logger: screenshot rejected — prefix=' . substr($ss, 0, 30) . ' len=' . strlen($ss));
+                }
+            } else {
+                $this->log->write('Debug Logger: screenshot enabled but empty in POST');
             }
         }
 
@@ -440,12 +442,19 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
             if (!$this->config->get('module_debug_logger_email_enable')) {
                 return;
             }
-            $sev_key = 'module_debug_logger_email_' . ($data['severity'] ?? 'bug');
-            if (!$this->config->get($sev_key)) {
+
+            // Check severity filter — if none checked, send for all
+            $sev = $data['severity'] ?? 'bug';
+            $any_checked = $this->config->get('module_debug_logger_email_bug')
+                        || $this->config->get('module_debug_logger_email_warning')
+                        || $this->config->get('module_debug_logger_email_info');
+            if ($any_checked && !$this->config->get('module_debug_logger_email_' . $sev)) {
                 return;
             }
+
             $to = (string)$this->config->get('module_debug_logger_email_to');
             if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                $this->log->write('Debug Logger: email_to invalid or empty [' . $to . ']');
                 return;
             }
 
@@ -464,23 +473,25 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
                 $body .= "Console:\n" . substr($data['console_log'], 0, 2000) . "\n";
             }
 
-            $mail = new \Opencart\System\Library\Mail($this->config->get('config_mail_engine'));
-            $mail->parameter = $this->config->get('config_mail_parameter');
-            $mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
-            $mail->smtp_username = $this->config->get('config_mail_smtp_username');
-            $mail->smtp_password = html_entity_decode(
-                (string)$this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8'
-            );
-            $mail->smtp_port = $this->config->get('config_mail_smtp_port');
-            $mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+            // OC4 Mail: adaptor + options array
+            $mail_option = [
+                'parameter'     => $this->config->get('config_mail_parameter'),
+                'smtp_hostname' => $this->config->get('config_mail_smtp_hostname'),
+                'smtp_username' => $this->config->get('config_mail_smtp_username'),
+                'smtp_password' => html_entity_decode((string)$this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8'),
+                'smtp_port'     => (int)$this->config->get('config_mail_smtp_port'),
+                'smtp_timeout'  => (int)$this->config->get('config_mail_smtp_timeout'),
+            ];
+
+            $mail = new \Opencart\System\Library\Mail($this->config->get('config_mail_engine') ?: 'mail', $mail_option);
             $mail->setTo($to);
             $mail->setFrom($this->config->get('config_email'));
-            $mail->setSender(html_entity_decode(
-                (string)$this->config->get('config_name'), ENT_QUOTES, 'UTF-8'
-            ));
+            $mail->setSender(html_entity_decode((string)$this->config->get('config_name'), ENT_QUOTES, 'UTF-8'));
             $mail->setSubject($subject);
             $mail->setText($body);
             $mail->send();
+
+            $this->log->write('Debug Logger: email sent to ' . $to . ' for report #' . $report_id);
         } catch (\Throwable $e) {
             $this->log->write('Debug Logger email error: ' . $e->getMessage());
         }

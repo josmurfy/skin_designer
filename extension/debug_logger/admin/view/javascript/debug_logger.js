@@ -76,25 +76,33 @@
       if (cfg.captureScreenshot && typeof html2canvas === 'function') {
         var $ssField = $('#dl-screenshot-field');
         $ssField.show();
+        console.log('[DL] Screenshot capture: starting html2canvas...');
         // Hide modal temporarily for clean screenshot
         $modal.css('visibility', 'hidden');
         $ov.css('visibility', 'hidden');
         setTimeout(function () {
           html2canvas(document.body, { useCORS: true, scale: 0.5, logging: false }).then(function (canvas) {
             var dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            console.log('[DL] Screenshot captured, size=' + dataUrl.length);
             if (dataUrl && dataUrl.length < 2097152) {
               $('#dl-screenshot-data').val(dataUrl);
               $ssField.find('#dl-screenshot-preview').html(
                 '<img src="' + dataUrl + '" style="max-width:100%;max-height:120px;border-radius:4px;border:1px solid #334155">'
               );
+            } else {
+              console.warn('[DL] Screenshot too large: ' + dataUrl.length);
             }
             $modal.css('visibility', '');
             $ov.css('visibility', '');
-          }).catch(function () {
+          }).catch(function (err) {
+            console.error('[DL] html2canvas error:', err);
             $modal.css('visibility', '');
             $ov.css('visibility', '');
           });
         }, 100);
+      } else {
+        if (!cfg.captureScreenshot) console.log('[DL] Screenshot disabled in config');
+        if (typeof html2canvas !== 'function') console.warn('[DL] html2canvas not loaded');
       }
 
       setTimeout(function () { $('#dl-comment').focus(); }, 300);
