@@ -39,7 +39,7 @@
             loadAnalyticsData(currentPeriod);
         });
     }
-
+ 
     /**
      * Initialise le bouton de rafraîchissement
      */
