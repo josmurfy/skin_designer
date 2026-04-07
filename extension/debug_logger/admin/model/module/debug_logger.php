@@ -9,15 +9,41 @@ class DebugLogger extends \Opencart\System\Engine\Model {
                 `id`          INT(11)       NOT NULL AUTO_INCREMENT,
                 `url`         TEXT          NOT NULL,
                 `console_log` MEDIUMTEXT    DEFAULT NULL,
+                `network_log` MEDIUMTEXT    DEFAULT NULL,
+                `screenshot`  MEDIUMTEXT    DEFAULT NULL,
                 `comment`     TEXT          DEFAULT NULL,
                 `admin_user`  VARCHAR(255)  DEFAULT '',
+                `assigned_to` INT(11)       DEFAULT NULL,
                 `severity`    VARCHAR(20)   DEFAULT 'bug',
                 `source`      VARCHAR(20)   DEFAULT 'admin',
                 `status`      TINYINT(1)    DEFAULT 0,
                 `date_added`  DATETIME      NOT NULL,
-                PRIMARY KEY (`id`)
+                PRIMARY KEY (`id`),
+                KEY `idx_assigned` (`assigned_to`),
+                KEY `idx_status` (`status`),
+                KEY `idx_severity` (`severity`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
+    }
+
+    /**
+     * Upgrade from v1.x — add missing columns if they don't exist.
+     */
+    public function upgrade(): void {
+        $table = DB_PREFIX . 'debug_report';
+
+        // screenshot
+        $q = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE 'screenshot'");
+        if (!$q->num_rows) {
+            $this->db->query("ALTER TABLE `" . $table . "` ADD COLUMN `screenshot` MEDIUMTEXT DEFAULT NULL AFTER `network_log`");
+        }
+
+        // assigned_to
+        $q = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE 'assigned_to'");
+        if (!$q->num_rows) {
+            $this->db->query("ALTER TABLE `" . $table . "` ADD COLUMN `assigned_to` INT(11) DEFAULT NULL AFTER `admin_user`");
+            $this->db->query("ALTER TABLE `" . $table . "` ADD KEY `idx_assigned` (`assigned_to`)");
+        }
     }
 
     public function dropTable(): void {
@@ -29,6 +55,8 @@ class DebugLogger extends \Opencart\System\Engine\Model {
             INSERT INTO `" . DB_PREFIX . "debug_report` SET
                 `url`         = '" . $this->db->escape(substr((string)($data['url'] ?? ''), 0, 2048)) . "',
                 `console_log` = '" . $this->db->escape(substr((string)($data['console_log'] ?? ''), 0, 65535)) . "',
+                `network_log` = '" . $this->db->escape(substr((string)($data['network_log'] ?? ''), 0, 65535)) . "',
+                `screenshot`  = '" . $this->db->escape((string)($data['screenshot'] ?? '')) . "',
                 `comment`     = '" . $this->db->escape(substr((string)($data['comment'] ?? ''), 0, 4096)) . "',
                 `admin_user`  = '" . $this->db->escape(substr((string)($data['admin_user'] ?? ''), 0, 255)) . "',
                 `severity`    = '" . $this->db->escape($data['severity'] ?? 'bug') . "',
@@ -36,6 +64,15 @@ class DebugLogger extends \Opencart\System\Engine\Model {
                 `date_added`  = NOW()
         ");
         return $this->db->getLastId();
+    }
+
+    public function assignReport(int $id, int $user_id): void {
+        $this->db->query("UPDATE `" . DB_PREFIX . "debug_report` SET `assigned_to` = " . ($user_id ?: 'NULL') . " WHERE `id` = " . (int)$id);
+    }
+
+    public function getAdminUsers(): array {
+        $result = $this->db->query("SELECT `user_id`, `firstname`, `lastname`, `username` FROM `" . DB_PREFIX . "user` WHERE `status` = 1 ORDER BY `firstname`");
+        return $result ? $result->rows : [];
     }
 
     public function getReports(int $filter_status = -1, string $filter_source = ''): array {
@@ -88,5 +125,36 @@ class DebugLogger extends \Opencart\System\Engine\Model {
             $delete = $total - $max;
             $this->db->query("DELETE FROM `" . DB_PREFIX . "debug_report` ORDER BY `id` ASC LIMIT " . (int)$delete);
         }
+    }
+
+    public function getReportsByDay(int $days = 7): array {
+        $result = $this->db->query("
+            SELECT DATE(`date_added`) AS `day`, `severity`, COUNT(*) AS `cnt`
+            FROM `" . DB_PREFIX . "debug_report`
+            WHERE `date_added` >= DATE_SUB(NOW(), INTERVAL " . (int)$days . " DAY)
+            GROUP BY `day`, `severity`
+            ORDER BY `day`
+        ");
+        return $result ? $result->rows : [];
+    }
+
+    public function getTopPages(int $limit = 5): array {
+        $result = $this->db->query("
+            SELECT `url`, COUNT(*) AS `cnt`
+            FROM `" . DB_PREFIX . "debug_report`
+            GROUP BY `url`
+            ORDER BY `cnt` DESC
+            LIMIT " . (int)$limit . "
+        ");
+        return $result ? $result->rows : [];
+    }
+
+    public function getCountBySeverity(): array {
+        $result = $this->db->query("
+            SELECT `severity`, COUNT(*) AS `cnt`
+            FROM `" . DB_PREFIX . "debug_report`
+            GROUP BY `severity`
+        ");
+        return $result ? $result->rows : [];
     }
 }

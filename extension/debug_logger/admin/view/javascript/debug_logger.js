@@ -1,12 +1,13 @@
 /**
- * Debug Logger v1.4.0 — Admin JS
- * Reads config from window.DL_CONFIG set by inline Twig script block.
+ * Debug Logger v2.0.0 Pro — Admin JS
+ * Modal content built from DL_CONFIG.i18n (multilingual, server-side).
  */
 (function () {
   'use strict';
 
-  var cfg = window.DL_CONFIG || {};
-  var _logs = [], _hasErr = false;
+  var cfg  = window.DL_CONFIG || {};
+  var i18n = cfg.i18n || {};
+  var _logs = [], _netLogs = [], _hasErr = false;
 
   /* ── Console capture ──────────────────────────────────────── */
   if (cfg.captureConsole) {
@@ -35,45 +36,68 @@
     var _oFetch = window.fetch;
     window.fetch = function () {
       return _oFetch.apply(this, arguments).then(function (r) {
-        if (!r.ok) _logs.push('[NET] ' + r.status + ' ' + r.url);
+        if (!r.ok) { _netLogs.push('[NET] ' + r.status + ' ' + r.url); }
         return r;
       }).catch(function (e) {
-        _logs.push('[NET] ' + e.message);
+        _netLogs.push('[NET-ERR] ' + e.message);
         throw e;
       });
     };
   }
 
+  /* ── Escape helper (used in save restore) ────────────────── */
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   /* ── DOM ready ────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
-    var $ov     = $('#dl-overlay');
-    var $modal  = $('#dl-modal');
-    var $btn    = $('#btn-debug-logger');
-    var $close  = $('#dl-modal-close');
-    var $cancel = $('#dl-btn-cancel');
-    var $save   = $('#dl-btn-save');
-    var $toast  = $('#dl-toast');
 
-    /* Show/hide severity options based on config */
-    if (!cfg.severityBug)     $('#dl-severity option[value="bug"]').remove();
-    if (!cfg.severityWarning) $('#dl-severity option[value="warning"]').remove();
-    if (!cfg.severityInfo)    $('#dl-severity option[value="info"]').remove();
-
-    if (cfg.requireComment) {
-      $('#dl-comment').attr('placeholder', 'Comment required…');
-      $('<span>', { text: ' *', style: 'color:#ef4444' }).appendTo($('#dl-comment').prev('label'));
-    }
+    var $ov    = $('#dl-overlay');
+    var $modal = $('#dl-modal');
+    var $btn   = $('#btn-debug-logger');
+    var $toast = $('#dl-toast');
 
     function openModal() {
       $ov.show();
       $modal.show();
       $('#dl-url-display').text(window.location.href);
-      $('#dl-console-display').text(_logs.join('\n'));
-      $('#dl-count').text('(' + _logs.length + ')');
+      var allLogs = _logs.concat(_netLogs);
+      $('#dl-console-display').text(allLogs.join('\n'));
+      $('#dl-count').text('(' + allLogs.length + ')');
       $('#dl-comment').val('');
-      $('#dl-severity').val(_hasErr ? 'bug' : $('#dl-severity option:first').val());
+      var $sev = $('#dl-severity');
+      $sev.val(_hasErr && $sev.find('option[value="bug"]').length ? 'bug' : $sev.find('option:first').val());
       $('body').css('overflow', 'hidden');
-      setTimeout(function () { $('#dl-comment').focus(); }, 100);
+
+      // Screenshot capture (Pro)
+      $('#dl-screenshot-data').val('');
+      $('#dl-screenshot-preview').empty();
+      if (cfg.captureScreenshot && typeof html2canvas === 'function') {
+        var $ssField = $('#dl-screenshot-field');
+        $ssField.show();
+        // Hide modal temporarily for clean screenshot
+        $modal.css('visibility', 'hidden');
+        $ov.css('visibility', 'hidden');
+        setTimeout(function () {
+          html2canvas(document.body, { useCORS: true, scale: 0.5, logging: false }).then(function (canvas) {
+            var dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+            if (dataUrl && dataUrl.length < 2097152) {
+              $('#dl-screenshot-data').val(dataUrl);
+              $ssField.find('#dl-screenshot-preview').html(
+                '<img src="' + dataUrl + '" style="max-width:100%;max-height:120px;border-radius:4px;border:1px solid #334155">'
+              );
+            }
+            $modal.css('visibility', '');
+            $ov.css('visibility', '');
+          }).catch(function () {
+            $modal.css('visibility', '');
+            $ov.css('visibility', '');
+          });
+        }, 100);
+      }
+
+      setTimeout(function () { $('#dl-comment').focus(); }, 300);
     }
 
     function closeModal() {
@@ -91,23 +115,27 @@
     }
 
     $btn.on('click', function (e) { e.preventDefault(); openModal(); });
-    $close.on('click', closeModal);
-    $cancel.on('click', closeModal);
+
+    $(document).on('click', '#dl-modal-close, #dl-btn-cancel', closeModal);
     $ov.on('click', closeModal);
     $(document).on('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
 
-    $save.on('click', function () {
+    $(document).on('click', '#dl-btn-save', function () {
       if (cfg.requireComment && !$('#dl-comment').val().trim()) {
         $('#dl-comment').focus();
         return;
       }
+      var $save = $('#dl-btn-save');
       $save.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
 
       var fd = new FormData();
-      fd.append('url', window.location.href);
+      fd.append('url',         window.location.href);
       fd.append('console_log', _logs.join('\n'));
-      fd.append('comment', $('#dl-comment').val());
-      fd.append('severity', $('#dl-severity').val());
+      fd.append('network_log', _netLogs.join('\n'));
+      fd.append('comment',     $('#dl-comment').val());
+      fd.append('severity',    $('#dl-severity').val());
+      var ssData = $('#dl-screenshot-data').val();
+      if (ssData) fd.append('screenshot', ssData);
 
       fetch(cfg.saveUrl, { method: 'POST', body: fd })
         .then(function (r) { return r.json(); })
@@ -121,7 +149,8 @@
           showToast(e.message, true);
         })
         .finally(function () {
-          $save.prop('disabled', false).html('<i class="fa-solid fa-save"></i> Save');
+          $save.prop('disabled', false)
+               .html('<i class="fa-solid fa-save"></i> ' + esc(i18n.btnSave || 'Save'));
         });
     });
   });

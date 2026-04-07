@@ -1,0 +1,954 @@
+# Debug Logger Pro - Spécifications d'Upgrade
+## Version actuelle: 1.4.6 → Version cible: 2.0.0 Pro
+
+---
+
+## 📋 CONTEXTE
+
+Extension OpenCart 4 existante qui capture les erreurs JavaScript et permet aux utilisateurs de soumettre des rapports de bugs via une interface modale. L'extension fonctionne déjà bien mais manque de features premium pour justifier un prix de vente plus élevé.
+
+**Code existant:**
+- Namespace: `Opencart\Admin\Controller\Extension\DebugLogger\Module`
+- Structure: MVC OpenCart 4 standard
+- Langues: FR, EN, ES
+- DB: Table custom `oc_debug_logger_reports`
+- Frontend: jQuery, Bootstrap 5, vanilla JS pour captures
+
+---
+
+## 🎯 OBJECTIF DE L'UPGRADE
+
+Transformer l'extension gratuite en version **freemium** avec:
+- **Version Free** (limitée): 50 rapports max, features de base
+- **Version Pro** ($29 one-time): Unlimited reports + features avancées ci-dessous
+
+---
+
+## 🚀 FEATURES À AJOUTER (PAR PRIORITÉ)
+
+### ⭐ PRIORITÉ 1 - MVP Pro Version
+
+#### 1.1 - Screenshots Automatiques
+**Description:** Capturer automatiquement une screenshot de la page au moment où le bug est rapporté.
+
+**Implémentation:**
+```javascript
+// Dans admin/view/javascript/debug_logger.js
+// Ajouter avant l'ouverture du modal
+
+function captureScreenshot() {
+    return new Promise((resolve) => {
+        if (typeof html2canvas === 'undefined') {
+            resolve(null);
+            return;
+        }
+        
+        html2canvas(document.body, {
+            allowTaint: true,
+            useCORS: true,
+            logging: false,
+            scale: 0.5  // Réduire la taille
+        }).then(canvas => {
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+        }).catch(() => resolve(null));
+    });
+}
+
+// Dans la fonction openModal(), ajouter:
+captureScreenshot().then(function(screenshot) {
+    if (screenshot) {
+        $('#dl-screenshot-data').val(screenshot);
+    }
+});
+```
+
+**Fichiers à modifier:**
+- `admin/view/javascript/debug_logger.js` - Ajout capture
+- `catalog/view/javascript/debug_logger.js` - Même logique
+- `admin/controller/module/debug_logger.php` - Méthode `debugSave()` pour recevoir screenshot
+- `admin/model/module/debug_logger.php` - Ajouter colonne `screenshot` type MEDIUMTEXT
+- `admin/view/template/module/debug_logger.twig` - Afficher screenshot dans reports
+
+**SQL Migration:**
+```sql
+ALTER TABLE `oc_debug_logger_reports` 
+ADD COLUMN `screenshot` MEDIUMTEXT NULL AFTER `network_log`;
+```
+
+**Bibliothèque requise:**
+- html2canvas.min.js (charger via CDN ou local)
+- URL CDN: `https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js`
+
+---
+
+#### 1.2 - Email Notifications
+**Description:** Envoyer un email aux admins quand un nouveau rapport est créé (configurable par sévérité).
+
+**Implémentation:**
+
+**Nouvelles settings (admin/view/template/module/debug_logger.twig):**
+```html
+<!-- Nouvelle carte: Email Notifications -->
+<div class="card mb-3">
+    <div class="card-header"><i class="fa-solid fa-envelope"></i> Email Notifications (PRO)</div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Activer notifications email</label>
+            <div class="col-sm-8">
+                <div class="form-check form-switch mt-2">
+                    <input type="checkbox" name="module_debug_logger_email_enable" value="1" id="input-email-enable">
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Email destinataire</label>
+            <div class="col-sm-8">
+                <input type="email" class="form-control" name="module_debug_logger_email_to" placeholder="bugs@phoenixdepot.com">
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Notifier pour sévérités</label>
+            <div class="col-sm-8">
+                <div class="form-check">
+                    <input type="checkbox" name="module_debug_logger_email_bug" value="1" checked>
+                    <label>🐛 Bugs</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" name="module_debug_logger_email_warning" value="1">
+                    <label>⚠️ Warnings</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" name="module_debug_logger_email_info" value="1">
+                    <label>ℹ️ Info</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+**Logique d'envoi (admin/controller/module/debug_logger.php):**
+```php
+// Dans la méthode debugSave(), après l'insertion en DB:
+
+if ($this->config->get('module_debug_logger_email_enable')) {
+    $severity = $data['severity'];
+    $setting_key = 'module_debug_logger_email_' . $severity;
+    
+    if ($this->config->get($setting_key)) {
+        $this->sendNotificationEmail($report_id, $data);
+    }
+}
+
+// Nouvelle méthode:
+private function sendNotificationEmail(int $report_id, array $data): void {
+    $to = $this->config->get('module_debug_logger_email_to');
+    if (!$to) return;
+    
+    $subject = '[Debug Logger] New ' . strtoupper($data['severity']) . ' Report #' . $report_id;
+    
+    $message = "A new debug report has been submitted:\n\n";
+    $message .= "Report ID: #" . $report_id . "\n";
+    $message .= "Severity: " . $data['severity'] . "\n";
+    $message .= "Source: " . $data['source'] . "\n";
+    $message .= "URL: " . $data['url'] . "\n";
+    $message .= "User: " . ($data['admin_user'] ?? 'Guest') . "\n";
+    $message .= "Date: " . date('Y-m-d H:i:s') . "\n\n";
+    
+    if ($data['comment']) {
+        $message .= "Comment:\n" . $data['comment'] . "\n\n";
+    }
+    
+    if ($data['console_log']) {
+        $message .= "Console Errors:\n" . $data['console_log'] . "\n\n";
+    }
+    
+    $message .= "View report: " . $this->url->link('extension/debug_logger/module/debug_logger.reports', 'user_token=' . $this->session->data['user_token']);
+    
+    $mail = new \Opencart\System\Library\Mail($this->config->get('config_mail_engine'));
+    $mail->parameter = $this->config->get('config_mail_parameter');
+    $mail->smtp_hostname = $this->config->get('config_mail_smtp_hostname');
+    $mail->smtp_username = $this->config->get('config_mail_smtp_username');
+    $mail->smtp_password = html_entity_decode($this->config->get('config_mail_smtp_password'), ENT_QUOTES, 'UTF-8');
+    $mail->smtp_port = $this->config->get('config_mail_smtp_port');
+    $mail->smtp_timeout = $this->config->get('config_mail_smtp_timeout');
+    
+    $mail->setTo($to);
+    $mail->setFrom($this->config->get('config_email'));
+    $mail->setSender($this->config->get('config_name'));
+    $mail->setSubject($subject);
+    $mail->setText($message);
+    $mail->send();
+}
+```
+
+---
+
+#### 1.3 - Webhook Notifications (Slack/Discord)
+**Description:** Envoyer les rapports vers Slack ou Discord via webhook.
+
+**Nouvelle section config:**
+```html
+<div class="card mb-3">
+    <div class="card-header"><i class="fa-brands fa-slack"></i> Webhook Notifications (PRO)</div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Type de webhook</label>
+            <div class="col-sm-8">
+                <select class="form-control" name="module_debug_logger_webhook_type">
+                    <option value="">Désactivé</option>
+                    <option value="slack">Slack</option>
+                    <option value="discord">Discord</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Webhook URL</label>
+            <div class="col-sm-8">
+                <input type="url" class="form-control" name="module_debug_logger_webhook_url" placeholder="https://hooks.slack.com/services/...">
+                <div class="form-text">URL du webhook Slack ou Discord</div>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+**Implémentation (admin/controller/module/debug_logger.php):**
+```php
+private function sendWebhookNotification(int $report_id, array $data): void {
+    $webhook_type = $this->config->get('module_debug_logger_webhook_type');
+    $webhook_url = $this->config->get('module_debug_logger_webhook_url');
+    
+    if (!$webhook_type || !$webhook_url) return;
+    
+    if ($webhook_type === 'slack') {
+        $payload = $this->buildSlackPayload($report_id, $data);
+    } elseif ($webhook_type === 'discord') {
+        $payload = $this->buildDiscordPayload($report_id, $data);
+    } else {
+        return;
+    }
+    
+    $ch = curl_init($webhook_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
+private function buildSlackPayload(int $report_id, array $data): array {
+    $severity_emoji = [
+        'bug' => '🐛',
+        'warning' => '⚠️',
+        'info' => 'ℹ️'
+    ];
+    
+    $severity_color = [
+        'bug' => '#ef4444',
+        'warning' => '#f59e0b',
+        'info' => '#3b82f6'
+    ];
+    
+    return [
+        'text' => 'New Debug Report #' . $report_id,
+        'attachments' => [
+            [
+                'color' => $severity_color[$data['severity']] ?? '#6b7280',
+                'fields' => [
+                    [
+                        'title' => 'Severity',
+                        'value' => $severity_emoji[$data['severity']] . ' ' . strtoupper($data['severity']),
+                        'short' => true
+                    ],
+                    [
+                        'title' => 'Source',
+                        'value' => ucfirst($data['source']),
+                        'short' => true
+                    ],
+                    [
+                        'title' => 'URL',
+                        'value' => $data['url'],
+                        'short' => false
+                    ],
+                    [
+                        'title' => 'Comment',
+                        'value' => $data['comment'] ?: '_No comment_',
+                        'short' => false
+                    ]
+                ],
+                'footer' => 'Debug Logger',
+                'ts' => time()
+            ]
+        ]
+    ];
+}
+
+private function buildDiscordPayload(int $report_id, array $data): array {
+    $severity_color = [
+        'bug' => 0xef4444,
+        'warning' => 0xf59e0b,
+        'info' => 0x3b82f6
+    ];
+    
+    return [
+        'embeds' => [
+            [
+                'title' => '🐛 New Debug Report #' . $report_id,
+                'color' => $severity_color[$data['severity']] ?? 0x6b7280,
+                'fields' => [
+                    [
+                        'name' => 'Severity',
+                        'value' => strtoupper($data['severity']),
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'Source',
+                        'value' => ucfirst($data['source']),
+                        'inline' => true
+                    ],
+                    [
+                        'name' => 'URL',
+                        'value' => $data['url']
+                    ],
+                    [
+                        'name' => 'Comment',
+                        'value' => $data['comment'] ?: '_No comment_'
+                    ]
+                ],
+                'timestamp' => date('c')
+            ]
+        ]
+    ];
+}
+```
+
+---
+
+#### 1.4 - Export CSV/JSON
+**Description:** Permettre l'export de tous les rapports en CSV ou JSON.
+
+**Boutons dans l'interface reports (admin/controller/module/debug_logger.php méthode reports()):**
+```php
+// Dans le HTML généré, ajouter après les filtres:
+$h .= '<div class="export-btns" style="margin-left:auto">';
+$h .= '<a href="' . htmlspecialchars($base . '&action=export&format=csv') . '" class="btn-export">Export CSV</a>';
+$h .= '<a href="' . htmlspecialchars($base . '&action=export&format=json') . '" class="btn-export">Export JSON</a>';
+$h .= '</div>';
+
+// Traiter l'action export:
+if ($action === 'export') {
+    $format = $this->request->get['format'] ?? 'csv';
+    $this->exportReports($format, $filter_status, $filter_source);
+    return;
+}
+```
+
+**Nouvelle méthode exportReports():**
+```php
+private function exportReports(string $format, int $filter_status, string $filter_source): void {
+    $this->load->model('extension/debug_logger/module/debug_logger');
+    $reports = $this->model_extension_debug_logger_module_debug_logger->getReports($filter_status, $filter_source);
+    
+    if ($format === 'csv') {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="debug_reports_' . date('Y-m-d_His') . '.csv"');
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['ID', 'Date', 'Severity', 'Source', 'URL', 'User', 'Comment', 'Status']);
+        
+        foreach ($reports as $row) {
+            fputcsv($output, [
+                $row['id'],
+                $row['date_added'],
+                $row['severity'],
+                $row['source'],
+                $row['url'],
+                $row['admin_user'] ?? '',
+                $row['comment'],
+                $row['status'] == 1 ? 'Closed' : 'Open'
+            ]);
+        }
+        
+        fclose($output);
+        
+    } elseif ($format === 'json') {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Content-Disposition: attachment; filename="debug_reports_' . date('Y-m-d_His') . '.json"');
+        
+        echo json_encode($reports, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+    }
+    
+    exit;
+}
+```
+
+---
+
+#### 1.5 - Limite Free vs Pro
+**Description:** Limiter à 50 rapports max dans la version gratuite.
+
+**Vérification de licence (nouveau fichier: admin/model/module/debug_logger_license.php):**
+```php
+<?php
+namespace Opencart\Admin\Model\Extension\DebugLogger\Module;
+
+class DebugLoggerLicense extends \Opencart\System\Engine\Model {
+    
+    public function isPro(): bool {
+        // Vérifier si la licence Pro est active
+        $license_key = $this->config->get('module_debug_logger_license_key');
+        
+        if (!$license_key) {
+            return false;
+        }
+        
+        // Validation simple (à améliorer avec API de validation)
+        return $this->validateLicenseKey($license_key);
+    }
+    
+    public function getMaxReports(): int {
+        return $this->isPro() ? 999999 : 50;
+    }
+    
+    public function canUseFeature(string $feature): bool {
+        if ($this->isPro()) {
+            return true;
+        }
+        
+        // Features gratuites
+        $free_features = [
+            'basic_reporting',
+            'console_capture',
+            'network_capture'
+        ];
+        
+        return in_array($feature, $free_features);
+    }
+    
+    private function validateLicenseKey(string $key): bool {
+        // Option 1: Validation locale simple (hash)
+        // Option 2: Call API externe pour validation
+        // Option 3: Format XXXX-XXXX-XXXX-XXXX avec checksum
+        
+        // Pour MVP, simple check de format:
+        return preg_match('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/', $key);
+    }
+}
+```
+
+**Ajout section licence dans config:**
+```html
+<div class="card mb-3">
+    <div class="card-header"><i class="fa-solid fa-key"></i> Licence</div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Version actuelle</label>
+            <div class="col-sm-8">
+                <span class="badge bg-secondary" id="license-status">FREE (50 reports max)</span>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <label class="col-sm-4 col-form-label">Clé de licence Pro</label>
+            <div class="col-sm-8">
+                <input type="text" class="form-control" name="module_debug_logger_license_key" placeholder="XXXX-XXXX-XXXX-XXXX">
+                <div class="form-text">Entrez votre clé de licence pour débloquer les features Pro</div>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+**Appliquer la limite (admin/model/module/debug_logger.php):**
+```php
+public function addReport(array $data): int {
+    $this->load->model('extension/debug_logger/module/debug_logger_license');
+    
+    // Vérifier la limite
+    $max = $this->model_extension_debug_logger_module_debug_logger_license->getMaxReports();
+    $current = $this->getTotalReports();
+    
+    if ($current >= $max) {
+        // Supprimer le plus ancien si limite atteinte
+        $this->db->query("DELETE FROM `" . DB_PREFIX . "debug_logger_reports` ORDER BY date_added ASC LIMIT 1");
+    }
+    
+    // Insérer le nouveau rapport
+    // ... code existant
+}
+```
+
+---
+
+### ⭐ PRIORITÉ 2 - Features Avancées
+
+#### 2.1 - Assignation d'utilisateurs
+**Description:** Assigner un rapport à un utilisateur admin spécifique.
+
+**SQL Migration:**
+```sql
+ALTER TABLE `oc_debug_logger_reports` 
+ADD COLUMN `assigned_to` INT(11) NULL AFTER `admin_user`,
+ADD KEY `idx_assigned` (`assigned_to`);
+```
+
+**UI (dans la page reports):**
+```html
+<!-- Dans chaque carte de rapport -->
+<select class="form-select form-select-sm assign-user" data-report-id="<?= $rid ?>">
+    <option value="">Unassigned</option>
+    <?php foreach ($admin_users as $user): ?>
+    <option value="<?= $user['user_id'] ?>" <?= $row['assigned_to'] == $user['user_id'] ? 'selected' : '' ?>>
+        <?= htmlspecialchars($user['firstname'] . ' ' . $user['lastname']) ?>
+    </option>
+    <?php endforeach; ?>
+</select>
+```
+
+**AJAX handler:**
+```javascript
+$(document).on('change', '.assign-user', function() {
+    var reportId = $(this).data('report-id');
+    var userId = $(this).val();
+    
+    fetch(cfg.assignUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            report_id: reportId,
+            user_id: userId
+        })
+    });
+});
+```
+
+---
+
+#### 2.2 - Tags personnalisés
+**Description:** Ajouter des tags aux rapports pour mieux les catégoriser.
+
+**SQL Migration:**
+```sql
+CREATE TABLE IF NOT EXISTS `oc_debug_logger_tags` (
+  `tag_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `report_id` INT(11) NOT NULL,
+  `tag_name` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`tag_id`),
+  KEY `idx_report` (`report_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+**UI:**
+```html
+<!-- Dans le modal de création -->
+<div class="form-group">
+    <label>Tags</label>
+    <input type="text" class="form-control" id="dl-tags" placeholder="payment, checkout, ui">
+    <small>Séparez par des virgules</small>
+</div>
+```
+
+---
+
+#### 2.3 - Analytics Dashboard
+**Description:** Graphiques montrant les tendances de bugs par jour/semaine/mois.
+
+**Utiliser Chart.js pour afficher:**
+- Nombre de rapports par jour (7 derniers jours)
+- Distribution par sévérité (pie chart)
+- Top 5 pages avec le plus d'erreurs
+- Temps moyen de résolution
+
+**Implémentation (nouvelle page):**
+```php
+public function analytics(): void {
+    // Charger Chart.js via CDN
+    // Générer des datasets JSON
+    // Afficher 4-6 graphiques différents
+}
+```
+
+---
+
+### ⭐ PRIORITÉ 3 - Nice to Have
+
+#### 3.1 - Session Replay (basique)
+Utiliser rrweb pour capturer les actions utilisateur avant le bug.
+
+#### 3.2 - Stack Trace amélioré
+Parser les erreurs JS pour afficher le stack trace formaté.
+
+#### 3.3 - Integration externe (Sentry/Bugsnag)
+Export automatique vers Sentry API.
+
+#### 3.4 - Mobile App
+App React Native pour consulter les rapports (très long terme).
+
+---
+
+## 📁 STRUCTURE DES FICHIERS À MODIFIER
+
+```
+debug_logger_ocmod/
+├── install.json (version 2.0.0)
+├── admin/
+│   ├── controller/
+│   │   ├── module/debug_logger.php (ajouter méthodes export, webhook, email)
+│   │   └── event/header.php
+│   ├── model/
+│   │   ├── module/
+│   │   │   ├── debug_logger.php (SQL updates)
+│   │   │   └── debug_logger_license.php (NOUVEAU)
+│   │   └── extension/debug_logger_license.php
+│   ├── view/
+│   │   ├── template/module/debug_logger.twig (ajouter sections Pro)
+│   │   ├── javascript/debug_logger.js (screenshot capture)
+│   │   └── stylesheet/debug_logger.css
+│   └── language/
+│       ├── en-gb/module/debug_logger.php (nouvelles clés)
+│       ├── fr-fr/module/debug_logger.php (nouvelles clés)
+│       └── es-es/module/debug_logger.php (nouvelles clés)
+└── catalog/
+    ├── controller/debug_logger.php
+    └── view/
+        ├── javascript/debug_logger.js (screenshot capture)
+        └── stylesheet/debug_logger.css
+```
+
+---
+
+## 🔧 MIGRATIONS SQL NÉCESSAIRES
+
+```sql
+-- Version 2.0.0 upgrade
+
+-- 1. Screenshot support
+ALTER TABLE `oc_debug_logger_reports` 
+ADD COLUMN `screenshot` MEDIUMTEXT NULL AFTER `network_log`;
+
+-- 2. Assignment support
+ALTER TABLE `oc_debug_logger_reports` 
+ADD COLUMN `assigned_to` INT(11) NULL AFTER `admin_user`,
+ADD KEY `idx_assigned` (`assigned_to`);
+
+-- 3. Tags table
+CREATE TABLE IF NOT EXISTS `oc_debug_logger_tags` (
+  `tag_id` INT(11) NOT NULL AUTO_INCREMENT,
+  `report_id` INT(11) NOT NULL,
+  `tag_name` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`tag_id`),
+  KEY `idx_report` (`report_id`),
+  KEY `idx_tag` (`tag_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Analytics table (optional - pour cache)
+CREATE TABLE IF NOT EXISTS `oc_debug_logger_stats` (
+  `stat_date` DATE NOT NULL,
+  `severity` VARCHAR(20) NOT NULL,
+  `source` VARCHAR(20) NOT NULL,
+  `count` INT(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`stat_date`, `severity`, `source`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+## 🎨 NOUVELLES CLÉS DE TRADUCTION
+
+### Français (admin/language/fr-fr/module/debug_logger.php)
+```php
+// Pro Features
+$_['text_pro_features']       = 'Fonctionnalités Pro';
+$_['text_free_version']       = 'Version Gratuite';
+$_['text_pro_version']        = 'Version Pro';
+$_['text_upgrade_pro']        = 'Passer à Pro';
+
+// License
+$_['entry_license_key']       = 'Clé de licence';
+$_['help_license_key']        = 'Entrez votre clé de licence Pro pour débloquer toutes les fonctionnalités.';
+$_['text_license_valid']      = 'Licence Pro active';
+$_['text_license_invalid']    = 'Licence invalide';
+$_['text_free_limit']         = 'Version gratuite (max 50 rapports)';
+
+// Email
+$_['text_email_notifications'] = 'Notifications Email';
+$_['entry_email_enable']       = 'Activer notifications';
+$_['entry_email_to']           = 'Email destinataire';
+$_['entry_email_severities']   = 'Notifier pour sévérités';
+$_['help_email_to']            = 'Adresse email qui recevra les notifications de bugs.';
+
+// Webhook
+$_['text_webhook']             = 'Notifications Webhook';
+$_['entry_webhook_type']       = 'Type de webhook';
+$_['entry_webhook_url']        = 'URL du webhook';
+$_['help_webhook_url']         = 'URL complète de votre webhook Slack ou Discord.';
+$_['text_webhook_slack']       = 'Slack';
+$_['text_webhook_discord']     = 'Discord';
+
+// Export
+$_['button_export_csv']        = 'Exporter CSV';
+$_['button_export_json']       = 'Exporter JSON';
+
+// Assignment
+$_['entry_assign_to']          = 'Assigner à';
+$_['text_unassigned']          = 'Non assigné';
+
+// Screenshot
+$_['text_screenshot']          = 'Capture d\'écran';
+$_['text_view_screenshot']     = 'Voir la capture';
+
+// Analytics
+$_['text_analytics']           = 'Analytics';
+$_['text_reports_by_day']      = 'Rapports par jour';
+$_['text_by_severity']         = 'Par sévérité';
+$_['text_top_pages']           = 'Pages les plus problématiques';
+```
+
+---
+
+## 🛠️ DÉPENDANCES EXTERNES
+
+### JavaScript Libraries
+```html
+<!-- Dans admin/controller/event/header.php, ajouter au <head> -->
+
+<!-- Screenshot capture -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- Charts (si analytics activé) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Session replay (optionnel - Phase 3) -->
+<script src="https://cdn.jsdelivr.net/npm/rrweb@latest/dist/rrweb.min.js"></script>
+```
+
+### PHP Requirements
+- OpenCart 4.x
+- PHP 7.4+
+- cURL extension (pour webhooks)
+- GD ou Imagick (pour manipulation screenshots si nécessaire)
+
+---
+
+## 🧪 CHECKLIST DE TEST
+
+### Tests Free Version
+- [ ] Installation propre sur OC 4.x
+- [ ] Limite de 50 rapports fonctionne
+- [ ] Ancien rapport supprimé quand limite atteinte
+- [ ] Message "Upgrade to Pro" visible
+- [ ] Features Pro désactivées/grisées
+
+### Tests Pro Version
+- [ ] Validation de licence fonctionne
+- [ ] Screenshot capturé et affiché
+- [ ] Email envoyé pour bugs (si configuré)
+- [ ] Webhook Slack fonctionne
+- [ ] Webhook Discord fonctionne
+- [ ] Export CSV contient toutes colonnes
+- [ ] Export JSON bien formaté
+- [ ] Assignation utilisateur sauvegardée
+- [ ] Unlimited reports fonctionne
+
+### Tests Compatibilité
+- [ ] Fonctionne sur Chrome/Firefox/Safari/Edge
+- [ ] Mobile responsive (modal + reports page)
+- [ ] Multilangue FR/EN/ES
+- [ ] Pas de conflits JavaScript avec autres extensions
+- [ ] Désinstallation propre (supprime tout)
+
+---
+
+## 📝 NOTES D'IMPLÉMENTATION
+
+### Ordre de développement recommandé:
+1. **Jour 1-2:** Migration DB + système de licence
+2. **Jour 3-4:** Screenshots + stockage
+3. **Jour 5:** Email notifications
+4. **Jour 6:** Webhooks Slack/Discord
+5. **Jour 7:** Export CSV/JSON
+6. **Jour 8-9:** UI/UX polishing + tests
+7. **Jour 10:** Documentation + packaging
+
+### Pièges à éviter:
+- **Screenshots trop lourds:** Compresser en JPEG 70% quality, scale 0.5
+- **Emails en spam:** Utiliser SPF/DKIM du domaine
+- **Webhook rate limits:** Throttle à max 1 notification/minute
+- **SQL injection:** Toujours utiliser prepared statements
+- **XSS dans reports:** Htmlspecialchars() sur tous outputs
+
+### Best Practices:
+- Garder rétro-compatibilité avec version 1.4.6
+- Migrer automatiquement l'ancienne DB lors de l'upgrade
+- Logger les erreurs d'envoi email/webhook pour debug
+- Ajouter un système de cache pour analytics (table stats)
+- Documenter chaque nouvelle méthode
+
+---
+
+## 🚀 PLAN DE RELEASE
+
+### Version 2.0.0 Free (Open Source)
+- Limite 50 rapports
+- Features de base actuelles
+- Message upgrade to Pro
+- Lien achat dans interface
+
+### Version 2.0.0 Pro ($29)
+- Licence validée par clé
+- Screenshots
+- Email notifications
+- Webhooks Slack/Discord
+- Export CSV/JSON
+- Unlimited reports
+- Support prioritaire (email 48h response)
+
+### Canaux de vente:
+1. **GitHub** - Version Free open source
+2. **PhoenixDepot.com** - Vente licence Pro
+3. **Gumroad/LemonSqueezy** - Alternative payment
+4. **OpenCart Marketplace** - Visibilité (commission 20%)
+
+---
+
+## 💡 IDÉES FUTURES (v2.1+)
+
+- Intégration Sentry/Bugsnag native
+- API REST pour accès externe
+- Filtres avancés (date range, search, multiple tags)
+- Rapports récurrents (même URL/erreur = grouping)
+- Dark mode toggle dans reports page
+- Bulk actions (close all, delete selected)
+- Custom fields configurables
+- Integration GitHub Issues (auto-create issue)
+- Permissions granulaires (qui peut voir quoi)
+- Multi-store support (si plusieurs stores OC)
+
+---
+
+## 📞 SUPPORT & DOCUMENTATION
+
+À créer:
+- `/docs/installation.md` - Guide d'installation
+- `/docs/upgrade-from-1.x.md` - Migration depuis v1.x
+- `/docs/pro-features.md` - Documentation features Pro
+- `/docs/webhooks.md` - Setup Slack/Discord
+- `/docs/api.md` - API documentation (si implémenté)
+- `/docs/faq.md` - Questions fréquentes
+- `/docs/troubleshooting.md` - Résolution problèmes courants
+
+---
+
+## ✅ CRITÈRES DE SUCCÈS
+
+### Technique:
+- [ ] 100% backward compatible avec v1.4.6
+- [ ] Aucune erreur PHP warnings/notices
+- [ ] Passe validation OpenCart Marketplace
+- [ ] Code PSR-12 compliant
+- [ ] Testé sur PHP 7.4, 8.0, 8.1, 8.2
+
+### Business:
+- [ ] Version Free utilisée par 100+ stores
+- [ ] Conversion Free→Pro de 5-10%
+- [ ] $500+ revenus premier mois
+- [ ] 4.5+ stars reviews
+- [ ] 0 refunds/complaints majeurs
+
+---
+
+## 🎯 PROMPT POUR AI ASSISTANT (VS CODE)
+
+**Copier-coller ce prompt dans ton AI assistant VS Code (Cursor, Continue, Copilot):**
+
+```
+Tu es un développeur expert en OpenCart 4 et PHP. 
+
+CONTEXTE:
+J'ai une extension OpenCart 4 appelée "Debug Logger" (version 1.4.6) qui permet de capturer les erreurs JavaScript et soumettre des rapports de bugs. Je veux l'upgrader en version 2.0.0 avec un modèle freemium (Free limité à 50 rapports, Pro illimité avec features avancées).
+
+ARCHITECTURE ACTUELLE:
+- Namespace: Opencart\Admin\Controller\Extension\DebugLogger\Module
+- DB Table: oc_debug_logger_reports
+- Stack: PHP 8.x, MySQL, jQuery, Bootstrap 5, Twig templating
+- Langues: FR, EN, ES
+
+FEATURES À IMPLÉMENTER (par ordre de priorité):
+
+1. SYSTÈME DE LICENCE
+   - Validation de clé format XXXX-XXXX-XXXX-XXXX
+   - Free = max 50 rapports, Pro = unlimited
+   - Section config pour entrer licence
+   - Model DebugLoggerLicense avec méthodes isPro(), canUseFeature()
+
+2. SCREENSHOTS AUTOMATIQUES
+   - Utiliser html2canvas.js
+   - Capturer page au moment du bug report
+   - Compresser JPEG 70%, scale 0.5
+   - Stocker en MEDIUMTEXT dans DB
+   - Afficher dans reports view
+
+3. EMAIL NOTIFICATIONS (Pro only)
+   - Settings: activer, email destinataire, filtres par sévérité
+   - Utiliser OpenCart Mail class
+   - Envoyer notification avec détails du rapport
+   - Template email propre et lisible
+
+4. WEBHOOKS SLACK/DISCORD (Pro only)
+   - Settings: type (slack/discord), webhook URL
+   - Payloads formatés selon API Slack/Discord
+   - Couleurs selon sévérité
+   - cURL POST async
+
+5. EXPORT CSV/JSON (Pro only)
+   - Boutons dans reports page
+   - Export tous les rapports filtrés
+   - Headers CSV propres
+   - JSON pretty print
+
+6. MIGRATIONS SQL
+   - ALTER TABLE pour screenshot column
+   - ALTER TABLE pour assigned_to column
+   - CREATE TABLE pour tags (optionnel)
+   - Script de migration auto lors upgrade
+
+CONSIGNES DE CODE:
+- Suivre conventions OpenCart 4 (namespaces, MVC)
+- PSR-12 code style
+- Toutes strings SQL avec prepared statements
+- Htmlspecialchars() sur tous outputs
+- Try-catch sur webhooks/emails (ne pas crasher si échec)
+- Backwards compatible avec v1.4.6 data
+- Comments en anglais dans le code
+- Variable names clairs et explicites
+
+FICHIERS À CRÉER/MODIFIER:
+- admin/controller/module/debug_logger.php (méthodes +)
+- admin/model/module/debug_logger.php (SQL +)
+- admin/model/module/debug_logger_license.php (NOUVEAU)
+- admin/view/template/module/debug_logger.twig (sections Pro)
+- admin/view/javascript/debug_logger.js (screenshot)
+- admin/language/*/module/debug_logger.php (nouvelles clés)
+- Migration SQL script
+
+Pour chaque feature, donne-moi:
+1. Le code complet commenté
+2. Les modifications SQL nécessaires
+3. Les ajouts aux fichiers de langue
+4. Les points d'attention/pièges
+5. Le code de test unitaire si applicable
+
+Commence par la feature 1 (système de licence). Montre-moi le code complet de debug_logger_license.php avec toute la logique de validation.
+```
+
+---
+
+**FIN DU DOCUMENT**
+
+Total pages: ~15-20 en format imprimé
+Temps d'implémentation estimé: 60-80 heures

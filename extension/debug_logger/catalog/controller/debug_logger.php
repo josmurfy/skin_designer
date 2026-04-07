@@ -40,7 +40,10 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
             'source'      => 'catalog',
         ]);
 
-        $max = (int)($this->config->get('module_debug_logger_max_reports') ?? 500);
+        // License-aware pruning
+        $license = (string)$this->config->get('module_debug_logger_license_key');
+        $is_pro  = (bool)preg_match('/^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$/i', $license);
+        $max     = $is_pro ? (int)($this->config->get('module_debug_logger_max_reports') ?? 500) : 50;
         if ($max > 0) {
             $this->model_extension_debug_logger_module_debug_logger->pruneOldest($max);
         }

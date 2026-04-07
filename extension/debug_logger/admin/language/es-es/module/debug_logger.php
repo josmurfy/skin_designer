@@ -51,8 +51,59 @@ $_['button_cancel']       = 'Cancelar';
 $_['button_view_reports'] = 'Ver informes';
 $_['button_clear_all']    = 'Borrar todos los informes';
 
+// Popup modal (injected via event)
+$_['popup_title']          = 'Reportar un problema';
+$_['popup_btn_trigger']    = 'Reportar un problema';
+$_['popup_label_page']     = 'Página';
+$_['popup_label_severity'] = 'Severidad';
+$_['popup_label_comment']  = 'Comentario';
+$_['popup_label_console']  = 'Errores de consola';
+$_['popup_placeholder']    = 'Describe el problema...';
+$_['popup_severity_bug']   = '🐛 Error';
+$_['popup_severity_warn']  = '⚠ Advertencia';
+$_['popup_severity_info']  = 'ℹ Información';
+$_['popup_btn_cancel']     = 'Cancelar';
+$_['popup_btn_save']       = 'Enviar';
+$_['popup_btn_reports']    = 'Ver informes';
+$_['popup_tip_severity']   = 'Elija el nivel de impacto del problema observado.';
+$_['popup_tip_comment']    = 'Describa qué estaba haciendo y qué salió mal. Obligatorio si "Comentario requerido" está activado.';
+$_['popup_tip_console']    = 'Errores de JavaScript capturados automáticamente en esta página.';
+$_['popup_tip_reports']    = 'Acceder a la lista de informes (solo administradores).';
+
 // Confirm
 $_['text_confirm_clear']  = '¿Eliminar TODOS los informes? Esta acción no se puede deshacer.';
 
 // Error
 $_['error_permission']    = '¡Atención: no tienes permiso para modificar el Debug Logger!';
+
+// Pro features
+$_['text_license']           = 'Licencia';
+$_['entry_license_key']      = 'Clave de licencia';
+$_['help_license_key']       = 'Introduce tu clave Pro (XXXX-XXXX-XXXX-XXXX) para desbloquear todas las funciones.';
+$_['text_free_limit']        = 'Versión gratuita: limitada a 50 informes. Actualiza a Pro para informes ilimitados y funciones avanzadas.';
+$_['text_disabled']          = 'Deshabilitado';
+
+$_['entry_capture_screenshot'] = 'Captura de pantalla';
+$_['help_capture_screenshot']  = 'Toma automáticamente una captura de pantalla al reportar (html2canvas).';
+$_['popup_label_screenshot']   = 'Captura de pantalla';
+
+$_['text_email']             = 'Notificaciones por correo';
+$_['entry_email_enable']     = 'Activar correo';
+$_['entry_email_to']         = 'Destinatario';
+$_['help_email_to']          = 'Dirección de correo para recibir alertas de informes de errores.';
+$_['text_email_severity']    = 'Notificar para';
+$_['entry_email_bug']        = 'Error';
+$_['entry_email_warning']    = 'Advertencia';
+$_['entry_email_info']       = 'Información';
+
+$_['text_webhook']           = 'Notificaciones Webhook';
+$_['entry_webhook_type']     = 'Servicio';
+$_['entry_webhook_url']      = 'URL Webhook';
+$_['help_webhook_url']       = 'Pega tu URL del Webhook de Slack o Discord aquí.';
+
+$_['text_pro_title']         = 'Funciones Pro';
+$_['text_pro_1']             = 'Informes ilimitados';
+$_['text_pro_2']             = 'Captura de pantalla (html2canvas)';
+$_['text_pro_3']             = 'Notificaciones por correo en nuevos informes';
+$_['text_pro_4']             = 'Integración Webhook Slack / Discord';
+$_['text_pro_5']             = 'Exportar CSV / JSON + asignación de informes';

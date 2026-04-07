@@ -2365,9 +2365,13 @@ class Product extends \Opencart\System\Engine\Controller {
 				$this->load->model('shopmanager/maintenance/image');
 				$this->model_shopmanager_maintenance_image->invalidateMaintenanceCache($post_info['product_id']);
 				
-				// Update eBay listings if product has marketplace items
+				// Mark marketplace listing for re-sync
 				$this->load->model('shopmanager/marketplace');
+						
+				
+				// Update eBay listings if product has marketplace items
 				$this->model_shopmanager_marketplace->updateMarketplaceListings($post_info['product_id']);
+				$this->model_shopmanager_marketplace->resetSyncState((int)$post_info['product_id']);
 			}
 
 			$json['success'] = ($lang['text_success'] ?? '');

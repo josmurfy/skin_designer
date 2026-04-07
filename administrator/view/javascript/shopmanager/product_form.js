@@ -696,9 +696,16 @@ function updateSpecificsTable(data, specifics_row_received) {
                     if (constraint.aspectMode === 'SELECTION_ONLY') {
                         inputField = '<select id="product-description-' + languageId + '-' + specifics_row + '" name="product_description[' + languageId + '][specifics][' + specificName + '][Value]" class="form-control" ' + required + ' >';
                         inputField += '<option value=""></option>';
+                        var hasSelectedValue = false;
                         values.forEach(function(value) {
-                            inputField += '<option value="' + value.localizedValue + '"' + (current_value.includes(value.localizedValue) ? ' selected' : '') + '>' + value.localizedValue + '</option>';
+                            var isSelected = current_value.includes(value.localizedValue);
+                            if (isSelected) hasSelectedValue = true;
+                            inputField += '<option value="' + value.localizedValue + '"' + (isSelected ? ' selected' : '') + '>' + value.localizedValue + '</option>';
                         });
+                        // If product has a saved value that doesn't match any dropdown option, add it
+                        if (!hasSelectedValue && current_value.length > 0 && current_value[0] !== '') {
+                            inputField += '<option value="' + current_value[0] + '" selected>' + current_value[0] + '</option>';
+                        }
                         inputField += '</select>';
                     } else if (constraint.aspectMode === 'FREE_TEXT' && constraint.itemToAspectCardinality === 'MULTI') {
                         inputField = '<select id="product-description-' + languageId + '-' + specifics_row + '" name="product_description[' + languageId + '][specifics][' + specificName + '][Value][]" class="form-control multiselect" multiple ' + required + ' size="' + Math.max(2, values.length + 2) + '" >';
@@ -2422,10 +2429,8 @@ window.addEventListener('load', function() {
                         location = json['redirect'];
                     }
                     if (json['success']) {
-                        var cancelBtn = document.getElementById('cancelButton');
-                        var listUrl = cancelBtn ? cancelBtn.href : null;
                         $('#alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> ' + json['success'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
-                        setTimeout(() => { if (listUrl) { location.href = listUrl; } else { location.reload(); } }, 1500);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                     if (json['error']) {
                         let errorMsg = json['error']['warning'] || 'Unknown error';

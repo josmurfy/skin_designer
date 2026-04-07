@@ -2581,7 +2581,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 if (!empty($marketplace['specifics'])) {
                     $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
                 }
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $this->model_shopmanager_marketplace->setToUpdate($product_id);
                 $json['success'] = "Category imported: $ebay_category_id";
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -2760,7 +2760,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
 
                 $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $best_id);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $this->model_shopmanager_marketplace->setToUpdate($product_id);
 
                 $label = $best_name ? "$best_id - $best_name" : "$best_id";
                 $json['success'] = "Category $label ($best_pct%) applied from info source";
@@ -2811,7 +2811,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                         if (!empty($marketplace['specifics'])) {
                             $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
                         }
-                        $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                        $this->model_shopmanager_marketplace->setToUpdate($product_id);
                         $success_count++;
                     } catch (\Exception $e) {
                         $errors[] = "Product $product_id: " . $e->getMessage();

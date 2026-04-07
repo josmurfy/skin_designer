@@ -51,8 +51,59 @@ $_['button_cancel']       = 'Annuler';
 $_['button_view_reports'] = 'Voir les rapports';
 $_['button_clear_all']    = 'Effacer tous les rapports';
 
+// Popup modal (injected via event)
+$_['popup_title']          = 'Signaler un problème';
+$_['popup_btn_trigger']    = 'Signaler un problème';
+$_['popup_label_page']     = 'Page';
+$_['popup_label_severity'] = 'Sévérité';
+$_['popup_label_comment']  = 'Commentaire';
+$_['popup_label_console']  = 'Erreurs console';
+$_['popup_placeholder']    = 'Décrivez le problème...';
+$_['popup_severity_bug']   = '🐛 Bug';
+$_['popup_severity_warn']  = '⚠ Avertissement';
+$_['popup_severity_info']  = 'ℹ Info';
+$_['popup_btn_cancel']     = 'Annuler';
+$_['popup_btn_save']       = 'Envoyer';
+$_['popup_btn_reports']    = 'Voir les rapports';
+$_['popup_tip_severity']   = 'Choisissez le niveau d\'impact du problème observé.';
+$_['popup_tip_comment']    = 'Décrivez ce que vous faisiez et ce qui s\'est mal passé. Obligatoire si "Commentaire requis" est activé.';
+$_['popup_tip_console']    = 'Erreurs JavaScript capturées automatiquement sur cette page.';
+$_['popup_tip_reports']    = 'Accéder à la liste des rapports (administrateurs seulement).';
+
 // Confirm
 $_['text_confirm_clear']  = 'Supprimer TOUS les rapports ? Cette action est irréversible.';
 
 // Error
 $_['error_permission']    = 'Attention : vous n\'avez pas la permission de modifier le Debug Logger !';
+
+// Pro features
+$_['text_license']           = 'Licence';
+$_['entry_license_key']      = 'Clé de licence';
+$_['help_license_key']       = 'Entrez votre clé Pro (XXXX-XXXX-XXXX-XXXX) pour débloquer toutes les fonctionnalités.';
+$_['text_free_limit']        = 'Version gratuite : limitée à 50 rapports. Passez en Pro pour des rapports illimités et des fonctionnalités avancées.';
+$_['text_disabled']          = 'Désactivé';
+
+$_['entry_capture_screenshot'] = 'Capture d\'écran';
+$_['help_capture_screenshot']  = 'Prend automatiquement une capture d\'écran de la page lors du signalement (html2canvas).';
+$_['popup_label_screenshot']   = 'Capture d\'écran';
+
+$_['text_email']             = 'Notifications par courriel';
+$_['entry_email_enable']     = 'Activer courriel';
+$_['entry_email_to']         = 'Destinataire';
+$_['help_email_to']          = 'Adresse courriel pour recevoir les alertes de rapports de bogues.';
+$_['text_email_severity']    = 'Notifier pour';
+$_['entry_email_bug']        = 'Bug';
+$_['entry_email_warning']    = 'Avertissement';
+$_['entry_email_info']       = 'Information';
+
+$_['text_webhook']           = 'Notifications Webhook';
+$_['entry_webhook_type']     = 'Service';
+$_['entry_webhook_url']      = 'URL Webhook';
+$_['help_webhook_url']       = 'Collez votre URL Webhook Slack ou Discord ici.';
+
+$_['text_pro_title']         = 'Fonctionnalités Pro';
+$_['text_pro_1']             = 'Rapports illimités';
+$_['text_pro_2']             = 'Capture d\'écran (html2canvas)';
+$_['text_pro_3']             = 'Notifications par courriel lors de nouveaux rapports';
+$_['text_pro_4']             = 'Intégration Webhook Slack / Discord';
+$_['text_pro_5']             = 'Export CSV / JSON + assignation de rapports';

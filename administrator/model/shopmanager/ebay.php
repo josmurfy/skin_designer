@@ -2613,6 +2613,32 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
                         $this->model_shopmanager_catalog_category->addSpecificTranslation($data['localizedAspectName'], $lang_code, $translatedValue);
                     }
                 }
+
+                // Traduire les aspectValues pour les aspects SELECTION_ONLY
+                $this->load->model('shopmanager/ai');
+                foreach ($category_specific_info as $key => $data) {
+                    if (isset($data['aspectConstraint']['aspectMode']) && 
+                        $data['aspectConstraint']['aspectMode'] === 'SELECTION_ONLY' &&
+                        !empty($data['aspectValues']) && is_array($data['aspectValues'])) {
+                        
+                        $enValues = array_column($data['aspectValues'], 'localizedValue');
+                        if (empty($enValues)) continue;
+
+                        $translatedValues = $this->model_shopmanager_ai->translate(
+                            json_encode($enValues, JSON_UNESCAPED_UNICODE), 
+                            $lang_code
+                        );
+                        if (is_string($translatedValues)) {
+                            $translatedValues = json_decode($translatedValues, true);
+                        }
+                        
+                        if (is_array($translatedValues) && count($translatedValues) === count($enValues)) {
+                            foreach ($data['aspectValues'] as $i => $val) {
+                                $category_specific_info[$key]['aspectValues'][$i]['localizedValue'] = $translatedValues[$i];
+                            }
+                        }
+                    }
+                }
         
                 // Mettre à jour les spécificités de la catégorie avec les nouvelles traductions
                 $this->model_shopmanager_catalog_category->editSpecifics($category_id, $language['language_id'], json_encode($category_specific_info));

@@ -1244,6 +1244,83 @@ class Category extends \Opencart\System\Engine\Model {
 			);
 		}
 		
+		// Validation: détecter les aspectValues SELECTION_ONLY FR non-traduits (identiques à EN)
+		if (!$language_id && isset($category_description_data[1]['specifics']) && isset($category_description_data[2]['specifics'])) {
+			$en_specifics = $category_description_data[1]['specifics'];
+			$fr_specifics = $category_description_data[2]['specifics'];
+			foreach ($en_specifics as $key => $en_data) {
+				if (isset($en_data['aspectConstraint']['aspectMode']) &&
+					$en_data['aspectConstraint']['aspectMode'] === 'SELECTION_ONLY' &&
+					!empty($en_data['aspectValues'])) {
+					$en_values = array_column($en_data['aspectValues'], 'localizedValue');
+					$fr_values = isset($fr_specifics[$key]['aspectValues']) ? array_column($fr_specifics[$key]['aspectValues'], 'localizedValue') : [];
+					if ($en_values === $fr_values) {
+						// Skip aspects where all values are numeric/symbolic (no translation needed)
+						$all_numeric = true;
+						foreach ($en_values as $v) {
+							if (preg_match('/[a-zA-Z]/', $v)) {
+								$all_numeric = false;
+								break;
+							}
+						}
+						if (!$all_numeric) {
+							$this->log->write('getSpecific: category_id=' . $category_id . ' aspect "' . $key . '" FR values identical to EN — needs sync refresh');
+						}
+					}
+				}
+			}
+		}
+		
+		// Auto-compléter les aspects "Year" avec les années manquantes jusqu'à l'année courante
+		$current_year = (int)date('Y');
+		foreach ($category_description_data as $lang_id => &$lang_data) {
+			if (empty($lang_data['specifics']) || !is_array($lang_data['specifics'])) continue;
+			$updated = false;
+			foreach ($lang_data['specifics'] as $key => &$aspect_data) {
+				if (stripos($key, 'year') === false) continue;
+				if (($aspect_data['aspectConstraint']['aspectMode'] ?? '') !== 'SELECTION_ONLY') continue;
+				if (empty($aspect_data['aspectValues'])) continue;
+				
+				// Extraire les années numériques existantes (4 digits)
+				$existing_years = [];
+				foreach ($aspect_data['aspectValues'] as $av) {
+					$v = $av['localizedValue'] ?? '';
+					if (preg_match('/^\d{4}$/', $v)) {
+						$existing_years[] = (int)$v;
+					}
+				}
+				if (empty($existing_years)) continue;
+				
+				$max_year = max($existing_years);
+				if ($max_year >= $current_year) continue;
+				
+				// Ajouter les années manquantes (max_year+1 ... current_year) en début de liste
+				$new_entries = [];
+				for ($y = $current_year; $y > $max_year; $y--) {
+					$new_entries[] = ['localizedValue' => (string)$y];
+				}
+				// Insérer après le dernier élément non-numérique du début, ou au tout début
+				// Les années récentes vont en premier (desc order typiquement)
+				$first_val = $aspect_data['aspectValues'][0]['localizedValue'] ?? '';
+				if (preg_match('/^\d{4}$/', $first_val) && (int)$first_val > $max_year - 5) {
+					// Liste triée desc — insérer au début
+					array_splice($aspect_data['aspectValues'], 0, 0, $new_entries);
+				} else {
+					// Liste triée asc ou mixte — insérer à la fin
+					$aspect_data['aspectValues'] = array_merge($aspect_data['aspectValues'], array_reverse($new_entries));
+				}
+				$updated = true;
+			}
+			unset($aspect_data);
+			
+			if ($updated) {
+				// Sauvegarder les specifics mises à jour en DB
+				$json = json_encode($lang_data['specifics'], JSON_UNESCAPED_UNICODE);
+				$this->db->query("UPDATE `" . DB_PREFIX . "category_description` SET `specifics` = '" . $this->db->escape($json) . "' WHERE `category_id` = '" . (int)$category_id . "' AND `language_id` = '" . (int)$lang_id . "'");
+			}
+		}
+		unset($lang_data);
+		
 		return $category_description_data;
 	}
 	

@@ -51,8 +51,59 @@ $_['button_cancel']       = 'Cancel';
 $_['button_view_reports'] = 'View Reports';
 $_['button_clear_all']    = 'Clear All Reports';
 
+// Popup modal (injected via event)
+$_['popup_title']          = 'Report a Problem';
+$_['popup_btn_trigger']    = 'Report a Problem';
+$_['popup_label_page']     = 'Page';
+$_['popup_label_severity'] = 'Severity';
+$_['popup_label_comment']  = 'Comment';
+$_['popup_label_console']  = 'Console Errors';
+$_['popup_placeholder']    = 'Describe the issue...';
+$_['popup_severity_bug']   = '🐛 Bug';
+$_['popup_severity_warn']  = '⚠ Warning';
+$_['popup_severity_info']  = 'ℹ Info';
+$_['popup_btn_cancel']     = 'Cancel';
+$_['popup_btn_save']       = 'Save';
+$_['popup_btn_reports']    = 'View Reports';
+$_['popup_tip_severity']   = 'Choose the impact level of the issue you observed.';
+$_['popup_tip_comment']    = 'Describe what you were doing and what went wrong. Required if "Require Comment" is enabled.';
+$_['popup_tip_console']    = 'JavaScript errors automatically captured on this page.';
+$_['popup_tip_reports']    = 'Access the reports list (administrators only).';
+
 // Confirm
 $_['text_confirm_clear']  = 'Delete ALL reports? This cannot be undone.';
 
 // Error
 $_['error_permission']    = 'Warning: You do not have permission to modify Debug Logger!';
+
+// Pro features
+$_['text_license']           = 'License';
+$_['entry_license_key']      = 'License Key';
+$_['help_license_key']       = 'Enter your Pro license key (XXXX-XXXX-XXXX-XXXX) to unlock all features.';
+$_['text_free_limit']        = 'Free version: limited to 50 reports. Upgrade to Pro for unlimited reports and advanced features.';
+$_['text_disabled']          = 'Disabled';
+
+$_['entry_capture_screenshot'] = 'Capture Screenshot';
+$_['help_capture_screenshot']  = 'Automatically takes a screenshot of the page when reporting (uses html2canvas).';
+$_['popup_label_screenshot']   = 'Screenshot';
+
+$_['text_email']             = 'Email Notifications';
+$_['entry_email_enable']     = 'Enable Email';
+$_['entry_email_to']         = 'Recipient';
+$_['help_email_to']          = 'Email address to receive bug report notifications.';
+$_['text_email_severity']    = 'Notify on';
+$_['entry_email_bug']        = 'Bug';
+$_['entry_email_warning']    = 'Warning';
+$_['entry_email_info']       = 'Info';
+
+$_['text_webhook']           = 'Webhook Notifications';
+$_['entry_webhook_type']     = 'Service';
+$_['entry_webhook_url']      = 'Webhook URL';
+$_['help_webhook_url']       = 'Paste your Slack or Discord webhook URL here.';
+
+$_['text_pro_title']         = 'Pro Features';
+$_['text_pro_1']             = 'Unlimited reports';
+$_['text_pro_2']             = 'Screenshot capture (html2canvas)';
+$_['text_pro_3']             = 'Email notifications on new reports';
+$_['text_pro_4']             = 'Slack / Discord webhook integration';
+$_['text_pro_5']             = 'Export CSV / JSON + report assignment';
