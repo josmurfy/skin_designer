@@ -1505,7 +1505,7 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
-        if ((utf8_strlen($this->request->post['upc']) < 1) || (utf8_strlen($this->request->post['upc']) > 14)) {
+        if ((oc_strlen($this->request->post['upc']) < 1) || (oc_strlen($this->request->post['upc']) > 14)) {
             $this->error['upc'] = ($lang['error_upc'] ?? '');
         }
 

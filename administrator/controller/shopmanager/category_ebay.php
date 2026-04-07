@@ -780,11 +780,11 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         }
 
         foreach ($this->request->post['category_description'] as $language_id => $value) {
-            if ((utf8_strlen($value['name']) < 2) || (utf8_strlen($value['name']) > 255)) {
+            if ((oc_strlen($value['name']) < 2) || (oc_strlen($value['name']) > 255)) {
                 $this->error['name'][$language_id] = ($lang['error_name'] ?? '');
             }
 
-            if ((utf8_strlen($value['meta_title']) < 3) || (utf8_strlen($value['meta_title']) > 255)) {
+            if ((oc_strlen($value['meta_title']) < 3) || (oc_strlen($value['meta_title']) > 255)) {
                 $this->error['meta_title'][$language_id] = ($lang['error_meta_title'] ?? '');
             }
         }

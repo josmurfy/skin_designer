@@ -14,12 +14,11 @@ function getConditionDetails(categoryId) {
                   
 
                     // Créez le contenu dynamique pour les conditions
-                    var conditionsHtml = '<div class="form-group"><label class="col-sm-2 control-label">Conditions</label><div class="col-sm-10"><div class="row">';
+                    var conditionsHtml = '<div class="row mb-3"><label class="col-sm-2 col-form-label">Conditions</label><div class="col-sm-10"><div class="row">';
 
                     $.each(json.conditions, function(index, condition) {
-                        conditionsHtml += '<div class="col-sm-5">';
-                        conditionsHtml += '<label for="condition-' + condition.condition_marketplace_item_id + '">';
-                        conditionsHtml += '<input type="radio" name="condition_id" class="save_data-radio" id="condition-' + condition.condition_marketplace_item_id + '" value="' + condition.condition_id + '" ';
+                        conditionsHtml += '<div class="col-sm-4"><div class="form-check">';
+                        conditionsHtml += '<input type="radio" name="condition_id" class="form-check-input save_data-radio" id="condition-' + condition.condition_marketplace_item_id + '" value="' + condition.condition_id + '" ';
                         
                         // Vérifiez si cette condition est déjà sélectionnée
                         if (json.selected_condition_id == condition.condition_id) {
@@ -27,8 +26,9 @@ function getConditionDetails(categoryId) {
                         }
                         conditionsHtml += ' onclick="checkFormStatus();"';
                         conditionsHtml += '>';
+                        conditionsHtml += '<label class="form-check-label" for="condition-' + condition.condition_marketplace_item_id + '">';
                         conditionsHtml += condition.condition_name;
-                        conditionsHtml += '</label></div>';
+                        conditionsHtml += '</label></div></div>';
                     });
 
                     conditionsHtml += '</div></div></div>';

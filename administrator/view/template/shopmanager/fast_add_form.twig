@@ -81,22 +81,21 @@
                 <label class="col-sm-2 col-form-label">{{ entry_condition }}</label>
                 <input type="hidden" id="conditions_json" name="conditions_json" value='{{ conditions|default([])|json_encode|e('html_attr') }}' />
                 <div class="col-sm-10">
-                  <label id="condition-name" style="text-align:left;display:{{ product_description.condition is defined ? 'block' : 'none' }};padding-top:10px;">
-                    {{ product_description.condition|default('') }}
-                  </label><br>
                   <div class="row">
                     {% for condition in conditions %}
-                      <div class="col-sm-5">
-                        <label for="condition-{{ condition.condition_marketplace_item_id }}">
+                      <div class="col-sm-4">
+                        <div class="form-check">
                           <input type="radio"
                                  name="condition_id"
-                                 class="save_data-radio"
+                                 class="form-check-input save_data-radio"
                                  id="condition-{{ condition.condition_marketplace_item_id }}"
                                  value="{{ condition.condition_id }}"
                                  {% if condition_id is defined and condition_id == condition.condition_id %}checked{% endif %}
                                  onclick="updateCondition('{{ condition.condition_marketplace_item_id }}','{{ condition.condition_id }}');checkFormStatus();">
-                          {{ condition.condition_name }}
-                        </label>
+                          <label class="form-check-label" for="condition-{{ condition.condition_marketplace_item_id }}">
+                            {{ condition.condition_name }}
+                          </label>
+                        </div>
                       </div>
                     {% endfor %}
                   </div>
