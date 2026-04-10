@@ -135,6 +135,13 @@ class ColumnLeft extends \Opencart\System\Engine\Controller {
 				];
 			}
 
+			if ($this->user->hasPermission('access', 'shopmanager/card/search')) {
+				$cards_group[] = [
+					'name'     => $this->language->get('text_card_search'),
+					'href'     => $this->url->link('shopmanager/card/search', 'user_token=' . $this->session->data['user_token'], true),
+					'children' => []
+				];
+			}
 			if ($this->user->hasPermission('access', 'shopmanager/card/card_market')) {
 				$cards_group[] = [
 					'name'     => $this->language->get('text_card_market'),

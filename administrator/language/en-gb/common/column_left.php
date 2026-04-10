@@ -103,6 +103,7 @@ $_['text_import_group']        = 'Import';
 $_['text_card_set_importer']   = 'Card Set Importer';
 $_['text_card_sold_importer']  = 'Sold Card Importer';
 $_['text_card_price_active']   = 'Active Card Importer';
+$_['text_card_search']         = 'Card Value Search';
 $_['text_card_market']         = 'Market Research';
 $_['text_card_manufacturer']   = 'Manufacturers';
 

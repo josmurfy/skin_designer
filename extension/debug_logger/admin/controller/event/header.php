@@ -5,10 +5,23 @@ class Header extends \Opencart\System\Engine\Controller {
 
     // OC4 view/after signature: ($route, $data, $output) — 3 params, no $code
     public function index(string &$route, array &$data, string &$output): void {
+        // Prevent double injection if event fires more than once
+        static $injected = false;
+        if ($injected) return;
+
         $enabled = (bool)$this->config->get('module_debug_logger_status')
                 && (bool)$this->config->get('module_debug_logger_admin_enable');
 
         if (!$enabled || !isset($this->session->data['user_token'])) {
+            return;
+        }
+
+        $injected = true;
+
+        // Check user group permission
+        $allowed_groups_raw = $this->config->get('module_debug_logger_allowed_groups');
+        $allowed_groups = $allowed_groups_raw ? json_decode($allowed_groups_raw, true) : [];
+        if (!empty($allowed_groups) && !in_array((int)$this->user->getGroupId(), $allowed_groups, true)) {
             return;
         }
 
@@ -29,6 +42,13 @@ class Header extends \Opencart\System\Engine\Controller {
         $this->load->model('extension/debug_logger/module/debug_logger_license');
         $is_pro = $this->model_extension_debug_logger_module_debug_logger_license->isPro();
         $capture_screenshot = $is_pro && (bool)$this->config->get('module_debug_logger_capture_screenshot');
+
+        // Appearance settings (Pro defaults)
+        $btn_color    = ($is_pro ? $this->config->get('module_debug_logger_btn_color') : null) ?: '#dc2626';
+        $header_color = ($is_pro ? $this->config->get('module_debug_logger_header_color') : null) ?: '#1e293b';
+        $accent_color = ($is_pro ? $this->config->get('module_debug_logger_accent_color') : null) ?: '#3b82f6';
+        $btn_position = ($is_pro ? $this->config->get('module_debug_logger_btn_position') : null) ?: 'navbar';
+        $btn_size     = ($is_pro ? $this->config->get('module_debug_logger_btn_size') : null) ?: 'medium';
 
         $config_json = json_encode([
             'saveUrl'           => $save_url,
@@ -63,16 +83,42 @@ class Header extends \Opencart\System\Engine\Controller {
 
         $a = htmlspecialchars($asset_base, ENT_QUOTES | ENT_HTML5);
 
-        // Nav button — red, "Report a Problem"
+        // Nav button label (must be defined before floating_btn uses it)
         $btn_label = htmlspecialchars($this->language->get('popup_btn_trigger'), ENT_QUOTES | ENT_HTML5);
-        $nav_btn   = '<li id="nav-debug" class="nav-item">'
-            . '<a href="#" id="btn-debug-logger" class="nav-link" title="' . $btn_label . '"'
-            . ' style="color:#fff;background:#dc2626;border-radius:4px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px">'
-            . '<i class="fa-solid fa-bug"></i>'
-            . '<span class="d-none d-md-inline">' . $btn_label . '</span>'
-            . '</a></li>';
 
-        $output = str_replace('<li id="nav-logout"', $nav_btn . '<li id="nav-logout"', $output);
+        // Floating button for non-navbar positions
+        $floating_btn = '';
+        if ($btn_position !== 'navbar') {
+            $pos_map = [
+                'bottom-right' => 'bottom:20px;right:20px',
+                'bottom-left'  => 'bottom:20px;left:20px',
+                'top-right'    => 'top:80px;right:20px',
+                'top-left'     => 'top:80px;left:20px',
+            ];
+            $pos_css = $pos_map[$btn_position] ?? 'bottom:20px;right:20px';
+            $floating_btn = '<div id="btn-debug-logger" style="position:fixed;' . $pos_css . ';z-index:99999;cursor:pointer;'
+                . 'background:' . htmlspecialchars($btn_color, ENT_QUOTES) . ';color:#fff;border-radius:50%;'
+                . 'width:' . ($btn_size === 'small' ? '36px' : ($btn_size === 'large' ? '56px' : '46px')) . ';'
+                . 'height:' . ($btn_size === 'small' ? '36px' : ($btn_size === 'large' ? '56px' : '46px')) . ';'
+                . 'display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)"'
+                . ' title="' . $btn_label . '">'
+                . '<i class="fa-solid fa-bug"></i></div>';
+        }
+
+        // Nav button — uses appearance settings
+        $size_map = ['small' => '3px 6px', 'medium' => '5px 10px', 'large' => '7px 14px'];
+        $btn_padding = $size_map[$btn_size] ?? '5px 10px';
+        $font_size = $btn_size === 'small' ? 'font-size:.8rem;' : ($btn_size === 'large' ? 'font-size:1.1rem;' : '');
+
+        if ($btn_position === 'navbar') {
+            $nav_btn = '<li id="nav-debug" class="nav-item">'
+                . '<a href="#" id="btn-debug-logger" class="nav-link" title="' . $btn_label . '"'
+                . ' style="color:#fff;background:' . htmlspecialchars($btn_color, ENT_QUOTES) . ';border-radius:4px;padding:' . $btn_padding . ';display:inline-flex;align-items:center;gap:6px;' . $font_size . '"'
+                . '><i class="fa-solid fa-bug"></i>'
+                . '<span class="d-none d-md-inline">' . $btn_label . '</span>'
+                . '</a></li>';
+            $output = str_replace('<li id="nav-logout"', $nav_btn . '<li id="nav-logout"', $output);
+        }
 
         // Translated strings for modal HTML (PHP-side, no DOMContentLoaded race)
         $t_title       = htmlspecialchars($this->language->get('popup_title'),         ENT_QUOTES | ENT_HTML5);
@@ -121,8 +167,12 @@ class Header extends \Opencart\System\Engine\Controller {
         }
 
         $inject = '<!-- Debug Logger v2.0.0 -->'
-            . ($capture_screenshot ? '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>' : '')
+            . '<style>#dl-modal-head{background:' . htmlspecialchars($header_color, ENT_QUOTES) . '}'
+            . ' .btn-dl-save{background:' . htmlspecialchars($accent_color, ENT_QUOTES) . '}'
+            . ' .btn-dl-save:hover{filter:brightness(1.15)}</style>'
+            . ($capture_screenshot ? '<script src="' . $a . 'javascript/html2canvas.min.js"></script>' : '')
             . '<link rel="stylesheet" href="' . $a . 'stylesheet/debug_logger.css">'
+            . $floating_btn
             . '<div id="dl-overlay"></div>'
             . '<div id="dl-modal">'
             .   '<div id="dl-modal-head">'
@@ -166,5 +216,51 @@ class Header extends \Opencart\System\Engine\Controller {
             . '<script src="' . $a . 'javascript/debug_logger.js"></script>';
 
         $output = str_replace('</header>', '</header>' . $inject, $output);
+    }
+
+    /**
+     * Event: admin/view/common/column_left/before
+     * Injects Debug Logger menu into admin sidebar.
+     */
+    public function columnLeft(string &$route, array &$args): void {
+        if (!isset($this->session->data['user_token'])) {
+            return;
+        }
+
+        if (!$this->user->hasPermission('access', 'extension/debug_logger/module/debug_logger')) {
+            return;
+        }
+
+        $this->load->language('extension/debug_logger/module/debug_logger');
+
+        $tok = $this->session->data['user_token'];
+
+        $children = [];
+
+        $children[] = [
+            'name'     => $this->language->get('text_menu_dashboard'),
+            'href'     => $this->url->link('extension/debug_logger/module/debug_logger.analytics', 'user_token=' . $tok),
+            'children' => [],
+        ];
+
+        $children[] = [
+            'name'     => $this->language->get('text_menu_reports'),
+            'href'     => $this->url->link('extension/debug_logger/module/debug_logger.reports', 'user_token=' . $tok),
+            'children' => [],
+        ];
+
+        $children[] = [
+            'name'     => $this->language->get('text_menu_settings'),
+            'href'     => $this->url->link('extension/debug_logger/module/debug_logger', 'user_token=' . $tok),
+            'children' => [],
+        ];
+
+        $args['menus'][] = [
+            'id'       => 'menu-debug-logger',
+            'icon'     => 'fa-solid fa-bug',
+            'name'     => $this->language->get('text_menu_title'),
+            'href'     => '',
+            'children' => $children,
+        ];
     }
 }

@@ -1,0 +1,42 @@
+
+**Objectif :**
+Créer une fonctionnalité de recherche optimisée qui me permet de filtrer rapidement uniquement les cartes ayant une valeur intéressante dans un lot donné.
+
+**Contexte d’utilisation :**
+Quand je prends une boîte physique (ex: hockey 1991), je veux pouvoir entrer une recherche comme :
+`1991 hockey set`
+
+Et obtenir uniquement les cartes de ce set qui valent la peine d’être sorties (haute valeur ou potentiel intéressant), afin de ne pas perdre de temps avec les cartes communes.
+
+**Ce que je veux exactement :**
+
+1. Une requête (SQL ou logique backend) qui :
+
+   * Filtre par année + sport + série (set)
+   * Retourne seulement les cartes avec une valeur supérieure à un certain seuil (ex: $5, $10, configurable)
+   * Priorise les cartes non gradées avec un bon potentiel (ex: rookie, stars, cartes recherchées)
+   * Peut aussi inclure les cartes gradées si leur valeur est significative
+
+2. Un système de tri intelligent :
+
+   * Par valeur décroissante
+   * Optionnellement par potentiel de grading
+
+3. Une logique de fallback :
+
+   * Si aucune carte ne correspond dans la base locale,
+   * Permettre d’utiliser une source externe ou mes fonctions existantes pour récupérer les cartes importantes du set
+
+4. Idéalement :
+
+   * Ajouter un champ ou calcul pour identifier le “grading potential” (ex: basé sur joueur, rareté, année, popularité)
+   * Permettre d’exclure automatiquement les cartes communes de faible valeur
+
+**But final :**
+Accélérer mon processus physique de tri en ne sortant que les cartes qui valent la peine :
+
+* soit pour grading
+* soit pour vente individuelle (ex: eBay)
+* et laisser de côté les cartes de faible valeur pour vente en lot
+
+

@@ -106,6 +106,27 @@ class CardSetImporter extends \Opencart\System\Engine\Model {
     }
 
     /**
+     * Return distinct values for a field filtered by current context.
+     * Used by cascading dropdowns: e.g. getFilteredDistinct('brand', ['year'=>'1991','category'=>'Hockey'])
+     */
+    public function getFilteredDistinct(string $field, array $context = [], int $limit = 500): array {
+        $allowed = ['title','category','year','brand','set_name','player','team','variation','card_number','subset'];
+        if (!in_array($field, $allowed)) return [];
+
+        $sql = 'SELECT DISTINCT `' . $field . '` AS value FROM ' . DB_PREFIX . 'card_set WHERE `' . $field . "` != '' AND `" . $field . '` IS NOT NULL';
+
+        $ctx_fields = ['year','category','brand','set_name','player','card_number'];
+        foreach ($ctx_fields as $cf) {
+            if ($cf !== $field && !empty($context[$cf])) {
+                $sql .= " AND `" . $cf . "` = '" . $this->db->escape($context[$cf]) . "'";
+            }
+        }
+
+        $sql .= ' ORDER BY `' . $field . '` ASC LIMIT ' . (int)$limit;
+        return array_column($this->db->query($sql)->rows, 'value');
+    }
+
+    /**
      * Check if a single CSV row already exists in DB by set_name + category + year + brand.
      * CSV uses 'set' key; DB column is 'set_name'.
      */

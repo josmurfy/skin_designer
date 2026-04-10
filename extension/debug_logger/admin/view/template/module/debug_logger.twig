@@ -3,15 +3,14 @@
   <div class="page-header">
     <div class="container-fluid">
       <div class="float-end">
-        <a href="{{ cancel }}" class="btn btn-light"><i class="fa-solid fa-reply"></i> {{ button_cancel }}</a>
-        <button type="submit" form="form-debug-logger" class="btn btn-primary"><i class="fa-regular fa-floppy-disk"></i> {{ button_save }}</button>
+        <a href="{{ cancel }}" data-bs-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-light"><i class="fa-solid fa-reply"></i></a>
+        <button type="submit" form="form-module" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa-solid fa-save"></i></button>
       </div>
-      <h1>
-        <i class="fa-solid fa-bug" style="color:#f59e0b"></i> {{ heading_title }}
+      <h1>{{ heading_title }}
         {% if is_pro %}
-        <span style="background:linear-gradient(135deg,#f59e0b,#eab308);color:#000;padding:2px 8px;border-radius:4px;font-size:.55em;font-weight:800;vertical-align:middle;margin-left:6px">PRO</span>
+        <span class="badge bg-warning text-dark" style="font-size:.45em;vertical-align:middle">PRO</span>
         {% else %}
-        <span style="background:#334155;color:#94a3b8;padding:2px 8px;border-radius:4px;font-size:.55em;font-weight:700;vertical-align:middle;margin-left:6px">FREE</span>
+        <span class="badge bg-secondary" style="font-size:.45em;vertical-align:middle">FREE</span>
         {% endif %}
       </h1>
       <ol class="breadcrumb">
@@ -21,331 +20,755 @@
       </ol>
     </div>
   </div>
-
   <div class="container-fluid">
     {% if error_warning %}
-    <div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> {{ error_warning }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> {{ error_warning }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     {% endif %}
     {% if success %}
-    <div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> {{ success }} <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> {{ success }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     {% endif %}
-
     <div class="row">
-      <div class="col-lg-8">
-        <form id="form-debug-logger" action="{{ action }}" method="post" enctype="multipart/form-data">
-
-          <!-- General -->
-          <div class="card mb-3">
-            <div class="card-header"><i class="fa-solid fa-toggle-on"></i> {{ text_general }}</div>
-            <div class="card-body">
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_status }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_status" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_status" value="1" id="input-status" {% if module_debug_logger_status %}checked{% endif %}>
-                    <label class="form-check-label" for="input-status">{{ text_enabled }}</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- License (Pro) -->
-          <div class="card mb-3" style="border-color:#f59e0b30">
-            <div class="card-header" style="background:#f59e0b15"><i class="fa-solid fa-key" style="color:#f59e0b"></i> {{ text_license }}</div>
-            <div class="card-body">
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_license_key }}</label>
-                <div class="col-sm-8">
-                  <input type="text" class="form-control" name="module_debug_logger_license_key" value="{{ module_debug_logger_license_key }}" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19" style="font-family:monospace">
-                  <div class="form-text">{{ help_license_key }}</div>
-                </div>
-              </div>
-              {% if not is_pro %}
-              <div class="alert alert-warning mb-0" style="font-size:.82rem">
-                <i class="fa-solid fa-lock"></i> {{ text_free_limit }}
-              </div>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Display -->
-          <div class="card mb-3">
-            <div class="card-header"><i class="fa-solid fa-eye"></i> {{ text_display }}</div>
-            <div class="card-body">
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_admin_enable }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_admin_enable" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_admin_enable" value="1" id="input-admin-enable" {% if module_debug_logger_admin_enable %}checked{% endif %}>
-                    <label class="form-check-label" for="input-admin-enable">{{ text_show_admin }}</label>
-                  </div>
-                  <div class="form-text">{{ help_admin_enable }}</div>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_catalog_enable }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_catalog_enable" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_catalog_enable" value="1" id="input-catalog-enable" {% if module_debug_logger_catalog_enable %}checked{% endif %}>
-                    <label class="form-check-label" for="input-catalog-enable">{{ text_show_catalog }}</label>
-                  </div>
-                  <div class="form-text">{{ help_catalog_enable }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Capture behaviour -->
-          <div class="card mb-3">
-            <div class="card-header"><i class="fa-solid fa-radar"></i> {{ text_capture }}</div>
-            <div class="card-body">
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_capture_console }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_capture_console" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_console" value="1" id="input-capture-console" {% if module_debug_logger_capture_console %}checked{% endif %}>
-                    <label class="form-check-label" for="input-capture-console">{{ text_enabled }}</label>
-                  </div>
-                  <div class="form-text">{{ help_capture_console }}</div>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_capture_network }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_capture_network" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_network" value="1" id="input-capture-network" {% if module_debug_logger_capture_network %}checked{% endif %}>
-                    <label class="form-check-label" for="input-capture-network">{{ text_enabled }}</label>
-                  </div>
-                  <div class="form-text">{{ help_capture_network }}</div>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_capture_screenshot }} {% if not is_pro %}<span class="badge bg-secondary">PRO</span>{% endif %}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_capture_screenshot" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_screenshot" value="1" id="input-capture-screenshot" {% if module_debug_logger_capture_screenshot %}checked{% endif %} {% if not is_pro %}disabled{% endif %}>
-                    <label class="form-check-label" for="input-capture-screenshot">{{ text_enabled }}</label>
-                  </div>
-                  <div class="form-text">{{ help_capture_screenshot }}</div>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_require_comment }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_require_comment" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_require_comment" value="1" id="input-require-comment" {% if module_debug_logger_require_comment %}checked{% endif %}>
-                    <label class="form-check-label" for="input-require-comment">{{ text_enabled }}</label>
-                  </div>
-                  <div class="form-text">{{ help_require_comment }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Severity levels -->
-          <div class="card mb-3">
-            <div class="card-header"><i class="fa-solid fa-layer-group"></i> {{ text_severity }}</div>
-            <div class="card-body">
-              <div class="form-text mb-3">{{ help_severity }}</div>
-              <div class="row mb-2">
-                <label class="col-sm-4 col-form-label">🐛 {{ entry_severity_bug }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_severity_bug" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_bug" value="1" id="input-sev-bug" {% if module_debug_logger_severity_bug %}checked{% endif %}>
-                  </div>
-                </div>
-              </div>
-              <div class="row mb-2">
-                <label class="col-sm-4 col-form-label">⚠️ {{ entry_severity_warning }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_severity_warning" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_warning" value="1" id="input-sev-warning" {% if module_debug_logger_severity_warning %}checked{% endif %}>
-                  </div>
-                </div>
-              </div>
-              <div class="row mb-2">
-                <label class="col-sm-4 col-form-label">ℹ️ {{ entry_severity_info }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_severity_info" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_info" value="1" id="input-sev-info" {% if module_debug_logger_severity_info %}checked{% endif %}>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Email Notifications (Pro) -->
-          <div class="card mb-3" style="border-color:{% if is_pro %}#3b82f630{% else %}#33415550{% endif %}">
-            <div class="card-header" style="{% if not is_pro %}opacity:.5{% endif %}">
-              <i class="fa-solid fa-envelope" style="color:#3b82f6"></i> {{ text_email }}
-              {% if not is_pro %}<span class="badge bg-secondary ms-2">PRO</span>{% endif %}
-            </div>
-            <div class="card-body" {% if not is_pro %}style="opacity:.45;pointer-events:none"{% endif %}>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_email_enable }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-switch mt-2">
-                    <input type="hidden" name="module_debug_logger_email_enable" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_email_enable" value="1" id="input-email-enable" {% if module_debug_logger_email_enable %}checked{% endif %} {% if not is_pro %}disabled{% endif %}>
-                    <label class="form-check-label" for="input-email-enable">{{ text_enabled }}</label>
-                  </div>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_email_to }}</label>
-                <div class="col-sm-8">
-                  <input type="email" class="form-control" name="module_debug_logger_email_to" value="{{ module_debug_logger_email_to }}" placeholder="admin@example.com" {% if not is_pro %}disabled{% endif %}>
-                  <div class="form-text">{{ help_email_to }}</div>
-                </div>
-              </div>
-              <div class="row mb-2">
-                <label class="col-sm-4 col-form-label">{{ text_email_severity }}</label>
-                <div class="col-sm-8">
-                  <div class="form-check form-check-inline mt-2">
-                    <input type="hidden" name="module_debug_logger_email_bug" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_email_bug" value="1" {% if module_debug_logger_email_bug %}checked{% endif %} {% if not is_pro %}disabled{% endif %}>
-                    <label class="form-check-label">🐛 Bug</label>
-                  </div>
-                  <div class="form-check form-check-inline mt-2">
-                    <input type="hidden" name="module_debug_logger_email_warning" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_email_warning" value="1" {% if module_debug_logger_email_warning %}checked{% endif %} {% if not is_pro %}disabled{% endif %}>
-                    <label class="form-check-label">⚠️ Warning</label>
-                  </div>
-                  <div class="form-check form-check-inline mt-2">
-                    <input type="hidden" name="module_debug_logger_email_info" value="0">
-                    <input class="form-check-input" type="checkbox" name="module_debug_logger_email_info" value="1" {% if module_debug_logger_email_info %}checked{% endif %} {% if not is_pro %}disabled{% endif %}>
-                    <label class="form-check-label">ℹ️ Info</label>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Webhook (Pro) -->
-          <div class="card mb-3" style="border-color:{% if is_pro %}#8b5cf630{% else %}#33415550{% endif %}">
-            <div class="card-header" style="{% if not is_pro %}opacity:.5{% endif %}">
-              <i class="fa-solid fa-satellite-dish" style="color:#8b5cf6"></i> {{ text_webhook }}
-              {% if not is_pro %}<span class="badge bg-secondary ms-2">PRO</span>{% endif %}
-            </div>
-            <div class="card-body" {% if not is_pro %}style="opacity:.45;pointer-events:none"{% endif %}>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_webhook_type }}</label>
-                <div class="col-sm-8">
-                  <select class="form-select" name="module_debug_logger_webhook_type" {% if not is_pro %}disabled{% endif %}>
-                    <option value="">-- {{ text_disabled }} --</option>
-                    <option value="slack" {% if module_debug_logger_webhook_type == 'slack' %}selected{% endif %}>Slack</option>
-                    <option value="discord" {% if module_debug_logger_webhook_type == 'discord' %}selected{% endif %}>Discord</option>
-                  </select>
-                </div>
-              </div>
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label">{{ entry_webhook_url }}</label>
-                <div class="col-sm-8">
-                  <input type="url" class="form-control" name="module_debug_logger_webhook_url" value="{{ module_debug_logger_webhook_url }}" placeholder="https://hooks.slack.com/services/..." {% if not is_pro %}disabled{% endif %}>
-                  <div class="form-text">{{ help_webhook_url }}</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Data management -->
-          <div class="card mb-3">
-            <div class="card-header"><i class="fa-solid fa-database"></i> {{ text_data }}</div>
-            <div class="card-body">
-              <div class="row mb-3">
-                <label class="col-sm-4 col-form-label" for="input-max-reports">{{ entry_max_reports }}</label>
-                <div class="col-sm-4">
-                  <input type="number" min="0" max="99999" step="1" class="form-control" id="input-max-reports" name="module_debug_logger_max_reports" value="{{ module_debug_logger_max_reports }}" placeholder="500" {% if not is_pro %}disabled{% endif %}>
-                  <div class="form-text">{{ help_max_reports }}</div>
-                  {% if not is_pro %}
-                  <div class="form-text text-warning"><i class="fa-solid fa-lock"></i> Free: {{ free_limit }} reports max</div>
-                  {% endif %}
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </form>
-      </div>
-
-      <!-- RIGHT COLUMN -->
-      <div class="col-lg-4">
-
-        <!-- Stats card -->
-        <div class="card mb-3" style="border-color:#334155;background:#1e293b;color:#e2e8f0">
-          <div class="card-header" style="background:#0f172a;border-color:#334155">
-            <i class="fa-solid fa-chart-bar" style="color:#f59e0b"></i> {{ text_stats }}
+      <div class="col-lg-9">
+        <div class="card">
+          <div class="card-header">
+            <ul class="nav nav-tabs card-header-tabs" id="dl-tabs">
+              <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-general">{{ tab_general }}</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-capture">{{ tab_capture }}</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-notifications">{{ tab_notifications }} {% if not is_pro %}<i class="fa-solid fa-lock fa-xs"></i>{% endif %}</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-appearance">{{ tab_appearance }} {% if not is_pro %}<i class="fa-solid fa-lock fa-xs"></i>{% endif %}</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-updates" id="dl-tab-updates-link">{{ tab_updates }}</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-permissions">{{ tab_permissions }}</a></li>
+              <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-license">{{ tab_license }}</a></li>
+            </ul>
           </div>
           <div class="card-body">
-            <div class="d-flex justify-content-between mb-2">
-              <span style="color:#94a3b8">{{ text_total_reports }}</span>
-              <strong>{{ total_reports }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span style="color:#94a3b8">⏳ {{ text_open_reports }}</span>
-              <strong style="color:#f59e0b">{{ total_open }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span style="color:#94a3b8">👤 {{ text_from_admin }}</span>
-              <strong style="color:#818cf8">{{ total_admin }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-2">
-              <span style="color:#94a3b8">🛒 {{ text_from_catalog }}</span>
-              <strong style="color:#4ade80">{{ total_catalog }}</strong>
-            </div>
-            <hr style="border-color:#334155">
-            <div class="d-grid gap-2">
-              <a href="{{ view_reports }}" class="btn btn-sm btn-outline-light" target="_blank">
-                <i class="fa-solid fa-list-ul"></i> {{ button_view_reports }}
-              </a>
-              {% if total_reports > 0 %}
-              <a href="{{ clear_url }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('{{ text_confirm_clear }}')">
-                <i class="fa-solid fa-trash"></i> {{ button_clear_all }}
-              </a>
-              {% endif %}
-            </div>
+            <form id="form-module" action="{{ action }}" method="post" enctype="multipart/form-data">
+              <div class="tab-content">
+                <!-- TAB: General -->
+                <div class="tab-pane fade show active" id="tab-general">
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-status">{{ entry_status }}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_status" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_status" value="1" id="input-status" {% if module_debug_logger_status %}checked{% endif %}>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-admin-enable">{{ entry_admin_enable }}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_admin_enable" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_admin_enable" value="1" id="input-admin-enable" {% if module_debug_logger_admin_enable %}checked{% endif %}>
+                      </div>
+                      <div class="form-text">{{ help_admin_enable }}</div>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-catalog-enable">{{ entry_catalog_enable }}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_catalog_enable" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_catalog_enable" value="1" id="input-catalog-enable" {% if module_debug_logger_catalog_enable %}checked{% endif %}>
+                      </div>
+                      <div class="form-text">{{ help_catalog_enable }}</div>
+                    </div>
+                  </div>
+                  {% if module_debug_logger_status %}
+                  <div class="card bg-light mt-3">
+                    <div class="card-header"><i class="fa-solid fa-chart-simple"></i> {{ text_active_title }}</div>
+                    <div class="card-body">
+                      <div class="row text-center">
+                        <div class="col">
+                          <div class="fs-4 fw-bold">{{ total_reports }}</div>
+                          <small class="text-muted">{{ text_total_reports }}</small>
+                        </div>
+                        <div class="col">
+                          <div class="fs-4 fw-bold text-warning">{{ total_open }}</div>
+                          <small class="text-muted">{{ text_open_reports }}</small>
+                        </div>
+                        <div class="col">
+                          <div class="fs-4 fw-bold text-primary">{{ total_admin }}</div>
+                          <small class="text-muted">{{ text_from_admin }}</small>
+                        </div>
+                        <div class="col">
+                          <div class="fs-4 fw-bold text-success">{{ total_catalog }}</div>
+                          <small class="text-muted">{{ text_from_catalog }}</small>
+                        </div>
+                      </div>
+                      <div class="mt-3">
+                        <a href="{{ view_reports }}" class="btn btn-sm btn-outline-primary"><i class="fa-solid fa-list-ul"></i> {{ button_view_reports }}</a>
+                        <a href="{{ analytics_url }}" class="btn btn-sm btn-outline-warning ms-1"><i class="fa-solid fa-chart-bar"></i> {{ text_analytics }}</a>
+                        {% if total_reports > 0 %}
+                        <a href="{{ clear_url }}" class="btn btn-sm btn-outline-danger ms-1" onclick="return confirm('{{ text_confirm_clear }}')"><i class="fa-solid fa-trash"></i> {{ button_clear_all }}</a>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="alert alert-info mt-3 mb-0"><i class="fa-solid fa-circle-info"></i> {{ text_not_enabled }}</div>
+                  {% endif %}
+                </div>
+                <!-- TAB: Capture -->
+                <div class="tab-pane fade" id="tab-capture">
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-capture-console">{{ entry_capture_console }}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_capture_console" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_console" value="1" id="input-capture-console" {% if module_debug_logger_capture_console %}checked{% endif %}>
+                      </div>
+                      <div class="form-text">{{ help_capture_console }}</div>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-capture-network">{{ entry_capture_network }}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_capture_network" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_network" value="1" id="input-capture-network" {% if module_debug_logger_capture_network %}checked{% endif %}>
+                      </div>
+                      <div class="form-text">{{ help_capture_network }}</div>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-capture-screenshot">{{ entry_capture_screenshot }} {% if not is_pro %}<span class="badge bg-secondary">PRO</span>{% endif %}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_capture_screenshot" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_capture_screenshot" value="1" id="input-capture-screenshot" {% if module_debug_logger_capture_screenshot %}checked{% endif %} {% if not is_pro %}disabled{% endif %}>
+                      </div>
+                      <div class="form-text">{{ help_capture_screenshot }}</div>
+                    </div>
+                  </div>
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-require-comment">{{ entry_require_comment }}</label>
+                    <div class="col-sm-10">
+                      <div class="form-check form-switch">
+                        <input type="hidden" name="module_debug_logger_require_comment" value="0"/>
+                        <input class="form-check-input" type="checkbox" name="module_debug_logger_require_comment" value="1" id="input-require-comment" {% if module_debug_logger_require_comment %}checked{% endif %}>
+                      </div>
+                      <div class="form-text">{{ help_require_comment }}</div>
+                    </div>
+                  </div>
+                  <fieldset class="mt-2">
+                    <legend><small>{{ text_severity }}</small></legend>
+                    <div class="form-text mb-2">{{ help_severity }}</div>
+                    <div class="row mb-2">
+                      <label class="col-sm-2 col-form-label" for="input-sev-bug"><span style="color:#dc3545">&#x25CF;</span> {{ entry_severity_bug }}</label>
+                      <div class="col-sm-10">
+                        <div class="form-check form-switch">
+                          <input type="hidden" name="module_debug_logger_severity_bug" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_bug" value="1" id="input-sev-bug" {% if module_debug_logger_severity_bug %}checked{% endif %}>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-2">
+                      <label class="col-sm-2 col-form-label" for="input-sev-warning"><span style="color:#f59e0b">&#x25CF;</span> {{ entry_severity_warning }}</label>
+                      <div class="col-sm-10">
+                        <div class="form-check form-switch">
+                          <input type="hidden" name="module_debug_logger_severity_warning" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_warning" value="1" id="input-sev-warning" {% if module_debug_logger_severity_warning %}checked{% endif %}>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-2">
+                      <label class="col-sm-2 col-form-label" for="input-sev-info"><span style="color:#3b82f6">&#x25CF;</span> {{ entry_severity_info }}</label>
+                      <div class="col-sm-10">
+                        <div class="form-check form-switch">
+                          <input type="hidden" name="module_debug_logger_severity_info" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_severity_info" value="1" id="input-sev-info" {% if module_debug_logger_severity_info %}checked{% endif %}>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+                <!-- TAB: Notifications -->
+                <div class="tab-pane fade" id="tab-notifications">
+                  {% if not is_pro %}
+                  <div class="alert alert-warning"><i class="fa-solid fa-lock"></i> {{ text_notifications_pro_only }}</div>
+                  {% endif %}
+                  <fieldset {% if not is_pro %}disabled{% endif %}>
+                    <h6 class="mb-3"><i class="fa-solid fa-envelope text-primary"></i> {{ text_email }}</h6>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-email-enable">{{ entry_email_enable }}</label>
+                      <div class="col-sm-10">
+                        <div class="form-check form-switch">
+                          <input type="hidden" name="module_debug_logger_email_enable" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_email_enable" value="1" id="input-email-enable" {% if module_debug_logger_email_enable %}checked{% endif %}>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-email-to">{{ entry_email_to }}</label>
+                      <div class="col-sm-10">
+                        <input type="email" class="form-control" id="input-email-to" name="module_debug_logger_email_to" value="{{ module_debug_logger_email_to }}" placeholder="admin@example.com">
+                        <div class="form-text">{{ help_email_to }}</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label">{{ text_email_severity }}</label>
+                      <div class="col-sm-10">
+                        <div class="form-check form-check-inline">
+                          <input type="hidden" name="module_debug_logger_email_bug" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_email_bug" value="1" {% if module_debug_logger_email_bug %}checked{% endif %}>
+                          <label class="form-check-label"><span style="color:#dc3545">&#x25CF;</span> {{ entry_email_bug }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="hidden" name="module_debug_logger_email_warning" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_email_warning" value="1" {% if module_debug_logger_email_warning %}checked{% endif %}>
+                          <label class="form-check-label"><span style="color:#f59e0b">&#x25CF;</span> {{ entry_email_warning }}</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                          <input type="hidden" name="module_debug_logger_email_info" value="0"/>
+                          <input class="form-check-input" type="checkbox" name="module_debug_logger_email_info" value="1" {% if module_debug_logger_email_info %}checked{% endif %}>
+                          <label class="form-check-label"><span style="color:#3b82f6">&#x25CF;</span> {{ entry_email_info }}</label>
+                        </div>
+                      </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3"><i class="fa-solid fa-satellite-dish text-info"></i> {{ text_webhook }}</h6>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-webhook-type">{{ entry_webhook_type }}</label>
+                      <div class="col-sm-10">
+                        <select class="form-select" id="input-webhook-type" name="module_debug_logger_webhook_type">
+                          <option value="">-- {{ text_disabled }} --</option>
+                          <option value="slack" {% if module_debug_logger_webhook_type == 'slack' %}selected{% endif %}>Slack</option>
+                          <option value="discord" {% if module_debug_logger_webhook_type == 'discord' %}selected{% endif %}>Discord</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-webhook-url">{{ entry_webhook_url }}</label>
+                      <div class="col-sm-10">
+                        <input type="url" class="form-control" id="input-webhook-url" name="module_debug_logger_webhook_url" value="{{ module_debug_logger_webhook_url }}" placeholder="https://hooks.slack.com/services/...">
+                        <div class="form-text">{{ help_webhook_url }}</div>
+                      </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3"><i class="fa-solid fa-flask text-secondary"></i> {{ text_test_email_title }}</h6>
+                    <div class="row mb-3">
+                      <div class="col-sm-10 offset-sm-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="dl-test-email"><i class="fa-solid fa-paper-plane"></i> {{ button_test_email }}</button>
+                        <span id="dl-test-email-spinner" class="d-none"><span class="spinner-border spinner-border-sm ms-2"></span></span>
+                        <div id="dl-test-email-result" class="mt-2 d-none"></div>
+                        <div class="form-text mt-1">{{ help_test_email }}</div>
+                      </div>
+                    </div>
+                  </fieldset>
+                </div>
+                <!-- TAB: Appearance (PRO) -->
+                <div class="tab-pane fade" id="tab-appearance">
+                  {% if not is_pro %}
+                  <div class="alert alert-warning"><i class="fa-solid fa-lock"></i> {{ text_appearance_pro_only }}</div>
+                  {% endif %}
+                  <fieldset {% if not is_pro %}disabled{% endif %}>
+                    <h6 class="mb-3"><i class="fa-solid fa-palette text-primary"></i> {{ text_appearance_colors }}</h6>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-btn-color">{{ entry_btn_color }}</label>
+                      <div class="col-sm-10">
+                        <input type="color" class="form-control form-control-color" id="input-btn-color" name="module_debug_logger_btn_color" value="{{ module_debug_logger_btn_color }}">
+                        <div class="form-text">{{ help_btn_color }}</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-header-color">{{ entry_header_color }}</label>
+                      <div class="col-sm-10">
+                        <input type="color" class="form-control form-control-color" id="input-header-color" name="module_debug_logger_header_color" value="{{ module_debug_logger_header_color }}">
+                        <div class="form-text">{{ help_header_color }}</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-accent-color">{{ entry_accent_color }}</label>
+                      <div class="col-sm-10">
+                        <input type="color" class="form-control form-control-color" id="input-accent-color" name="module_debug_logger_accent_color" value="{{ module_debug_logger_accent_color }}">
+                        <div class="form-text">{{ help_accent_color }}</div>
+                      </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3"><i class="fa-solid fa-arrows-up-down-left-right text-success"></i> {{ text_appearance_layout }}</h6>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-btn-position">{{ entry_btn_position }}</label>
+                      <div class="col-sm-10">
+                        <select class="form-select" id="input-btn-position" name="module_debug_logger_btn_position">
+                          <option value="navbar" {% if module_debug_logger_btn_position == 'navbar' %}selected{% endif %}>{{ text_pos_navbar }}</option>
+                          <option value="bottom-right" {% if module_debug_logger_btn_position == 'bottom-right' %}selected{% endif %}>{{ text_pos_bottom_right }}</option>
+                          <option value="bottom-left" {% if module_debug_logger_btn_position == 'bottom-left' %}selected{% endif %}>{{ text_pos_bottom_left }}</option>
+                          <option value="top-right" {% if module_debug_logger_btn_position == 'top-right' %}selected{% endif %}>{{ text_pos_top_right }}</option>
+                          <option value="top-left" {% if module_debug_logger_btn_position == 'top-left' %}selected{% endif %}>{{ text_pos_top_left }}</option>
+                        </select>
+                        <div class="form-text">{{ help_btn_position }}</div>
+                      </div>
+                    </div>
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label" for="input-btn-size">{{ entry_btn_size }}</label>
+                      <div class="col-sm-10">
+                        <select class="form-select" id="input-btn-size" name="module_debug_logger_btn_size">
+                          <option value="small" {% if module_debug_logger_btn_size == 'small' %}selected{% endif %}>{{ text_size_small }}</option>
+                          <option value="medium" {% if module_debug_logger_btn_size == 'medium' %}selected{% endif %}>{{ text_size_medium }}</option>
+                          <option value="large" {% if module_debug_logger_btn_size == 'large' %}selected{% endif %}>{{ text_size_large }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <hr>
+                    <h6 class="mb-3"><i class="fa-solid fa-eye text-info"></i> {{ text_appearance_preview }}</h6>
+                    <div class="border rounded p-3 bg-light mb-3" style="position:relative;min-height:120px">
+                      <div id="dl-preview-navbar" style="display:flex;align-items:center;background:#343a40;border-radius:6px;padding:6px 14px;margin-bottom:10px">
+                        <span style="color:#adb5bd;font-size:.85rem;margin-right:auto">Navbar</span>
+                        <div id="dl-preview-btn-navbar" style="display:inline-flex;align-items:center;gap:6px;border-radius:4px;padding:5px 10px;color:#fff;cursor:default;background:{{ module_debug_logger_btn_color }}">
+                          <i class="fa-solid fa-bug"></i> <span>{{ popup_btn_trigger }}</span>
+                        </div>
+                      </div>
+                      <div id="dl-preview-floating" style="display:none">
+                        <div style="position:relative;background:#e9ecef;border-radius:6px;height:80px;border:1px dashed #adb5bd">
+                          <div id="dl-preview-btn-float" style="position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;cursor:default;box-shadow:0 2px 8px rgba(0,0,0,.2);width:46px;height:46px;background:{{ module_debug_logger_btn_color }}">
+                            <i class="fa-solid fa-bug"></i>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <button type="button" class="btn btn-outline-secondary btn-sm" id="dl-reset-appearance"><i class="fa-solid fa-rotate-left"></i> {{ button_reset_defaults }}</button>
+                </div>
+                <!-- TAB: Permissions -->
+                <div class="tab-pane fade" id="tab-permissions">
+                  <div class="alert alert-info"><i class="fa-solid fa-circle-info"></i> {{ text_permissions_info }}</div>
+                  <h6 class="mb-3"><i class="fa-solid fa-users text-primary"></i> {{ text_allowed_groups }}</h6>
+                  <div class="form-text mb-3">{{ help_allowed_groups }}</div>
+                  <div class="table-responsive">
+                    <table class="table table-bordered">
+                      <thead>
+                        <tr>
+                          <th style="width:1px" class="text-center">
+                            <input type="checkbox" id="dl-check-all-groups" class="form-check-input">
+                          </th>
+                          <th>{{ text_group_name }}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {% for group in user_groups %}
+                        <tr>
+                          <td class="text-center">
+                            <input type="checkbox" class="form-check-input dl-group-check" name="module_debug_logger_allowed_groups[]" value="{{ group.user_group_id }}" {% if group.user_group_id in allowed_groups %}checked{% endif %}>
+                          </td>
+                          <td>{{ group.name }}</td>
+                        </tr>
+                        {% endfor %}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- TAB: Updates -->
+                <div class="tab-pane fade" id="tab-updates">
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label">{{ text_current_version }}</label>
+                    <div class="col-sm-10">
+                      <span class="badge bg-primary fs-6">v{{ current_version }}</span>
+                    </div>
+                  </div>
+                  <div id="dl-update-result" class="d-none">
+                    <div class="row mb-3">
+                      <label class="col-sm-2 col-form-label">{{ text_latest_version }}</label>
+                      <div class="col-sm-10">
+                        <span id="dl-latest-badge" class="badge fs-6"></span>
+                      </div>
+                    </div>
+                    <div id="dl-update-available" class="d-none">
+                      <div class="alert alert-success">
+                        <i class="fa-solid fa-circle-up"></i> {{ text_update_available }}
+                        <button type="button" class="btn btn-sm btn-success ms-2" id="dl-install-update"><i class="fa-solid fa-download"></i> {{ button_install_update }}</button>
+                        <a id="dl-release-link" href="#" class="btn btn-sm btn-outline-secondary ms-1" target="_blank"><i class="fa-brands fa-github"></i> {{ button_view_release }}</a>
+                      </div>
+                      <div id="dl-install-progress" class="d-none">
+                        <div class="d-flex align-items-center gap-2 text-muted mb-2"><div class="spinner-border spinner-border-sm"></div> {{ text_installing }}</div>
+                      </div>
+                      <div id="dl-install-success" class="d-none">
+                        <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> <span id="dl-install-success-msg"></span></div>
+                      </div>
+                      <div id="dl-install-error" class="d-none">
+                        <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i> <span id="dl-install-error-msg"></span></div>
+                      </div>
+                    </div>
+                    <div id="dl-update-current" class="d-none">
+                      <div class="alert alert-info"><i class="fa-solid fa-circle-check"></i> {{ text_up_to_date }}</div>
+                    </div>
+                    <div id="dl-changelog-section" class="d-none">
+                      <h6><i class="fa-solid fa-scroll"></i> {{ text_changelog }}</h6>
+                      <div id="dl-changelog-body" class="border rounded p-3 bg-light" style="white-space:pre-wrap;font-size:.85rem;max-height:300px;overflow-y:auto"></div>
+                    </div>
+                  </div>
+                  <div id="dl-update-loading" class="d-none">
+                    <div class="d-flex align-items-center gap-2 text-muted"><div class="spinner-border spinner-border-sm"></div> {{ text_checking_update }}</div>
+                  </div>
+                  <div id="dl-update-error" class="d-none">
+                    <div class="alert alert-danger"><i class="fa-solid fa-circle-exclamation"></i> <span id="dl-update-error-msg"></span></div>
+                  </div>
+                  <hr>
+                  <h6><i class="fa-solid fa-clock-rotate-left"></i> {{ text_version_history }}</h6>
+                  <div id="dl-version-history">
+                    <div class="text-muted small">{{ text_version_history_hint }}</div>
+                  </div>
+                  <div class="mt-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="dl-check-update"><i class="fa-solid fa-arrows-rotate"></i> {{ button_refresh }}</button>
+                  </div>
+                  <div class="form-text mt-2">{{ text_update_source }} <a href="https://github.com/{{ github_repo }}" target="_blank" class="text-decoration-none"><i class="fa-brands fa-github"></i> {{ github_repo }}</a></div>
+                </div>
+                <!-- TAB: License & Pro -->
+                <div class="tab-pane fade" id="tab-license">
+                  <div class="row mb-3">
+                    <label class="col-sm-2 col-form-label" for="input-license-key">{{ entry_license_key }}</label>
+                    <div class="col-sm-10">
+                      <div class="input-group">
+                        <span class="input-group-text"><i class="fa-solid fa-key"></i></span>
+                        <input type="text" class="form-control font-monospace" id="input-license-key" name="module_debug_logger_license_key" value="{{ module_debug_logger_license_key }}" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19">
+                      </div>
+                      <div class="form-text">{{ help_license_key }}</div>
+                    </div>
+                  </div>
+                  {% if is_pro %}
+                  <div class="alert alert-success"><i class="fa-solid fa-circle-check"></i> {{ text_license_active }}</div>
+                  {% else %}
+                  <div class="alert alert-warning"><i class="fa-solid fa-lock"></i> {{ text_free_limit }}</div>
+                  {% endif %}
+                  <hr>
+                  <h6><i class="fa-solid fa-crown text-warning"></i> {{ text_pro_title }}</h6>
+                  <div class="row mt-3">
+                    <div class="col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title"><i class="fa-solid fa-infinity text-primary"></i> {{ text_pro_1 }}</h6>
+                          <p class="card-text text-muted small mb-0">{{ text_pro_1_desc }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title"><i class="fa-solid fa-camera text-success"></i> {{ text_pro_2 }}</h6>
+                          <p class="card-text text-muted small mb-0">{{ text_pro_2_desc }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title"><i class="fa-solid fa-envelope text-info"></i> {{ text_pro_3 }}</h6>
+                          <p class="card-text text-muted small mb-0">{{ text_pro_3_desc }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title"><i class="fa-brands fa-slack text-warning"></i> {{ text_pro_4 }}</h6>
+                          <p class="card-text text-muted small mb-0">{{ text_pro_4_desc }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title"><i class="fa-solid fa-file-export text-secondary"></i> {{ text_pro_5 }}</h6>
+                          <p class="card-text text-muted small mb-0">{{ text_pro_5_desc }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-sm-6 mb-3">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title"><i class="fa-solid fa-pen-ruler text-danger"></i> {{ text_pro_6 }}</h6>
+                          <p class="card-text text-muted small mb-0">{{ text_pro_6_desc }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <hr>
+                  <h6><i class="fa-solid fa-database"></i> {{ text_data }}</h6>
+                  <div class="row mb-3 mt-3">
+                    <label class="col-sm-2 col-form-label" for="input-max-reports">{{ entry_max_reports }}</label>
+                    <div class="col-sm-4">
+                      <input type="number" min="0" max="99999" step="1" class="form-control" id="input-max-reports" name="module_debug_logger_max_reports" value="{{ module_debug_logger_max_reports }}" placeholder="500" {% if not is_pro %}disabled{% endif %}>
+                      <div class="form-text">{{ help_max_reports }}</div>
+                      {% if not is_pro %}
+                      <div class="form-text text-warning"><i class="fa-solid fa-lock"></i> Free: {{ free_limit }} reports max</div>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
-
-        <!-- Info card -->
-        <div class="card mb-3" style="border-color:#1e3a5f;background:#0d1b2e;color:#93c5fd">
-          <div class="card-body" style="font-size:.82rem">
-            <p><i class="fa-solid fa-circle-info"></i> <strong>{{ text_info_title }}</strong></p>
-            <ul class="ps-3 mb-0" style="color:#7dd3fc">
-              <li>{{ text_info_1 }}</li>
-              <li>{{ text_info_2 }}</li>
+      </div>
+      <div class="col-lg-3">
+        <div class="card mb-3">
+          <div class="card-header"><i class="fa-solid fa-circle-info"></i> {{ text_info_title }}</div>
+          <div class="card-body">
+            <ol class="small text-muted ps-3 mb-0">
+              <li class="mb-1">{{ text_info_1 }}</li>
+              <li class="mb-1">{{ text_info_2 }}</li>
               <li>{{ text_info_3 }}</li>
-            </ul>
+            </ol>
           </div>
         </div>
-
-        <!-- Pro features card -->
-        <div class="card mb-3" style="border-color:#f59e0b30;background:#1a150b;color:#fbbf24">
-          <div class="card-body" style="font-size:.82rem">
-            <p><i class="fa-solid fa-crown" style="color:#f59e0b"></i> <strong>{{ text_pro_title }}</strong></p>
-            <ul class="ps-3 mb-0" style="color:#fde68a">
-              <li>{{ text_pro_1 }}</li>
-              <li>{{ text_pro_2 }}</li>
-              <li>{{ text_pro_3 }}</li>
-              <li>{{ text_pro_4 }}</li>
-              <li>{{ text_pro_5 }}</li>
-            </ul>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
 </div>
+<script>
+// Update checker
+var dlDownloadUrl = '';
+var dlChecked = false;
+
+function dlCheckUpdate() {
+  var loading = document.getElementById('dl-update-loading');
+  var result = document.getElementById('dl-update-result');
+  var errorDiv = document.getElementById('dl-update-error');
+  result.classList.add('d-none');
+  errorDiv.classList.add('d-none');
+  document.getElementById('dl-install-success').classList.add('d-none');
+  document.getElementById('dl-install-error').classList.add('d-none');
+  loading.classList.remove('d-none');
+  fetch('{{ check_update_url }}', {headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(function(r){return r.json()})
+    .then(function(json){
+      loading.classList.add('d-none');
+      dlChecked = true;
+      if(json.error){
+        errorDiv.classList.remove('d-none');
+        document.getElementById('dl-update-error-msg').textContent = json.message||'Error';
+        return;
+      }
+      result.classList.remove('d-none');
+      var badge = document.getElementById('dl-latest-badge');
+      badge.textContent = 'v'+json.latest_version;
+      badge.className = 'badge fs-6 '+(json.has_update?'bg-success':'bg-info');
+      if(json.has_update){
+        document.getElementById('dl-update-available').classList.remove('d-none');
+        document.getElementById('dl-update-current').classList.add('d-none');
+        dlDownloadUrl = json.download_url || '';
+        if(json.html_url) document.getElementById('dl-release-link').href = json.html_url;
+        var tabLink = document.getElementById('dl-tab-updates-link');
+        if(tabLink && !tabLink.querySelector('.badge')){
+          tabLink.insertAdjacentHTML('beforeend',' <span class="badge bg-success rounded-pill">NEW</span>');
+        }
+      } else {
+        document.getElementById('dl-update-available').classList.add('d-none');
+        document.getElementById('dl-update-current').classList.remove('d-none');
+      }
+      if(json.changelog){
+        document.getElementById('dl-changelog-section').classList.remove('d-none');
+        document.getElementById('dl-changelog-body').textContent = json.changelog;
+      }
+      // Render version history
+      if(json.versions && json.versions.length){
+        dlRenderVersionHistory(json.versions, json.current_version);
+      }
+    })
+    .catch(function(){
+      loading.classList.add('d-none');
+      errorDiv.classList.remove('d-none');
+      document.getElementById('dl-update-error-msg').textContent = 'Network error';
+    });
+}
+
+function dlRenderVersionHistory(versions, currentVersion) {
+  var container = document.getElementById('dl-version-history');
+  var html = '<div class="list-group list-group-flush">';
+  for(var i=0; i<versions.length; i++){
+    var v = versions[i];
+    var isCurrent = (v.version === currentVersion);
+    var isNewer = dlVersionCompare(v.version, currentVersion) > 0;
+    var badgeClass = isCurrent ? 'bg-primary' : (isNewer ? 'bg-success' : 'bg-secondary');
+    var badgeLabel = isCurrent ? '{{ text_version_installed }}' : (isNewer ? '{{ text_version_newer }}' : '');
+
+    html += '<div class="list-group-item' + (isCurrent ? ' list-group-item-primary' : '') + '">';
+    html += '<div class="d-flex justify-content-between align-items-center">';
+    html += '<div>';
+    html += '<strong>v' + dlEscHtml(v.version) + '</strong> ';
+    if(badgeLabel) html += '<span class="badge ' + badgeClass + ' ms-1" style="font-size:.7em">' + badgeLabel + '</span>';
+    if(v.published_at) html += ' <small class="text-muted ms-2">' + dlFormatDate(v.published_at) + '</small>';
+    html += '</div>';
+    html += '<div>';
+    if(v.html_url) html += '<a href="' + dlEscHtml(v.html_url) + '" target="_blank" class="btn btn-outline-secondary btn-sm me-1" title="{{ button_view_release }}"><i class="fa-brands fa-github"></i></a>';
+    if(v.download_url && !isCurrent && !isNewer) html += '<button type="button" class="btn btn-outline-warning btn-sm dl-install-version" data-url="' + dlEscHtml(v.download_url) + '" title="{{ text_version_downgrade }}"><i class="fa-solid fa-download"></i></button>';
+    html += '</div></div>';
+    if(v.changelog){
+      html += '<div class="mt-1 small text-muted" style="white-space:pre-wrap;max-height:80px;overflow-y:auto">' + dlEscHtml(v.changelog) + '</div>';
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  container.innerHTML = html;
+
+  // Bind downgrade buttons
+  container.querySelectorAll('.dl-install-version').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!confirm('{{ text_confirm_downgrade }}')){return;}
+      var url = this.getAttribute('data-url');
+      dlDownloadUrl = url;
+      document.getElementById('dl-install-update').click();
+    });
+  });
+}
+
+function dlEscHtml(s){ var d=document.createElement('div');d.textContent=s;return d.innerHTML; }
+function dlFormatDate(iso){ try{var d=new Date(iso);return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});}catch(e){return iso;} }
+function dlVersionCompare(a,b){
+  var pa=a.split('.'),pb=b.split('.');
+  for(var i=0;i<3;i++){
+    var na=parseInt(pa[i]||'0',10),nb=parseInt(pb[i]||'0',10);
+    if(na>nb)return 1;if(na<nb)return -1;
+  }
+  return 0;
+}
+
+// Auto-check on Updates tab activation
+document.getElementById('dl-tab-updates-link').addEventListener('shown.bs.tab', function(){
+  if(!dlChecked) dlCheckUpdate();
+});
+
+// Manual refresh button
+document.getElementById('dl-check-update').addEventListener('click', dlCheckUpdate);
+// Install update
+document.getElementById('dl-install-update').addEventListener('click', function() {
+  if(!dlDownloadUrl) return;
+  var btn = this;
+  btn.disabled = true;
+  document.getElementById('dl-install-progress').classList.remove('d-none');
+  document.getElementById('dl-install-success').classList.add('d-none');
+  document.getElementById('dl-install-error').classList.add('d-none');
+  fetch('{{ install_update_url }}&download_url=' + encodeURIComponent(dlDownloadUrl), {headers:{'X-Requested-With':'XMLHttpRequest'}})
+    .then(function(r){return r.json()})
+    .then(function(json){
+      document.getElementById('dl-install-progress').classList.add('d-none');
+      if(json.error){
+        document.getElementById('dl-install-error').classList.remove('d-none');
+        document.getElementById('dl-install-error-msg').textContent = json.message||'Install error';
+        btn.disabled = false;
+      } else {
+        document.getElementById('dl-install-success').classList.remove('d-none');
+        document.getElementById('dl-install-success-msg').textContent = json.message;
+        document.getElementById('dl-update-available').querySelector('.alert').classList.add('d-none');
+      }
+    })
+    .catch(function(){
+      document.getElementById('dl-install-progress').classList.add('d-none');
+      document.getElementById('dl-install-error').classList.remove('d-none');
+      document.getElementById('dl-install-error-msg').textContent = 'Network error during install';
+      btn.disabled = false;
+    });
+});
+// Appearance live preview
+(function(){
+  var btnColor = document.getElementById('input-btn-color');
+  var btnPosition = document.getElementById('input-btn-position');
+  var btnSize = document.getElementById('input-btn-size');
+  var navbarPreview = document.getElementById('dl-preview-navbar');
+  var floatingPreview = document.getElementById('dl-preview-floating');
+  var previewNavbar = document.getElementById('dl-preview-btn-navbar');
+  var previewFloat = document.getElementById('dl-preview-btn-float');
+
+  var sizeMap = {small: '36px', medium: '46px', large: '56px'};
+  var paddingMap = {small: '3px 6px', medium: '5px 10px', large: '7px 14px'};
+  var posMap = {
+    'bottom-right': {bottom:'5px',right:'5px',top:'',left:''},
+    'bottom-left':  {bottom:'5px',right:'',top:'',left:'5px'},
+    'top-right':    {bottom:'',right:'5px',top:'5px',left:''},
+    'top-left':     {bottom:'',right:'',top:'5px',left:'5px'}
+  };
+
+  function updatePreview() {
+    var color = btnColor ? btnColor.value : '{{ default_btn_color }}';
+    var pos = btnPosition ? btnPosition.value : 'navbar';
+    var size = btnSize ? btnSize.value : 'medium';
+
+    if (previewNavbar) previewNavbar.style.background = color;
+    if (previewNavbar) previewNavbar.style.padding = paddingMap[size] || '5px 10px';
+    if (previewFloat) {
+      previewFloat.style.background = color;
+      var s = sizeMap[size] || '46px';
+      previewFloat.style.width = s;
+      previewFloat.style.height = s;
+    }
+
+    if (pos === 'navbar') {
+      if (navbarPreview) navbarPreview.style.display = 'flex';
+      if (floatingPreview) floatingPreview.style.display = 'none';
+    } else {
+      if (navbarPreview) navbarPreview.style.display = 'none';
+      if (floatingPreview) floatingPreview.style.display = 'block';
+      if (previewFloat && posMap[pos]) {
+        var p = posMap[pos];
+        previewFloat.style.top = p.top;
+        previewFloat.style.bottom = p.bottom;
+        previewFloat.style.left = p.left;
+        previewFloat.style.right = p.right;
+      }
+    }
+  }
+
+  if(btnColor) btnColor.addEventListener('input', updatePreview);
+  if(btnPosition) btnPosition.addEventListener('change', updatePreview);
+  if(btnSize) btnSize.addEventListener('change', updatePreview);
+  updatePreview();
+
+  // Reset to defaults
+  var resetBtn = document.getElementById('dl-reset-appearance');
+  if(resetBtn){
+    resetBtn.addEventListener('click', function(){
+      document.getElementById('input-btn-color').value = '{{ default_btn_color }}';
+      document.getElementById('input-header-color').value = '{{ default_header_color }}';
+      document.getElementById('input-accent-color').value = '{{ default_accent_color }}';
+      document.getElementById('input-btn-position').value = '{{ default_btn_position }}';
+      document.getElementById('input-btn-size').value = '{{ default_btn_size }}';
+      updatePreview();
+    });
+  }
+  // Check all groups
+  var checkAll = document.getElementById('dl-check-all-groups');
+  if(checkAll){
+    checkAll.addEventListener('change', function(){
+      document.querySelectorAll('.dl-group-check').forEach(function(cb){ cb.checked = checkAll.checked; });
+    });
+  }
+  // Test email
+  var testBtn = document.getElementById('dl-test-email');
+  if(testBtn){
+    testBtn.addEventListener('click', function(){
+      var email = document.getElementById('input-email-to').value.trim();
+      if(!email){
+        document.getElementById('dl-test-email-result').className = 'mt-2 alert alert-warning py-1 px-2 small';
+        document.getElementById('dl-test-email-result').textContent = '{{ text_test_email_invalid }}';
+        return;
+      }
+      testBtn.disabled = true;
+      document.getElementById('dl-test-email-spinner').classList.remove('d-none');
+      document.getElementById('dl-test-email-result').className = 'mt-2 d-none';
+      fetch('{{ test_email_url }}&email=' + encodeURIComponent(email), {headers:{'X-Requested-With':'XMLHttpRequest'}})
+        .then(function(r){return r.json()})
+        .then(function(json){
+          document.getElementById('dl-test-email-spinner').classList.add('d-none');
+          testBtn.disabled = false;
+          var res = document.getElementById('dl-test-email-result');
+          if(json.error){
+            res.className = 'mt-2 alert alert-danger py-1 px-2 small';
+            res.innerHTML = '<i class="fa-solid fa-circle-exclamation"></i> ' + dlEscHtml(json.message);
+          } else {
+            res.className = 'mt-2 alert alert-success py-1 px-2 small';
+            res.innerHTML = '<i class="fa-solid fa-circle-check"></i> ' + dlEscHtml(json.message) + (json.engine ? ' <span class="badge bg-secondary">' + dlEscHtml(json.engine) + '</span>' : '');
+          }
+        })
+        .catch(function(){
+          document.getElementById('dl-test-email-spinner').classList.add('d-none');
+          testBtn.disabled = false;
+          var res = document.getElementById('dl-test-email-result');
+          res.className = 'mt-2 alert alert-danger py-1 px-2 small';
+          res.textContent = 'Network error';
+        });
+    });
+  }
+})();
+</script>
 {{ footer }}
