@@ -50,6 +50,26 @@
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
+  /* ── Collect all files loaded on the page ──────────────── */
+  function collectLoadedFiles() {
+    var files = [];
+    // Server-derived PHP/Twig files from the route
+    if (cfg.serverFiles && cfg.serverFiles.length) {
+      cfg.serverFiles.forEach(function(f) { files.push(f); });
+    }
+    // JS files from DOM
+    document.querySelectorAll('script[src]').forEach(function(s) {
+      var src = s.getAttribute('src');
+      if (src && src.indexOf('debug_logger') === -1) files.push(src);
+    });
+    // CSS files from DOM
+    document.querySelectorAll('link[rel="stylesheet"][href]').forEach(function(l) {
+      var href = l.getAttribute('href');
+      if (href && href.indexOf('debug_logger') === -1) files.push(href);
+    });
+    return files;
+  }
+
   /* ── Screenshot annotator (fullscreen overlay editor) ──── */
   var _annot = { drawing: false, ctx: null, canvas: null, tool: 'pen', color: '#ef4444', history: [] };
   var _ssOriginal = '';
@@ -60,7 +80,7 @@
       '<div style="display:flex;align-items:center;gap:10px;margin-top:6px">'
       + '<img src="' + dataUrl + '" style="max-width:180px;max-height:80px;border-radius:4px;border:1px solid #334155;cursor:pointer" id="dl-ss-thumb">'
       + '<button type="button" id="dl-btn-edit-ss" style="background:#1e3a5f;color:#93c5fd;border:1px solid #3b82f6;border-radius:6px;padding:5px 12px;font-size:.78rem;cursor:pointer;white-space:nowrap">'
-      + '<i class="fa-solid fa-pen"></i> Edit Screenshot</button>'
+      + '<i class="fa-solid fa-pen"></i> ' + (i18n.ssEdit || 'Edit Screenshot') + '</button>'
       + '</div>'
     );
   }
@@ -76,26 +96,26 @@
         + '<div id="dl-editor-toolbar"></div>'
         + '<canvas id="dl-editor-canvas" style="cursor:crosshair;border-radius:6px;border:1px solid #475569;max-width:100%"></canvas>'
         + '<div style="margin-top:.75rem">'
-        +   '<button type="button" id="dl-ed-done" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:8px;padding:8px 28px;font-size:.9rem;font-weight:700;cursor:pointer;margin-right:10px">✓ Done</button>'
-        +   '<button type="button" id="dl-ed-cancel" style="background:#374151;color:#d1d5db;border:none;border-radius:8px;padding:8px 20px;font-size:.9rem;cursor:pointer">Cancel</button>'
+        +   '<button type="button" id="dl-ed-done" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:8px;padding:8px 28px;font-size:.9rem;font-weight:700;cursor:pointer;margin-right:10px">✓ ' + (i18n.ssDone || 'Done') + '</button>'
+        +   '<button type="button" id="dl-ed-cancel" style="background:#374151;color:#d1d5db;border:none;border-radius:8px;padding:8px 20px;font-size:.9rem;cursor:pointer">' + (i18n.ssCancel || 'Cancel') + '</button>'
         + '</div>'
         + '</div></div>'
       );
       $ed = $('#dl-editor-overlay');
     }
 
-    var toolbar = '<button type="button" class="dl-et dl-et-active" data-tool="pen">✏️ Draw</button>'
-      + '<button type="button" class="dl-et" data-tool="arrow">➡️ Arrow</button>'
-      + '<button type="button" class="dl-et" data-tool="rect">⬜ Rect</button>'
-      + '<button type="button" class="dl-et" data-tool="text">T Text</button>'
+    var toolbar = '<button type="button" class="dl-et dl-et-active" data-tool="pen">✏️ ' + (i18n.ssDraw || 'Draw') + '</button>'
+      + '<button type="button" class="dl-et" data-tool="arrow">➡️ ' + (i18n.ssArrow || 'Arrow') + '</button>'
+      + '<button type="button" class="dl-et" data-tool="rect">⬜ ' + (i18n.ssRect || 'Rect') + '</button>'
+      + '<button type="button" class="dl-et" data-tool="text">T ' + (i18n.ssText || 'Text') + '</button>'
       + '<span style="width:1px;height:22px;background:#475569;display:inline-block"></span>'
       + '<input type="color" id="dl-ed-color" value="' + _annot.color + '" style="width:32px;height:28px;border:none;padding:0;cursor:pointer;background:transparent">'
       + '<select id="dl-ed-size" style="background:#1e293b;color:#e2e8f0;border:1px solid #475569;border-radius:6px;font-size:13px;padding:2px 6px">'
-      +   '<option value="2">Thin</option><option value="4" selected>Normal</option><option value="8">Thick</option>'
+      +   '<option value="2">' + (i18n.ssThin || 'Thin') + '</option><option value="4" selected>' + (i18n.ssNormal || 'Normal') + '</option><option value="8">' + (i18n.ssThick || 'Thick') + '</option>'
       + '</select>'
       + '<span style="width:1px;height:22px;background:#475569;display:inline-block"></span>'
-      + '<button type="button" id="dl-ed-undo" class="dl-et">↩️ Undo</button>'
-      + '<button type="button" id="dl-ed-reset" class="dl-et">🗑️ Reset</button>';
+      + '<button type="button" id="dl-ed-undo" class="dl-et">↩️ ' + (i18n.ssUndo || 'Undo') + '</button>'
+      + '<button type="button" id="dl-ed-reset" class="dl-et">🗑️ ' + (i18n.ssReset || 'Reset') + '</button>';;
     $('#dl-editor-toolbar').html(toolbar);
 
     _annot.tool = 'pen';
@@ -136,7 +156,7 @@
         if (_annot.tool === 'pen') { ctx.beginPath(); ctx.moveTo(p.x, p.y); }
         if (_annot.tool === 'text') {
           _annot.drawing = false;
-          var txt = prompt('Text:');
+          var txt = prompt(i18n.ssPrompt || 'Text:');
           if (txt) {
             var sz = parseInt($('#dl-ed-size').val()) * 5 + 10;
             ctx.font = 'bold ' + sz + 'px sans-serif';
@@ -235,9 +255,14 @@
       $ov.show();
       $modal.show();
       $('#dl-url-display').text(window.location.href);
+      $('#dl-route-display').text(cfg.currentRoute || '');
       var allLogs = _logs.concat(_netLogs);
       $('#dl-console-display').text(allLogs.join('\n'));
       $('#dl-count').text('(' + allLogs.length + ')');
+      // Populate loaded files
+      var loadedFiles = collectLoadedFiles();
+      $('#dl-files-display').text(loadedFiles.join('\n'));
+      $('#dl-files-count').text('(' + loadedFiles.length + ')');
       $('#dl-comment').val('');
       var $sev = $('#dl-severity');
       $sev.val(_hasErr && $sev.find('option[value="bug"]').length ? 'bug' : $sev.find('option:first').val());
@@ -323,10 +348,12 @@
 
       var fd = new FormData();
       fd.append('url',         window.location.href);
+      fd.append('route',       cfg.currentRoute || '');
       fd.append('console_log', _logs.join('\n'));
       fd.append('network_log', _netLogs.join('\n'));
       fd.append('comment',     $('#dl-comment').val());
       fd.append('severity',    $('#dl-severity').val());
+      fd.append('loaded_files', JSON.stringify(collectLoadedFiles()));
       var ssData = $('#dl-screenshot-data').val();
       if (ssData) fd.append('screenshot', ssData);
 
@@ -334,8 +361,8 @@
         .then(function (r) { return r.json(); })
         .then(function (j) {
           closeModal();
-          if (j.success) showToast('Report #' + j.id + ' saved');
-          else showToast(j.error || 'Error', true);
+          if (j.success) showToast((i18n.toastSaved || 'Report #%s saved').replace('%s', j.id));
+          else showToast(j.error || i18n.toastError || 'Error', true);
         })
         .catch(function (e) {
           closeModal();

@@ -37,6 +37,30 @@ $_['button_refresh']	         		= 'Rafraîchir';
 $_['button_save']			            	= 'Enregistrer le compte';
 $_['button_filter']			          	= 'Filtrer les comptes';
 $_['button_clear']			          	= 'Effacer le filtre';
+$_['button_cancel']                 = 'Annuler';
+$_['button_save_token']             = 'Sauvegarder le token';
+$_['button_delete']                 = 'Supprimer';
+
+// Gestion des tokens
+$_['text_token_status']             = 'Statut Token';
+$_['text_token_present']            = 'Token OK';
+$_['text_token_truncated']          = 'Token tronqué!';
+$_['text_token_absent']             = 'Aucun token';
+$_['text_token_valid']              = 'Valide — connexion eBay OK';
+$_['text_token_invalid']            = 'Invalide ou expiré — veuillez le renouveler';
+$_['text_token_missing']            = 'Refresh token absent';
+$_['text_token_too_short']          = 'Token trop court — un refresh token eBay fait 800+ caractères. Vérifiez le copier-coller.';
+$_['text_token_saved_valid']        = 'Token sauvegardé et vérifié — connexion eBay OK!';
+$_['text_token_saved_invalid']      = 'Token sauvegardé mais INVALIDE — vérifiez que vous avez copié le bon refresh token.';
+$_['text_token_empty']              = 'Veuillez coller un refresh token.';
+$_['text_test_token']               = 'Tester la connexion eBay';
+$_['text_update_token']             = 'Mettre à jour le Refresh Token';
+$_['text_testing']                  = 'Test en cours';
+$_['text_new_refresh_token']        = 'Nouveau Refresh Token';
+$_['text_token_placeholder']        = 'Collez votre nouveau refresh token eBay ici (800+ caractères)...';
+$_['text_token_hint']               = 'Obtenez-le sur developer.ebay.com → Votre App → User Tokens → Get a Token from eBay';
+$_['text_token_instructions_title'] = 'Comment obtenir un nouveau refresh token :';
+$_['text_token_instructions']       = '1. Allez sur <a href="https://developer.ebay.com/my/keys" target="_blank">developer.ebay.com/my/keys</a><br>2. Cliquez <strong>Get a Token from eBay via Your Application</strong> (Production)<br>3. Connectez-vous avec votre compte vendeur eBay<br>4. Copiez le <strong>Refresh Token</strong> (PAS l\'Access Token)<br>5. Collez-le ci-dessous et sauvegardez';
 
 
 // Clés manquantes (ajoutées)

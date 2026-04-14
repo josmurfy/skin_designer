@@ -1,11 +1,7 @@
 <?php
 /**
- * @version [3.0.0.0] [Supported opencart version 3.x.x.x]
- * @category Webkul
- * @package Marketplace eBay Connector
- * @author [Webkul] <[<http://webkul.com/>]>
- * @copyright Copyright (c) 2010-2019 Webkul Software Private Limited (https://webkul.com)
- * @license https://store.webkul.com/license.html 
+ * ShopManager Connect Controller — OpenCart 4.x
+ * Manages marketplace account connections + eBay refresh token status.
  */
 namespace Opencart\Admin\Controller\Shopmanager;
 
@@ -24,369 +20,388 @@ class Connect extends \Opencart\System\Engine\Controller {
 		);
 
   public function index(): void {
-	ini_set('display_errors', 1);
-	ini_set('display_startup_errors', 1);
-	error_reporting(E_ALL);
-  	$lang = $this->load->language('shopmanager/connect');
-  	$data = $data ?? [];
-  	$data += $lang;
+		$this->load->language('shopmanager/connect');
 
-		$this->getList();
-	}
+		$this->document->setTitle($this->language->get('heading_title'));
 
-	public function delete() {
-		$lang = $this->load->language('shopmanager/connect');
-		$data = $data ?? [];
-		$data += $lang;
-		$this->load->model('shopmanager/marketplace');
-		//$this->checkStatus();
-		$this->document->setTitle(($lang['heading_title'] ?? ''));
-
-		if (isset($this->request->post['delete_marketplace_account_id']) && $this->validateDelete()) {
-		//	foreach ($this->request->post['selected'] as $marketplace_account_id) {
-				$this->model_shopmanager_marketplace->deleteAccount($this->request->post['delete_marketplace_account_id']);
-		//	}
-//echo $this->request->post['delete_marketplace_account_id'];
-			$this->session->data['success'] = ($lang['text_success'] ?? '');
-
-			$url = '';
-
-			if (isset($this->request->get['sort'])) {
-				$url .= '&sort=' . $this->request->get['sort'];
-			}
-
-			if (isset($this->request->get['order'])) {
-				$url .= '&order=' . $this->request->get['order'];
-			}
-
-			if (isset($this->request->get['page'])) {
-				$url .= '&page=' . $this->request->get['page'];
-			}
-
-			$this->response->redirect($this->url->link('shopmanager/connect', $url, true));
-		}
-
-		$this->getList();
-	}
-	public function add_Account() {
-
-		//$this->checkStatus('shopmanager/account/add_Account');
-		//$this->load->model('shopmanager/dashboard');
-		//$this->load->model('shopmanager/account');
-		$data =$lang = $this->load->language('shopmanager/connect');
-
-		
-        $url = '';
-       // echo "allo331";
-		$this->document->setTitle(($lang['heading_title_add'] ?? ''));
-		$this->response->setOutput($this->load->view('shopmanager/connect_form.tpl', $data));
-	
-	} 
-	protected function getList(): void {
-		ini_set('display_errors', 1);
-		ini_set('display_startup_errors', 1);
-		error_reporting(E_ALL);
-		//$this->checkStatus();
 		$this->load->model('tool/image');
-		$data = $lang = $this->load->language('shopmanager/connect');
-		$data['ebay']=$this->model_tool_image->resize('catalog/marketplace/ebay.png',150, 40);
-		$data['amazon']=$this->model_tool_image->resize('catalog/marketplace/amazon.png',150, 40);
-		$data['bonanza']=$this->model_tool_image->resize('catalog/marketplace/bonanza.png',150, 40);
-		$data['etsy']=$this->model_tool_image->resize('catalog/marketplace/etsy.png',150, 40);
-		$data['opencart']=$this->model_tool_image->resize('catalog/marketplace/opencart.png',150, 40);
-		$data['shipstation']=$this->model_tool_image->resize('catalog/marketplace/shipstation.png',150, 40);
-		$data['shopify']=$this->model_tool_image->resize('catalog/marketplace/shopify.png',150, 40);
 
-		$this->document->setTitle(($lang['heading_title_add'] ?? ''));
+		$data['ebay']      = $this->model_tool_image->resize('catalog/marketplace/ebay.png', 150, 40);
+		$data['amazon']    = $this->model_tool_image->resize('catalog/marketplace/amazon.png', 150, 40);
+		$data['bonanza']   = $this->model_tool_image->resize('catalog/marketplace/bonanza.png', 150, 40);
+		$data['etsy']      = $this->model_tool_image->resize('catalog/marketplace/etsy.png', 150, 40);
+		$data['opencart']  = $this->model_tool_image->resize('catalog/marketplace/opencart.png', 150, 40);
+		$data['shipstation']= $this->model_tool_image->resize('catalog/marketplace/shipstation.png', 150, 40);
+		$data['shopify']   = $this->model_tool_image->resize('catalog/marketplace/shopify.png', 150, 40);
 
-		if (isset($this->request->get['filter_marketplace_account_id'])) {
-			$filter_marketplace_account_id = $this->request->get['filter_marketplace_account_id'];
-		} else {
-			$filter_marketplace_account_id = null;
-		}
-
-		if (isset($this->request->get['filter_store_name'])) {
-			$filter_store_name = $this->request->get['filter_store_name'];
-		} else {
-			$filter_store_name = null;
-		}
-
-		if (isset($this->request->get['filter_user_id'])) {
-			$filter_user_id = $this->request->get['filter_user_id'];
-		} else {
-			$filter_user_id = null;
-		}
-		if (isset($this->request->get['filter_marketplace_id'])) {
-			$filter_marketplace_id = $this->request->get['filter_marketplace_id'];
-		} else {
-			$filter_marketplace_id = null;
-		}
-		if (isset($this->request->get['sort'])) {
-			$sort = $this->request->get['sort'];
-		} else {
-			$sort = 'name';
-		}
-
-		if (isset($this->request->get['order'])) {
-			$order = $this->request->get['order'];
-		} else {
-			$order = 'ASC';
-		}
-
-		if (isset($this->request->get['page'])) {
-			$page = $this->request->get['page'];
-		} else {
-			$page = 1;
-		}
+		// Filter values for the sidebar
+		$data['filter_store_name']             = $this->request->get['filter_store_name'] ?? '';
+		$data['filter_user_id']                = $this->request->get['filter_user_id'] ?? '';
+		$data['filter_marketplace_id']         = $this->request->get['filter_marketplace_id'] ?? '';
+		$data['filter_status']                 = $this->request->get['filter_status'] ?? '';
 
 		$url = '';
-
-		if (isset($this->request->get['filter_marketplace_account_id'])) {
-			$url .= '&filter_marketplace_account_id=' . $this->request->get['filter_marketplace_account_id'];
-		}
 
 		if (isset($this->request->get['filter_store_name'])) {
 			$url .= '&filter_store_name=' . urlencode(html_entity_decode($this->request->get['filter_store_name'], ENT_QUOTES, 'UTF-8'));
 		}
-
 		if (isset($this->request->get['filter_user_id'])) {
 			$url .= '&filter_user_id=' . urlencode(html_entity_decode($this->request->get['filter_user_id'], ENT_QUOTES, 'UTF-8'));
 		}
 		if (isset($this->request->get['filter_marketplace_id'])) {
 			$url .= '&filter_marketplace_id=' . urlencode(html_entity_decode($this->request->get['filter_marketplace_id'], ENT_QUOTES, 'UTF-8'));
 		}
+		if (isset($this->request->get['filter_status'])) {
+			$url .= '&filter_status=' . $this->request->get['filter_status'];
+		}
 		if (isset($this->request->get['sort'])) {
 			$url .= '&sort=' . $this->request->get['sort'];
 		}
-
 		if (isset($this->request->get['order'])) {
 			$url .= '&order=' . $this->request->get['order'];
 		}
-
 		if (isset($this->request->get['page'])) {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['breadcrumbs'] = array();
+		$data['breadcrumbs'] = [];
 
 		$data['breadcrumbs'][] = [
-			'text' => ($lang['text_home'] ?? ''),
-			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true)
+			'text' => $this->language->get('text_home'),
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'])
 		];
 
-		$data['breadcrumbs'][] = array(
-			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/connect', $url, true)
-		);
-		$data['button_add_ebay_account'] =($lang['button_add_ebay_account'] ?? '');
-		$data['button_add_amazon_account'] =($lang['button_add_amazon_account'] ?? '');
-		$data['button_add_bonanza_account'] =($lang['button_add_bonanza_account'] ?? '');
-		$data['button_add_opencart_account'] =($lang['button_add_opencart_account'] ?? '');
-		$data['button_add_etsy_account'] =($lang['button_add_etsy_account'] ?? '');
-		$data['button_add_shipstation_account'] =($lang['button_add_shipstation_account'] ?? '');
-		$data['button_add_shopify_account'] =($lang['button_add_shopify_account'] ?? '');
-		$data['add_ebay_account'] = $this->url->link('shopmanager/ebay/add&api=yes', $url, true);
-		$data['add_account'] = $this->url->link('shopmanager/connect/add_account', $url, true);
-		$data['add_amazon_account'] = $this->url->link('shopmanager/amazon/add&api=yes', $url, true);
-		$data['add_bonanza_account'] = $this->url->link('shopmanager/bonanza/add&api=yes', $url, true);
-		$data['add_opencart_account'] = $this->url->link('shopmanager/opencart/add&api=yes', $url, true);
-		$data['add_shipstation_account'] =($lang['shopmanager/shipstation/add&api=yes'] ?? '');
-		$data['add_shopify_account'] = $this->url->link('shopmanager/shopify/add&api=yes', $url, true);
-		$data['add_etsy_account'] = $this->url->link('shopmanager/etsy/add&api=yes', $url, true);
+		$data['breadcrumbs'][] = [
+			'text' => $this->language->get('heading_title'),
+			'href' => $this->url->link('shopmanager/connect', 'user_token=' . $this->session->data['user_token'] . $url)
+		];
 
-		$data['delete'] = $this->url->link('shopmanager/connect/delete', $url, true);
+		$data['add_ebay_account']       = $this->url->link('shopmanager/ebay/add&api=yes', 'user_token=' . $this->session->data['user_token']);
+		$data['add_account']            = $this->url->link('shopmanager/connect/add_account', 'user_token=' . $this->session->data['user_token']);
+		$data['add_amazon_account']     = $this->url->link('shopmanager/amazon/add&api=yes', 'user_token=' . $this->session->data['user_token']);
+		$data['add_bonanza_account']    = $this->url->link('shopmanager/bonanza/add&api=yes', 'user_token=' . $this->session->data['user_token']);
+		$data['add_opencart_account']   = $this->url->link('shopmanager/opencart/add&api=yes', 'user_token=' . $this->session->data['user_token']);
+		$data['add_shopify_account']    = $this->url->link('shopmanager/shopify/add&api=yes', 'user_token=' . $this->session->data['user_token']);
+		$data['add_etsy_account']       = $this->url->link('shopmanager/etsy/add&api=yes', 'user_token=' . $this->session->data['user_token']);
 
-		$data['clear_filter'] = $this->url->link('shopmanager/connect', '', true);
+		$data['delete'] = $this->url->link('shopmanager/connect.delete', 'user_token=' . $this->session->data['user_token']);
 
-		$data['marketplace_accounts'] = array();
+		// AJAX URLs for token management
+		$data['url_test_token'] = $this->url->link('shopmanager/connect/testToken', 'user_token=' . $this->session->data['user_token']);
+		$data['url_save_token'] = $this->url->link('shopmanager/connect/saveToken', 'user_token=' . $this->session->data['user_token']);
 
-		$filter_data = array(
-			'customer_id'					=>10,
-			'filter_marketplace_account_id'	  => $filter_marketplace_account_id,
-			'filter_store_name'	  => $filter_store_name,
-			'filter_user_id'	=> $filter_user_id,
-			'filter_marketplace_id'	=> $filter_marketplace_id,
-			'sort'  							=> $sort,
-			'order' 							=> $order,
-			'start' 							=> ($page - 1) * $this->config->get('config_limit_admin'),
-			'limit'				 				=> $this->config->get('config_limit_admin')
-		);
+		// Load the list portion via getList()
+		$data['list'] = $this->load->controller('shopmanager/connect.getList');
+
+		$data['user_token'] = $this->session->data['user_token'];
+
+		$data['header'] = $this->load->controller('common/header');
+		$data['column_left'] = $this->load->controller('common/column_left');
+		$data['footer'] = $this->load->controller('common/footer');
+
+		$this->response->setOutput($this->load->view('shopmanager/connect', $data));
+	}
+
+	/**
+	 * AJAX list endpoint — returns only the list HTML (no header/footer)
+	 */
+	public function list(): void {
+		$this->load->language('shopmanager/connect');
+
+		$this->response->setOutput($this->load->controller('shopmanager/connect.getList'));
+	}
+
+	public function delete(): void {
+		$this->load->language('shopmanager/connect');
+		$this->load->model('shopmanager/marketplace');
+
+		$json = [];
+
+		if (isset($this->request->post['selected'])) {
+			foreach ((array)$this->request->post['selected'] as $marketplace_account_id) {
+				$this->model_shopmanager_marketplace->deleteAccount((int)$marketplace_account_id);
+			}
+
+			$json['success'] = $this->language->get('text_success_remove');
+		} else if (isset($this->request->post['delete_marketplace_account_id'])) {
+			$this->model_shopmanager_marketplace->deleteAccount((int)$this->request->post['delete_marketplace_account_id']);
+
+			$json['success'] = $this->language->get('text_success_remove');
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
+
+	public function add_Account() {
+		$data = $lang = $this->load->language('shopmanager/connect');
+
+		$this->document->setTitle($this->language->get('heading_title_add'));
+		$this->response->setOutput($this->load->view('shopmanager/connect_form', $data));
+	}
+
+	/**
+	 * AJAX: Test if the refresh token is valid for a given marketplace account.
+	 * Returns JSON { success: bool, message: string }
+	 */
+	public function testToken(): void {
+		$this->load->language('shopmanager/connect');
+		$json = [];
+
+		$marketplace_account_id = isset($this->request->get['marketplace_account_id']) ? (int)$this->request->get['marketplace_account_id'] : 0;
+
+		if (!$marketplace_account_id) {
+			$json['success'] = false;
+			$json['message'] = 'marketplace_account_id manquant';
+			$this->response->addHeader('Content-Type: application/json');
+			$this->response->setOutput(json_encode($json));
+			return;
+		}
 
 		$this->load->model('shopmanager/marketplace');
+		$account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+			'customer_id' => 10,
+			'filter_marketplace_account_id' => $marketplace_account_id
+		]);
+
+		if (empty($account) || empty($account['refresh_token'])) {
+			$json['success'] = false;
+			$json['message'] = $this->language->get('text_token_missing') ?: 'Refresh token absent';
+			$this->response->addHeader('Content-Type: application/json');
+			$this->response->setOutput(json_encode($json));
+			return;
+		}
+
+		// Try to refresh the token via eBay API
+		$this->load->model('shopmanager/ebay');
+		$result = $this->model_shopmanager_ebay->refreshAccessToken($account['refresh_token']);
+
+		if ($result && isset($result['access_token'])) {
+			$json['success'] = true;
+			$json['message'] = $this->language->get('text_token_valid') ?: 'Token valide — connexion eBay OK';
+			$json['expires_in'] = $result['expires_in'] ?? 7200;
+		} else {
+			$json['success'] = false;
+			$json['message'] = $this->language->get('text_token_invalid') ?: 'Refresh token invalide ou expiré — veuillez le renouveler';
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
+
+	/**
+	 * AJAX: Save a new refresh token for a given marketplace account.
+	 * POST: marketplace_account_id, refresh_token
+	 */
+	public function saveToken(): void {
+		$this->load->language('shopmanager/connect');
+		$json = [];
+
+		$marketplace_account_id = isset($this->request->post['marketplace_account_id']) ? (int)$this->request->post['marketplace_account_id'] : 0;
+		$refresh_token = isset($this->request->post['refresh_token']) ? trim($this->request->post['refresh_token']) : '';
+
+		if (!$marketplace_account_id || empty($refresh_token)) {
+			$json['success'] = false;
+			$json['message'] = 'marketplace_account_id et refresh_token requis';
+			$this->response->addHeader('Content-Type: application/json');
+			$this->response->setOutput(json_encode($json));
+			return;
+		}
+
+		// Validation: real eBay refresh tokens are 200+ chars
+		if (strlen($refresh_token) < 200) {
+			$json['success'] = false;
+			$json['message'] = $this->language->get('text_token_too_short') ?: 'Token trop court — un refresh token eBay fait 800+ caractères. Vérifiez le copier-coller.';
+			$this->response->addHeader('Content-Type: application/json');
+			$this->response->setOutput(json_encode($json));
+			return;
+		}
+
+		$this->load->model('shopmanager/marketplace');
+		$this->model_shopmanager_marketplace->updateRefreshToken($marketplace_account_id, $refresh_token);
+
+		// Test the new token
+		$this->load->model('shopmanager/ebay');
+		$result = $this->model_shopmanager_ebay->refreshAccessToken($refresh_token);
+
+		if ($result && isset($result['access_token'])) {
+			$json['success'] = true;
+			$json['message'] = $this->language->get('text_token_saved_valid') ?: 'Token sauvegardé et vérifié — connexion eBay OK!';
+		} else {
+			$json['success'] = false;
+			$json['message'] = $this->language->get('text_token_saved_invalid') ?: 'Token sauvegardé mais INVALIDE — vérifiez que vous avez copié le bon refresh token.';
+		}
+
+		$this->response->addHeader('Content-Type: application/json');
+		$this->response->setOutput(json_encode($json));
+	}
+
+	protected function getList(): string {
+		$this->load->language('shopmanager/connect');
+		$this->load->model('shopmanager/marketplace');
+		$this->load->model('tool/image');
+
+		$filter_store_name        = $this->request->get['filter_store_name'] ?? '';
+		$filter_user_id           = $this->request->get['filter_user_id'] ?? '';
+		$filter_marketplace_id    = $this->request->get['filter_marketplace_id'] ?? '';
+		$filter_status            = $this->request->get['filter_status'] ?? '';
+		$sort   = $this->request->get['sort'] ?? 'store_name';
+		$order  = $this->request->get['order'] ?? 'ASC';
+		$page   = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
+
+		$limit = (int)$this->config->get('config_pagination_admin');
+		if ($limit < 1) $limit = 20;
+
+		$filter_data = [
+			'customer_id'                    => 10,
+			'filter_store_name'              => $filter_store_name,
+			'filter_user_id'                 => $filter_user_id,
+			'filter_marketplace_id'          => $filter_marketplace_id,
+			'filter_status'                  => $filter_status,
+			'sort'                           => $sort,
+			'order'                          => $order,
+			'start'                          => ($page - 1) * $limit,
+			'limit'                          => $limit
+		];
 
 		$marketplace_total_account = $this->model_shopmanager_marketplace->getTotalMarketplaceAccount($filter_data);
 
 		$results = $this->model_shopmanager_marketplace->getMarketplaceAccount($filter_data);
 
-/* 		$sites = $this->Ebayconnector->getEbaySiteList();
-		$ebay_sites = $result['marketplace_image']; */
-		//print("<pre>".print_r ($results,true )."</pre>");
-		$this->load->model('tool/image');
-		
+		$data['marketplace_accounts'] = [];
+
 		if ($results) {
+			// Model returns a flat row when num_rows==1, normalize to array of rows
+			if (isset($results['marketplace_account_id'])) {
+				$results = [$results['marketplace_account_id'] => $results];
+			}
 			foreach ($results as $result) {
-				if($result['site_setting']!=""){
-					$site_setting= array();
-				//	//print("<pre>".print_r ($result,true )."</pre>");
-				
-					$site_setting=$result['site_setting'];
-				//	//print("<pre>".print_r ($site_setting,true )."</pre>");
+				$site_setting = [];
+				if (!empty($result['site_setting']) && is_array($result['site_setting'])) {
+					$site_setting = $result['site_setting'];
 				}
-				if($result['marketplace_id']==8){
-					$dataresult = array (
+
+				if ((int)$result['marketplace_id'] == 8) {
+					$dataresult = [
 						'SS-UserName' => $result['user_id'],
 						'SS-Password' => $result['auth_token'],
-						'url'	=> $site_setting->url,
-						'version'	=> $site_setting->version
-					);
+						'url'         => $site_setting['url'] ?? '',
+						'version'     => $site_setting['version'] ?? ''
+					];
 					$this->load->model('shopmanager/opencart');
-					//$result['image']=$this->model_tool_image->resize($site_setting->url."/image/".$site_setting->config_image,40, 40);;
-					$result['image']=$this->model_tool_image->resize($result['image'],150, 40);
-
-					$status=$this->model_shopmanager_opencart->getStatus($dataresult);
-					$marketplace_status_image=$status['status_image'];
-				}else{
-					/*
-					$result["marketplace_name"]=str_replace('Canada','',$result["marketplace_name"]);
-					//print("<pre>".print_r ($result["marketplace_name"],true )."</pre>");
-					$this->load->model(
-						"shopmanager/" . strtolower($result["marketplace_name"]) . ""
-					);
-					
-					$marketplace_status_image=$this->{"model_shopmanager_" .strtolower($result["marketplace_name"])}->getStatus($result);
-					*/ 
-					$marketplace_status_image= '<i class="fas fa-check-circle fa-2x" style="color:green"></i>';
-					//$result['image'] = '<i class="fas fa-check-circle fa-2x" style="color:green"></i>';
-				//	$result['image']=$this->model_tool_image->resize($result['image'],150, 40);
+					$result['image'] = $this->model_tool_image->resize($result['image'], 150, 40);
+					$status = $this->model_shopmanager_opencart->getStatus($dataresult);
+					$marketplace_status_image = $status['status_image'];
+				} else {
+					$marketplace_status_image = '<i class="fas fa-check-circle fa-2x" style="color:green"></i>';
 				}
-			/*	}else{
-					$marketplace_status_image="";
-					$result['image']=$this->model_tool_image->resize($result['image'],150, 40);
-				}*/
-				
-				$data['marketplace_accounts'][] = array(
-					'marketplace_account_id' 		=> $result['marketplace_account_id'],
-					'store_name'    		=> $result['store_name'],
-					'marketplace_image'     => $result['marketplace_image'],
-					'marketplace_name'     => $result['name'],
-					'marketplace_user_id'  => $result['user_id'],
-					'url_connexion'  		=> $result['url_connexion'],
-					'marketplace_status_image'  => $marketplace_status_image,
-					'edit'  				=> $this->url->link('shopmanager/connect/edit', 'marketplace_account_id=' . $result['marketplace_account_id'] . $url, true),
-				);
+
+				$is_ebay = in_array((int)$result['marketplace_id'], [1, 5, 10, 14]);
+				$has_refresh_token = !empty($result['refresh_token']) && strlen($result['refresh_token']) > 10;
+				$account_status = (int)($result['status'] ?? 1);
+
+				$url = '';
+				if ($filter_store_name) {
+					$url .= '&filter_store_name=' . urlencode(html_entity_decode($filter_store_name, ENT_QUOTES, 'UTF-8'));
+				}
+				if ($filter_user_id) {
+					$url .= '&filter_user_id=' . urlencode(html_entity_decode($filter_user_id, ENT_QUOTES, 'UTF-8'));
+				}
+				if ($filter_marketplace_id) {
+					$url .= '&filter_marketplace_id=' . urlencode(html_entity_decode($filter_marketplace_id, ENT_QUOTES, 'UTF-8'));
+				}
+				if ($filter_status !== '') {
+					$url .= '&filter_status=' . $filter_status;
+				}
+
+				$data['marketplace_accounts'][] = [
+					'marketplace_account_id'   => $result['marketplace_account_id'],
+					'store_name'               => $result['store_name'],
+					'marketplace_image'        => $result['marketplace_image'],
+					'marketplace_name'         => $result['name'] ?? $result['marketplace_name'] ?? '',
+					'marketplace_user_id'      => $result['user_id'],
+					'url_connexion'            => $result['url_connexion'] ?? '',
+					'marketplace_status_image' => $marketplace_status_image,
+					'is_ebay'                  => $is_ebay,
+					'has_refresh_token'        => $has_refresh_token,
+					'refresh_token_length'     => strlen($result['refresh_token'] ?? ''),
+					'status'                   => $account_status,
+					'edit'                     => $this->url->link('shopmanager/connect/edit', 'user_token=' . $this->session->data['user_token'] . '&marketplace_account_id=' . $result['marketplace_account_id'] . $url),
+				];
 			}
-		} 
-
-		if (isset($this->error['warning'])) {
-			$data['error_warning'] = $this->error['warning'];
-		} else {
-			$data['error_warning'] = '';
 		}
 
-		if (isset($this->session->data['success'])) {
-			$data['success'] = $this->session->data['success'];
-
-			unset($this->session->data['success']);
-		} else {
-			$data['success'] = '';
-		}
-
-		if (isset($this->request->post['selected'])) {
-			$data['selected'] = (array)$this->request->post['selected'];
-		} else {
-			$data['selected'] = array();
-		}
-
+		// Sort links — toggle order
 		$url = '';
-
-		if (isset($this->request->get['filter_marketplace_account_id'])) {
-			$url .= '&filter_marketplace_account_id=' . $this->request->get['filter_marketplace_account_id'];
+		if ($filter_store_name) {
+			$url .= '&filter_store_name=' . urlencode(html_entity_decode($filter_store_name, ENT_QUOTES, 'UTF-8'));
 		}
-
-		if (isset($this->request->get['filter_store_name'])) {
-			$url .= '&filter_store_name=' . urlencode(html_entity_decode($this->request->get['filter_store_name'], ENT_QUOTES, 'UTF-8'));
+		if ($filter_user_id) {
+			$url .= '&filter_user_id=' . urlencode(html_entity_decode($filter_user_id, ENT_QUOTES, 'UTF-8'));
 		}
-
-		if (isset($this->request->get['filter_user_id'])) {
-			$url .= '&filter_user_id=' . urlencode(html_entity_decode($this->request->get['filter_user_id'], ENT_QUOTES, 'UTF-8'));
+		if ($filter_marketplace_id) {
+			$url .= '&filter_marketplace_id=' . urlencode(html_entity_decode($filter_marketplace_id, ENT_QUOTES, 'UTF-8'));
 		}
-		if (isset($this->request->get['filter_marketplace_id'])) {
-			$url .= '&filter_marketplace_id=' . urlencode(html_entity_decode($this->request->get['filter_marketplace_id'], ENT_QUOTES, 'UTF-8'));
+		if ($filter_status !== '') {
+			$url .= '&filter_status=' . $filter_status;
 		}
-		if ($order == 'ASC') {
-			$url .= '&order=DESC';
-		} else {
-			$url .= '&order=ASC';
-		}
-
 		if (isset($this->request->get['page'])) {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_marketplace_account_id'] = $this->url->link('shopmanager/connect', 'sort=marketplace_account_id' . $url, true);
-		$data['sort_marketplace_store_name'] = $this->url->link('shopmanager/connect',  'sort=store_name' . $url, true);
-		$data['sort_marketplace_user_id'] = $this->url->link('shopmanager/connect',  'sort=user_id' . $url, true);
+		$url_sort = $url . '&order=' . ($order == 'ASC' ? 'DESC' : 'ASC');
 
-		$url = '';
+		$data['sort_store_name']              = $this->url->link('shopmanager/connect.list', 'user_token=' . $this->session->data['user_token'] . '&sort=store_name' . $url_sort);
+		$data['sort_user_id']                 = $this->url->link('shopmanager/connect.list', 'user_token=' . $this->session->data['user_token'] . '&sort=user_id' . $url_sort);
+		$data['sort_marketplace_account_id']  = $this->url->link('shopmanager/connect.list', 'user_token=' . $this->session->data['user_token'] . '&sort=marketplace_account_id' . $url_sort);
 
-		if (isset($this->request->get['filter_marketplace_account_id'])) {
-			$url .= '&filter_marketplace_account_id=' . $this->request->get['filter_marketplace_account_id'];
+		// Pagination
+		$url_page = '';
+		if ($filter_store_name) {
+			$url_page .= '&filter_store_name=' . urlencode(html_entity_decode($filter_store_name, ENT_QUOTES, 'UTF-8'));
 		}
-
-		if (isset($this->request->get['filter_store_name'])) {
-			$url .= '&filter_store_name=' . urlencode(html_entity_decode($this->request->get['filter_store_name'], ENT_QUOTES, 'UTF-8'));
+		if ($filter_user_id) {
+			$url_page .= '&filter_user_id=' . urlencode(html_entity_decode($filter_user_id, ENT_QUOTES, 'UTF-8'));
 		}
-
-		if (isset($this->request->get['filter_user_id'])) {
-			$url .= '&filter_user_id=' . urlencode(html_entity_decode($this->request->get['filter_user_id'], ENT_QUOTES, 'UTF-8'));
+		if ($filter_marketplace_id) {
+			$url_page .= '&filter_marketplace_id=' . urlencode(html_entity_decode($filter_marketplace_id, ENT_QUOTES, 'UTF-8'));
 		}
-		if (isset($this->request->get['filter_marketplace_id'])) {
-			$url .= '&filter_marketplace_id=' . urlencode(html_entity_decode($this->request->get['filter_marketplace_id'], ENT_QUOTES, 'UTF-8'));
+		if ($filter_status !== '') {
+			$url_page .= '&filter_status=' . $filter_status;
 		}
 		if (isset($this->request->get['sort'])) {
-			$url .= '&sort=' . $this->request->get['sort'];
+			$url_page .= '&sort=' . $this->request->get['sort'];
 		}
-
 		if (isset($this->request->get['order'])) {
-			$url .= '&order=' . $this->request->get['order'];
+			$url_page .= '&order=' . $this->request->get['order'];
 		}
 
 		$data['pagination'] = $this->load->controller('common/pagination', [
 			'total' => $marketplace_total_account,
 			'page'  => $page,
-			'limit' => $this->config->get('config_limit_admin'),
-			'url'   => $this->url->link('shopmanager/connect', $url . '&page={page}', '', true)
+			'limit' => $limit,
+			'url'   => $this->url->link('shopmanager/connect.list', 'user_token=' . $this->session->data['user_token'] . $url_page . '&page={page}')
 		]);
 
-		$data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($marketplace_total_account) ? (($page - 1) * $this->config->get('config_limit_admin')) + 1 : 0, ((($page - 1) * $this->config->get('config_limit_admin')) > ($marketplace_total_account - $this->config->get('config_limit_admin'))) ? $marketplace_total_account : ((($page - 1) * $this->config->get('config_limit_admin')) + $this->config->get('config_limit_admin')), $marketplace_total_account, ceil($marketplace_total_account / $this->config->get('config_limit_admin')));
+		$data['results'] = sprintf($this->language->get('text_pagination'), ($marketplace_total_account) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($marketplace_total_account - $limit)) ? $marketplace_total_account : ((($page - 1) * $limit) + $limit), $marketplace_total_account, ceil($marketplace_total_account / max($limit, 1)));
 
-		$data['filter_marketplace_account_id'] 	= $filter_marketplace_account_id;
-		$data['filter_store_name'] 	= $filter_store_name;
-		$data['filter_user_id']= $filter_user_id;
-		$data['filter_marketplace_id']= $filter_marketplace_id;
-
-		$data['sort'] = $sort;
+		$data['sort']  = $sort;
 		$data['order'] = strtolower($order);
 
-		  $data['separate_view'] = true;
-		  
+		// AJAX URLs for token management (needed in list twig for JS)
+		$data['url_test_token'] = $this->url->link('shopmanager/connect/testToken', 'user_token=' . $this->session->data['user_token']);
+		$data['url_save_token'] = $this->url->link('shopmanager/connect/saveToken', 'user_token=' . $this->session->data['user_token']);
+		$data['user_token'] = $this->session->data['user_token'];
 
-		$data['header'] = $this->load->controller('common/header');
-		$data['column_left'] = $this->load->controller('common/column_left');
-		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
-
-		 $this->response->setOutput($this->load->view('shopmanager/connect_list', $data));
-		
+		return $this->load->view('shopmanager/connect_list', $data);
 	}	
 	
 	public function edit() {
 
-		//$this->checkStatus();
 		$data = array();
-		$data = array_merge($data, $this->load->language('shopmanager/connect'));
+		$lang = $this->load->language('shopmanager/connect');
+		$data = array_merge($data, $lang);
+		$this->load->model('shopmanager/marketplace');
 
 		$this->document->setTitle(($lang['heading_title_edit'] ?? ''));
 
@@ -409,7 +424,7 @@ class Connect extends \Opencart\System\Engine\Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('shopmanager/connect', $url, true));
+			$this->response->redirect($this->url->link('shopmanager/connect', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 
 		$this->getForm();
@@ -418,6 +433,7 @@ class Connect extends \Opencart\System\Engine\Controller {
 	public function getForm() {
 		$data = $lang = $this->load->language('shopmanager/connect');
 		$this->load->model('shopmanager/marketplace');
+		$data['user_token'] = $this->session->data['user_token'];
 
 		$this->document->setTitle(($lang['text_add'] ?? ''));
 
@@ -429,12 +445,6 @@ class Connect extends \Opencart\System\Engine\Controller {
 			$data['text_account_tab'] = ($lang['text_account_add_tab'] ?? '');
 		}
 
-		//$ebay_sites = $this->Ebayconnector->getEbaySiteList();
-
-	//	$data['ebay_sites'] = $ebay_sites['ebay_sites'];
-
-	//	$data['ebay_site_currency'] = $this->Ebayconnector->getEbaySiteCurrency();
- 
 		$url = '';
 
 		if (isset($this->request->get['sort'])) {
@@ -453,38 +463,21 @@ class Connect extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['text_home'] ?? ''),
-			'href' => $this->url->link('shopmanager/dashboard', '', true)
-		);
-
-/* 		$data['breadcrumbs'][] = array(
-			'text' => ($lang['text_account'] ?? ''),
-			'href' => $this->url->link('account/account', '', true)
+			'href' => $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true)
 		);
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/connect', $url, true)
+			'href' => $this->url->link('shopmanager/connect', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 
 		if (isset($this->request->get['marketplace_account_id'])) {
-			$data['breadcrumbs'][] = array(
-			'text' => ($lang['heading_title_edit'] ?? ''),
-			'href' => $this->url->link('shopmanager/connect/edit', 'marketplace_account_id=' . $this->request->get['marketplace_account_id'] . $url, true)
-		);
+			$data['action'] = $this->url->link('shopmanager/connect/edit', 'user_token=' . $this->session->data['user_token'] . '&marketplace_account_id=' . $this->request->get['marketplace_account_id'] . $url, true);
 		} else {
-			$data['breadcrumbs'][] = array(
-				'text' => ($lang['heading_title_add'] ?? ''),
-				'href' => $this->url->link('shopmanager/connect/add', $url, true)
-			);
+			$data['action'] = $this->url->link('shopmanager/connect/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
 		}
 
-		if (!isset($this->request->get['marketplace_account_id'])) {
-			$data['action'] = $this->url->link('shopmanager/connect/add', $url, true);
-		} else {
-			$data['action'] = $this->url->link('shopmanager/connect/edit', 'marketplace_account_id=' . $this->request->get['marketplace_account_id'] . $url, true);
-		} */
-
-		$data['cancel'] = $this->url->link('shopmanager/connect', '' . $url,  true);
+		$data['cancel'] = $this->url->link('shopmanager/connect', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
 		if (isset($this->error['warning'])) {
 			$data['error_warning'] = $this->error['warning'];
@@ -623,15 +616,10 @@ class Connect extends \Opencart\System\Engine\Controller {
 		$data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
 
 
-		 $this->response->setOutput($this->load->view('default/template/shopmanager/connect_form.tpl', $data));
-
-
+		 $this->response->setOutput($this->load->view('shopmanager/connect_form', $data));
 	}
 
-	/* protected function validateAccount() {
-		if (!$this->wkebay->hasPermission('modify', 'account')) {
-			$this->error['permission'] = ($lang['error_permission'] ?? '');
-		} 
+/*  // Old validateAccount() - kept for reference
 		//echo "allo838<br>";
 		$this->load->model('shopmanager/marketplace');
 

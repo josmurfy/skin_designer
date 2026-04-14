@@ -16,7 +16,7 @@ class Opencart extends \Opencart\System\Engine\Controller {
 		
 		$this->load->model('shopmanager/dashboard');
 		$this->load->model('shopmanager/opencart');
-		$lang = $this->load->language('shopmanager/connect');
+		$lang = $this->load->language('shopmanager/marketplace/marketplace');
 		$data = $data ?? [];
 		$data += $lang;
         $json = array();
@@ -79,7 +79,7 @@ class Opencart extends \Opencart\System\Engine\Controller {
                             $url .= '&page=' . $this->request->get['page'];
                         }
             
-                        $this->response->redirect($this->url->link('shopmanager/connect', $url, true));
+                        $this->response->redirect($this->url->link('shopmanager/marketplace/marketplace', $url, true));
         }else{
             $json['result']=$status;//'<i class="fas fa-check-circle fa-2x" style="color:green"></i>'
             $this->response->addHeader('Content-Type: application/json');

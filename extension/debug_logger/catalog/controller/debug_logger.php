@@ -26,18 +26,23 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
 
         $this->load->model('extension/debug_logger/module/debug_logger');
 
+        // Ensure schema is up-to-date (route column may not exist yet)
+        $this->model_extension_debug_logger_module_debug_logger->upgrade();
+
         $severity = $this->request->post['severity'] ?? 'bug';
         if (!in_array($severity, ['bug', 'warning', 'info'])) {
             $severity = 'bug';
         }
 
         $id = $this->model_extension_debug_logger_module_debug_logger->addReport([
-            'url'         => $this->request->post['url'] ?? '',
-            'console_log' => $this->request->post['console_log'] ?? '',
-            'comment'     => $this->request->post['comment'] ?? '',
-            'severity'    => $severity,
-            'admin_user'  => '',
-            'source'      => 'catalog',
+            'url'          => html_entity_decode((string)($this->request->post['url'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'route'        => $this->request->post['route'] ?? '',
+            'console_log'  => html_entity_decode((string)($this->request->post['console_log'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'comment'      => $this->request->post['comment'] ?? '',
+            'loaded_files' => html_entity_decode((string)($this->request->post['loaded_files'] ?? ''), ENT_QUOTES, 'UTF-8'),
+            'severity'     => $severity,
+            'admin_user'   => '',
+            'source'       => 'catalog',
         ]);
 
         // License-aware pruning

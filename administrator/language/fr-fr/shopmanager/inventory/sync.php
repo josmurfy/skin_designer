@@ -126,6 +126,7 @@ $_['text_not_imported_info'] = 'Ces produits sont listés sur eBay mais n\'ont j
 $_['text_to_update_info']   = 'Ces produits ont des modifications locales en attente d\'envoi vers eBay (to_update = 1).';
 $_['text_no_not_imported']  = 'Aucun produit en attente d\'importation!';
 $_['text_no_to_update']     = 'Aucun produit en attente de mise à jour sur eBay!';
+$_['button_update_all_ebay'] = 'Mettre TOUT à jour sur eBay';
 $_['text_no_not_synced']    = 'Tous les produits sont à jour!';
 
 // Table Headers

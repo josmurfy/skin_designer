@@ -328,16 +328,15 @@ class Sync extends \Opencart\System\Engine\Model {
                 p.sku,
                 p.quantity,
                 p.unallocated_quantity,
-                pd.name,
+                COALESCE(pd.name, CONCAT('[No Name] SKU:', p.sku)) as name,
                 pm.marketplace_item_id,
                 pm.error,
                 pm.last_sync
             FROM " . DB_PREFIX . "product p
-            INNER JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id)
             INNER JOIN " . DB_PREFIX . "product_marketplace pm ON (p.product_id = pm.product_id)
+            LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "')
             WHERE pm.error IS NOT NULL 
             AND pm.error != ''
-            AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             ORDER BY pm.last_sync DESC
         ");
 
@@ -516,6 +515,8 @@ class Sync extends \Opencart\System\Engine\Model {
         $query = $this->db->query("
             SELECT COUNT(DISTINCT pm.product_id) as total
             FROM " . DB_PREFIX . "product_marketplace pm
+            INNER JOIN " . DB_PREFIX . "product p ON p.product_id = pm.product_id
+            INNER JOIN " . DB_PREFIX . "product_description pd ON pd.product_id = p.product_id AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'
             WHERE pm.marketplace_id = 1
             AND pm.to_update = 1
         ");

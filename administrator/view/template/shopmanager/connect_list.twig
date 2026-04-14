@@ -1,4 +1,4 @@
-{{ header }}
+
 <style>
 *, *::after, *::before {
   box-sizing: border-box;
@@ -66,297 +66,369 @@ overflow-y: auto;
   opacity: 1;
   pointer-events: all;
 }
+
+.token-status-badge { font-size: 0.85rem; padding: 4px 10px; border-radius: 4px; }
+.token-ok  { background: #d4edda; color: #155724; }
+.token-bad { background: #f8d7da; color: #721c24; }
+.token-warning { background: #fff3cd; color: #856404; }
 </style>
-{{ column_left }}
-
-        
-  
 
 
- <div class="container-fluid" id="content">
+<div class="container-fluid" id="content">
+
+{# ── Modal: Connect a new marketplace ── #}
 <div class="modalmarket" id="modalmarket">
-
   <div class="modalmarket-header">
-    <div class="title">{{ text_add }}
-    </div>
+    <div class="title">{{ text_add }}</div>
     <button data-close-button class="close-button">&times;</button>
   </div>
   <div class="modalmarket-body" id="modalmarket-body">
     <div class="marketplace-grid-modal">
-      <div class="search-bar-wrapper">
-      </div>
-      <div class="title"><h1>Connect with a Marketplace by clicking on a tile below</h1>
-      </div>
+      <div class="title"><h1>Connect with a Marketplace by clicking on a tile below</h1></div>
       <div class="marketplace-grid">
-       <button class="btn btn-light">
-        
-          <img src="{{ amazon }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_amazon_account }}" onClick="window.open('{{ add_amazon_account }}', '_self')">
-          <div class="title">Connect
-          </div>
+        <button class="btn btn-light">
+          <img src="{{ amazon }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_amazon_account }}" onClick="window.open('{{ add_amazon_account }}', '_self')">
+          <div class="title">Connect</div>
         </button>
         <button class="btn btn-light">
-        
-          <img src="{{ bonanza }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_bonanza_account }}" onClick="window.open('{{ add_bonanza_account }}', '_self')">
-          <div class="title">Connect
-          </div>
+          <img src="{{ bonanza }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_bonanza_account }}" onClick="window.open('{{ add_bonanza_account }}', '_self')">
+          <div class="title">Connect</div>
         </button>
         <button class="btn btn-light">
-        
-          <img src="{{ ebay }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_ebay_account }}" onClick="window.open('{{ add_ebay_account }}', '_self')">
-          <div class="title">Connect
-          </div>
+          <img src="{{ ebay }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_ebay_account }}" onClick="window.open('{{ add_ebay_account }}', '_self')">
+          <div class="title">Connect</div>
         </button>
         <button class="btn btn-light">
-        
-          <img src="{{ etsy }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_etsy_account }}" onClick="window.open('{{ add_etsy_account }}', '_self')">
-          <div class="title">Connect
-          </div>
+          <img src="{{ etsy }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_etsy_account }}" onClick="window.open('{{ add_etsy_account }}', '_self')">
+          <div class="title">Connect</div>
         </button>
         <button class="btn btn-light">
-        
-          <img src="{{ opencart }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_opencart_account }}" onClick="instruction_opencart();">
-          <div class="title">Connect
-          </div>
+          <img src="{{ opencart }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_opencart_account }}" onClick="instruction_opencart();">
+          <div class="title">Connect</div>
         </button>
         <button class="btn btn-light">
-        
-        <img src="{{ shipstation }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_shipstation_account }}" onClick="instruction_shipstation();">
-        <div class="title">Connect
-        </div>
-      </button>
+          <img src="{{ shipstation }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_shipstation_account }}" onClick="instruction_shipstation();">
+          <div class="title">Connect</div>
+        </button>
         <button class="btn btn-light">
-        
-          <img src="{{ shopify }}" class="thumbnail" data-toggle="tooltip" title="{{ button_add_shopify_account }}" onClick="instruction_shopify();">
-          <div class="title">Connect
-          </div>
+          <img src="{{ shopify }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_shopify_account }}" onClick="instruction_shopify();">
+          <div class="title">Connect</div>
         </button>
       </div>
     </div>
   </div>
 </div>
-  <ul class="breadcrumb">
-    {% for breadcrumb in breadcrumbs %}
-      <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
-    {% endfor %}
-  </ul>
-  
 
-      <h1>{{ heading_title_account }}
-      </h1>
+{# ── Breadcrumbs ── #}
+<ul class="breadcrumb">
+  {% for breadcrumb in breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+  {% endfor %}
+</ul>
 
+<h1>{{ heading_title_account }}</h1>
 
-             <div class="panel panel-default" style="margin-top: 5.8%;">
-        <div class="panel-heading"  style="display:inline-block;width:100%;">
-          <h3 class="panel-title"><i class="fa fa-list"></i> {{ text_marketplace_account_list }}</h3>
-        </div>
-      {% if error_warning %}
-      <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-      </div>
-    {% endif %}
-      {% if success %}
-      <div class="alert alert-success"><i class="fa fa-check-circle"></i> {{ success }}
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
-      </div>
-    {% endif %}
-     
-        <div class="panel-body">
-         
-    
-            <div class="table-responsive"> 
-              <div class="pull-right">
-  <button data-modalmarket-target="#modalmarket" title="{{ button_add_account }}" class="btn btn-lg btn-success"><i class="fa-solid fa-circle-plus"></i> {{ text_add }}</button>
+{# ── Alerts ── #}
+{% if error_warning %}
+  <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
+{% if success %}
+  <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+{% endif %}
 
-        </div>
-                  <form action="{{ delete }}" method="post" enctype="multipart/form-data" id="form-marketplace-account">
-
-              <table class="table table-bordered table-hover">
-                <thead>
-                  <tr class="info">
-                    <td colspan="2" class="text-center">{% if sort == 'marketplace_store_name' %}
-                      <a href="{{ sort_marketplace_store_name }}" class="{{ order|lower }}">{{ column_marketplace_store_name }}</a>
-                    {% else %}
-                      <a href="{{ sort_marketplace_store_name }}">{{ column_marketplace_store_name }}</a>
-                    {% endif %}</td>
-                   
-                      <td colspan="1" class="text-center">{% if sort == 'marketplace_marketplace_id' %}
-                      <a href="{{ sort_marketplace_account_id }}" class="{{ order|lower }}">{{ column_marketplace_sites }}</a>
-                    {% else %}
-                      <a href="{{ sort_marketplace_account_id }}">{{ column_marketplace_sites }}</a>
-                    {% endif %}</td>
-                    <td colspan="1" class="text-center">
-                      {{ column_status }}
-                    </td>
-                    <td colspan="2" class="text-center">
-                      {{ column_action }}
-                    </td>
-                  </tr>
-                </thead>
-                <tbody>
-                               <input type="hidden" name="delete_account_id" id="delete-account-id" value="" />
-                         <input type="hidden" name="refresh_account_id" id="refresh-account-id" value="" />
-
-                  {% if marketplace_accounts %}
-                  {% for account in marketplace_accounts %}
-                  <tr>
-                    
-              
-                    <td colspan="2" class="text-center">{{ account.store_name }}</td>
-                 
-                    <td colspan="1" class="text-center"><img src="{{ account.marketplace_image }}" title="{{ account.marketplace_name }}" alt="{{ account.marketplace_name }}"  /></td>
-                    <td class="text-center">{{ account.marketplace_status_image|raw }}</td>
-                    <td colspan="2" class="text-center">
-                            <button type="button" data-toggle="tooltip" id="account-refresh-{{ account.marketplace_account_id }}" title="{{ button_refresh }}" class="btn btn-success" onClick="window.open('{{ account.url_connexion }}', '_self')"><i class="fa fa-refresh"></i></button>
-                            <button type="button" data-toggle="tooltip" id="account-delete-{{ account.marketplace_account_id }}" title="{{ button_delete }}" class="btn btn-danger"  onClick="delete_account({{ account.marketplace_account_id }});"><i class="fa fa-trash-o"></i></button>
-                    </td>
-                  </tr>
-                  {% endfor %}
+{# ── Account List Card ── #}
+<div class="card mb-3">
+  <div class="card-header">
+    <i class="fa fa-list"></i> {{ text_marketplace_account_list }}
+    <div class="float-end">
+      <button data-modalmarket-target="#modalmarket" title="{{ button_add_account }}" class="btn btn-success"><i class="fa-solid fa-circle-plus"></i> {{ text_add }}</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <form action="{{ delete }}" method="post" enctype="multipart/form-data" id="form-marketplace-account">
+      <input type="hidden" name="delete_marketplace_account_id" id="delete-marketplace-account-id" value="" />
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th class="text-center">
+                {% if sort == 'store_name' %}
+                  <a href="{{ sort_marketplace_store_name }}" class="{{ order }}">{{ column_marketplace_store_name }}</a>
                 {% else %}
-                  <tr>
-                    <td class="text-center" colspan="7">{{ text_no_results }}</td>
-                  </tr>
+                  <a href="{{ sort_marketplace_store_name }}">{{ column_marketplace_store_name }}</a>
                 {% endif %}
-                </tbody>
-              </table>
-            </div>
-          </form>
-     <div class="row">
-      <div class="col-sm-6 text-left">{{ pagination }}</div>
-      <div class="col-sm-6 text-left">{{ results }}</div>
-       </div>
- </div>
-
+              </th>
+              <th class="text-center">{{ column_marketplace_sites }}</th>
+              <th class="text-center">{{ column_status }}</th>
+              <th class="text-center">{{ text_token_status }}</th>
+              <th class="text-center">{{ column_action }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if marketplace_accounts %}
+              {% for account in marketplace_accounts %}
+              <tr>
+                <td class="text-center">{{ account.store_name }}</td>
+                <td class="text-center">
+                  <img src="{{ account.marketplace_image }}" title="{{ account.marketplace_name }}" alt="{{ account.marketplace_name }}" />
+                </td>
+                <td class="text-center">{{ account.marketplace_status_image|raw }}</td>
+                <td class="text-center" id="token-status-{{ account.marketplace_account_id }}">
+                  {% if account.is_ebay %}
+                    {% if account.has_refresh_token %}
+                      {% if account.refresh_token_length > 200 %}
+                        <span class="token-status-badge token-ok"><i class="fa fa-key"></i> {{ text_token_present }}</span>
+                      {% else %}
+                        <span class="token-status-badge token-bad"><i class="fa fa-exclamation-triangle"></i> {{ text_token_truncated }}</span>
+                      {% endif %}
+                    {% else %}
+                      <span class="token-status-badge token-bad"><i class="fa fa-times-circle"></i> {{ text_token_absent }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td class="text-center">
+                  {% if account.is_ebay %}
+                    <button type="button" data-bs-toggle="tooltip" title="{{ text_test_token }}" class="btn btn-sm btn-info" onClick="testToken({{ account.marketplace_account_id }})"><i class="fa fa-stethoscope"></i></button>
+                    <button type="button" data-bs-toggle="tooltip" title="{{ text_update_token }}" class="btn btn-sm btn-warning" onClick="showTokenModal({{ account.marketplace_account_id }}, '{{ account.store_name|e('js') }}')"><i class="fa fa-key"></i></button>
+                  {% endif %}
+                  {% if account.url_connexion %}
+                    <button type="button" data-bs-toggle="tooltip" title="{{ button_refresh }}" class="btn btn-sm btn-success" onClick="window.open('{{ account.url_connexion }}', '_self')"><i class="fa fa-refresh"></i></button>
+                  {% endif %}
+                  <button type="button" data-bs-toggle="tooltip" title="{{ button_delete }}" class="btn btn-sm btn-danger" onClick="delete_account({{ account.marketplace_account_id }});"><i class="fa fa-trash"></i></button>
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td class="text-center" colspan="5">{{ text_no_results }}</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </form>
+    <div class="row">
+      <div class="col-sm-6 text-start">{{ pagination }}</div>
+      <div class="col-sm-6 text-end">{{ results }}</div>
     </div>
-
   </div>
 </div>
-       
+
+</div>
+
+{# ── Modal: Update Refresh Token ── #}
+<div class="modal fade" id="modal-token" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa fa-key"></i> {{ text_update_token }} — <span id="modal-token-store"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+          <strong>{{ text_token_instructions_title }}</strong><br>
+          {{ text_token_instructions|raw }}
+        </div>
+        <input type="hidden" id="modal-token-account-id" value="" />
+        <div class="mb-3">
+          <label class="form-label" for="input-refresh-token">{{ text_new_refresh_token }}</label>
+          <textarea id="input-refresh-token" class="form-control" rows="5" placeholder="{{ text_token_placeholder }}"></textarea>
+          <div class="form-text">{{ text_token_hint }}</div>
+        </div>
+        <div id="modal-token-result" style="display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_cancel }}</button>
+        <button type="button" class="btn btn-primary" id="btn-save-token"><i class="fa fa-save"></i> {{ button_save_token }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="overlay"></div>
 
 {{ footer }}
 
- <script type="text/javascript">
-const openModalButtons = document.querySelectorAll('[data-modalmarket-target]')
-const closeModalButtons = document.querySelectorAll('[data-close-button]')
-const overlay = document.getElementById('overlay')
+<script type="text/javascript">
+// ── Marketplace connect modal ──
+const openModalButtons = document.querySelectorAll('[data-modalmarket-target]');
+const closeModalButtons = document.querySelectorAll('[data-close-button]');
+const overlay = document.getElementById('overlay');
 
 openModalButtons.forEach(button => {
   button.addEventListener('click', () => {
-    const modalmarket = document.querySelector(button.dataset.modalmarketTarget)
-    openModal(modalmarket)
-  })
-})
+    const modalmarket = document.querySelector(button.dataset.modalmarketTarget);
+    openModal(modalmarket);
+  });
+});
 
 overlay.addEventListener('click', () => {
-  const modals = document.querySelectorAll('.modalmarket.active')
-  modals.forEach(modalmarket => {
-    closeModal(modalmarket)
-  })
-})
+  const modals = document.querySelectorAll('.modalmarket.active');
+  modals.forEach(modalmarket => { closeModal(modalmarket); });
+});
 
 closeModalButtons.forEach(button => {
   button.addEventListener('click', () => {
-    const modalmarket = button.closest('.modalmarket')
-    closeModal(modalmarket)
-  })
-})
+    const modalmarket = button.closest('.modalmarket');
+    closeModal(modalmarket);
+  });
+});
 
 function openModal(modalmarket) {
-  if (modalmarket == null) return
-  modalmarket.classList.add('active')
-  overlay.classList.add('active')
+  if (modalmarket == null) return;
+  modalmarket.classList.add('active');
+  overlay.classList.add('active');
 }
 
 function closeModal(modalmarket) {
-  if (modalmarket == null) return
-  modalmarket.classList.remove('active')
-  overlay.classList.remove('active')
+  if (modalmarket == null) return;
+  modalmarket.classList.remove('active');
+  overlay.classList.remove('active');
 }
 
+// ── Delete account ──
+function delete_account(marketplace_account_id) {
+  document.getElementById('delete-marketplace-account-id').value = marketplace_account_id;
+  if (confirm('{{ text_confirm }}')) {
+    $('#form-marketplace-account').submit();
+  } else {
+    document.getElementById('delete-marketplace-account-id').value = '';
+  }
+}
+
+// ── Test token (AJAX) ──
+function testToken(marketplace_account_id) {
+  var $cell = $('#token-status-' + marketplace_account_id);
+  $cell.html('<i class="fa fa-spinner fa-spin"></i> {{ text_testing }}...');
+
+  $.ajax({
+    url: '{{ url_test_token|raw }}&marketplace_account_id=' + marketplace_account_id,
+    dataType: 'json',
+    success: function(json) {
+      if (json.success) {
+        $cell.html('<span class="token-status-badge token-ok"><i class="fa fa-check-circle"></i> ' + json.message + '</span>');
+      } else {
+        $cell.html('<span class="token-status-badge token-bad"><i class="fa fa-times-circle"></i> ' + json.message + '</span>');
+      }
+    },
+    error: function(xhr) {
+      $cell.html('<span class="token-status-badge token-bad"><i class="fa fa-times-circle"></i> Erreur réseau</span>');
+    }
+  });
+}
+
+// ── Show token update modal ──
+function showTokenModal(marketplace_account_id, store_name) {
+  $('#modal-token-account-id').val(marketplace_account_id);
+  $('#modal-token-store').text(store_name);
+  $('#input-refresh-token').val('');
+  $('#modal-token-result').hide().html('');
+  var modal = new bootstrap.Modal(document.getElementById('modal-token'));
+  modal.show();
+}
+
+// ── Save token (AJAX) ──
+$('#btn-save-token').on('click', function() {
+  var accountId = $('#modal-token-account-id').val();
+  var token = $('#input-refresh-token').val().trim();
+  var $result = $('#modal-token-result');
+
+  if (!token) {
+    $result.show().html('<div class="alert alert-warning">{{ text_token_empty }}</div>');
+    return;
+  }
+
+  $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> ...');
+
+  $.ajax({
+    url: '{{ url_save_token|raw }}',
+    method: 'POST',
+    data: { marketplace_account_id: accountId, refresh_token: token },
+    dataType: 'json',
+    success: function(json) {
+      if (json.success) {
+        $result.show().html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + json.message + '</div>');
+        // Update the status badge in the table
+        $('#token-status-' + accountId).html('<span class="token-status-badge token-ok"><i class="fa fa-check-circle"></i> ' + json.message + '</span>');
+      } else {
+        $result.show().html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + json.message + '</div>');
+      }
+    },
+    error: function(xhr) {
+      $result.show().html('<div class="alert alert-danger">Erreur réseau</div>');
+    },
+    complete: function() {
+      $('#btn-save-token').prop('disabled', false).html('<i class="fa fa-save"></i> {{ button_save_token }}');
+    }
+  });
+});
+
+// ── Filter ──
 $('#button-filter').on('click', function() {
-  var url = 'index.php?route=shopmanager/connect';
+  var url = 'index.php?route=shopmanager/connect&user_token={{ user_token }}';
 
   var filter_marketplace_id = $('input[name=\'filter_marketplace_id\']').val();
-
   if (filter_marketplace_id) {
     url += '&filter_marketplace_id=' + encodeURIComponent(filter_marketplace_id);
   }
 
   var filter_store_name = $('input[name=\'filter_store_name\']').val();
-
   if (filter_store_name) {
     url += '&filter_store_name=' + encodeURIComponent(filter_store_name);
   }
 
   var filter_user_id = $('input[name=\'filter_user_id\']').val();
-
   if (filter_user_id) {
     url += '&filter_user_id=' + encodeURIComponent(filter_user_id);
   }
 
   location = url;
 });
-function instruction_opencart(){
-   $.ajax({
-          url: 'index.php?route=shopmanager/opencart/openInstruction',
-           method: "POST",
-        dataType: 'json',
-        crossDomain: true,
-           success:function(json) {
-       html =json['html'];
-    $('#modalmarket-body').html(html);
-        
-           },
-        error: function(xhr, ajaxOptions, thrownError) {
-            showAlertPopup(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
-        }
-      });
-        
-};
-function instruction_shopify(){
-   $.ajax({
-          url: 'index.php?route=shopmanager/shopify/openInstruction',
-           method: "POST",
-        dataType: 'json',
-        crossDomain: true,
-           success:function(json) {
-       html =json['html'];
-    $('#modalmarket-body').html(html);
-        
-           }
-      });
-        
-};
-function instruction_shipstation(){
-   $.ajax({
-          url: 'index.php?route=shopmanager/shipstation/openInstruction',
-           method: "POST",
-        dataType: 'json',
-        crossDomain: true,
-           success:function(json) {
-       html =json['html'];
-    $('#modalmarket-body').html(html);
-        
-           }
-      });
-        
-};
-function refresh_account(marketplace_account_id) {
- //showAlertPopup('test' + marketplace_account_id);
-  document.getElementById('refresh_account_id').value=marketplace_account_id;
 
-   // showAlertPopup($result + marketplace_account_id);
-    document.getElementById('refresh_account_id').value="";
+// ── Instruction popups (existing) ──
+function instruction_opencart() {
+  $.ajax({
+    url: 'index.php?route=shopmanager/opencart/openInstruction&user_token={{ user_token }}',
+    method: 'POST',
+    dataType: 'json',
+    success: function(json) {
+      $('#modalmarket-body').html(json['html']);
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+    }
+  });
+}
 
-};
-function delete_account(marketplace_account_id) {
- //showAlertPopup('test' + marketplace_account_id);
-  document.getElementById('delete_account_id').value=marketplace_account_id;
-  $result=confirm('{{ text_confirm }}') ? $('#form-marketplace-account').submit() : false;
-  if ($result == false){
-   // showAlertPopup($result + marketplace_account_id);
-    document.getElementById('delete_account_id').value="";
-  }
-};
+function instruction_shopify() {
+  $.ajax({
+    url: 'index.php?route=shopmanager/shopify/openInstruction&user_token={{ user_token }}',
+    method: 'POST',
+    dataType: 'json',
+    success: function(json) {
+      $('#modalmarket-body').html(json['html']);
+    }
+  });
+}
 
+function instruction_shipstation() {
+  $.ajax({
+    url: 'index.php?route=shopmanager/shipstation/openInstruction&user_token={{ user_token }}',
+    method: 'POST',
+    dataType: 'json',
+    success: function(json) {
+      $('#modalmarket-body').html(json['html']);
+    }
+  });
+}
 
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+tooltipTriggerList.forEach(function(el) { new bootstrap.Tooltip(el); });
 </script>

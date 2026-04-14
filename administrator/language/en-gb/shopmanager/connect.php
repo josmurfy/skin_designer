@@ -40,4 +40,28 @@ $_['button_refresh']	         		= 'Refresh';
 $_['button_save']			            	= 'Save Account';
 $_['button_filter']			          	= 'Filter Account';
 $_['button_clear']			          	= 'Clear Filter';
+$_['button_cancel']                 = 'Cancel';
+$_['button_save_token']             = 'Save Token';
+$_['button_delete']                 = 'Delete';
+
+// Token Management
+$_['text_token_status']             = 'Token Status';
+$_['text_token_present']            = 'Token OK';
+$_['text_token_truncated']          = 'Token truncated!';
+$_['text_token_absent']             = 'No token';
+$_['text_token_valid']              = 'Valid — eBay connection OK';
+$_['text_token_invalid']            = 'Invalid or expired — please renew';
+$_['text_token_missing']            = 'Refresh token absent';
+$_['text_token_too_short']          = 'Token too short — an eBay refresh token is 800+ chars. Check your copy-paste.';
+$_['text_token_saved_valid']        = 'Token saved and verified — eBay connection OK!';
+$_['text_token_saved_invalid']      = 'Token saved but INVALID — verify you copied the correct refresh token.';
+$_['text_token_empty']              = 'Please paste a refresh token.';
+$_['text_test_token']               = 'Test eBay connection';
+$_['text_update_token']             = 'Update Refresh Token';
+$_['text_testing']                  = 'Testing';
+$_['text_new_refresh_token']        = 'New Refresh Token';
+$_['text_token_placeholder']        = 'Paste your new eBay refresh token here (800+ characters)...';
+$_['text_token_hint']               = 'Get it from developer.ebay.com → Your App → User Tokens → Get a Token from eBay';
+$_['text_token_instructions_title'] = 'How to get a new refresh token:';
+$_['text_token_instructions']       = '1. Go to <a href="https://developer.ebay.com/my/keys" target="_blank">developer.ebay.com/my/keys</a><br>2. Click <strong>Get a Token from eBay via Your Application</strong> (Production)<br>3. Sign in with your eBay seller account<br>4. Copy the <strong>Refresh Token</strong> (NOT the Access Token)<br>5. Paste it below and save';
 

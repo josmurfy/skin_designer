@@ -1,50 +1,61 @@
 <?php
 namespace Opencart\Admin\Model\Shopmanager;
 
-use Google\Cloud\Vision\V1\ImageAnnotatorClient;
+use Google\Cloud\Vision\V1\Client\ImageAnnotatorClient;
 use Google\Cloud\Vision\V1\Feature;
+use Google\Cloud\Vision\V1\Feature\Type;
+use Google\Cloud\Vision\V1\Image;
+use Google\Cloud\Vision\V1\ImageSource;
+use Google\Cloud\Vision\V1\AnnotateImageRequest;
+use Google\Cloud\Vision\V1\BatchAnnotateImagesRequest;
 
 
 
 class Ocr extends \Opencart\System\Engine\Model {
 
+    private function createClient(): ImageAnnotatorClient {
+        putenv('GOOGLE_APPLICATION_CREDENTIALS=' . __DIR__ . '/ocr.json');
+
+        if (!file_exists(getenv('GOOGLE_APPLICATION_CREDENTIALS'))) {
+            throw new \Exception('Google Vision credentials file is missing: ' . getenv('GOOGLE_APPLICATION_CREDENTIALS'));
+        }
+
+        return new ImageAnnotatorClient();
+    }
+
     public function recognizeText($imagePath) {
 
-        putenv('GOOGLE_APPLICATION_CREDENTIALS=' . __DIR__ . '/ocr.json');
-        // Initialiser le client Cloud Vision
-        if (!getenv('GOOGLE_APPLICATION_CREDENTIALS')) {
-            throw new Exception('GOOGLE_APPLICATION_CREDENTIALS is not set.');
-        }
-
-        // Debug: Check if the credentials file exists
-        if (!file_exists(getenv('GOOGLE_APPLICATION_CREDENTIALS'))) {
-            throw new Exception('Credentials file does not exist: ' . getenv('GOOGLE_APPLICATION_CREDENTIALS'));
-        }
-        $imageAnnotator = new ImageAnnotatorClient([
-            'credentials' => null, // Use ADC
-        ]);
-        
+        $imageAnnotator = $this->createClient();
 
         try {
             // Charger l'image
             $imageData = file_get_contents($imagePath);
 
-            // Envoyer la requête d'analyse de texte
-            $response = $imageAnnotator->textDetection($imageData);
-            $textAnnotations = $response->getTextAnnotations();
+            $image = new Image();
+            $image->setContent($imageData);
 
-            // Extraire le texte détecté
-            if (!empty($textAnnotations)) {
-                $recognizedText = $textAnnotations[0]->getDescription();
-            } else {
-                $recognizedText = null;
+            $feature = new Feature();
+            $feature->setType(Type::TEXT_DETECTION);
+
+            $request = new AnnotateImageRequest();
+            $request->setImage($image);
+            $request->setFeatures([$feature]);
+
+            $batchRequest = new BatchAnnotateImagesRequest();
+            $batchRequest->setRequests([$request]);
+
+            $batchResponse = $imageAnnotator->batchAnnotateImages($batchRequest);
+            $responses = $batchResponse->getResponses();
+
+            if (count($responses) > 0) {
+                $textAnnotations = $responses[0]->getTextAnnotations();
+                if (!empty($textAnnotations) && count($textAnnotations) > 0) {
+                    return $textAnnotations[0]->getDescription();
+                }
             }
 
-            // Fermer le client
-            $imageAnnotator->close();
-
-            return $recognizedText;
-        } catch (Exception $e) {
+            return null;
+        } catch (\Exception $e) {
             // Gérer les erreurs
             error_log('Google OCR Error: ' . $e->getMessage());
             return null;
@@ -52,28 +63,36 @@ class Ocr extends \Opencart\System\Engine\Model {
     }
 
     public function getBestSimilarImage($imageUrl) {
-        // Définir les identifiants Google Cloud
-        putenv('GOOGLE_APPLICATION_CREDENTIALS=' . __DIR__ . '/ocr.json');
     
-        if (!file_exists(getenv('GOOGLE_APPLICATION_CREDENTIALS'))) {
-            throw new Exception('Google Vision credentials file is missing.');
-        }
-    
-        // Initialiser le client Google Vision
-        $imageAnnotator = new ImageAnnotatorClient();
+        $imageAnnotator = $this->createClient();
     
         try {
             // Construire la requête pour Web Detection
+            $imageSource = new ImageSource();
+            $imageSource->setImageUri($imageUrl);
+
             $image = new Image();
-            $image->setSource((new ImageSource())->setImageUri($imageUrl));
+            $image->setSource($imageSource);
     
             $feature = new Feature();
             $feature->setType(Type::WEB_DETECTION);
-    
-            $response = $imageAnnotator->annotateImage($image, [$feature]);
-            $webDetection = $response->getWebDetection();
-    
+
+            $request = new AnnotateImageRequest();
+            $request->setImage($image);
+            $request->setFeatures([$feature]);
+
+            $batchRequest = new BatchAnnotateImagesRequest();
+            $batchRequest->setRequests([$request]);
+
+            $batchResponse = $imageAnnotator->batchAnnotateImages($batchRequest);
+            $responses = $batchResponse->getResponses();
+
             $imageData = [];
+
+            $webDetection = null;
+            if (count($responses) > 0) {
+                $webDetection = $responses[0]->getWebDetection();
+            }
     
             if (!$webDetection || count($webDetection->getFullMatchingImages()) === 0) {
                 $headers = @get_headers($imageUrl, 1);
@@ -141,11 +160,9 @@ class Ocr extends \Opencart\System\Engine\Model {
     
             return $imageData;
     
-        } catch (Exception $e) {
-            echo 'Erreur : ' . $e->getMessage();
+        } catch (\Exception $e) {
+            error_log('Google Vision getBestSimilarImage Error: ' . $e->getMessage());
             return [];
-        } finally {
-            $imageAnnotator->close();
         }
     }
     

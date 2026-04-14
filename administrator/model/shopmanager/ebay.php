@@ -384,7 +384,10 @@ public function addCardListing(int $listing_id, $site_setting = [], $marketplace
 
       if ($bearer) {
 		//	$connectionapi['TOKEN'] = $this->getEbayAccessToken($connectionapi);
-            $defaultHeaders[] = "X-EBAY-API-IAF-TOKEN: Bearer ".$connectionapi['bearer_token'];
+            if (empty($connectionapi['bearer_token'])) {
+                $this->log->write('eBay API ERREUR: bearer_token manquant dans connectionapi — le refresh_token est probablement expiré.');
+            }
+            $defaultHeaders[] = "X-EBAY-API-IAF-TOKEN: Bearer ".($connectionapi['bearer_token'] ?? '');
       }
 //"<pre>".print_r ('1560:ebay.php',true )."</pre>");
 //"<pre>".print_r ($defaultHeaders,true )."</pre>");
@@ -2496,6 +2499,9 @@ public function getApiCredentials($marketplace_account_id = 1) {
         if (isset($newAccessTokenData['bearer_token'])) {
       
             $connectionapi['bearer_token'] = $newAccessTokenData['bearer_token'];
+        } else {
+            $this->log->write('eBay OAuth ERREUR: refreshAccessToken a échoué — le refresh_token est probablement expiré ou invalide. Ré-autorisez l\'app eBay pour obtenir un nouveau refresh_token.');
+            $connectionapi['bearer_token'] = '';
         }
     //"<pre>".print_r('863:ebay.php', true)."</pre>");
 //"<pre>".print_r($this->request->cookie, true)."</pre>");
@@ -5180,7 +5186,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 //'scope' => 'https://api.ebay.com/oauth/api_scope/buy.marketplace.insights'
 
             ];
-    
+    $this->log->write('[refreshAccessToken] Refreshing eBay access token with refresh_token=' . $refreshToken . '...');  
         try {
             // Effectuer la requête POST pour renouveler le jeton d'accès
             $response = $client->post($url, [
@@ -5190,8 +5196,8 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
     
             // Analyser la réponse
             $responseArray = json_decode($response->getBody()->getContents(), true);
-       //"<pre>".print_r ('1451:ebay.php',true )."</pre>");
-      //"<pre>".print_r ($responseArray,true )."</pre>");
+       // print ("<pre>".print_r ('1451:ebay.php',true )."</pre>");
+     // print ("<pre>".print_r ($responseArray,true )."</pre>");
             // Vérifier si le nouveau jeton d'accès est obtenu
             if (isset($responseArray['access_token'])) {
                 $responseArray['bearer_token']=$responseArray['access_token'];
@@ -5208,7 +5214,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 return null; 
             }
         } catch (\Exception $e) {
-            echo "Erreur pendant l'obtention du nouveau jeton d'accès : " . $e->getMessage();
+            $this->log->write('eBay OAuth ERREUR: refreshAccessToken a échoué — ' . $e->getMessage());
             return null;
         }
     }

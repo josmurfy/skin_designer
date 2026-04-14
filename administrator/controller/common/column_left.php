@@ -293,11 +293,18 @@ class ColumnLeft extends \Opencart\System\Engine\Controller {
 				];
 			}
 
-			if ($this->user->hasPermission('access', 'shopmanager/connect')) {
-				$shopmanager[] = [
-					'name'     => $this->language->get('text_connect'),
-					'href'     => $this->url->link('shopmanager/connect', 'user_token=' . $this->session->data['user_token'], true),
+			if ($this->user->hasPermission('access', 'shopmanager/marketplace/marketplace')) {
+				$marketplace_group = [];
+				$marketplace_group[] = [
+					'name'     => $this->language->get('text_marketplace_account'),
+					'href'     => $this->url->link('shopmanager/marketplace/marketplace', 'user_token=' . $this->session->data['user_token'], true),
 					'children' => []
+				];
+
+				$shopmanager[] = [
+					'name'     => $this->language->get('text_marketplace'),
+					'href'     => '',
+					'children' => $marketplace_group
 				];
 			}
 			

@@ -30,6 +30,7 @@ class Header extends \Opencart\System\Engine\Controller {
 
         $tok         = $this->session->data['user_token'];
         $asset_base  = HTTP_CATALOG . 'extension/debug_logger/admin/view/';
+        $cache_bust  = '?v=' . filemtime(DIR_EXTENSION . 'debug_logger/admin/view/javascript/debug_logger.js');
         $save_url    = $this->url->link('extension/debug_logger/module/debug_logger.debugSave', 'user_token=' . $tok, true);
 
         // View Reports only for group_id = 1 (Administrator)
@@ -43,6 +44,17 @@ class Header extends \Opencart\System\Engine\Controller {
         $is_pro = $this->model_extension_debug_logger_module_debug_logger_license->isPro();
         $capture_screenshot = $is_pro && (bool)$this->config->get('module_debug_logger_capture_screenshot');
 
+        // Current route & derived server files
+        $current_route = $this->request->get['route'] ?? '';
+        $server_files = [];
+        if ($current_route) {
+            $server_files[] = 'controller/' . $current_route . '.php';
+            $server_files[] = 'model/' . $current_route . '.php';
+            $lang_code = $this->config->get('config_language_admin') ?: 'en-gb';
+            $server_files[] = 'language/' . $lang_code . '/' . $current_route . '.php';
+            $server_files[] = 'view/template/' . $current_route . '.twig';
+        }
+
         // Appearance settings (Pro defaults)
         $btn_color    = ($is_pro ? $this->config->get('module_debug_logger_btn_color') : null) ?: '#dc2626';
         $header_color = ($is_pro ? $this->config->get('module_debug_logger_header_color') : null) ?: '#1e293b';
@@ -53,6 +65,8 @@ class Header extends \Opencart\System\Engine\Controller {
         $config_json = json_encode([
             'saveUrl'           => $save_url,
             'reportsUrl'        => $reports_url,
+            'currentRoute'      => $current_route,
+            'serverFiles'       => $server_files,
             'captureConsole'    => (bool)($this->config->get('module_debug_logger_capture_console') ?? 1),
             'captureNetwork'    => (bool)$this->config->get('module_debug_logger_capture_network'),
             'captureScreenshot' => $capture_screenshot,
@@ -78,6 +92,21 @@ class Header extends \Opencart\System\Engine\Controller {
                 'tipComment'   => $this->language->get('popup_tip_comment'),
                 'tipConsole'   => $this->language->get('popup_tip_console'),
                 'tipReports'   => $this->language->get('popup_tip_reports'),
+                'toastSaved'   => $this->language->get('popup_toast_saved'),
+                'toastError'   => $this->language->get('popup_toast_error'),
+                'ssEdit'       => $this->language->get('popup_ss_edit'),
+                'ssDone'       => $this->language->get('popup_ss_done'),
+                'ssCancel'     => $this->language->get('popup_ss_cancel'),
+                'ssDraw'       => $this->language->get('popup_ss_draw'),
+                'ssArrow'      => $this->language->get('popup_ss_arrow'),
+                'ssRect'       => $this->language->get('popup_ss_rect'),
+                'ssText'       => $this->language->get('popup_ss_text'),
+                'ssUndo'       => $this->language->get('popup_ss_undo'),
+                'ssReset'      => $this->language->get('popup_ss_reset'),
+                'ssThin'       => $this->language->get('popup_ss_thin'),
+                'ssNormal'     => $this->language->get('popup_ss_normal'),
+                'ssThick'      => $this->language->get('popup_ss_thick'),
+                'ssPrompt'     => $this->language->get('popup_ss_prompt'),
             ],
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
@@ -170,8 +199,8 @@ class Header extends \Opencart\System\Engine\Controller {
             . '<style>#dl-modal-head{background:' . htmlspecialchars($header_color, ENT_QUOTES) . '}'
             . ' .btn-dl-save{background:' . htmlspecialchars($accent_color, ENT_QUOTES) . '}'
             . ' .btn-dl-save:hover{filter:brightness(1.15)}</style>'
-            . ($capture_screenshot ? '<script src="' . $a . 'javascript/html2canvas.min.js"></script>' : '')
-            . '<link rel="stylesheet" href="' . $a . 'stylesheet/debug_logger.css">'
+            . ($capture_screenshot ? '<script src="' . $a . 'javascript/html2canvas.min.js' . $cache_bust . '"></script>' : '')
+            . '<link rel="stylesheet" href="' . $a . 'stylesheet/debug_logger.css' . $cache_bust . '">'
             . $floating_btn
             . '<div id="dl-overlay"></div>'
             . '<div id="dl-modal">'
@@ -182,7 +211,13 @@ class Header extends \Opencart\System\Engine\Controller {
             .   '</div>'
             .   '<div id="dl-modal-body">'
             .     '<div class="dl-field"><label>' . $t_page . '</label>'
-            .       '<div class="dl-url-val" id="dl-url-display"></div></div>'
+            .       '<div class="dl-url-val" id="dl-url-display"></div>'
+            .       '<div class="dl-url-val" id="dl-route-display" style="font-size:.8em;color:#64748b;font-family:monospace"></div></div>'
+            .     '<div class="dl-field">'
+            .       '<label>' . htmlspecialchars($this->language->get('popup_label_files'), ENT_QUOTES | ENT_HTML5) . ''
+            .         ' <span id="dl-files-count" style="color:#64748b;font-size:.8em">(0)</span></label>'
+            .       '<div class="dl-console" id="dl-files-display" style="max-height:120px"></div>'
+            .     '</div>'
             .     '<div class="dl-field">'
             .       '<label>' . $t_sev . '</label>'
             .       sprintf($hint, $t_tip_sev)
@@ -213,7 +248,7 @@ class Header extends \Opencart\System\Engine\Controller {
             . '</div>'
             . '<div id="dl-toast"></div>'
             . '<script>window.DL_CONFIG=' . $config_json . ';</script>'
-            . '<script src="' . $a . 'javascript/debug_logger.js"></script>';
+            . '<script src="' . $a . 'javascript/debug_logger.js' . $cache_bust . '"></script>';
 
         $output = str_replace('</header>', '</header>' . $inject, $output);
     }

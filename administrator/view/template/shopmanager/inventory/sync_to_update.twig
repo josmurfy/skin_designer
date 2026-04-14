@@ -2,15 +2,20 @@
 
 {% if to_update|length > 0 %}
 
-  {# Toolbar — always in DOM, shown via JS when rows are checked #}
-  <div id="tu-toolbar" style="display:none;" class="mb-2 p-2 bg-light border rounded">
-    <span id="tu-count" class="me-3 text-muted small fw-bold"></span>
-    <button type="button" id="tu-btn-update" class="btn btn-sm btn-primary me-2">
-      <i class="fa-solid fa-rotate"></i> Update Selected on eBay
+  {# Top action bar — always visible when items exist #}
+  <div class="mb-2 p-2 bg-light border rounded d-flex align-items-center gap-2">
+    <button type="button" id="tu-btn-update-all" class="btn btn-sm btn-danger">
+      <i class="fa-solid fa-bolt"></i> {{ button_update_all_ebay }} <span class="badge bg-light text-danger">{{ to_update_total }}</span>
     </button>
-    <button type="button" id="tu-btn-deselect" class="btn btn-sm btn-outline-secondary">
-      <i class="fa-solid fa-times"></i> Deselect All
-    </button>
+    <span id="tu-toolbar" style="display:none;" class="d-flex align-items-center gap-2">
+      <span id="tu-count" class="text-muted small fw-bold"></span>
+      <button type="button" id="tu-btn-update" class="btn btn-sm btn-primary">
+        <i class="fa-solid fa-rotate"></i> Update Selected on eBay
+      </button>
+      <button type="button" id="tu-btn-deselect" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-times"></i> Deselect All
+      </button>
+    </span>
   </div>
 
   <div class="table-responsive">

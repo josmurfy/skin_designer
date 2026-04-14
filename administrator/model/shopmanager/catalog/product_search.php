@@ -173,7 +173,11 @@ class ProductSearch extends \Opencart\System\Engine\Model {
 
        $data['shipping_cost']=$shippingRates['shipping_cost'];
        $data['shipping_carrier']=$shippingRates['shipping_carrier'];
-       $data['price'] =  $data['price_with_shipping']-$data['shipping_cost']??3.79;
+       // ANCIEN: déduisait le shipping du prix eBay (double déduction car le prix eBay inclut déjà le shipping)
+       // $data['price'] =  $data['price_with_shipping']-$data['shipping_cost']??3.79;
+       // NOUVEAU: prix = prix eBay le plus bas (inclut déjà le shipping), converti en CAD
+       $ebay_currency = $product_search_data['ebay_pricevariant'][$data['condition_id']]['currency'] ?? 'USD';
+       $data['price'] = $this->currency->convert($data['price_with_shipping'], $ebay_currency, $this->config->get('config_currency'));
 // 🔹 Vérification et ajout du `made_in_country_id`
             // 🔹 Prioriser "Country/Region of Manufacture" si elle est disponible
             if (isset($specifics['Country/Region of Manufacture']['Value']) && !empty($specifics['Country/Region of Manufacture']['Value'])) {
@@ -460,7 +464,10 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                     //get_shipping();
                     $product_search['shipping_cost']=$shippingRates['shipping_cost']??3.79;
                     $product_search['shipping_carrier']=$shippingRates['shipping_carrier'];
-                    $product_search['price'] = $product_search['price_with_shipping']-$product_search['shipping_cost'];
+                    // ANCIEN: déduisait le shipping du prix eBay (double déduction)
+                    // $product_search['price'] = $product_search['price_with_shipping']-$product_search['shipping_cost'];
+                    // NOUVEAU: prix = prix eBay le plus bas, converti en CAD
+                    $product_search['price'] = $this->currency->convert($product_search['price_with_shipping'], 'USD', $this->config->get('config_currency'));
                     if($product_search['price']<.99){
                     
                      
@@ -3004,8 +3011,13 @@ private function processCategorySpecifics($source_value, $category_specific_info
         //print("<pre>".print_r ($data['images'],true )."</pre>");
         if (empty($product_info['image']) && isset($data['images']) && is_array($data['images']) && !empty($data['images'])) {
             $first_image_url = reset($data['images']);
-            $data['similar_images'] = $this->model_shopmanager_ocr->getBestSimilarImage($first_image_url);
+            $data['similar_images'] = [];
             $data['image_temp'] = null; // Initialisation
+            try {
+                $data['similar_images'] = $this->model_shopmanager_ocr->getBestSimilarImage($first_image_url);
+            } catch (\Throwable $e) {
+                $this->log->write('OCR getBestSimilarImage error: ' . $e->getMessage());
+            }
          //print("<pre>".print_r ($data['similar_images'],true )."</pre>");
             if (!empty($data['similar_images']) && is_array($data['similar_images'])) {
                 foreach ($data['similar_images'] as $similar_images) {

@@ -601,6 +601,15 @@ public function extractImageUrls($htmlContent) {
 	  //print("<pre>" . print_r($imageUrls, true) . "</pre>");
       return $imageUrls;
 	}else{
+		// Si c'est une URL (pas du HTML), récupérer le contenu de la page via cURL
+		$trimmed = trim($htmlContent);
+		if (preg_match('/^https?:\/\/[^\s<>"]+$/i', $trimmed) && !preg_match('/<[a-z][\s\S]*>/i', $trimmed)) {
+			$fetchedHtml = $this->fetchUrlContent($trimmed);
+			if ($fetchedHtml) {
+				$htmlContent = $fetchedHtml;
+			}
+		}
+
 		$htmlContent = html_entity_decode($htmlContent);
 		// Première tentative : Utiliser une expression régulière pour chercher les URLs avec ProductImage
 		preg_match_all('/https:\/\/[^\s"]*ProductImage\/[^\s"]+\.(jpg|jpeg|png|gif)/', $htmlContent, $matches);
@@ -647,6 +656,32 @@ public function extractImageUrls($htmlContent) {
 	//$imageUrls = $this->removeArrayDuplicates($imageUrls);
     return $imageUrls;
 }
+
+/**
+ * Récupère le contenu HTML d'une URL via cURL
+ * Utilisé quand l'utilisateur colle un lien au lieu du code source
+ */
+private function fetchUrlContent(string $url): string|false {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    curl_setopt($ch, CURLOPT_ENCODING, ''); // Accept all encodings
+    curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+
+    $content = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($content && $httpCode >= 200 && $httpCode < 400) {
+        return $content;
+    }
+
+    return false;
+}
+
 private function get_images_toys_r_ca($htmlContent) {
     // Initialiser un tableau pour stocker les URLs d'images
     $imageUrls = [];

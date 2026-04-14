@@ -7,7 +7,9 @@ class DebugLogger extends \Opencart\System\Engine\Model {
         $this->db->query("
             INSERT INTO `" . DB_PREFIX . "debug_report` SET
                 `url`         = '" . $this->db->escape(substr((string)($data['url'] ?? ''), 0, 2048)) . "',
+                `route`       = '" . $this->db->escape(substr((string)($data['route'] ?? ''), 0, 255)) . "',
                 `console_log` = '" . $this->db->escape(substr((string)($data['console_log'] ?? ''), 0, 65535)) . "',
+                `loaded_files`= '" . $this->db->escape(substr((string)($data['loaded_files'] ?? ''), 0, 65535)) . "',
                 `comment`     = '" . $this->db->escape(substr((string)($data['comment'] ?? ''), 0, 4096)) . "',
                 `admin_user`  = '',
                 `severity`    = '" . $this->db->escape($data['severity'] ?? 'bug') . "',

@@ -23,7 +23,11 @@ class Marketplace extends \Opencart\System\Engine\Model {
 			$customer_id=	(int)$this->customer->getId();
 		}
 
-		$sql = "SELECT *,m.image as marketplace_image,m.name as marketplace_name  FROM `" . DB_PREFIX . "marketplace_accounts` ca LEFT JOIN `oc_marketplace` m ON (m.marketplace_id=ca.marketplace_id) WHERE ca.status=1 AND ca.customer_id = '" . $customer_id . "'";
+		$sql = "SELECT *,m.image as marketplace_image,m.name as marketplace_name  FROM `" . DB_PREFIX . "marketplace_accounts` ca LEFT JOIN `oc_marketplace` m ON (m.marketplace_id=ca.marketplace_id) WHERE ca.customer_id = '" . $customer_id . "'";
+
+		if (isset($data['filter_status']) && $data['filter_status'] !== '') {
+			$sql .= " AND ca.status = '" . (int)$data['filter_status'] . "'";
+		}
 
 		if (!empty($data['filter_marketplace_account_id'])) {
 			$sql .= " AND ca.marketplace_account_id  = " . (int)$data['filter_marketplace_account_id'] . "";
@@ -108,7 +112,17 @@ class Marketplace extends \Opencart\System\Engine\Model {
 	 * @return [type]       [total number of marketplace account records]
 	 */
 	public function getTotalMarketplaceAccount($data = array()) { 
-		$sql = "SELECT COUNT(DISTINCT marketplace_account_id ) AS total FROM " . DB_PREFIX . "marketplace_accounts WHERE `customer_id` = " . (int)$this->customer->getId() . "";
+		if (!empty($data['customer_id'])) {
+			$customer_id = (int)$data['customer_id'];
+		} else {
+			$customer_id = (int)$this->customer->getId();
+		}
+
+		$sql = "SELECT COUNT(DISTINCT marketplace_account_id ) AS total FROM " . DB_PREFIX . "marketplace_accounts WHERE `customer_id` = " . $customer_id . "";
+
+		if (isset($data['filter_status']) && $data['filter_status'] !== '') {
+			$sql .= " AND `status` = '" . (int)$data['filter_status'] . "'";
+		}
 
 		if (!empty($data['filter_marketplace_account_id'])) {
 			$sql .= " AND `marketplace_account_id ` = " . (int)$data['filter_marketplace_account_id'] . "";
@@ -210,6 +224,19 @@ class Marketplace extends \Opencart\System\Engine\Model {
 			$this->db->query("DELETE FROM ".DB_PREFIX."marketplace_accounts WHERE marketplace_account_id  = '".(int)$marketplace_account_id."' "); 
 		}
 	}
+
+	/**
+	 * Update the refresh_token for a marketplace account.
+	 * @param int    $marketplace_account_id
+	 * @param string $refresh_token
+	 */
+	public function updateRefreshToken(int $marketplace_account_id, string $refresh_token): void {
+		$this->db->query("UPDATE `" . DB_PREFIX . "marketplace_accounts` SET 
+			`refresh_token` = '" . $this->db->escape($refresh_token) . "',
+			`date_modified` = NOW()
+			WHERE `marketplace_account_id` = '" . (int)$marketplace_account_id . "'");
+	}
+
 	public function getProducts($data = array()) {
 		// Vérifier si customer_id est défini (obligatoire)
 		if (empty($data['customer_id'])) {

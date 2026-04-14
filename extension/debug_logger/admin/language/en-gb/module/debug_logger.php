@@ -90,6 +90,8 @@ $_['text_disabled']          = 'Disabled';
 $_['entry_capture_screenshot'] = 'Capture Screenshot';
 $_['help_capture_screenshot']  = 'Automatically takes a screenshot of the page when reporting (uses html2canvas).';
 $_['popup_label_screenshot']   = 'Screenshot';
+$_['popup_label_files']        = 'Loaded Files';
+$_['popup_tip_files']          = 'PHP, Twig, JS, and CSS files loaded on this page.';
 
 $_['text_email']             = 'Email Notifications';
 $_['entry_email_enable']     = 'Enable Email';
@@ -228,3 +230,22 @@ $_['text_menu_title']        = 'Debug Logger';
 $_['text_menu_dashboard']    = 'Dashboard';
 $_['text_menu_reports']      = 'Log Reports';
 $_['text_menu_settings']     = 'Settings';
+
+// v3.3.2 — toast messages
+$_['popup_toast_saved']      = 'Report #%s saved';
+$_['popup_toast_error']      = 'Error';
+
+// v3.3.2 — screenshot editor
+$_['popup_ss_edit']          = 'Edit Screenshot';
+$_['popup_ss_done']          = 'Done';
+$_['popup_ss_cancel']        = 'Cancel';
+$_['popup_ss_draw']          = 'Draw';
+$_['popup_ss_arrow']         = 'Arrow';
+$_['popup_ss_rect']          = 'Rect';
+$_['popup_ss_text']          = 'Text';
+$_['popup_ss_undo']          = 'Undo';
+$_['popup_ss_reset']         = 'Reset';
+$_['popup_ss_thin']          = 'Thin';
+$_['popup_ss_normal']        = 'Normal';
+$_['popup_ss_thick']         = 'Thick';
+$_['popup_ss_prompt']        = 'Text:';

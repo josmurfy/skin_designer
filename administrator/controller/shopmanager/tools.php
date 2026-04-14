@@ -21,11 +21,13 @@ class Tools extends \Opencart\System\Engine\Controller {
             $imageUrls['secondary']=[];
            
             if(isset( $this->request->post['sourcecode']) && !empty( $this->request->post['sourcecode'])){
-                $this->model_shopmanager_tools->deleteProductImages($product_id, 'all');
                 $imageUrlsReceived = $this->model_shopmanager_tools->extractImageUrls($this->request->post['sourcecode']);
                 //print("<pre>" . print_r($imageUrlsReceived, true) . "</pre>");
                 if (isset($imageUrlsReceived) && is_array($imageUrlsReceived) && count($imageUrlsReceived) > 0) {
     
+                    // Supprimer les images existantes SEULEMENT si on a des nouvelles images
+                    $this->model_shopmanager_tools->deleteProductImages($product_id, 'all');
+
                 //print("<pre>" . print_r($imageUrls, true) . "</pre>");
                     $image_temp=$imageUrlsReceived[0];
          //print("<pre>" . print_r($image_temp, true) . "</pre>");
@@ -58,11 +60,13 @@ class Tools extends \Opencart\System\Engine\Controller {
                   
                 //	$this->model_shopmanager_tools->clearProductIDImages($product_id);
                 //	$this->model_shopmanager_tools->transferTempImages($product_id,$product_search);
-                }
 
-                // Marquer le produit pour mise à jour sur eBay (sourcecode upload)
-                $this->load->model('shopmanager/marketplace');
-                $this->model_shopmanager_marketplace->setToUpdate((int)$product_id);
+                    // Marquer le produit pour mise à jour sur eBay (sourcecode upload)
+                    $this->load->model('shopmanager/marketplace');
+                    $this->model_shopmanager_marketplace->setToUpdate((int)$product_id);
+                } else {
+                    $json['error'] = 'Aucune image trouvée dans le lien ou code source fourni.';
+                }
     
             }else{
     

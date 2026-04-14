@@ -3,7 +3,7 @@ namespace Opencart\Admin\Controller\Extension\DebugLogger\Module;
 
 class DebugLogger extends \Opencart\System\Engine\Controller {
 
-    private const VERSION = '3.2.1';
+    private const VERSION = '3.3.3';
     private array $error = [];
 
     public function index(): void {
@@ -429,6 +429,9 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
         $this->load->model('extension/debug_logger/module/debug_logger');
         $this->load->model('extension/debug_logger/module/debug_logger_license');
 
+        // Ensure schema is up-to-date (route column may not exist yet)
+        $this->model_extension_debug_logger_module_debug_logger->upgrade();
+
         $severity = strtolower((string)($this->request->post['severity'] ?? 'bug'));
         if (!in_array($severity, ['bug', 'warning', 'info'])) {
             $severity = 'bug';
@@ -450,11 +453,13 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
         }
 
         $report_data = [
-            'url' => substr((string)($this->request->post['url'] ?? ''), 0, 2048),
-            'console_log' => substr((string)($this->request->post['console_log'] ?? ''), 0, 65535),
-            'network_log' => substr((string)($this->request->post['network_log'] ?? ''), 0, 65535),
+            'url' => html_entity_decode(substr((string)($this->request->post['url'] ?? ''), 0, 2048), ENT_QUOTES, 'UTF-8'),
+            'route' => substr((string)($this->request->post['route'] ?? ''), 0, 255),
+            'console_log' => html_entity_decode(substr((string)($this->request->post['console_log'] ?? ''), 0, 65535), ENT_QUOTES, 'UTF-8'),
+            'network_log' => html_entity_decode(substr((string)($this->request->post['network_log'] ?? ''), 0, 65535), ENT_QUOTES, 'UTF-8'),
             'screenshot' => $screenshot,
             'comment' => substr((string)($this->request->post['comment'] ?? ''), 0, 4096),
+            'loaded_files' => html_entity_decode(substr((string)($this->request->post['loaded_files'] ?? ''), 0, 65535), ENT_QUOTES, 'UTF-8'),
             'severity' => $severity,
             'admin_user' => $this->user->isLogged() ? (string)$this->user->getUserName() : '',
             'source' => 'admin',
@@ -669,8 +674,9 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
         foreach ($results as $row) {
             $rid = (int)$row['id'];
             $clean_url = html_entity_decode((string)($row['url'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $route = '';
-            if (preg_match('/[?&]route=([^&]+)/', $clean_url, $rm)) {
+            // Route: use dedicated column, fallback to extraction from URL for legacy reports
+            $route = trim((string)($row['route'] ?? ''));
+            if (!$route && preg_match('/[?&]route=([^&]+)/', $clean_url, $rm)) {
                 $route = $rm[1];
             }
             $twig_reports[] = [
@@ -689,6 +695,7 @@ class DebugLogger extends \Opencart\System\Engine\Controller {
                 'resolution'  => (string)($row['resolution'] ?? ''),
                 'console_log' => trim((string)($row['console_log'] ?? '')),
                 'network_log' => trim((string)($row['network_log'] ?? '')),
+                'loaded_files'=> json_decode((string)($row['loaded_files'] ?? ''), true) ?: [],
                 'screenshot'  => $row['screenshot'] ?? '',
                 'tags'        => $tags_map[$rid] ?? [],
             ];

@@ -1043,6 +1043,32 @@
         tuRefreshToolbar();
     });
 
+    // UPDATE ALL — load all items on 1 page, select all, auto-start sync
+    $(document).on('click', '#tu-btn-update-all', function() {
+        var $btn = $(this);
+        var total = parseInt($btn.find('.badge').text(), 10) || 0;
+        if (!total) return;
+        if (!confirm('Update ALL ' + total + ' product(s) on eBay? This may take a while.')) return;
+
+        $btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Loading all items...');
+
+        var url = $('#url_to_update_tab').val();
+        $.get(url + '&all=1', function(html) {
+            $('#to-update-tab-pane').html(html);
+            // Auto check all checkboxes
+            setTimeout(function() {
+                $('#tu-check-all').prop('checked', true).trigger('change');
+                // Auto click update button
+                setTimeout(function() {
+                    $('#tu-btn-update').trigger('click');
+                }, 300);
+            }, 200);
+        }).fail(function() {
+            $btn.prop('disabled', false).html('<i class="fa-solid fa-bolt"></i> Update ALL on eBay <span class="badge bg-light text-danger">' + total + '</span>');
+            alert('Failed to load all items.');
+        });
+    });
+
     // Update selected — one product per request to avoid 502 timeout
     $(document).on('click', '#tu-btn-update', function() {
         var ids = $('.tu-cb:checked').map(function() { return this.value; }).get();

@@ -8,8 +8,10 @@ class DebugLogger extends \Opencart\System\Engine\Model {
             CREATE TABLE IF NOT EXISTS `" . DB_PREFIX . "debug_report` (
                 `id`          INT(11)       NOT NULL AUTO_INCREMENT,
                 `url`         TEXT          NOT NULL,
+                `route`       VARCHAR(255)  DEFAULT '',
                 `console_log` MEDIUMTEXT    DEFAULT NULL,
                 `network_log` MEDIUMTEXT    DEFAULT NULL,
+                `loaded_files` MEDIUMTEXT   DEFAULT NULL,
                 `screenshot`  MEDIUMTEXT    DEFAULT NULL,
                 `comment`     TEXT          DEFAULT NULL,
                 `resolution`  TEXT          DEFAULT NULL,
@@ -50,6 +52,18 @@ class DebugLogger extends \Opencart\System\Engine\Model {
         $q = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE 'resolution'");
         if (!$q->num_rows) {
             $this->db->query("ALTER TABLE `" . $table . "` ADD COLUMN `resolution` TEXT DEFAULT NULL AFTER `comment`");
+        }
+
+        // v3.3.0: loaded_files
+        $q = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE 'loaded_files'");
+        if (!$q->num_rows) {
+            $this->db->query("ALTER TABLE `" . $table . "` ADD COLUMN `loaded_files` MEDIUMTEXT DEFAULT NULL AFTER `network_log`");
+        }
+
+        // v3.3.1: route column
+        $q = $this->db->query("SHOW COLUMNS FROM `" . $table . "` LIKE 'route'");
+        if (!$q->num_rows) {
+            $this->db->query("ALTER TABLE `" . $table . "` ADD COLUMN `route` VARCHAR(255) DEFAULT '' AFTER `url`");
         }
 
         // v3.0.0: tags table
@@ -99,8 +113,10 @@ class DebugLogger extends \Opencart\System\Engine\Model {
         $this->db->query("
             INSERT INTO `" . DB_PREFIX . "debug_report` SET
                 `url`         = '" . $this->db->escape(substr((string)($data['url'] ?? ''), 0, 2048)) . "',
+                `route`       = '" . $this->db->escape(substr((string)($data['route'] ?? ''), 0, 255)) . "',
                 `console_log` = '" . $this->db->escape(substr((string)($data['console_log'] ?? ''), 0, 65535)) . "',
                 `network_log` = '" . $this->db->escape(substr((string)($data['network_log'] ?? ''), 0, 65535)) . "',
+                `loaded_files`= '" . $this->db->escape(substr((string)($data['loaded_files'] ?? ''), 0, 65535)) . "',
                 `screenshot`  = '" . $this->db->escape((string)($data['screenshot'] ?? '')) . "',
                 `comment`     = '" . $this->db->escape(substr((string)($data['comment'] ?? ''), 0, 4096)) . "',
                 `admin_user`  = '" . $this->db->escape(substr((string)($data['admin_user'] ?? ''), 0, 255)) . "',

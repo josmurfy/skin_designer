@@ -1429,19 +1429,19 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 			$url = '';
 	
 			// Vérifier si le produit existe déjà avec l'UPC et la condition donnée
-			$data = $this->model_shopmanager_fast_add->checkProductExists($this->request->post['upc'], $this->request->post['condition_id']);
-			if (isset($data) && $data) {
+			$existing_product = $this->model_shopmanager_fast_add->checkProductExists($this->request->post['upc'], $this->request->post['condition_id']);
+			if (isset($existing_product) && $existing_product) {
 				// Incrémenter la quantité si le produit existe déjà
-				$this->model_shopmanager_fast_add->incrementQuantity($data['product_id'], $this->request->post['unallocated_quantity']);
+				$this->model_shopmanager_fast_add->incrementQuantity($existing_product['product_id'], $this->request->post['unallocated_quantity']);
 				
-				if ($data['total_quantity'] < 1) {
-					$this->model_shopmanager_catalog_product->editProductSku($data['product_id']);
-					$sku = $data['product_id'];
+				if ($existing_product['total_quantity'] < 1) {
+					$this->model_shopmanager_catalog_product->editProductSku($existing_product['product_id']);
+					$sku = $existing_product['product_id'];
 				} else {
-					$sku = $data['sku'];
+					$sku = $existing_product['sku'];
 				}
 	
-				$product_id = $data['product_id'];
+				$product_id = $existing_product['product_id'];
 				$this->session->data['warning'] = ($lang['text_success_add_quantity'] ?? '');
 			} else {
 				// Générer un SKU aléatoire si non fourni
@@ -1502,23 +1502,23 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
     // Méthode de validation du formulaire
     protected function validateForm() {
         if (!$this->user->hasPermission('modify', 'shopmanager/fast_add')) {
-            $this->error['warning'] = ($lang['error_permission'] ?? '');
+            $this->error['warning'] = $this->language->get('error_permission');
         }
 
         if ((oc_strlen($this->request->post['upc']) < 1) || (oc_strlen($this->request->post['upc']) > 14)) {
-            $this->error['upc'] = ($lang['error_upc'] ?? '');
+            $this->error['upc'] = $this->language->get('error_upc');
         }
 
         if ((($this->request->post['unallocated_quantity']) < 1) || (($this->request->post['unallocated_quantity']) == '')) {
-            $this->error['unallocated_quantity'] = ($lang['error_unallocated_quantity'] ?? '');
+            $this->error['unallocated_quantity'] = $this->language->get('error_unallocated_quantity');
         }
 
 		if (!isset($this->request->post['product_category'][0])) {
-            $this->error['product_category'] = ($lang['error_product_category'] ?? '');
+            $this->error['product_category'] = $this->language->get('error_product_category');
         }
 
 		if (!isset($this->request->post['condition_id'])) {
-            $this->error['condition_id'] = ($lang['error_condition_id'] ?? '');
+            $this->error['condition_id'] = $this->language->get('error_condition_id');
         }
 
         return !$this->error;

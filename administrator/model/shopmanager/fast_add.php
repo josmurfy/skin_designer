@@ -34,13 +34,16 @@ class FastAdd extends \Opencart\System\Engine\Model {
         }
 
         public function incrementQuantity($product_id, $unallocated_quantity = 0, $quantity = 0) {
-            $this->db->query("UPDATE " . DB_PREFIX . "product SET quantity = quantity+" . (int)$quantity . ", unallocated_quantity = unallocated_quantity+" . (int)$unallocated_quantity . " 
+            $this->db->query("UPDATE " . DB_PREFIX . "product SET quantity = quantity+" . (int)$quantity . ", unallocated_quantity = unallocated_quantity+" . (int)$unallocated_quantity . ", status = 1 
             WHERE product_id = '" . (int)$product_id . "'");
         }
         public function populateDefaultValues($data) {
             // Définir les valeurs par défaut pour chaque champ attendu
             $default_values = array(
                 
+                'master_id' => 0,
+                'variant' => '',
+                'override' => '',
                 'to_feed' => 1,
                 'marketplace_item_id' => 0,
                 'model' => 'n/a',

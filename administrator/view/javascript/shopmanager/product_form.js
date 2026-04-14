@@ -2961,6 +2961,47 @@ function cleanHTML(rawHTML) {
     return cleanedDoc.documentElement.outerHTML;
 }
 
+/**
+ * Extrait seulement les fragments contenant des URLs d'images du HTML source.
+ * Réduit un source code de 2MB+ à quelques KB pour éviter le 413 Apache.
+ * Couvre: Amazon (hiRes), Walmart.com (zoomable), Walmart.ca (Enlarge),
+ *         eBay (ProductImage), Toys R Us (product__media), et <img> tags génériques.
+ */
+function extractRelevantContent(rawHTML) {
+    var extracted = [];
+
+    // Amazon: "hiRes":"https://...jpg"
+    var hiRes = rawHTML.match(/"hiRes"\s*:\s*"https?:\/\/[^"]+\.(jpg|jpeg|png|gif)"/gi);
+    if (hiRes) extracted = extracted.concat(hiRes);
+
+    // Walmart.com: "url":"https://...","zoomable":true
+    var walmartCom = rawHTML.match(/"url"\s*:\s*"https?:\/\/[^"]*\.(jpg|jpeg|png|gif|webp|svg)"\s*,\s*"zoomable"\s*:\s*true/gi);
+    if (walmartCom) extracted = extracted.concat(walmartCom);
+
+    // Walmart.ca: srcset avec Enlarge
+    var walmartCa = rawHTML.match(/<img[^>]+srcset="[^"]*Enlarge[^"]*"/gi);
+    if (walmartCa) extracted = extracted.concat(walmartCa);
+
+    // eBay: ProductImage URLs
+    var ebay = rawHTML.match(/https:\/\/[^\s"]*ProductImage\/[^\s"]+\.(jpg|jpeg|png|gif)/gi);
+    if (ebay) extracted = extracted.concat(ebay);
+
+    // Toys R Us: product__media divs avec images
+    var toysrus = rawHTML.match(/<div class="product__media[^"]*">[\s\S]*?<\/div>/gi);
+    if (toysrus) extracted = extracted.concat(toysrus);
+
+    // JSON-LD image arrays (courant sur plusieurs sites)
+    var jsonLd = rawHTML.match(/"image"\s*:\s*\[[^\]]*\]/gi);
+    if (jsonLd) extracted = extracted.concat(jsonLd);
+
+    if (extracted.length > 0) {
+        return extracted.join('\n');
+    }
+
+    // Fallback: si aucun pattern reconnu, utiliser cleanHTML (risque de 413)
+    return cleanHTML(rawHTML);
+}
+
 function uploadImages() {
     // Récupérer les valeurs de `product_id` et `user_token`
     var product_id = document.querySelector('input[name="product_id"]').value;
@@ -2971,7 +3012,14 @@ function uploadImages() {
     var formData = new FormData();
     var primaryImageFile = $('#input-image-principal')[0] ? $('#input-image-principal')[0].files[0] : null;
     var secondaryImageFiles = $('#input-images-secondary')[0] ? $('#input-images-secondary')[0].files : [];
-    sourcecode = cleanHTML(sourcecode);
+    
+    // Si c'est une URL ou un ID eBay numérique, envoyer tel quel (le serveur va fetcher le contenu)
+    // Sinon extraire les parties pertinentes du HTML pour éviter le 413 (source code trop gros)
+    var trimmedSource = sourcecode.trim();
+    if (trimmedSource && !trimmedSource.match(/^https?:\/\/\S+$/) && !trimmedSource.match(/^\d+$/)) {
+        sourcecode = extractRelevantContent(sourcecode);
+    }
+    
     // Ajouter `product_id` et `sourcecode` aux données du formulaire
     formData.append('product_id', product_id);
     formData.append('sourcecode', sourcecode);
@@ -3000,7 +3048,7 @@ function uploadImages() {
         processData: false,
         dataType: 'json',
         success: function(response) {
-            if (response.success) {
+            if (response.success && response.product_images) {
                 updateImagesUI(response.product_images);
                 $('#input-image-principal').val('');  // Efface l'image principale
                 $('#input-image-secondary').val('');   // Efface les images secondaires

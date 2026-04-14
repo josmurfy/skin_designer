@@ -22,7 +22,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data += $lang;
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
-        $this->document->addScript('view/javascript/shopmanager/inventory/sync.js');
+        $this->document->addScript('view/javascript/shopmanager/inventory/sync.js?v=' . filemtime(DIR_APPLICATION . 'view/javascript/shopmanager/inventory/sync.js'));
 
         // Breadcrumbs
         $data['breadcrumbs'] = [];
@@ -2682,16 +2682,25 @@ class Sync extends \Opencart\System\Engine\Controller {
         $lang = $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
+        $all   = isset($this->request->get['all']) && $this->request->get['all'] == '1';
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
-        $limit = 50;
-        $start = ($page - 1) * $limit;
         $sort  = $this->request->get['sort']  ?? 'product_id';
         $order = $this->request->get['order'] ?? 'ASC';
+
+        $total = $this->model_shopmanager_inventory_sync->getTotalToUpdate();
+
+        if ($all) {
+            $limit = $total;
+            $start = 0;
+            $page  = 1;
+        } else {
+            $limit = 50;
+            $start = ($page - 1) * $limit;
+        }
 
         $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => $sort, 'order' => $order];
 
         $rows  = $this->model_shopmanager_inventory_sync->getToUpdate($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalToUpdate();
 
         $data  = $lang;
         $data['to_update']            = $rows;
@@ -2699,10 +2708,10 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['to_update_page']       = $page;
         $data['to_update_sort']       = $sort;
         $data['to_update_order']      = $order;
-        $data['to_update_start']      = $start + 1;
+        $data['to_update_start']      = $total > 0 ? $start + 1 : 0;
         $data['to_update_end']        = min($start + $limit, $total);
-        $data['to_update_num_pages']  = ceil($total / $limit);
-        $data['to_update_pagination'] = $total > $limit;
+        $data['to_update_num_pages']  = $limit > 0 ? ceil($total / $limit) : 1;
+        $data['to_update_pagination'] = !$all && $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
         $this->response->setOutput($this->load->view('shopmanager/inventory/sync_to_update', $data));

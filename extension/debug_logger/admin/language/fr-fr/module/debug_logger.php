@@ -228,3 +228,26 @@ $_['text_menu_title']        = 'Debug Logger';
 $_['text_menu_dashboard']    = 'Tableau de bord';
 $_['text_menu_reports']      = 'Rapports de log';
 $_['text_menu_settings']     = 'Paramètres';
+
+// v3.3.0
+$_['popup_label_files']      = 'Fichiers chargés';
+$_['popup_tip_files']        = 'Fichiers PHP, Twig, JS et CSS chargés sur cette page.';
+
+// v3.3.2 — toast messages
+$_['popup_toast_saved']      = 'Rapport #%s enregistré';
+$_['popup_toast_error']      = 'Erreur';
+
+// v3.3.2 — screenshot editor
+$_['popup_ss_edit']          = 'Modifier la capture';
+$_['popup_ss_done']          = 'Terminé';
+$_['popup_ss_cancel']        = 'Annuler';
+$_['popup_ss_draw']          = 'Dessiner';
+$_['popup_ss_arrow']         = 'Flèche';
+$_['popup_ss_rect']          = 'Rectangle';
+$_['popup_ss_text']          = 'Texte';
+$_['popup_ss_undo']          = 'Annuler';
+$_['popup_ss_reset']         = 'Réinitialiser';
+$_['popup_ss_thin']          = 'Fin';
+$_['popup_ss_normal']        = 'Normal';
+$_['popup_ss_thick']         = 'Épais';
+$_['popup_ss_prompt']        = 'Texte :';

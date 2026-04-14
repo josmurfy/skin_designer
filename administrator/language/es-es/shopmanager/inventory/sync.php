@@ -125,6 +125,7 @@ $_['text_not_imported_info'] = 'Estos productos están listados en eBay pero nun
 $_['text_to_update_info']   = 'Estos productos tienen cambios locales pendientes de enviar a eBay (to_update = 1).';
 $_['text_no_not_imported']  = '¡No hay productos esperando importación!';
 $_['text_no_to_update']     = '¡No hay productos pendientes de actualización en eBay!';
+$_['button_update_all_ebay'] = 'Actualizar TODO en eBay';
 $_['text_no_not_synced']    = '¡Todos los productos están al día!';
 
 $_['text_products_errors'] = 'Productos con errores en Marketplace';

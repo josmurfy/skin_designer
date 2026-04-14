@@ -97,13 +97,15 @@
           <small class="text-muted ms-auto">#{{ report.id }} &middot; {{ report.date_added }}</small>
         </div>
 
-        {# URL #}
-        {% if report.url %}
+        {# Route + URL #}
+        {% if report.route or report.url %}
         <div class="mb-1" style="font-size:.78rem">
           {% if report.route %}
           <span class="badge bg-dark font-monospace" style="font-size:.72rem">{{ report.route }}</span>
           {% endif %}
-          <a href="{{ report.url }}" target="_blank" class="text-muted" style="word-break:break-all">{{ report.url }}</a>
+          {% if report.url %}
+          <a href="{{ report.url }}" target="_blank" class="text-muted ms-1" style="word-break:break-all">{{ report.url }}</a>
+          {% endif %}
         </div>
         {% endif %}
 
@@ -134,6 +136,15 @@
         <details class="mb-1">
           <summary class="text-muted" style="font-size:.78rem;cursor:pointer">Network log</summary>
           <pre class="bg-dark text-light rounded p-2" style="font-size:.72rem;max-height:200px;overflow:auto">{{ report.network_log }}</pre>
+        </details>
+        {% endif %}
+
+        {# Loaded files #}
+        {% if report.loaded_files %}
+        <details class="mb-1">
+          <summary class="text-muted" style="font-size:.78rem;cursor:pointer"><i class="fa-solid fa-file-code"></i> Loaded files ({{ report.loaded_files|length }})</summary>
+          <pre class="bg-dark text-light rounded p-2" style="font-size:.72rem;max-height:200px;overflow:auto">{% for f in report.loaded_files %}{{ f }}
+{% endfor %}</pre>
         </details>
         {% endif %}
 

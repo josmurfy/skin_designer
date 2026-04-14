@@ -6,6 +6,7 @@
   'use strict';
 
   var cfg = window.DL_CONFIG || {};
+  var i18n = cfg.i18n || {};
   var _logs = [], _hasErr = false;
 
   /* ── Console capture ──────────────────────────────────────── */
@@ -35,7 +36,22 @@
       });
     };
   }
-
+  /* ── Collect all files loaded on the page ──────────────── */
+  function collectLoadedFiles() {
+    var files = [];
+    if (cfg.serverFiles && cfg.serverFiles.length) {
+      cfg.serverFiles.forEach(function(f) { files.push(f); });
+    }
+    document.querySelectorAll('script[src]').forEach(function(s) {
+      var src = s.getAttribute('src');
+      if (src && src.indexOf('debug_logger') === -1) files.push(src);
+    });
+    document.querySelectorAll('link[rel="stylesheet"][href]').forEach(function(l) {
+      var href = l.getAttribute('href');
+      if (href && href.indexOf('debug_logger') === -1) files.push(href);
+    });
+    return files;
+  }
   /* ── DOM ready ────────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
     var $btn    = document.getElementById('dl-btn-trigger');
@@ -63,6 +79,14 @@
       $ov.style.display = 'block';
       $modal.style.display = 'block';
       document.getElementById('dl-url-display').textContent = window.location.href;
+      var routeEl = document.getElementById('dl-route-display');
+      if (routeEl) routeEl.textContent = cfg.currentRoute || '';
+      // Populate loaded files
+      var loadedFiles = collectLoadedFiles();
+      var filesEl = document.getElementById('dl-files-display');
+      if (filesEl) filesEl.textContent = loadedFiles.join('\n');
+      var countEl = document.getElementById('dl-files-count');
+      if (countEl) countEl.textContent = '(' + loadedFiles.length + ')';
       document.getElementById('dl-comment').value = '';
       var sel = document.getElementById('dl-severity');
       if (sel && sel.options.length) sel.value = _hasErr ? 'bug' : sel.options[0].value;
@@ -99,15 +123,17 @@
         $save.disabled = true;
         var fd = new FormData();
         fd.append('url', window.location.href);
+        fd.append('route', cfg.currentRoute || '');
         fd.append('console_log', _logs.join('\n'));
         fd.append('comment', document.getElementById('dl-comment').value);
         fd.append('severity', document.getElementById('dl-severity').value);
+        fd.append('loaded_files', JSON.stringify(collectLoadedFiles()));
         fetch(cfg.saveUrl, { method: 'POST', body: fd })
           .then(function (r) { return r.json(); })
           .then(function (j) {
             closeModal();
-            if (j.success) showToast('Report #' + j.id + ' saved', false);
-            else showToast(j.error || 'Error', true);
+            if (j.success) showToast((i18n.toastSaved || 'Report #%s saved').replace('%s', j.id), false);
+            else showToast(j.error || i18n.toastError || 'Error', true);
           })
           .catch(function (e) {
             closeModal();

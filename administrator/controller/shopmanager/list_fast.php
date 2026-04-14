@@ -734,7 +734,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 			'href' => $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 
-		$data['product_search'] = $this->url->link('shopmanager/list_fast/product_search', 'user_token=' . $this->session->data['user_token']. $url, true);
+		$data['product_search'] = $this->url->link('shopmanager/list_fast.product_search', 'user_token=' . $this->session->data['user_token']. $url, true);
 		$data['print_report'] = $this->url->link('shopmanager/print_report', 'type_report=list_fast&user_token=' . $this->session->data['user_token'] . $url, true);
 
 		$data['add'] = $this->url->link('shopmanager/list_fast/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
@@ -818,7 +818,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					? $this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'] . $url, true) 
 					: ($result['has_sources'] 
 						? "javascript:void(0);\" onclick=\"fastProductSearch(" . $result['product_id'] . ",'" . $result['upc'] . "')"
-						: $this->url->link('shopmanager/list_fast/product_search', 'view=fast_list&user_token=' . $this->session->data['user_token'] . '&upc=' . $result['upc'] . '&product_id=' . $result['product_id'] . '&condition_id=' . $result['condition_id'] . $url, true)
+						: $this->url->link('shopmanager/list_fast.product_search', 'view=fast_list&user_token=' . $this->session->data['user_token'] . '&upc=' . $result['upc'] . '&product_id=' . $result['product_id'] . '&condition_id=' . $result['condition_id'] . $url, true)
 					)
 
 							);
