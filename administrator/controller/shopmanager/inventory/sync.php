@@ -707,17 +707,17 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     public function quickStats(): string {
         $this->load->model('shopmanager/inventory/sync');
-        $lang = $this->load->language('shopmanager/analytics');
+        $lang = $this->load->language('shopmanager/inventory/sync');
         $data = $data ?? [];
         $data += $lang;
 
         $data = [];
-        $data['total_products'] = $this->model_shopmanager_analytics->getTotalProducts();
-        $data['low_stock'] = $this->model_shopmanager_analytics->getLowStockCount();
-        $data['pending_orders'] = $this->model_shopmanager_analytics->getPendingOrders();
-        $data['todays_revenue'] = $this->model_shopmanager_analytics->getTodaysRevenue();
+        $data['total_products'] = $this->model_shopmanager_inventory_sync->getTotalProducts();
+        $data['low_stock'] = $this->model_shopmanager_inventory_sync->getLowStockCount();
+        $data['pending_orders'] = $this->model_shopmanager_inventory_sync->getPendingOrders();
+        $data['todays_revenue'] = $this->model_shopmanager_inventory_sync->getTodaysRevenue();
 
-        return $this->load->view('shopmanager/analytics_widget', $data);
+        return $this->load->view('shopmanager/inventory/sync_widget', $data);
     }
 
     /**
