@@ -4,6 +4,78 @@ namespace Opencart\Admin\Model\Shopmanager;
 
 class Order extends \Opencart\System\Engine\Model {
 
+/**
+ * Get a mysqli connection to the sister site's database.
+ * Uses config constants — no hardcoded credentials.
+ */
+private function getSisterDbConnection(): \mysqli|false {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    $is_phoenixsupplies = strpos($host, 'phoenixsupplies') !== false;
+
+    // If on phoenixsupplies, sister = phoenixliquidation and vice versa
+    $sister_db = $is_phoenixsupplies ? DB_DATABASE : DB_SISTER_DATABASE;
+
+    $db = @mysqli_connect(DB_HOSTNAME, DB_USERNAME, DB_PASSWORD, $sister_db, (int)DB_PORT);
+
+    if (!$db) {
+        $this->log->write('Order cross-DB connection failed: ' . mysqli_connect_error());
+        return false;
+    }
+
+    mysqli_set_charset($db, 'utf8mb4');
+    return $db;
+}
+
+/**
+ * Query the sister DB for a product by ID (read-only).
+ */
+private function getSisterProduct(int $product_id): array|false {
+    $db = $this->getSisterDbConnection();
+    if (!$db) {
+        return false;
+    }
+
+    $sql = "SELECT p.product_id, p.quantity, p.unallocated_quantity, p.sku, p.image, p.location
+            FROM " . DB_PREFIX . "product p
+            JOIN " . DB_PREFIX . "product_description pd ON p.product_id = pd.product_id
+            WHERE pd.language_id = 1 AND p.product_id = " . (int)$product_id;
+
+    $req = mysqli_query($db, $sql);
+    $data = $req ? mysqli_fetch_assoc($req) : false;
+    mysqli_close($db);
+
+    return $data ?: false;
+}
+
+/**
+ * Update quantity on the sister DB for a product.
+ */
+private function updateSisterQuantity(int $product_id, int $quantity, int $unallocated_quantity): bool {
+    $db = $this->getSisterDbConnection();
+    if (!$db) {
+        return false;
+    }
+
+    $sql = "UPDATE " . DB_PREFIX . "product SET quantity = " . (int)$quantity
+         . ", unallocated_quantity = " . (int)$unallocated_quantity
+         . " WHERE product_id = " . (int)$product_id;
+
+    $result = mysqli_query($db, $sql);
+    mysqli_close($db);
+
+    return (bool)$result;
+}
+
+/**
+ * Detect which site we're running on.
+ */
+private function detectSite(): array {
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    return [
+        'is_phoenixsupplies'   => strpos($host, 'phoenixsupplies') !== false,
+        'is_phoenixliquidation' => strpos($host, 'phoenixliquidation') !== false,
+    ];
+}
 
 public function getOrder($order_id = null){
 
@@ -157,53 +229,22 @@ public function getOrders(array $data = []): array {
                         }
 
                         // Determine the host and connect to the appropriate database
-                        $host = $_SERVER['HTTP_HOST'] ?? '';
-                        $is_phoenixsupplies = strpos($host, 'phoenixsupplies') !== false;
-                        $is_phoenixliquidation = strpos($host, 'phoenixliquidation') !== false;
+                        $site = $this->detectSite();
 
 
                         if ($orders_output[$i]['com'] == "CARD_") {
                             
                             $data = $this->model_shopmanager_card_card->getCard((int)$orders_output[$i]['customlabel']);
-                        } elseif ($orders_output[$i]['com'] == "COM_" && $is_phoenixsupplies) {
-                            $data = $this->model_shopmanager_catalog_product->getProduct($orders_output[$i]['customlabel']);
-                        } elseif ($orders_output[$i]['com'] == "COM_" && $is_phoenixliquidation) {
+                        } elseif ($orders_output[$i]['com'] == "COM_" && $site['is_phoenixsupplies']) {
+                            $data = $this->model_shopmanager_catalog_product->getProduct((int)$orders_output[$i]['customlabel']);
+                        } elseif ($orders_output[$i]['com'] == "COM_" && $site['is_phoenixliquidation']) {
 
-                            $db = mysqli_connect("localhost", "n7f9655_n7f9655", "jnthngrvs01$$", "n7f9655_phoenixsupplies");
-                            $sql = "SELECT p.product_id, p.quantity, p.unallocated_quantity, p.sku, p.image, p.location FROM " . DB_PREFIX . "product p
-                                    JOIN " . DB_PREFIX . "product_description pd
-                                    ON p.product_id = pd.product_id 
-                                    WHERE pd.language_id = 1 
-                                    AND p.product_id = '" . $orders_output[$i]['customlabel'] . "'";
-                            $req = mysqli_query($db, $sql);
-                            $data = mysqli_fetch_assoc($req);
-                            if (!$db) {
-                                die("Connection failed: " . mysqli_connect_error());
-                            }
-                            if (isset($db)) {
-                                mysqli_close($db);
-                            }
-                        } elseif ($orders_output[$i]['com'] == "RET_" && $is_phoenixliquidation) {
-                            $data = $this->model_shopmanager_catalog_product->getProduct($orders_output[$i]['customlabel']);
-                        } elseif ($orders_output[$i]['com'] == "RET_" && $is_phoenixsupplies) {
+                            $data = $this->getSisterProduct((int)$orders_output[$i]['customlabel']);
+                        } elseif ($orders_output[$i]['com'] == "RET_" && $site['is_phoenixliquidation']) {
+                            $data = $this->model_shopmanager_catalog_product->getProduct((int)$orders_output[$i]['customlabel']);
+                        } elseif ($orders_output[$i]['com'] == "RET_" && $site['is_phoenixsupplies']) {
 
-                            $db = mysqli_connect('localhost', 'n7f9655_n7f9655', 'jnthngrvs01$$', 'n7f9655_phoenixliquidation');
-                            $sql = "SELECT p.product_id, p.quantity, p.unallocated_quantity, p.sku, p.image, p.location FROM " . DB_PREFIX . "product p
-                                    JOIN " . DB_PREFIX . "product_description pd
-                                    ON p.product_id = pd.product_id 
-                                    WHERE pd.language_id = 1 
-                                    AND p.product_id = '" . $orders_output[$i]['customlabel'] . "'";
-
-                          //print("<pre>".print_r ($sql,true )."</pre>");
-                            $req = mysqli_query($db, $sql);
-                         //print("<pre>".print_r ($req,true )."</pre>");
-                            $data = mysqli_fetch_assoc($req);
-                            if (!$db) {
-                                die("Connection failed: " . mysqli_connect_error());
-                            }
-                            if (isset($db)) {
-                                mysqli_close($db);
-                            }
+                            $data = $this->getSisterProduct((int)$orders_output[$i]['customlabel']);
                         }
                       
                      //print("<pre>".print_r ($data,true )."</pre>");
@@ -284,9 +325,7 @@ public function getOrders(array $data = []): array {
             $com = $product_data['com'];
 			
             // Determine the host and connect to the appropriate database
-            $host = $_SERVER['HTTP_HOST'] ?? '';
-            $is_phoenixsupplies = strpos($host, 'phoenixsupplies') !== false;
-            $is_phoenixliquidation = strpos($host, 'phoenixliquidation') !== false;
+            $site = $this->detectSite();
 
             if (strpos($com, 'CARD_') === 0) {
                 // Card listing: update oc_card.quantity directly
@@ -312,37 +351,22 @@ public function getOrders(array $data = []): array {
                 $quantity_total_final=$quantity+$unallocated_quantity-$needed_quantity;
                 //print("<pre>".print_r ($quantity_total_final,true )."</pre>");
 
-                if ($com == "COM_" && $is_phoenixsupplies) {
+                if ($com == "COM_" && $site['is_phoenixsupplies']) {
                   
-                    $this->model_shopmanager_catalog_product->updateQuantity($product_id, $quantity_final);
-                    $this->model_shopmanager_catalog_product->updateUnallocatedQuantity($product_id, $unallocated_quantity_final);
+                    $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
+                    $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
                     
-                } elseif ($com == "COM_" && $is_phoenixliquidation) {
-                    $db = mysqli_connect("localhost","n7f9655_n7f9655","jnthngrvs01$$","n7f9655_phoenixsupplies");
+                } elseif ($com == "COM_" && $site['is_phoenixliquidation']) {
 
-                    $sql = 'UPDATE `oc_product` SET quantity='.$quantity_final.',unallocated_quantity='.$unallocated_quantity_final.' where product_id='.$product_id; 
-                    mysqli_query($db, $sql);
-                    //print("<pre>".print_r ($sql,true )."</pre>");
-                    if (!$db) {
-                        die("Connection failed: " . mysqli_connect_error());
-                    }
-					
+                    $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
                    
-                   
-                } elseif ($com == "RET_" && $is_phoenixliquidation) {
-                    $this->model_shopmanager_catalog_product->updateQuantity($product_id, $quantity_final);
-                    $this->model_shopmanager_catalog_product->updateUnallocatedQuantity($product_id, $unallocated_quantity_final);
+                } elseif ($com == "RET_" && $site['is_phoenixliquidation']) {
+                    $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
+                    $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
                     //print("<pre>".print_r (189,true )."</pre>");
-                } elseif ($com == "RET_" && $is_phoenixsupplies) {
-                    $db = mysqli_connect('localhost','n7f9655_n7f9655','jnthngrvs01$$','n7f9655_phoenixliquidation');
+                } elseif ($com == "RET_" && $site['is_phoenixsupplies']) {
 
-                    $sql = 'UPDATE `oc_product` SET quantity='.$quantity_final.',unallocated_quantity='.$unallocated_quantity_final.' where product_id='.$product_id; 
-					mysqli_query($db, $sql);
-                    //print("<pre>".print_r ($sql,true )."</pre>");
-    
-                    if (!$db) {
-                        die("Connection failed: " . mysqli_connect_error());
-                    }
+                    $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
                 }
 
                     $this->load->model('shopmanager/marketplace');
@@ -423,9 +447,7 @@ public function getOrders(array $data = []): array {
             $com = $product_data['com'];
             $location = $product_data['location'];
 
-            $host = $_SERVER['HTTP_HOST'] ?? '';
-            $is_phoenixsupplies = strpos($host, 'phoenixsupplies') !== false;
-            $is_phoenixliquidation = strpos($host, 'phoenixliquidation') !== false;
+            $site = $this->detectSite();
 
             if (strpos($com, 'CARD_') === 0) {
                 // Card listing: restore oc_card.quantity directly
@@ -450,26 +472,16 @@ public function getOrders(array $data = []): array {
             
             $quantity_total_final = $quantity_final + $unallocated_quantity_final;
 
-            if ($com == "COM_" && $is_phoenixsupplies) {
-                $this->model_shopmanager_catalog_product->updateQuantity($product_id, $quantity_final);
-                $this->model_shopmanager_catalog_product->updateUnallocatedQuantity($product_id, $unallocated_quantity_final);
-            } elseif ($com == "COM_" && $is_phoenixliquidation) {
-                $db = mysqli_connect("localhost","n7f9655_n7f9655","jnthngrvs01$$","n7f9655_phoenixsupplies");
-                $sql = 'UPDATE `oc_product` SET quantity='.$quantity_final.',unallocated_quantity='.$unallocated_quantity_final.' where product_id='.$product_id; 
-                mysqli_query($db, $sql);
-                if ($db) {
-                    mysqli_close($db);
-                }
-            } elseif ($com == "RET_" && $is_phoenixliquidation) {
-                $this->model_shopmanager_catalog_product->updateQuantity($product_id, $quantity_final);
-                $this->model_shopmanager_catalog_product->updateUnallocatedQuantity($product_id, $unallocated_quantity_final);
-            } elseif ($com == "RET_" && $is_phoenixsupplies) {
-                $db = mysqli_connect('localhost','n7f9655_n7f9655','jnthngrvs01$$','n7f9655_phoenixliquidation');
-                $sql = 'UPDATE `oc_product` SET quantity='.$quantity_final.',unallocated_quantity='.$unallocated_quantity_final.' where product_id='.$product_id; 
-                mysqli_query($db, $sql);
-                if ($db) {
-                    mysqli_close($db);
-                }
+            if ($com == "COM_" && $site['is_phoenixsupplies']) {
+                $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
+                $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
+            } elseif ($com == "COM_" && $site['is_phoenixliquidation']) {
+                $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
+            } elseif ($com == "RET_" && $site['is_phoenixliquidation']) {
+                $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
+                $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
+            } elseif ($com == "RET_" && $site['is_phoenixsupplies']) {
+                $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
             }
 
             $this->load->model('shopmanager/marketplace');
