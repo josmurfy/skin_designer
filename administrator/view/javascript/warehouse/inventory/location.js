@@ -1,4 +1,4 @@
-// Original: shopmanager/inventory/location.js
+// Original: warehouse/inventory/location.js
 // ============================================
 // FILTER LOCATION HANDLERS (from Twig)
 // ============================================
@@ -626,7 +626,7 @@ window.reinitInventory = function() {
         });
         
         if (!skuFound && inputSku !== '') {
-            fetch('index.php?route=shopmanager/inventory/location.searchProduct&user_token=' + document.querySelector('input[name="user_token"]').value + '&sku=' + encodeURIComponent(inputSku))
+            fetch('index.php?route=warehouse/inventory/location.searchProduct&user_token=' + document.querySelector('input[name="user_token"]').value + '&sku=' + encodeURIComponent(inputSku))
             .then(response => response.json())
             .then(data => {
                     if (data.success && data.product) {
@@ -794,7 +794,7 @@ function showCountryPopupForScan(productId, row, callback) {
         const user_token = document.querySelector('input[name="user_token"]').value;
         
         
-        fetch('index.php?route=shopmanager/ai.getMadeInCountry&user_token=' + user_token, {
+        fetch('index.php?route=warehouse/tools/ai.getMadeInCountry&user_token=' + user_token, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -813,7 +813,7 @@ function showCountryPopupForScan(productId, row, callback) {
                 countrySelect.value = data.success.country_id;
                 
                 // Save to database via AJAX
-                fetch('index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + user_token, {
+                fetch('index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + user_token, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -897,7 +897,7 @@ function showModalWithAI(productId, row, callback, productName, productSku, coun
     const user_token = document.querySelector('input[name="user_token"]').value;
     
     
-    fetch('index.php?route=shopmanager/ai.getMadeInCountry&user_token=' + user_token, {
+    fetch('index.php?route=warehouse/tools/ai.getMadeInCountry&user_token=' + user_token, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -964,7 +964,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Save to database via AJAX
                 const user_token = document.querySelector('input[name="user_token"]').value;
                 
-                fetch('index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + user_token, {
+                fetch('index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + user_token, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',

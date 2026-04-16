@@ -1,10 +1,10 @@
 <?php
-// Original: shopmanager/alert_popup.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/popup/alert.php
+namespace Opencart\Admin\Controller\Warehouse\Popup;
 
-class AlertPopup extends \Opencart\System\Engine\Controller {
+class Alert extends \Opencart\System\Engine\Controller {
     public function index(): string {
-        $this->load->language('shopmanager/alert_popup');
+        $this->load->language('warehouse/popup/alert');
         $data = [];
         
 
@@ -12,6 +12,6 @@ class AlertPopup extends \Opencart\System\Engine\Controller {
         $data['text_message'] = ($lang['text_message'] ?? '');
         $data['text_close'] = ($lang['text_close'] ?? '');
 
-        return $this->load->view('shopmanager/alert_popup', $data);
+        return $this->load->view('warehouse/popup/alert', $data);
     }
 }

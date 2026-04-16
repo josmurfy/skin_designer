@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/ebaytemplate.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/marketplace/ebay/template.php
+namespace Opencart\Admin\Model\Warehouse\Marketplace\Ebay;
 
-class Ebaytemplate extends \Opencart\System\Engine\Model {
+class Template extends \Opencart\System\Engine\Model {
 
 	private $domain;
 
@@ -13,17 +13,17 @@ class Ebaytemplate extends \Opencart\System\Engine\Model {
     }
 	   public function getEbayTemplate($product, $site_setting = [],$marketplace_account_id = null)
         {
-            $this->load->model('shopmanager/catalog/product');
-			$this->load->model('shopmanager/condition');
-			$this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/product/product');
+			$this->load->model('warehouse/product/condition');
+			$this->load->model('warehouse/marketplace/ebay/api');
             $product_id = $product['product_id'];
-            $product_description_result = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+            $product_description_result = $this->model_warehouse_product_product->getDescriptions($product_id);
             $product_description= $site_setting['Language']=='fr_CA'?$product_description_result[2]:$product_description_result[1];
 		//	//print("<pre>".print_r ($product,true )."</pre>");
 		//print("<pre>" . print_r(value: '18:EBAYTEMPLATE.php') . "</pre>");
 
-            $category_info= $this->model_shopmanager_condition->getConditionDetails($product['category_id'], $product['condition_id'] );
-			$ConditionsByCategory=$this->model_shopmanager_ebay->getConditionsByCategory($product['category_id']);
+            $category_info= $this->model_warehouse_product_condition->getConditionDetails($product['category_id'], $product['condition_id'] );
+			$ConditionsByCategory=$this->model_warehouse_marketplace_ebay_api->getConditionsByCategory($product['category_id']);
 			if(!isset($ConditionsByCategory[$category_info[1][$product['condition_id']]['ConditionID']])){
 				//print("<pre>".print_r ( 'Product:'.$product_id,true )."</pre>");
 				//print("<pre>".print_r ($category_info,true )."</pre>");
@@ -41,16 +41,16 @@ class Ebaytemplate extends \Opencart\System\Engine\Model {
             $item_specifics = $this->generateItemSpecifics($product_description['specifics'],$product);
 			//print("<pre>".print_r ($item_specifics,true )."</pre>");
 		   }else{
-			$this->load->model('shopmanager/marketplace');
+			$this->load->model('warehouse/marketplace/listing');
 		//	//print("<pre>".print_r (28,true )."</pre>");
-			$specifics = $this->model_shopmanager_marketplace->getProductSpecifics($product['product_id'], 1);
+			$specifics = $this->model_warehouse_marketplace_listing->getProductSpecifics($product['product_id'], 1);
 		//	//print("<pre>".print_r ($specifics,true )."</pre>");
 			$item_specifics = $this->generateItemSpecifics($specifics,$product);
 
 		   }
 		//print("<pre>".print_r ($item_specifics,true )."</pre>");
 			
-            $product_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+            $product_images = $this->model_warehouse_product_product->getImages($product_id);
 
             $pictures = $this->generatePictures($product_images,$product['image'] );//$product['image_princ']
             $shipping_details = $this->generateShippingDetails($product,$site_setting);
@@ -549,7 +549,7 @@ class Ebaytemplate extends \Opencart\System\Engine\Model {
         
     private function generateListingDescription($category_id,$description, $template_parts)
         {
-			$this->load->model('shopmanager/tools');
+			$this->load->model('warehouse/tools/utility');
             $desc1 = $this->getDescription1($category_id, $template_parts['desc1']);
             $desc2 = $template_parts['desc2'];
             $desc3 = $template_parts['desc3'];
@@ -570,7 +570,7 @@ class Ebaytemplate extends \Opencart\System\Engine\Model {
             $listing_description = $list1 . $line . $list2 . $desc1 . $list3 . $desc2 . $list4 . $desc3 . $list5 . $desc4 . $list6 . $desc5 . $list7;
             $listing_description = str_replace(["\r", "\n"], "", $listing_description);
             $listing_description = urldecode($listing_description);
-            $listing_description = "<![CDATA[" . $this->model_shopmanager_tools->convert_smart_quotes($listing_description) . "]]>";
+            $listing_description = "<![CDATA[" . $this->model_warehouse_tools_utility->convert_smart_quotes($listing_description) . "]]>";
       //  echo $listing_description;
 	  //print("<pre>".print_r ($line,true )."</pre>");
 	  //die(); 
@@ -579,7 +579,7 @@ class Ebaytemplate extends \Opencart\System\Engine\Model {
 
 	private function generateCardListingDescription($category_id,$description, $template_parts)
         {
-			$this->load->model('shopmanager/tools');
+			$this->load->model('warehouse/tools/utility');
             $desc1 = $this->getDescription1($category_id, $template_parts['desc1']);
             $desc2 = $template_parts['desc2'];
             $desc3 = $template_parts['desc3'];
@@ -608,7 +608,7 @@ class Ebaytemplate extends \Opencart\System\Engine\Model {
             $listing_description = $mobile_snippet . $list1 . $line . $list2 . $desc1 . $list3 . $desc2 . $list4 . $desc3 . $list5 . $desc4 . $list6 . $desc5 . $list7;
             $listing_description = str_replace(["\r", "\n"], "", $listing_description);
             $listing_description = urldecode($listing_description);
-            $listing_description = "<![CDATA[" . $this->model_shopmanager_tools->convert_smart_quotes($listing_description) . "]]>";
+            $listing_description = "<![CDATA[" . $this->model_warehouse_tools_utility->convert_smart_quotes($listing_description) . "]]>";
             return $listing_description;
         }
         
@@ -1011,8 +1011,8 @@ private function generateCardListingSpecifics($NameValueLists = null): string|nu
 
 private function generateEbayCardListing($listing_data, $listing_description, $item_specifics, $shipping_details)
 {
-    $this->load->model('shopmanager/tools');
-    $title = $this->model_shopmanager_tools->convert_smart_quotes(
+    $this->load->model('warehouse/tools/utility');
+    $title = $this->model_warehouse_tools_utility->convert_smart_quotes(
         $this->escape_special_chars($listing_data['title'])
     );
     
@@ -1158,8 +1158,8 @@ private function generateEbayCardListing($listing_data, $listing_description, $i
 
 	private function generateEbayListing($product, $listing_description, $item_specifics, $pictures, $shipping_details, $site_setting = [])
 		{
-			$this->load->model('shopmanager/tools');
-			$title = $this->model_shopmanager_tools->convert_smart_quotes(
+			$this->load->model('warehouse/tools/utility');
+			$title = $this->model_warehouse_tools_utility->convert_smart_quotes(
 				$this->escape_special_chars($product['name'])
 			);
 			
@@ -1270,9 +1270,9 @@ private function generateEbayCardListing($listing_data, $listing_description, $i
 
 	public function getEbayTemplateCardListing($listing_data, $site_setting = [], $marketplace_account_id = null)
 	{
-		$this->load->model('shopmanager/card/card_listing');
-		$this->load->model('shopmanager/condition');
-		$this->load->model('shopmanager/ebay');
+		$this->load->model('warehouse/card/listing');
+		$this->load->model('warehouse/product/condition');
+		$this->load->model('warehouse/marketplace/ebay/api');
 	
 		// Description brutte : priorité à ce qui est passé dans listing_data,
 		// sinon charger le batch 1 depuis la DB.
@@ -1284,7 +1284,7 @@ private function generateEbayCardListing($listing_data, $listing_description, $i
 			$merged_description = html_entity_decode($listing_data['description'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
 		} elseif ($listing_id > 0) {
 			// Lit la description du batch 1 depuis getDescriptions() (indexé par batch_name).
-			$batchDescriptions = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id);
+			$batchDescriptions = $this->model_warehouse_card_listing->getDescriptions($listing_id);
 
 			if (!empty($batchDescriptions[1]['description'])) {
 				$merged_description = html_entity_decode($batchDescriptions[1]['description'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
@@ -1373,8 +1373,8 @@ private function generateEbayCardListing($listing_data, $listing_description, $i
 	 * @return string  Ready-to-send HTML description.
 	 */
 	public function buildBatchDescription(string $ebay_category_id, array $batchVariations): string {
-		$this->load->model('shopmanager/card/card_listing');
-		$rawDesc       = $this->model_shopmanager_card_card_listing->generateBatchDescription($batchVariations);
+		$this->load->model('warehouse/card/listing');
+		$rawDesc       = $this->model_warehouse_card_listing->generateBatchDescription($batchVariations);
 		$template_parts = $this->getTemplatePartsCardListing();
 		return $this->generateCardListingDescriptionHTML($ebay_category_id, $rawDesc, $template_parts);
 	}
@@ -1439,7 +1439,7 @@ private function formatVariationsForInventory($variations, $base_aspects = []) {
 
 	private function generateCardListingDescriptionHTML($category_id, $description, $template_parts)
 	{
-		$this->load->model('shopmanager/tools');
+		$this->load->model('warehouse/tools/utility');
 		
 		$desc1 = $this->getDescription1($category_id, $template_parts['desc1']);
 		$desc2 = $template_parts['desc2'];
@@ -1469,7 +1469,7 @@ private function formatVariationsForInventory($variations, $base_aspects = []) {
 		
 		$listing_description = str_replace(["\r", "\n"], "", $listing_description);
 		$listing_description = urldecode($listing_description);
-		$listing_description = $this->model_shopmanager_tools->convert_smart_quotes($listing_description);
+		$listing_description = $this->model_warehouse_tools_utility->convert_smart_quotes($listing_description);
 
 		return $listing_description;
 	}

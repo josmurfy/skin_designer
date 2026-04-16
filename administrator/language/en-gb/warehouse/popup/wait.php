@@ -1,5 +1,5 @@
 <?php 
-// Original: shopmanager/wait_popup.php
+// Original: warehouse/popup/wait.php
 
 $_['text_loading_please_wait'] = 'Please wait...';
 $_['text_loading_specifics'] = 'Generating information, please be patient...';

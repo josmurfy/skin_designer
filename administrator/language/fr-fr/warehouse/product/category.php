@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/catalog/category.php
+// Original: warehouse/product/category.php
 // Heading
 $_['heading_title']          = 'Catégories';
 

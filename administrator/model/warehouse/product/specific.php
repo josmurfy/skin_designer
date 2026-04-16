@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/catalog/product_specific.php
-namespace Opencart\Admin\Model\Shopmanager\Catalog;
+// Original: warehouse/product/product_specific.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
-class ProductSpecific extends \Opencart\System\Engine\Model {
+class Specific extends \Opencart\System\Engine\Model {
     
     // 1. Récupérer une clé spécifique par clé et category_id
     public function getSpecificKey($specific_key, $category_id, $language_id =1) {
@@ -93,7 +93,7 @@ class ProductSpecific extends \Opencart\System\Engine\Model {
     public function translateMissingTerms() {
         // Charger le modèle pour les langues et la traduction
         $this->load->model('localisation/language');
-        //$this->load->model('shopmanager/translate");
+        //$this->load->model('warehouse/tools/translate");
       
     
         // Récupérer toutes les langues disponibles
@@ -136,7 +136,7 @@ class ProductSpecific extends \Opencart\System\Engine\Model {
                 // Boucler à travers chaque langue pour traduire le terme
                             if($replacement_term!=''){
                                 // Utiliser le modèle de traduction pour traduire le replacement_term dans la langue courante
-                                $translated_term = $this->model_shopmanager_translate->translate($replacement_term, $language['code']);
+                                $translated_term = $this->model_warehouse_tools_translate->translate($replacement_term, $language['code']);
                                 $translated_term = str_replace('&#39;', "\'", $translated_term);
                                 // Insérer la traduction dans la table " . DB_PREFIX . "product_specific_mappings pour cette langue
                                 $this->db->query("INSERT INTO `" . DB_PREFIX . "product_specific_mappings` 

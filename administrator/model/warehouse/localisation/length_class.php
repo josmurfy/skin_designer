@@ -1,7 +1,7 @@
 <?php
-// Original: shopmanager/localisation/length_class.php
+// Original: warehouse/localisation/length_class.php
 
-namespace Opencart\Admin\Model\Shopmanager\Localisation;
+namespace Opencart\Admin\Model\Warehouse\Localisation;
 
 class LengthClass extends \Opencart\System\Engine\Model {
 

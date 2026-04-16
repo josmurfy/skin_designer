@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/walmart.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/walmart.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 
 use GuzzleHttp\Client;
@@ -32,8 +32,8 @@ class Walmart extends \Opencart\System\Engine\Model {
     }
 
     public function getApiCredentials($marketplace_account_id = 3) {
-        $this->load->model('shopmanager/marketplace');
-        $connectionapi = $this->model_shopmanager_marketplace->getMarketplaceAccount(['customer_id' => 10, 'filter_marketplace_account_id' => $marketplace_account_id]);
+        $this->load->model('warehouse/marketplace/listing');
+        $connectionapi = $this->model_warehouse_marketplace_listing->getMarketplaceAccount(['customer_id' => 10, 'filter_marketplace_account_id' => $marketplace_account_id]);
         $connectionapi = isset($connectionapi[$marketplace_account_id]) ? $connectionapi[$marketplace_account_id] : $connectionapi;
         //print("<pre>".print_r ($connectionapi,true )."</pre>"); 
         
@@ -173,7 +173,7 @@ class Walmart extends \Opencart\System\Engine\Model {
         $description = isset($product['meta_description'][1]) ? $product['meta_description'][1] : '';
         $brand = isset($product['brand']) ? $product['brand'] : '';
         $weight = isset($product['weight']) ? $product['weight'] : 0.0;
-        $product_images = $this->model_shopmanager_catalog_product->getProductImages($product_id);
+        $product_images = $this->model_warehouse_product_product->getProductImages($product_id);
         $images = $this->generatePictures($product_images, $product['image']);
         $upc = isset($product['upc']) ? $product['upc'] : '';
 

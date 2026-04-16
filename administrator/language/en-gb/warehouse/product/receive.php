@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/fast_add.php
+// Original: warehouse/product/receive.php
 // Heading
 $_['heading_title'] = 'Fast Product Addition';
 

@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/maintenance/image.php
-namespace Opencart\Admin\Model\Shopmanager\Maintenance;
+// Original: warehouse/maintenance/image.php
+namespace Opencart\Admin\Model\Warehouse\Maintenance;
 
 class Image extends \Opencart\System\Engine\Model {
     

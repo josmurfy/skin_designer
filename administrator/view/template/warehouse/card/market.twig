@@ -1,4 +1,4 @@
-{# Original: shopmanager/card/card_market.twig #}
+{# Original: warehouse/card/market.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
 <style>
@@ -232,7 +232,7 @@ function uploadMarketImage(file) {
   $('#market-image-dropzone').addClass('disabled').html('<div class="spinner-border spinner-border-sm text-primary me-2"></div>' + TEXT_UPLOADING_IMAGE_MARKET);
 
   $.ajax({
-    url: 'index.php?route=shopmanager/card/card_market.uploadImage&user_token=' + USER_TOKEN_MARKET,
+    url: 'index.php?route=warehouse/card/market.uploadImage&user_token=' + USER_TOKEN_MARKET,
     type: 'POST',
     data: formData,
     processData: false,
@@ -293,8 +293,8 @@ $('#button-filter').on('click', function() {
         if (f.value !== '') url += '&' + encodeURIComponent(f.name) + '=' + encodeURIComponent(f.value);
     });
     console.log('[CardMarket] Filter params:', url);
-    window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_market&user_token=' + USER_TOKEN_MARKET + url);
-    marketLoad('index.php?route=shopmanager/card/card_market.list&user_token=' + USER_TOKEN_MARKET + url);
+    window.history.pushState({}, null, 'index.php?route=warehouse/card/market&user_token=' + USER_TOKEN_MARKET + url);
+    marketLoad('index.php?route=warehouse/card/market.list&user_token=' + USER_TOKEN_MARKET + url);
 });
 
 $('#button-reset-filters').on('click', function() {
@@ -302,8 +302,8 @@ $('#button-reset-filters').on('click', function() {
     $('#form-filter select').each(function() { $(this).val($(this).find('option:first').val()); });
     $('#grader-fields').addClass('d-none');
   setMarketImagePreview('');
-    window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_market&user_token=' + USER_TOKEN_MARKET);
-    marketLoad('index.php?route=shopmanager/card/card_market.list&user_token=' + USER_TOKEN_MARKET);
+    window.history.pushState({}, null, 'index.php?route=warehouse/card/market&user_token=' + USER_TOKEN_MARKET);
+    marketLoad('index.php?route=warehouse/card/market.list&user_token=' + USER_TOKEN_MARKET);
 });
 
 $('#market-image-dropzone').on('click', function() {

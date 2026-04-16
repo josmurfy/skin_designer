@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/option.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/option.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 class Option extends \Opencart\System\Engine\Model {
 

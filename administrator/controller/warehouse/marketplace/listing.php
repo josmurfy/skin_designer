@@ -1,20 +1,20 @@
 <?php
-// Original: shopmanager/marketplace.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/marketplace/listing.php
+namespace Opencart\Admin\Controller\Warehouse\Marketplace;
 
-class Marketplace extends \Opencart\System\Engine\Controller {
+class Listing extends \Opencart\System\Engine\Controller {
     public function addToMarketplace(): void {
         $json = [];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/marketplace')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/marketplace/listing')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
 			return;
 		}
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/marketplace/listing');
 
         // Toujours vérifier la méthode de requête
         if (isset($json)) {
@@ -27,7 +27,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 
                 if ($product_id && $marketplace_account_id) {
                     // Mise à jour des tarifs dans la base de données
-                    $result = $this->model_shopmanager_marketplace->addToMarketplace($product_id, $marketplace_account_id);
+                    $result = $this->model_warehouse_marketplace_listing->addToMarketplace($product_id, $marketplace_account_id);
                     //print("<pre>".print_r ($result,true )."</pre>");
                     if (isset($result['ErrorLanguage'])) {
                         $json['error'] = false;
@@ -51,8 +51,8 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                             'ebay_image_count' => 0,
                         );
 
-                        $this->model_shopmanager_marketplace->addProductMarketplace($data);
-                        $this->model_shopmanager_marketplace->syncMarketplaceProduct($result['ItemID']);
+                        $this->model_warehouse_marketplace_listing->addProductMarketplace($data);
+                        $this->model_warehouse_marketplace_listing->syncMarketplaceProduct($result['ItemID']);
                        
                         $json['marketplace_item_id'] = $result['ItemID'];
                         $json['success'] = $result;
@@ -79,15 +79,15 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 
         $json = [];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/marketplace')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/marketplace/listing')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
 			return;
 		}
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/marketplace/listing');
 
        
 
@@ -102,7 +102,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 
                 if ($product_id && $marketplace_account_id) {
                     // Mise à jour des tarifs dans la base de données
-                    $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
+                    $result = $this->model_warehouse_marketplace_listing->editQuantity($product_id, $marketplace_account_id);
                     //print("<pre>".print_r ($result,true )."</pre>");
                     if (isset($result['ErrorLanguage'])) {
                         $json['error'] = json_encode($result);
@@ -130,20 +130,20 @@ class Marketplace extends \Opencart\System\Engine\Controller {
     public function editMarketplaceBulk(): void {
         $json = [];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/marketplace')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/marketplace/listing')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
 			return;
 		}
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
 
-        $marketplace_accounts_id = $this->model_shopmanager_marketplace->getProducts();
+        $marketplace_accounts_id = $this->model_warehouse_marketplace_listing->getProducts();
         //print("<pre>".print_r ($marketplace_accounts_id,true )."</pre>");
 
         foreach ($marketplace_accounts_id as $marketplace_account) {
             if (isset($marketplace_account['marketplace_item_id'])) {
-                $this->model_shopmanager_marketplace->editToMarketplace($marketplace_account['product_id'], $marketplace_account['marketplace_account_id']);
+                $this->model_warehouse_marketplace_listing->editToMarketplace($marketplace_account['product_id'], $marketplace_account['marketplace_account_id']);
                 //print("<pre>".print_r ($marketplace_accounts_id,true )."</pre>");
             }
         }
@@ -152,7 +152,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
     public function updateListedProduct(): void {
         $json = ['results' => []];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/marketplace')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/marketplace/listing')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
@@ -168,10 +168,10 @@ class Marketplace extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/marketplace/listing');
 
-        $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $product = $this->model_warehouse_product_product->getProduct($product_id);
 
         if (!$product) {
             $json['error'] = 'Produit introuvable.';
@@ -189,9 +189,9 @@ class Marketplace extends \Opencart\System\Engine\Controller {
         }
 
         // Check image count: DB images must be >= eBay images
-        $this->load->model('shopmanager/ebay');
-        $this->load->language('shopmanager/catalog/product');
-        $marketplace_accounts = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->language('warehouse/product/product');
+        $marketplace_accounts = $this->model_warehouse_marketplace_listing->getMarketplace(['product_id' => $product_id]);
         
         // Get eBay listing info if available
         $ebay_item_id = null;
@@ -210,13 +210,13 @@ class Marketplace extends \Opencart\System\Engine\Controller {
             if (!empty($product['image'])) {
                 $db_count++;
             }
-            $secondary_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+            $secondary_images = $this->model_warehouse_product_product->getImages($product_id);
             if (!empty($secondary_images) && is_array($secondary_images)) {
                 $db_count += count($secondary_images);
             }
 
             // Count eBay images
-            $ebay_urls = $this->model_shopmanager_ebay->getImages($ebay_item_id);
+            $ebay_urls = $this->model_warehouse_marketplace_ebay_api->getImages($ebay_item_id);
             if (!empty($ebay_urls) && is_array($ebay_urls)) {
                 $ebay_count = count($ebay_urls);
             }
@@ -246,17 +246,17 @@ class Marketplace extends \Opencart\System\Engine\Controller {
             $has_processable_listing = true;
 
             try {
-                $result = $this->model_shopmanager_marketplace->editToMarketplace($product_id, (int)$marketplace_account_id);
+                $result = $this->model_warehouse_marketplace_listing->editToMarketplace($product_id, (int)$marketplace_account_id);
 
                 // DEBUG TEMP
                 $this->log->write('[updateListedProduct] product_id=' . $product_id . ' item_id=' . $marketplace_item_id . ' Ack=' . ($result['Ack'] ?? 'N/A') . ' result=' . json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
 
                 if (isset($result['Ack']) && $result['Ack'] != 'Failure' && !isset($result['error'])) {
-                    $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($marketplace_item_id);
+                    $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($marketplace_item_id);
                     if ($_pm_row) {
                         $_pm_row['error'] = '';
                         $_pm_row['to_update'] = 0;
-                        $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                        $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
                     }
 
                     $json['results'][] = [
@@ -271,11 +271,11 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                         ? $error_payload
                         : json_encode($error_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-                    $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($marketplace_item_id);
+                    $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($marketplace_item_id);
                     if ($_pm_row) {
                         $_pm_row['error'] = (string)$error_json;
                         $_pm_row['to_update'] = 9;
-                        $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                        $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
                     }
 
                     $json['results'][] = [
@@ -290,11 +290,11 @@ class Marketplace extends \Opencart\System\Engine\Controller {
                 $error_payload = ['exception' => ['LongMessage' => $e->getMessage()]];
                 $error_json = json_encode($error_payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
-                $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($marketplace_item_id);
+                $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($marketplace_item_id);
                 if ($_pm_row) {
                     $_pm_row['error'] = (string)$error_json;
                     $_pm_row['to_update'] = 9;
-                    $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                    $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
                 }
 
                 $json['results'][] = [

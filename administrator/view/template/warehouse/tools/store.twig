@@ -1,4 +1,4 @@
-{# Original: shopmanager/opencart.twig #}
+{# Original: warehouse/tools/store.twig #}
 <div class="container-fluid" id="content">
   <div class="row">
     <img src="{{ opencart }}" class="mfp-img" alt="OpenCart">
@@ -83,7 +83,7 @@ function testConnection() {
   const url = document.getElementById("input-url").value;
   $.ajax({
     method: "POST",
-    url: 'index.php?route=shopmanager/opencart/testConnection',
+    url: 'index.php?route=warehouse/tools/store/testConnection',
     data: {version,userkey,regkey,url},
     dataType: 'json',
     crossDomain: true,
@@ -115,7 +115,7 @@ function connect() {
   if (successHtml !== "") {
     $.ajax({
       method: "POST",
-      url: 'index.php?route=shopmanager/opencart/add',
+      url: 'index.php?route=warehouse/tools/store/add',
       data: {version,userkey,regkey,url},
       dataType: 'json',
       crossDomain: true,

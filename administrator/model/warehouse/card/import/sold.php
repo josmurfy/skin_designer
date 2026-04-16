@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/card/import/card_sold_importer.php
-namespace Opencart\Admin\Model\Shopmanager\Card\Import;
+// Original: warehouse/card/import/sold.php
+namespace Opencart\Admin\Model\Warehouse\Card\Import;
 
-class CardSoldImporter extends \Opencart\System\Engine\Model {
+class Sold extends \Opencart\System\Engine\Model {
 
 
     // ─── READ ────────────────────────────────────────────────────────────────

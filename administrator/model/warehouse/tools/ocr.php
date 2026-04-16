@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/ocr.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/ocr.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 use Google\Cloud\Vision\V1\Client\ImageAnnotatorClient;
 use Google\Cloud\Vision\V1\Feature;

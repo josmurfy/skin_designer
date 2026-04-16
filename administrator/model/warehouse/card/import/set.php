@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/card/import/card_set_importer.php
-namespace Opencart\Admin\Model\Shopmanager\Card\Import;
+// Original: warehouse/card/import/set.php
+namespace Opencart\Admin\Model\Warehouse\Card\Import;
 
-class CardSetImporter extends \Opencart\System\Engine\Model {
+class Set extends \Opencart\System\Engine\Model {
 
     public function getCardPrices(array $data = []): array {
         $sql = 'SELECT * FROM ' . DB_PREFIX . 'card_set';

@@ -1,4 +1,4 @@
-{# Original: shopmanager/inventory/sync.twig #}
+{# Original: warehouse/marketplace/ebay/sync.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
 
@@ -9,9 +9,9 @@
   <input type="hidden" id="lang_updating" value="{{ text_updating }}" />
   <input type="hidden" id="user_token" value="{{ user_token }}" />
   <input type="hidden" id="url_get_data" value="{{ url_get_data }}" />
-  <input type="hidden" id="url_sync_marketplace" value="index.php?route=shopmanager/inventory/sync.importMarketplace&user_token={{ user_token }}" />
-  <input type="hidden" id="url_force_refresh_marketplace" value="index.php?route=shopmanager/inventory/sync.importMarketplace&force_refresh=1&user_token={{ user_token }}" />
-  <input type="hidden" id="url_scan_image_backup" value="index.php?route=shopmanager/inventory/sync.scanImageBackupCounts&user_token={{ user_token }}" />
+  <input type="hidden" id="url_sync_marketplace" value="index.php?route=warehouse/marketplace/ebay/sync.importMarketplace&user_token={{ user_token }}" />
+  <input type="hidden" id="url_force_refresh_marketplace" value="index.php?route=warehouse/marketplace/ebay/sync.importMarketplace&force_refresh=1&user_token={{ user_token }}" />
+  <input type="hidden" id="url_scan_image_backup" value="index.php?route=warehouse/marketplace/ebay/sync.scanImageBackupCounts&user_token={{ user_token }}" />
   <input type="hidden" id="url_not_imported_tab" value="{{ url_not_imported_tab }}" />
   <input type="hidden" id="url_to_update_tab" value="{{ url_to_update_tab }}" />
   <input type="hidden" id="url_not_synced_tab" value="{{ url_not_synced_tab }}" />
@@ -330,7 +330,7 @@
                                 <button type="button" class="btn btn-sm btn-info refresh-item-btn mb-1" data-product-id="{{ product.product_id }}" data-bs-toggle="tooltip" title="{{ tooltip_refresh_item }}">
                                   <i class="fa-solid fa-rotate"></i> 
                                 </button>
-                                <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ button_edit }}">
+                                <a href="index.php?route=warehouse/product/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ button_edit }}">
                                   <i class="fa-solid fa-edit"></i> 
                                 </a>
                               </div>
@@ -372,7 +372,7 @@
                             <td class="text-end">{{ product.unallocated_quantity }}</td>
                             <td class="text-end"><strong class="text-primary">{{ product.quantity + product.unallocated_quantity }}</strong></td>
                             <td class="text-center">
-                              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ text_edit_product }}">
+                              <a href="index.php?route=warehouse/product/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ text_edit_product }}">
                                 <i class="fa-solid fa-edit"></i>
                               </a>
                             </td>
@@ -488,7 +488,7 @@
                                 <button type="button" class="btn btn-sm btn-info refresh-item-btn mb-1" data-product-id="{{ product.product_id }}" data-bs-toggle="tooltip" title="{{ tooltip_refresh_item }}">
                                   <i class="fa-solid fa-rotate"></i> 
                                 </button>
-                                <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ button_edit }}">
+                                <a href="index.php?route=warehouse/product/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" title="{{ button_edit }}">
                                   <i class="fa-solid fa-edit"></i> 
                                 </a>
                               </div>

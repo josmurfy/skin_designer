@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/maintenance/product_description.php
+// Original: warehouse/maintenance/description.php
 // Heading
 $_['heading_title']    = 'Mantenimiento de Descripciones de Productos';
 

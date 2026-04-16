@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/card/card.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/card.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
 /**
  * Class Card

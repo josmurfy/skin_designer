@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/category_ebay_form.js
+// Original: warehouse/marketplace/ebay/category_form.js
 // category_ebay_form.js
 
 // ============================================

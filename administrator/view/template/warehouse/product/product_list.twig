@@ -1,4 +1,4 @@
-{# Original: shopmanager/catalog/product_list.twig #}
+{# Original: warehouse/product/product_list.twig #}
 <form id="form-product" method="post" enctype="multipart/form-data"  data-oc-toggle="ajax" data-oc-load="{{ action }}" data-oc-target="#product">
   <input type="hidden" name="user_token" value="{{ user_token }}">
  
@@ -61,8 +61,8 @@
               {% set count = (name_plain|length > 80) ? ' (' ~ name_plain|length ~ ')' : '' %}
               
               <td class="text-center" {{ style|raw }}
-                  onclick="window.open('index.php?route=shopmanager/google&user_token={{ user_token }}&query={{ product.name|url_encode }}', 'search_name', 'width=1200,height=800,resizable=yes,scrollbars=yes');
-                            window.open('index.php?route=shopmanager/google&user_token={{ user_token }}&query={{ product.upc|url_encode }}', 'search_upc', 'width=1200,height=800,resizable=yes,scrollbars=yes');"
+                  onclick="window.open('index.php?route=warehouse/tools/google&user_token={{ user_token }}&query={{ product.name|url_encode }}', 'search_name', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+                            window.open('index.php?route=warehouse/tools/google&user_token={{ user_token }}&query={{ product.upc|url_encode }}', 'search_upc', 'width=1200,height=800,resizable=yes,scrollbars=yes');"
                   style="cursor:pointer;">
                 {{ name ~ count }}
               </td>

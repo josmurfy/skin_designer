@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/list_fast.php
+// Original: warehouse/product/publish.php
 // Encabezado
 $_['heading_title'] = 'Listado rápido de productos';
 

@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/opencart.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/store.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 /**
  * @version [3.0.0.0] [Supported opencart version 3.x.x.x]
@@ -11,7 +11,7 @@ namespace Opencart\Admin\Model\Shopmanager;
  * @license https://store.webkul.com/license.html 
  */
 
-class Opencart extends \Opencart\System\Engine\Model {
+class Store extends \Opencart\System\Engine\Model {
 
 
 	/**
@@ -374,7 +374,7 @@ public function formatDataforDB($order,$account,$typerequest){
 						);
 					//	//print("<pre>".print_r ($data,true )."</pre>");
 //update 
-					//$xml2=$this->model_shopmanager_opencart->getExistingOrderDetail($account,$order['OrderID'],1);
+					//$xml2=$this->model_warehouse_tools_store->getExistingOrderDetail($account,$order['OrderID'],1);
 				//	//print("<pre>".print_r ($xml2,true )."</pre>");
 					//$shipments_order_opencart= json_encode($xml2);
 				//	$shipments_order_opencart= json_decode($shipments_order_opencart,true);

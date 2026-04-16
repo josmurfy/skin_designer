@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/order.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/order/order.php
+namespace Opencart\Admin\Model\Warehouse\Order;
 
 
 class Order extends \Opencart\System\Engine\Model {
@@ -80,18 +80,18 @@ private function detectSite(): array {
 
 public function getOrder($order_id = null){
 
-    $this->load->model('shopmanager/ebay');
+    $this->load->model('warehouse/marketplace/ebay/api');
 
-    $order = $this->model_shopmanager_ebay->getOrder($order_id);
+    $order = $this->model_warehouse_marketplace_ebay_api->getOrder($order_id);
 
     return $order;
 }
 
 public function getOrders(array $data = []): array {
 
-    $this->load->model('shopmanager/ebay');
-    $this->load->model('shopmanager/catalog/product');
-    $this->load->model('shopmanager/card/card');
+    $this->load->model('warehouse/marketplace/ebay/api');
+    $this->load->model('warehouse/product/product');
+    $this->load->model('warehouse/card/card');
 
     // Handle date filters
     if (!empty($data['filter_date_start']) && !empty($data['filter_date_end'])) {
@@ -111,7 +111,7 @@ public function getOrders(array $data = []): array {
         $date_transaction = gmdate('Y-m-d\TH:i:s.000\Z', strtotime("-10 days"));
     }
 
-    $orders = $this->model_shopmanager_ebay->getOrders($date_transaction);
+    $orders = $this->model_warehouse_marketplace_ebay_api->getOrders($date_transaction);
 
     $orders_output = [];
     $i = 0;
@@ -235,14 +235,14 @@ public function getOrders(array $data = []): array {
 
                         if ($orders_output[$i]['com'] == "CARD_") {
                             
-                            $data = $this->model_shopmanager_card_card->getCard((int)$orders_output[$i]['customlabel']);
+                            $data = $this->model_warehouse_card_card->getCard((int)$orders_output[$i]['customlabel']);
                         } elseif ($orders_output[$i]['com'] == "COM_" && $site['is_phoenixsupplies']) {
-                            $data = $this->model_shopmanager_catalog_product->getProduct((int)$orders_output[$i]['customlabel']);
+                            $data = $this->model_warehouse_product_product->getProduct((int)$orders_output[$i]['customlabel']);
                         } elseif ($orders_output[$i]['com'] == "COM_" && $site['is_phoenixliquidation']) {
 
                             $data = $this->getSisterProduct((int)$orders_output[$i]['customlabel']);
                         } elseif ($orders_output[$i]['com'] == "RET_" && $site['is_phoenixliquidation']) {
-                            $data = $this->model_shopmanager_catalog_product->getProduct((int)$orders_output[$i]['customlabel']);
+                            $data = $this->model_warehouse_product_product->getProduct((int)$orders_output[$i]['customlabel']);
                         } elseif ($orders_output[$i]['com'] == "RET_" && $site['is_phoenixsupplies']) {
 
                             $data = $this->getSisterProduct((int)$orders_output[$i]['customlabel']);
@@ -282,10 +282,10 @@ public function getOrders(array $data = []): array {
 
     public function updateQuantity($post = []) {
         // Charger le modèle qui gère les produits
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/card/card');
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/card/card');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
        
         // Group orders by product_id to cumulate quantities
         $products_to_update = [];
@@ -333,7 +333,7 @@ public function getOrders(array $data = []): array {
                 $quantity_final = $quantity - $needed_quantity;
                 if ($quantity_final < 0) $quantity_final = 0;
                 
-                $this->model_shopmanager_card_card->updateCardQuantity((int)$product_id, $quantity_final);
+                $this->model_warehouse_card_card->updateCardQuantity((int)$product_id, $quantity_final);
                 continue; // Skip product/eBay update for cards
             } elseif (strpos($com, 'COM_') === 0) {
                 // Se connecter à la première base de données
@@ -354,16 +354,16 @@ public function getOrders(array $data = []): array {
 
                 if ($com == "COM_" && $site['is_phoenixsupplies']) {
                   
-                    $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
-                    $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
+                    $this->model_warehouse_product_product->updateQuantity((int)$product_id, $quantity_final);
+                    $this->model_warehouse_product_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
                     
                 } elseif ($com == "COM_" && $site['is_phoenixliquidation']) {
 
                     $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
                    
                 } elseif ($com == "RET_" && $site['is_phoenixliquidation']) {
-                    $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
-                    $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
+                    $this->model_warehouse_product_product->updateQuantity((int)$product_id, $quantity_final);
+                    $this->model_warehouse_product_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
                     //print("<pre>".print_r (189,true )."</pre>");
                 } elseif ($com == "RET_" && $site['is_phoenixsupplies']) {
 
@@ -378,13 +378,13 @@ public function getOrders(array $data = []): array {
                                  || ($com != "COM_" && $com != "RET_");
 
                 if ($is_local_product) {
-                    $this->load->model('shopmanager/marketplace');
-                    $marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
+                    $this->load->model('warehouse/marketplace/listing');
+                    $marketplace_accounts_id = $this->model_warehouse_marketplace_listing->getMarketplace(['product_id' => $product_id]);
 
                     foreach($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account){
                         if(isset($marketplace_account['marketplace_item_id'])){
                             //print("<pre>".print_r ($marketplace_account,true )."</pre>");
-                          $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
+                          $result = $this->model_warehouse_marketplace_listing->editQuantity($product_id, $marketplace_account_id);
                           //print("<pre>".print_r ($result,true )."</pre>");
                           //$result=[]; 
                         /*  if(isset($result['Errors']) && $result['Ack']=='Failure'){
@@ -416,10 +416,10 @@ public function getOrders(array $data = []): array {
     }
     
     public function undoProductQuantity($post = []) {
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/card/card');
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/card/card');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
        
         $products_to_update = [];
         
@@ -463,7 +463,7 @@ public function getOrders(array $data = []): array {
                 // Card listing: restore oc_card.quantity directly
                 $quantity_final = $quantity + $needed_quantity;
                
-                $this->model_shopmanager_card_card->updateCardQuantity((int)$product_id, $quantity_final);
+                $this->model_warehouse_card_card->updateCardQuantity((int)$product_id, $quantity_final);
                 continue; // Skip product/eBay update for cards
             } elseif (strpos($com, 'COM_') === 0) {
                 $product_id = str_replace("COM_", "", $product_id);
@@ -483,13 +483,13 @@ public function getOrders(array $data = []): array {
             $quantity_total_final = $quantity_final + $unallocated_quantity_final;
 
             if ($com == "COM_" && $site['is_phoenixsupplies']) {
-                $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
-                $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
+                $this->model_warehouse_product_product->updateQuantity((int)$product_id, $quantity_final);
+                $this->model_warehouse_product_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
             } elseif ($com == "COM_" && $site['is_phoenixliquidation']) {
                 $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
             } elseif ($com == "RET_" && $site['is_phoenixliquidation']) {
-                $this->model_shopmanager_catalog_product->updateQuantity((int)$product_id, $quantity_final);
-                $this->model_shopmanager_catalog_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
+                $this->model_warehouse_product_product->updateQuantity((int)$product_id, $quantity_final);
+                $this->model_warehouse_product_product->updateUnallocatedQuantity((int)$product_id, $unallocated_quantity_final);
             } elseif ($com == "RET_" && $site['is_phoenixsupplies']) {
                 $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
             }
@@ -500,12 +500,12 @@ public function getOrders(array $data = []): array {
                              || ($com != "COM_" && $com != "RET_");
 
             if ($is_local_product) {
-                $this->load->model('shopmanager/marketplace');
-                $marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
+                $this->load->model('warehouse/marketplace/listing');
+                $marketplace_accounts_id = $this->model_warehouse_marketplace_listing->getMarketplace(['product_id' => $product_id]);
 
                 foreach($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account){
                     if(isset($marketplace_account['marketplace_item_id'])){
-                        $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
+                        $result = $this->model_warehouse_marketplace_listing->editQuantity($product_id, $marketplace_account_id);
                     }
                 }
             }

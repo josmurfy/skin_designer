@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/catalog/category_ebay.php
+// Original: warehouse/marketplace/ebay/category.php
 // En-tête
 $_['heading_title']          = 'Catégories eBay';
 

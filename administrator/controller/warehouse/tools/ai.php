@@ -1,17 +1,17 @@
 <?php
-// Original: shopmanager/ai.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/tools/ai.php
+namespace Opencart\Admin\Controller\Warehouse\Tools;
 
 class Ai extends \Opencart\System\Engine\Controller {
     public function prompt_ai(): void {
-        $this->load->language('shopmanager/ai');
+        $this->load->language('warehouse/tools/ai');
         $data = [];
         
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/tools/ai');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/ai')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/tools/ai')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->respondJson($json);
             return;
@@ -36,11 +36,11 @@ class Ai extends \Opencart\System\Engine\Controller {
         $temperature = isset($data['temperature']) ? (float)$data['temperature'] : 1.0;
 
         // Compute user_token budget (let model handle internal caps)
-        $max_tokens = $this->model_shopmanager_ai->countTokensOpenAI($system_prompt)
-                    + $this->model_shopmanager_ai->countTokensOpenAI($user_prompt);
+        $max_tokens = $this->model_warehouse_tools_ai->countTokensOpenAI($system_prompt)
+                    + $this->model_warehouse_tools_ai->countTokensOpenAI($user_prompt);
 
         try {
-            $ai_response = $this->model_shopmanager_ai->prompt_ai($user_prompt, $system_prompt, $max_tokens, $temperature);
+            $ai_response = $this->model_warehouse_tools_ai->prompt_ai($user_prompt, $system_prompt, $max_tokens, $temperature);
 
             if ($ai_response) {
                 $json['success'] = $ai_response;
@@ -57,14 +57,14 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
     public function prompt_ai_image(): void {
-        $this->load->language('shopmanager/ai');
+        $this->load->language('warehouse/tools/ai');
         $data = [];
         
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/tools/ai');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/ai')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/tools/ai')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->respondJson($json);
             return;
@@ -85,7 +85,7 @@ class Ai extends \Opencart\System\Engine\Controller {
         }
 
         $prompt = (string)$data['prompt'];
-        $ai_response = $this->model_shopmanager_ai->prompt_ai_image($prompt);
+        $ai_response = $this->model_warehouse_tools_ai->prompt_ai_image($prompt);
 
         if ($ai_response) {
             $json['success'] = $ai_response;
@@ -97,16 +97,16 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
     public function getProductSpecific(): void {
-        $this->load->language('shopmanager/ai');
+        $this->load->language('warehouse/tools/ai');
         $data = [];
         
-        $this->load->model('shopmanager/ai');
-        $this->load->model('shopmanager/catalog/category');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/tools/ai');
+        $this->load->model('warehouse/product/category');
+        $this->load->model('warehouse/product/product');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/ai')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/tools/ai')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->respondJson($json);
             return;
@@ -130,13 +130,13 @@ class Ai extends \Opencart\System\Engine\Controller {
         $product_id = (int)$data['product_id'];
         $aspectName = (string)$data['aspectName'];
 
-        $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $product_info = $this->model_warehouse_product_product->getProduct($product_id);
 
         // Resolve leaf category specifics
-        $categories = $this->model_shopmanager_catalog_product->getCategories($product_id);
+        $categories = $this->model_warehouse_product_product->getCategories($product_id);
         $category_specifics = [];
         foreach ($categories as $category_id) {
-            $category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+            $category_info = $this->model_warehouse_product_category->getCategory($category_id);
             if ($category_info && (string)$category_info['leaf'] === '1') {
                 $category_specifics = json_decode((string)$category_info['specifics'], true) ?? [];
                 break;
@@ -146,7 +146,7 @@ class Ai extends \Opencart\System\Engine\Controller {
         $aspectConstraint = $category_specifics[$aspectName]['aspectConstraint'] ?? '';
         $aspectValues = $category_specifics[$aspectName]['aspectValues'] ?? '';
 
-        $ai_response = $this->model_shopmanager_ai->getProductSpecific($product_info, $aspectName, $aspectValues, $aspectConstraint);
+        $ai_response = $this->model_warehouse_tools_ai->getProductSpecific($product_info, $aspectName, $aspectValues, $aspectConstraint);
 
         if ($ai_response) {
             // Ne pas utiliser ucwords() car il manque les caractères Unicode comme Ș, ă, etc.
@@ -161,14 +161,14 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
       public function translate(): void {
-        $this->load->language('shopmanager/ai');
+        $this->load->language('warehouse/tools/ai');
         $data = [];
         
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/tools/ai');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/ai')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/tools/ai')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->respondJson($json);
             return;
@@ -204,7 +204,7 @@ class Ai extends \Opencart\System\Engine\Controller {
         }
 
         try {
-            $ai_response = $this->model_shopmanager_ai->translate(json_encode($text_field)  , $targetLanguage);
+            $ai_response = $this->model_warehouse_tools_ai->translate(json_encode($text_field)  , $targetLanguage);
 
             if ($ai_response) {
                 $json['success'] = $ai_response;
@@ -221,15 +221,15 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
     public function getMadeInCountry(): void {
-        $this->load->language('shopmanager/ai');
+        $this->load->language('warehouse/tools/ai');
         $data = [];
         
-        $this->load->model('shopmanager/ai');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/tools/ai');
+        $this->load->model('warehouse/product/product');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/ai')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/tools/ai')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->respondJson($json);
             return;
@@ -251,7 +251,7 @@ class Ai extends \Opencart\System\Engine\Controller {
         }
 
         $product_id = (int)$data['product_id'];
-        $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $product_info = $this->model_warehouse_product_product->getProduct($product_id);
 
         if (!$product_info) {
             $json['error'] = 'Produit introuvable.';
@@ -261,7 +261,7 @@ class Ai extends \Opencart\System\Engine\Controller {
 
         try {
             $this->logSafe('getMadeInCountry: About to call AI model for product_id: ' . $product_id);
-            $ai_response = $this->model_shopmanager_ai->getMadeInCountry($product_info);
+            $ai_response = $this->model_warehouse_tools_ai->getMadeInCountry($product_info);
             $this->logSafe('getMadeInCountry: AI response: ' . json_encode($ai_response));
 
             if ($ai_response) {

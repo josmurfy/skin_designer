@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/catalog/category_specific.php
+// Original: warehouse/product/category_specific.php
 $_['heading_title'] = 'Especificidades de Categoría';
 $_['text_list'] = 'Lista de traducciones';
 $_['text_no_results'] = 'No se encontraron especificidades de categoría.';

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/search.php
+// Original: warehouse/card/search.php
 // ==== HEADINGS ====
 $_['heading_title']       = 'Card Value Search';
 

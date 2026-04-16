@@ -1,4 +1,4 @@
-// Original: shopmanager/inventory/sync.js
+// Original: warehouse/marketplace/ebay/sync.js
 /**
  * Performance Analytics JavaScript
  * 
@@ -115,7 +115,7 @@
                         );
                         setTimeout(function() {
                             $.ajax({
-                                url: 'index.php?route=shopmanager/inventory/sync.getImageMismatchTab&user_token=' + $('#user_token').val(),
+                                url: 'index.php?route=warehouse/marketplace/ebay/sync.getImageMismatchTab&user_token=' + $('#user_token').val(),
                                 type: 'GET',
                                 dataType: 'html',
                                 success: function(html) { $('#image-mismatch').html(html); }
@@ -358,7 +358,7 @@
             button.html('<i class="fa-solid fa-spinner fa-spin"></i> ' + updatingMsg);
             
             $.ajax({
-                url: 'index.php?route=shopmanager/inventory/sync.updateEbayQuantity&user_token=' + $('#user_token').val(),
+                url: 'index.php?route=warehouse/marketplace/ebay/sync.updateEbayQuantity&user_token=' + $('#user_token').val(),
                 type: 'POST',
                 data: { product_id: productId },
                 dataType: 'json',
@@ -429,7 +429,7 @@
             button.html('<i class="fa-solid fa-spinner fa-spin"></i> Syncing...');
             
             $.ajax({
-                url: 'index.php?route=shopmanager/inventory/sync.syncSingleProduct&user_token=' + $('#user_token').val(),
+                url: 'index.php?route=warehouse/marketplace/ebay/sync.syncSingleProduct&user_token=' + $('#user_token').val(),
                 type: 'POST',
                 data: { product_id: productId },
                 dataType: 'json',
@@ -478,7 +478,7 @@
             const userToken = $('#user_token').val();
             
             // Open print window for ALL mismatch products (no product_id = all)
-            const printUrl = 'index.php?route=shopmanager/inventory/sync.printMismatchReport&user_token=' + userToken;
+            const printUrl = 'index.php?route=warehouse/marketplace/ebay/sync.printMismatchReport&user_token=' + userToken;
             window.open(printUrl, '_blank', 'width=800,height=600');
         });
     }
@@ -513,7 +513,7 @@
                     updateDashboard(data);
                     
                     // Update URL without reload
-                    const newUrl = window.location.pathname + '?route=shopmanager/inventory/sync&user_token=' + userToken + '&period=' + period;
+                    const newUrl = window.location.pathname + '?route=warehouse/marketplace/ebay/sync&user_token=' + userToken + '&period=' + period;
                     window.history.pushState({period: period}, '', newUrl);
                     
                     showSuccessMessage('Analytics data refreshed successfully!');
@@ -690,8 +690,8 @@
         if (!confirm(confirmMsg)) return;
         
         const route = direction === 'to_ebay' 
-            ? 'shopmanager/inventory/sync.syncPriceToEbay'
-            : 'shopmanager/inventory/sync.syncPriceFromEbay';
+            ? 'warehouse/marketplace/ebay/sync.syncPriceToEbay'
+            : 'warehouse/marketplace/ebay/sync.syncPriceFromEbay';
         
         $.ajax({
             url: 'index.php?route=' + route + '&user_token=' + userToken,
@@ -732,8 +732,8 @@
         if (!confirm(confirmMsg)) return;
         
         const route = direction === 'to_ebay' 
-            ? 'shopmanager/inventory/sync.syncQuantityToEbay'
-            : 'shopmanager/inventory/sync.syncQuantityFromEbay';
+            ? 'warehouse/marketplace/ebay/sync.syncQuantityToEbay'
+            : 'warehouse/marketplace/ebay/sync.syncQuantityFromEbay';
         
         $.ajax({
             url: 'index.php?route=' + route + '&user_token=' + userToken,
@@ -753,7 +753,7 @@
                     });
                     // Recharger le tab qty mismatch (produit fixé = disparaît de la liste)
                     $.ajax({
-                        url: 'index.php?route=shopmanager/inventory/sync.getQtyMismatchTab&user_token=' + userToken,
+                        url: 'index.php?route=warehouse/marketplace/ebay/sync.getQtyMismatchTab&user_token=' + userToken,
                         type: 'GET',
                         data: { page: 1, sort: 'product_id', order: 'ASC' },
                         dataType: 'html',
@@ -788,8 +788,8 @@
         if (!confirm(confirmMsg)) return;
         
         const route = direction === 'to_ebay' 
-            ? 'shopmanager/inventory/sync.syncSpecificsToEbay'
-            : 'shopmanager/inventory/sync.syncSpecificsFromEbay';
+            ? 'warehouse/marketplace/ebay/sync.syncSpecificsToEbay'
+            : 'warehouse/marketplace/ebay/sync.syncSpecificsFromEbay';
         
         $.ajax({
             url: 'index.php?route=' + route + '&user_token=' + userToken,
@@ -828,7 +828,7 @@
         }
         
         $.ajax({
-            url: 'index.php?route=shopmanager/inventory/sync.refreshItemFromEbay&user_token=' + userToken,
+            url: 'index.php?route=warehouse/marketplace/ebay/sync.refreshItemFromEbay&user_token=' + userToken,
             type: 'POST',
             data: { product_id: productId },
             dataType: 'json',
@@ -911,7 +911,7 @@
         var $btn = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i> Importing...');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/inventory/sync.bulkGetItemNotImported&user_token=' + $('#user_token').val(),
+            url: 'index.php?route=warehouse/marketplace/ebay/sync.bulkGetItemNotImported&user_token=' + $('#user_token').val(),
             type: 'POST',
             data: { product_ids: ids },
             dataType: 'json',
@@ -1100,7 +1100,7 @@
             $btn.html('<i class="fa-solid fa-spinner fa-spin"></i> Updating ' + (index + 1) + '/' + total + '...');
 
             $.ajax({
-                url: 'index.php?route=shopmanager/inventory/sync.bulkUpdateToEbay&user_token=' + $('#user_token').val(),
+                url: 'index.php?route=warehouse/marketplace/ebay/sync.bulkUpdateToEbay&user_token=' + $('#user_token').val(),
                 type: 'POST',
                 data: { product_id: id },
                 dataType: 'json',

@@ -1,4 +1,4 @@
-{# Original: shopmanager/card/card.twig #}
+{# Original: warehouse/card/card.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -155,9 +155,9 @@
               url += '&limit=' + encodeURIComponent(limit);
           }
 
-           window.history.pushState({}, null, 'index.php?route=shopmanager/card/card&user_token={{ user_token }}' + url);
+           window.history.pushState({}, null, 'index.php?route=warehouse/card/card&user_token={{ user_token }}' + url);
 
-          $('#card-list').load('index.php?route=shopmanager/card/card.list&user_token={{ user_token }}' + url, function() {
+          $('#card-list').load('index.php?route=warehouse/card/card.list&user_token={{ user_token }}' + url, function() {
              /* if (typeof window.reinitImagePreview === 'function') {
                   window.reinitImagePreview();
               }
@@ -176,9 +176,9 @@
           $('#input-year').val('');
           $('#input-location').val('');
           $('#input-status').val('*');
-           window.history.pushState({}, null, 'index.php?route=shopmanager/card/card&user_token={{ user_token }}' + url);
+           window.history.pushState({}, null, 'index.php?route=warehouse/card/card&user_token={{ user_token }}' + url);
 
-          $('#card-list').load('index.php?route=shopmanager/card/card.list&user_token={{ user_token }}' + url, function() {
+          $('#card-list').load('index.php?route=warehouse/card/card.list&user_token={{ user_token }}' + url, function() {
              /* if (typeof window.reinitImagePreview === 'function') {
                   window.reinitImagePreview();
               }
@@ -223,6 +223,6 @@
     var TEXT_MERGE_MIN     = '{{ error_merge_min|escape('js') }}';
     var TEXT_CONFIRM_MERGE = '{{ text_confirm_merge|escape('js') }}';
     var TEXT_MERGE_SUCCESS = '{{ text_merge_success|escape('js') }}';
-    var URL_MERGE_CARDS    = 'index.php?route=shopmanager/card/card.mergeCards&user_token={{ user_token }}';
+    var URL_MERGE_CARDS    = 'index.php?route=warehouse/card/card.mergeCards&user_token={{ user_token }}';
 </script>
 {{ footer }}

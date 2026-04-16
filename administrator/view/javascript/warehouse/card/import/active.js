@@ -1,4 +1,4 @@
-// Original: shopmanager/card/import/card_price_active.js
+// Original: warehouse/card/import/active.js
 /**
  * card_price_active.js - Active Card Prices module
  * Standalone (no shared dependency)

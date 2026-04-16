@@ -1,4 +1,4 @@
-// Original: shopmanager/maintenance/image.js
+// Original: warehouse/maintenance/image.js
 /**
  * ShopManager - Maintenance Image
  * Page principale (validation + filtre)
@@ -13,7 +13,7 @@ $(document).ready(function() {
 
 function checkValidationStatus() {
     $.ajax({
-        url: 'index.php?route=shopmanager/maintenance/image.checkValidationStatus&user_token=' + MAINT_IMAGE_TOKEN,
+        url: 'index.php?route=warehouse/maintenance/image.checkValidationStatus&user_token=' + MAINT_IMAGE_TOKEN,
         dataType: 'json',
         success: function(json) {
             if (json.needs_validation) {
@@ -56,7 +56,7 @@ $('#btn-start-validation').on('click', function() {
 
     // Check if table needs to be created first
     $.ajax({
-        url: 'index.php?route=shopmanager/maintenance/image.checkValidationStatus&user_token=' + MAINT_IMAGE_TOKEN,
+        url: 'index.php?route=warehouse/maintenance/image.checkValidationStatus&user_token=' + MAINT_IMAGE_TOKEN,
         dataType: 'json',
         success: function(json) {
             validationStats.total_products = json.total_products;
@@ -65,7 +65,7 @@ $('#btn-start-validation').on('click', function() {
                 // Need to create table
                 $('#validation-status').html('<i class="fa-solid fa-cog fa-spin"></i> Creating maintenance table...');
                 $.ajax({
-                    url: 'index.php?route=shopmanager/maintenance/image.createValidationTable&user_token=' + MAINT_IMAGE_TOKEN,
+                    url: 'index.php?route=warehouse/maintenance/image.createValidationTable&user_token=' + MAINT_IMAGE_TOKEN,
                     type: 'post',
                     dataType: 'json',
                     success: function(result) {
@@ -99,7 +99,7 @@ function validateBatch(offset, total) {
     );
 
     $.ajax({
-        url: 'index.php?route=shopmanager/maintenance/image.validateBatch&user_token=' + MAINT_IMAGE_TOKEN,
+        url: 'index.php?route=warehouse/maintenance/image.validateBatch&user_token=' + MAINT_IMAGE_TOKEN,
         type: 'post',
         data: {offset: offset},
         dataType: 'json',
@@ -143,7 +143,7 @@ function validateBatch(offset, total) {
                 var reloadBtn = $('<button type="button" class="btn btn-primary">Reload List</button>');
                 reloadBtn.on('click', function() {
                     $('#report').html('<div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-3x"></i><br><br>Loading...</div>');
-                    $('#report').load('index.php?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN);
+                    $('#report').load('index.php?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN);
                     hideModal(document.getElementById('validation-modal'));
                 });
                 $('.modal-footer').html(reloadBtn);
@@ -218,8 +218,8 @@ $('#button-filter').on('click', function() {
     url += '&filter_orphan_images=' + ($('input[name=\'filter_orphan_images\']').is(':checked') ? '1' : '0');
     url += '&filter_zero_quantity=' + ($('input[name=\'filter_zero_quantity\']').is(':checked') ? '1' : '0');
 
-    window.history.pushState({}, null, 'index.php?route=shopmanager/maintenance/image&user_token=' + MAINT_IMAGE_TOKEN + url);
+    window.history.pushState({}, null, 'index.php?route=warehouse/maintenance/image&user_token=' + MAINT_IMAGE_TOKEN + url);
 
     $('#report').html('<div class="text-center py-5"><i class="fa-solid fa-circle-notch fa-spin fa-3x text-primary"></i><br><br><strong>Loading products...</strong></div>');
-    $('#report').load('index.php?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN + url);
+    $('#report').load('index.php?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN + url);
 });

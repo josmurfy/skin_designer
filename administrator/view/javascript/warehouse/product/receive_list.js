@@ -1,4 +1,4 @@
-// Original: shopmanager/fast_add_list.js
+// Original: warehouse/product/receive_list.js
 // Assurez-vous que le DOM est prêt
 
 function transferUnallocatedQuantity(productId) {
@@ -45,7 +45,7 @@ function transferUnallocatedQuantity(productId) {
 
                         // Envoyer les nouvelles données via AJAX pour mettre à jour la base de données
                         $.ajax({
-                            url: 'index.php?route=shopmanager/catalog/product.trfUnallocatedQuantity&user_token=' + user_token,
+                            url: 'index.php?route=warehouse/product/product.trfUnallocatedQuantity&user_token=' + user_token,
                             type: 'post',
                             data: {
                                 product_id: productId,
@@ -98,7 +98,7 @@ function transferUnallocatedQuantity(productId) {
 
                 // Envoyer les données via AJAX pour mettre à jour la base de données
                 $.ajax({
-                    url: 'index.php?route=shopmanager/catalog/product.trfUnallocatedQuantity&user_token=' + user_token,
+                    url: 'index.php?route=warehouse/product/product.trfUnallocatedQuantity&user_token=' + user_token,
                     type: 'post',
                     data: {
                         product_id: productId,
@@ -279,7 +279,7 @@ function confirmUnallocatedQuantity(productId, newUnallocatedQuantity, currentQu
 
     // Appel AJAX pour sauvegarder les données sur le serveur
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateUnallocatedQuantity&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.updateUnallocatedQuantity&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,
@@ -327,7 +327,7 @@ function confirmLocation(productId, newLocation) {
 
     // Appel AJAX pour sauvegarder les données sur le serveur si nécessaire
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateLocation&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.updateLocation&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,
@@ -364,7 +364,7 @@ function confirmQuantity(productId, finalQuantity, unallocatedQuantity, marketpl
   
     // Appel AJAX pour sauvegarder les données sur le serveur
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateQuantity&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.updateQuantity&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,
@@ -524,7 +524,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
             'source': function(request, response) {
                 $.ajax({
-                    url: 'index.php?route=shopmanager/catalog/product.autocomplete&user_token=' + user_token + '&' + filterType + '=' + encodeURIComponent(request),
+                    url: 'index.php?route=warehouse/product/product.autocomplete&user_token=' + user_token + '&' + filterType + '=' + encodeURIComponent(request),
                     dataType: 'json',
                     success: function(json) {
 

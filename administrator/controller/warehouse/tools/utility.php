@@ -1,13 +1,13 @@
 <?php
-// Original: shopmanager/tools.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/tools/utility.php
+namespace Opencart\Admin\Controller\Warehouse\Tools;
 
-class Tools extends \Opencart\System\Engine\Controller {
+class Utility extends \Opencart\System\Engine\Controller {
 
 
     public function uploadImagesFiles() {
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/tools/utility');
     //    $this->request->post['product_id']=27300;
  //print("<pre>" . print_r( $this->request->post['sourcecode'], true) . "</pre>");
         if (isset($this->request->post['product_id']) || isset($this->request->get['product_id'])) {
@@ -22,19 +22,19 @@ class Tools extends \Opencart\System\Engine\Controller {
             $imageUrls['secondary']=[];
            
             if(isset( $this->request->post['sourcecode']) && !empty( $this->request->post['sourcecode'])){
-                $imageUrlsReceived = $this->model_shopmanager_tools->extractImageUrls($this->request->post['sourcecode']);
+                $imageUrlsReceived = $this->model_warehouse_tools_utility->extractImageUrls($this->request->post['sourcecode']);
                 //print("<pre>" . print_r($imageUrlsReceived, true) . "</pre>");
                 if (isset($imageUrlsReceived) && is_array($imageUrlsReceived) && count($imageUrlsReceived) > 0) {
     
                     // Supprimer les images existantes SEULEMENT si on a des nouvelles images
-                    $this->model_shopmanager_tools->deleteProductImages($product_id, 'all');
+                    $this->model_warehouse_tools_utility->deleteProductImages($product_id, 'all');
 
                 //print("<pre>" . print_r($imageUrls, true) . "</pre>");
                     $image_temp=$imageUrlsReceived[0];
          //print("<pre>" . print_r($image_temp, true) . "</pre>");
                 
-                      $imageUrls['primary'] = $this->model_shopmanager_tools->uploadImages($image_temp,$product_id,'pri');
-                    $this->model_shopmanager_catalog_product->updateProductImage($product_id, $imageUrls['primary']);
+                      $imageUrls['primary'] = $this->model_warehouse_tools_utility->uploadImages($image_temp,$product_id,'pri');
+                    $this->model_warehouse_product_product->updateProductImage($product_id, $imageUrls['primary']);
                     $json['product_images'] = array(
                         'primary' => array(
                             'image' => $imageUrls['primary'] ?? null,
@@ -47,9 +47,9 @@ class Tools extends \Opencart\System\Engine\Controller {
                         foreach($imageUrlsReceived as $key=>$image ){
                             $image=$imageUrlsReceived[$key];
                         //	$product_search['product_image_temp'][] = ;
-                            $target_file = $this->db->escape($this->model_shopmanager_tools->uploadImages($image,$product_id,'sec')) ;
+                            $target_file = $this->db->escape($this->model_warehouse_tools_utility->uploadImages($image,$product_id,'sec')) ;
                             $imageUrls['secondary'][] = $target_file;
-                            $this->model_shopmanager_catalog_product->insertProductImage($product_id, $target_file);
+                            $this->model_warehouse_product_product->insertProductImage($product_id, $target_file);
                             $json['product_images']['secondary'][] = array(
                                 'image' => $target_file,
                                 'thumb' => $this->model_tool_image->resize($target_file, 100, 100),
@@ -59,12 +59,12 @@ class Tools extends \Opencart\System\Engine\Controller {
                      
                     }
                   
-                //	$this->model_shopmanager_tools->clearProductIDImages($product_id);
-                //	$this->model_shopmanager_tools->transferTempImages($product_id,$product_search);
+                //	$this->model_warehouse_tools_utility->clearProductIDImages($product_id);
+                //	$this->model_warehouse_tools_utility->transferTempImages($product_id,$product_search);
 
                     // Marquer le produit pour mise à jour sur eBay (sourcecode upload)
-                    $this->load->model('shopmanager/marketplace');
-                    $this->model_shopmanager_marketplace->setToUpdate((int)$product_id);
+                    $this->load->model('warehouse/marketplace/listing');
+                    $this->model_warehouse_marketplace_listing->setToUpdate((int)$product_id);
                 } else {
                     $json['error'] = 'Aucune image trouvée dans le lien ou code source fourni.';
                 }
@@ -74,9 +74,9 @@ class Tools extends \Opencart\System\Engine\Controller {
                 // Télécharger l'image principale
                 if($this->request->get['type'] == 'pri'){
                     if (!empty($this->request->files['imageprincipal']['tmp_name'])) {
-                        $this->model_shopmanager_tools->deleteProductImages($product_id, 'pri');
-                        $imageUrls['primary'] = $this->model_shopmanager_tools->addProductImage($product_id, $this->request->files['imageprincipal'],'pri');
-                        $this->model_shopmanager_catalog_product->updateProductImage($product_id, $imageUrls['primary']);
+                        $this->model_warehouse_tools_utility->deleteProductImages($product_id, 'pri');
+                        $imageUrls['primary'] = $this->model_warehouse_tools_utility->addProductImage($product_id, $this->request->files['imageprincipal'],'pri');
+                        $this->model_warehouse_product_product->updateProductImage($product_id, $imageUrls['primary']);
                         
                         // S'assurer que le fichier est écrit sur le disque avant de resize
                         clearstatcache();
@@ -89,7 +89,7 @@ class Tools extends \Opencart\System\Engine\Controller {
                             
                             // Si resize a échoué (retourne l'originale), créer manuellement avec Imagick
                             if (strpos($thumb, '/cache/') === false) {
-                                $thumb = $this->model_shopmanager_tools->manualResize($imageUrls['primary'], 100, 100);
+                                $thumb = $this->model_warehouse_tools_utility->manualResize($imageUrls['primary'], 100, 100);
                             }
                             
                             // Construire l'URL complète pour fullsize
@@ -106,8 +106,8 @@ class Tools extends \Opencart\System\Engine\Controller {
                         );
 
                         // Marquer le produit pour mise à jour sur eBay
-                        $this->load->model('shopmanager/marketplace');
-                        $this->model_shopmanager_marketplace->setToUpdate((int)$product_id);
+                        $this->load->model('warehouse/marketplace/listing');
+                        $this->model_warehouse_marketplace_listing->setToUpdate((int)$product_id);
                     } else {
                         $json['error'] = 'No file uploaded';
                     }
@@ -126,7 +126,7 @@ class Tools extends \Opencart\System\Engine\Controller {
                                     'size'     => $this->request->files['imagesecondary']['size'][$key]
                                 );
     
-                                $imageUrls['secondary'][] = $this->model_shopmanager_tools->addProductImage($product_id, $file,'sec');
+                                $imageUrls['secondary'][] = $this->model_warehouse_tools_utility->addProductImage($product_id, $file,'sec');
                             }
                         }
                     }
@@ -155,10 +155,10 @@ class Tools extends \Opencart\System\Engine\Controller {
     }
 
     public function uploadEbayImages() {
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
         $this->load->model('tool/image');
         
         $json = array();
@@ -168,7 +168,7 @@ class Tools extends \Opencart\System\Engine\Controller {
             
             try {
                 // Get marketplace data for this product using existing function
-                $marketplace_data = $this->model_shopmanager_marketplace->getMarketplace([
+                $marketplace_data = $this->model_warehouse_marketplace_listing->getMarketplace([
                     'product_id' => $product_id,
                     'marketplace_id' => 1
                 ]);
@@ -181,7 +181,7 @@ class Tools extends \Opencart\System\Engine\Controller {
                     
                     if (!empty($marketplace_item_id)) {
                         // Get eBay item images using existing function
-                        $imageUrls = $this->model_shopmanager_ebay->getImages($marketplace_item_id);
+                        $imageUrls = $this->model_warehouse_marketplace_ebay_api->getImages($marketplace_item_id);
                         
                         // DEBUG: Log what we got
                         $json['debug_marketplace_item_id'] = $marketplace_item_id;
@@ -191,7 +191,7 @@ class Tools extends \Opencart\System\Engine\Controller {
                         if (!empty($imageUrls)) {
                         
                         // Delete existing product images
-                        $this->model_shopmanager_tools->deleteProductImages($product_id, 'all');
+                        $this->model_warehouse_tools_utility->deleteProductImages($product_id, 'all');
                         
                         $json['product_images'] = array(
                             'primary' => null,
@@ -207,10 +207,10 @@ class Tools extends \Opencart\System\Engine\Controller {
                             }
 
                             if (!$primary_set) {
-                                $primary_image = $this->model_shopmanager_tools->uploadImages($image_url, $product_id, 'pri');
+                                $primary_image = $this->model_warehouse_tools_utility->uploadImages($image_url, $product_id, 'pri');
 
                                 if ($primary_image) {
-                                    $this->model_shopmanager_catalog_product->updateProductImage($product_id, $primary_image);
+                                    $this->model_warehouse_product_product->updateProductImage($product_id, $primary_image);
                                     $json['product_images']['primary'] = array(
                                         'image' => $primary_image,
                                         'thumb' => $this->model_tool_image->resize($primary_image, 100, 100)
@@ -222,10 +222,10 @@ class Tools extends \Opencart\System\Engine\Controller {
                                 continue;
                             }
 
-                            $secondary_image = $this->model_shopmanager_tools->uploadImages($image_url, $product_id, 'sec');
+                            $secondary_image = $this->model_warehouse_tools_utility->uploadImages($image_url, $product_id, 'sec');
 
                             if ($secondary_image) {
-                                $this->model_shopmanager_catalog_product->insertProductImage($product_id, $secondary_image);
+                                $this->model_warehouse_product_product->insertProductImage($product_id, $secondary_image);
 
                                 $json['product_images']['secondary'][] = array(
                                     'image' => $secondary_image,
@@ -262,7 +262,7 @@ class Tools extends \Opencart\System\Engine\Controller {
     }
 
     public function deleteProductImagePermanent() {
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/product/product');
         
         $json = array();
         
@@ -272,7 +272,7 @@ class Tools extends \Opencart\System\Engine\Controller {
             
             try {
                 // Delete from database
-                $this->model_shopmanager_catalog_product->deleteProductImageById($product_image_id);
+                $this->model_warehouse_product_product->deleteProductImageById($product_image_id);
                 
                 // Delete physical file
                 $full_path = DIR_IMAGE . $image_path;
@@ -301,9 +301,9 @@ class Tools extends \Opencart\System\Engine\Controller {
 public function deleteProductImage() {
 
 $this->load->model('tool/image');
-$this->load->model('shopmanager/catalog/category');
-$this->load->model('shopmanager/catalog/product');
-$this->load->model('shopmanager/tools');
+$this->load->model('warehouse/product/category');
+$this->load->model('warehouse/product/product');
+$this->load->model('warehouse/tools/utility');
 $json = array();
 
 if (isset($this->request->post['product_id']) && isset($this->request->post['image']) && isset($this->request->post['type'])) {
@@ -313,7 +313,7 @@ if (isset($this->request->post['product_id']) && isset($this->request->post['ima
 
 
     // Appeler la méthode du modèle pour supprimer l'image
-    $result = $this->model_shopmanager_tools->deleteProductImage($product_id, $image, $type);
+    $result = $this->model_warehouse_tools_utility->deleteProductImage($product_id, $image, $type);
 
     if ($result === true) {
         $json['success'] = 'Image supprimée avec succès.';
@@ -345,7 +345,7 @@ public function create_label($sku = '', $upc ='', $quantity = 1) {
 
     //print("<pre>" . print_r( $this->request->get, true) . "</pre>");
 
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
     // Récupérer les données de l'URL ou du POST
     $sku = '';
     if (!empty($this->request->get['sku']) && $this->request->get['sku'] != 'null') {
@@ -401,7 +401,7 @@ public function create_label($sku = '', $upc ='', $quantity = 1) {
     //print("<pre>" . print_r( $data, true) . "</pre>");
     // Sortie du PDF pour affichage dans le navigateur
     //$json['url'] = 
-    $this->response->setOutput($this->load->view('shopmanager/create_label', $data));
+    $this->response->setOutput($this->load->view('warehouse/inventory/create_label', $data));
     //unlink($qrCodeFile);
     //$this->response->addHeader('Content-Type: application/json');
    // $this->response->setOutput(json_encode($json));

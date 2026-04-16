@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/inventory/allocation.php
+// Original: warehouse/inventory/allocation.php
 // Heading
 $_['heading_title']          = 'Asignación de Inventario';
 

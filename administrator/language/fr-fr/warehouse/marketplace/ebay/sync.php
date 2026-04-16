@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/inventory/sync.php
+// Original: warehouse/marketplace/ebay/sync.php
 // Heading
 $_['heading_title'] = 'Sync & Issues';
 

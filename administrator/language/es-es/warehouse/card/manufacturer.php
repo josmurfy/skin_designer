@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/card_manufacturer.php
+// Original: warehouse/card/manufacturer.php
 // Heading
 $_['heading_title']         = 'Fabricantes de Cartas';
 

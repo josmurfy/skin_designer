@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/inventory.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/inventory/inventory.php
+namespace Opencart\Admin\Model\Warehouse\Inventory;
 
 class Inventory extends \Opencart\System\Engine\Model {
 

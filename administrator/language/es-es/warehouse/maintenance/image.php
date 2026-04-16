@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/maintenance/image.php
+// Original: warehouse/maintenance/image.php
 // Heading
 $_['heading_title']          = 'Verificación de Imágenes de Productos';
 

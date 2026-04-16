@@ -1,4 +1,4 @@
-{# Original: shopmanager/inventory/sync_category_mismatch.twig #}
+{# Original: warehouse/marketplace/ebay/sync_category_mismatch.twig #}
 {# Category Mismatch Tab with Pagination and Ordering #}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div>
@@ -125,7 +125,7 @@
                   <i class="fa-solid fa-star"></i> {{ product.source_percent }}%
                 </button>
                 {% endif %}
-                <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}"
+                <a href="index.php?route=warehouse/product/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}"
                    class="btn btn-xs btn-outline-secondary"
                    title="Edit product" target="_blank">
                   <i class="fa-solid fa-edit"></i>
@@ -222,10 +222,10 @@ $(document).ready(function() {
     console.log('Direction:', direction);
     console.log('Route:', route);
     console.log('Product IDs:', productIds);
-    console.log('URL:', 'index.php?route=shopmanager/inventory/sync.' + route + '&user_token={{ user_token }}');
+    console.log('URL:', 'index.php?route=warehouse/marketplace/ebay/sync.' + route + '&user_token={{ user_token }}');
     
     $.ajax({
-      url: 'index.php?route=shopmanager/inventory/sync.' + route + '&user_token={{ user_token }}',
+      url: 'index.php?route=warehouse/marketplace/ebay/sync.' + route + '&user_token={{ user_token }}',
       type: 'POST',
       data: {product_ids: productIds},
       dataType: 'json',
@@ -282,7 +282,7 @@ $(document).ready(function() {
   
   function loadCategoryMismatchTab(page, sort, order) {
     $.ajax({
-      url: 'index.php?route=shopmanager/inventory/sync.getCategoryMismatchTab&user_token={{ user_token }}',
+      url: 'index.php?route=warehouse/marketplace/ebay/sync.getCategoryMismatchTab&user_token={{ user_token }}',
       type: 'GET',
       data: {
         page: page,
@@ -327,7 +327,7 @@ $(document).ready(function() {
     if (!confirm(msgs[direction] || 'Confirm?')) return;
 
     $.ajax({
-      url: 'index.php?route=shopmanager/inventory/sync.' + routes[direction] + '&user_token={{ user_token }}',
+      url: 'index.php?route=warehouse/marketplace/ebay/sync.' + routes[direction] + '&user_token={{ user_token }}',
       type: 'POST',
       data: {product_id: productId},
       dataType: 'json',

@@ -1,12 +1,12 @@
 <?php
-// Original: shopmanager/ebay.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/marketplace/ebay/api.php
+namespace Opencart\Admin\Controller\Warehouse\Marketplace\Ebay;
 
-class Ebay extends \Opencart\System\Engine\Controller {
+class Api extends \Opencart\System\Engine\Controller {
     private $error = array();
 
     public function index(): void {
-        $this->load->language('shopmanager/ebay');
+        $this->load->language('warehouse/marketplace/ebay/api');
         $data = [];
         
 
@@ -20,7 +20,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
 
-            $this->response->redirect($this->url->link('shopmanager/ebay', 'user_token=' . $this->session->data['user_token'], true));
+            $this->response->redirect($this->url->link('warehouse/marketplace/ebay/api', 'user_token=' . $this->session->data['user_token'], true));
         }
 
         $data['heading_title'] = ($lang['heading_title'] ?? '');
@@ -70,25 +70,25 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/ebay', 'user_token=' . $this->session->data['user_token'], true)
+            'href' => $this->url->link('warehouse/marketplace/ebay/api', 'user_token=' . $this->session->data['user_token'], true)
         );
 
-        $data['action'] = $this->url->link('shopmanager/ebay', 'user_token=' . $this->session->data['user_token'], true);
+        $data['action'] = $this->url->link('warehouse/marketplace/ebay/api', 'user_token=' . $this->session->data['user_token'], true);
         $data['cancel'] = $this->url->link('common/dashboard', 'user_token=' . $this->session->data['user_token'], true);
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/marketplace/listing_popup');
 
         // Render the template with the data
-        $this->response->setOutput($this->load->view('shopmanager/ebay_template_form', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/api_template_form', $data));
     }
 
     protected function validate() {
-        if (!$this->user->hasPermission('modify', 'shopmanager/ebay')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/marketplace/ebay/api')) {
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
@@ -97,8 +97,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
     public function endListing(){
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
      
         $json = array();
 
@@ -119,14 +119,14 @@ class Ebay extends \Opencart\System\Engine\Controller {
                 
                 // Appel eBay (si déjà terminé on ignore l'erreur)
                 try {
-                    $result = $this->model_shopmanager_ebay->endListing($marketplace_item_id);
+                    $result = $this->model_warehouse_marketplace_ebay_api->endListing($marketplace_item_id);
                 } catch (\Exception $e) {
                     $result = null;
                     $json['ebay_warning'] = $e->getMessage();
                 }
 
                 // Toujours effacer l'item_id en DB même si eBay retourne une erreur
-                $this->model_shopmanager_marketplace->deleteProductMarketplaceItemId($marketplace_item_id);
+                $this->model_warehouse_marketplace_listing->deleteProductMarketplaceItemId($marketplace_item_id);
 
                 $json['success'] = true;
                 $json['message'] = '';
@@ -147,8 +147,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
     public function relist(){
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/product/product');
      
         $json = array();
 
@@ -162,13 +162,13 @@ class Ebay extends \Opencart\System\Engine\Controller {
                //print("<pre>".print_r ($data,true )."</pre>");
                 
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->relist($marketplace_item_id);
+                $result=$this->model_warehouse_marketplace_ebay_api->relist($marketplace_item_id);
            //print("<pre>".print_r ($result,true )."</pre>");
               
 
                 if ($result['Ack']!='Failure') {
                    
-                    $this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
+                    $this->model_warehouse_product_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
                     $json['success'] = true;
                     $json['message'] = $result;
                     $json['marketplace_item_id'] = $result['ItemID'];
@@ -193,8 +193,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
     public function add(){
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/product/product');
      
         $json = array();
 
@@ -209,13 +209,13 @@ class Ebay extends \Opencart\System\Engine\Controller {
                //print("<pre>".print_r ($data,true )."</pre>");
                 
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->addListing($product_id,$quantity,$site_id);
+                $result=$this->model_warehouse_marketplace_ebay_api->addListing($product_id,$quantity,$site_id);
            //print("<pre>".print_r ($result,true )."</pre>");
               
 
                 if ($result['Ack']!='Failure') {
-                    //$this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,'');
-           //         $this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
+                    //$this->model_warehouse_product_product->editProductMarketplaceItemId($product_id,'');
+           //         $this->model_warehouse_product_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
                     $data = array(
                         'customer_id' => 10,
                         'product_id' => $product_id,
@@ -234,7 +234,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
                         'ebay_image_count' => 0,
                     );
 
-                    $this->model_shopmanager_marketplace->addProductMarketplace($data);
+                    $this->model_warehouse_marketplace_listing->addProductMarketplace($data);
                     $json['success'] = true;
                     $json['marketplace_item_id'] = $result['ItemID'];
                     $json['message'] = $result;
@@ -259,7 +259,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
     public function edit(){
 
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
      
         $json = array();
 
@@ -271,7 +271,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
             //print("<pre>".print_r ($post,true )."</pre>");
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->editListing($product_id);
+                $result=$this->model_warehouse_marketplace_ebay_api->editListing($product_id);
                //print("<pre>".print_r ($result,true )."</pre>");
               
 
@@ -302,8 +302,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
         ini_set('display_errors', 1);
         ini_set('display_startup_errors', 1);
         error_reporting(E_ALL);
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
      
         $json = array();
  
@@ -327,7 +327,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
             //print("<pre>".print_r ($this->request->post,true )."</pre>");
         
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->editPrice($marketplace_item_id, $price,$made_in_country_id);
+                $result=$this->model_warehouse_marketplace_ebay_api->editPrice($marketplace_item_id, $price,$made_in_country_id);
             
                
                 if (isset($result['Ack']) && $result['Ack']!='Failure') {
@@ -374,24 +374,24 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
                     //print("<pre>".print_r ('ebay:334',true )."</pre>");
                     //print("<pre>".print_r ($result,true )."</pre>");
-                            $result = $this->model_shopmanager_ebay->endListing($marketplace_item_id);
+                            $result = $this->model_warehouse_marketplace_ebay_api->endListing($marketplace_item_id);
                       //print("<pre>".print_r ('ebay:331',true )."</pre>");
                       //print("<pre>".print_r ($result,true )."</pre>");
                      
-                            $existingEntry = $this->model_shopmanager_marketplace->getMarketplace([
+                            $existingEntry = $this->model_warehouse_marketplace_listing->getMarketplace([
                                 'marketplace_item_id' => $marketplace_item_id
                             ]);
                             $existing_data= json_decode($existingEntry[$marketplace_item_id],true);
-                            $this->model_shopmanager_marketplace->deleteProductMarketplaceItemId($marketplace_item_id);
+                            $this->model_warehouse_marketplace_listing->deleteProductMarketplaceItemId($marketplace_item_id);
                             // Remettre en liste l'élément eBay
-                            $result = $this->model_shopmanager_ebay->relist($marketplace_item_id);
+                            $result = $this->model_warehouse_marketplace_ebay_api->relist($marketplace_item_id);
                             $existing_data['marketplace_item_id'] = $result['ItemID'];
                             $existing_data['to_update'] = 0;
                            
                             if ($result['Ack']!='Failure') {
-                                //$this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,'');\
-                                $result=$this->model_shopmanager_ebay->editPrice($result['ItemID'], $price);
-                                $this->model_shopmanager_marketplace->addProductMarketplace($existing_data);
+                                //$this->model_warehouse_product_product->editProductMarketplaceItemId($product_id,'');\
+                                $result=$this->model_warehouse_marketplace_ebay_api->editPrice($result['ItemID'], $price);
+                                $this->model_warehouse_marketplace_listing->addProductMarketplace($existing_data);
                                 $json['success'] = true;
                               //  $json['message'] = $result;
                                 $json['message'] = $result;
@@ -428,7 +428,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
     public function getCategorySpecifics(){
 
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
      
         $json = array();
 
@@ -441,7 +441,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
            //     $category_id=617;
            //print("<pre>".print_r ($post,true )."</pre>");
                 // Mise à jour des tarifs dans la base de données
-                $result=$this->model_shopmanager_ebay->getCategorySpecifics($category_id,$site_id);
+                $result=$this->model_warehouse_marketplace_ebay_api->getCategorySpecifics($category_id,$site_id);
               
               
             //print("<pre>".print_r ($result,true )."</pre>");
@@ -470,13 +470,13 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
 
     public function getCategoryId() {
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
         
         $json = [];
     
         if (isset($this->request->get['upc']) && $this->request->get['upc']) {
             $gtin = $this->request->get['upc'];
-            $category_id = $this->model_shopmanager_ebay->get($gtin,  null,  null,  null,  10,  null,  null, 1, null, true) ;;
+            $category_id = $this->model_warehouse_marketplace_ebay_api->get($gtin,  null,  null,  null,  10,  null,  null, 1, null, true) ;;
     
             if ($category_id) {
                 $json['success'] = true;
@@ -498,16 +498,16 @@ class Ebay extends \Opencart\System\Engine\Controller {
         ini_set('display_errors', 1);
         ini_set('display_startup_errors', 1);
         error_reporting(E_ALL);
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/catalog/category');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/product/category');
        $site_id=100;
-        $leafCategories=$this->model_shopmanager_ebay->getLeafCategories($site_id);
+        $leafCategories=$this->model_warehouse_marketplace_ebay_api->getLeafCategories($site_id);
     //print("<pre>".print_r ($leafCategories,true )."</pre>");
         foreach($leafCategories as $category){
             
             $category_id=$category['CategoryID'];
         
-           $result=$this->model_shopmanager_catalog_category->editCategoryEbay_site_id($category_id, $site_id);
+           $result=$this->model_warehouse_product_category->editCategoryEbay_site_id($category_id, $site_id);
 
            if(!is_numeric($result)){
             //print("<pre>".print_r ($result,true )."</pre>");
@@ -519,13 +519,13 @@ class Ebay extends \Opencart\System\Engine\Controller {
         echo "<br>NB Category Leaf eBay Motor: ".count($leafCategories);
 
         $site_id=0;
-        $leafCategories=$this->model_shopmanager_ebay->getLeafCategories($site_id);
+        $leafCategories=$this->model_warehouse_marketplace_ebay_api->getLeafCategories($site_id);
     //print("<pre>".print_r ($leafCategories,true )."</pre>");
         foreach($leafCategories as $category){
             
             $category_id=$category['CategoryID'];
         
-           $result=$this->model_shopmanager_catalog_category->editCategoryEbay_site_id($category_id, $site_id);
+           $result=$this->model_warehouse_product_category->editCategoryEbay_site_id($category_id, $site_id);
 
            if(!is_numeric($result)){
             //print("<pre>".print_r ($result,true )."</pre>");
@@ -545,9 +545,9 @@ class Ebay extends \Opencart\System\Engine\Controller {
         error_reporting(E_ALL);
         //print("<pre>".print_r ('411:ebay.php',true )."</pre>");
 
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
-     //   $result=$this->model_shopmanager_ebay->fetchAndAddAllCategories(100);
+     //   $result=$this->model_warehouse_marketplace_ebay_api->fetchAndAddAllCategories(100);
       //print("<pre>".print_r ($result,true )."</pre>");
 
         //echo $result
@@ -555,9 +555,9 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
 
     public function processAndCompareAllEbayCategories(){
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
-        $result=$this->model_shopmanager_catalog_category_ebay->processAndCompareAllEbayCategories();
+        $result=$this->model_warehouse_marketplace_ebay_category->processAndCompareAllEbayCategories();
     //print("<pre>".print_r ($result,true )."</pre>");
 
         //echo $result
@@ -565,17 +565,17 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
 
     public function trfCategoriesSpecifics (){
-		$this->load->model('shopmanager/catalog/category_ebay');
+		$this->load->model('warehouse/marketplace/ebay/category');
 
-        $this->model_shopmanager_catalog_category_ebay->trfCategoriesSpecifics();
+        $this->model_warehouse_marketplace_ebay_category->trfCategoriesSpecifics();
 	}
 	
     public function searchByName() {
-        $this->load->language('shopmanager/ebay');
+        $this->load->language('warehouse/marketplace/ebay/api');
         $data = [];
         
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/tools/utility');
         $json = [];
       //print("<pre>".print_r (value: '446:ebay' )."</pre>");
         $data = json_decode(file_get_contents('php://input'), true);
@@ -611,7 +611,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
           
 
             // Appel de la méthode get() pour récupérer les produits eBay
-            $data_result = $this->model_shopmanager_ebay->get(null, $data['keyword']);
+            $data_result = $this->model_warehouse_marketplace_ebay_api->get(null, $data['keyword']);
         //print("<pre>".print_r (value: '477:ebay' )."</pre>");
         //print("<pre>".print_r($data_result, true)."</pre>");
             if ($data_result) {
@@ -630,7 +630,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
                 $json['success'] = true;
     
                 // Charge la vue en tant que HTML
-                $json['html'] = $this->load->view('shopmanager/ebay_search_results', $data_result);
+                $json['html'] = $this->load->view('warehouse/marketplace/ebay/api_search_results', $data_result);
             } else {
                 $json['error'] = ($lang['error_no_items_found'] ?? '');
             }
@@ -641,7 +641,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
    
     public function getProduct() {
-        $this->load->language('shopmanager/ebay'); // Charger le fichier de langue
+        $this->load->language('warehouse/marketplace/ebay/api'); // Charger le fichier de langue
         $json = [];
 
       //  if ($this->request->server['REQUEST_METHOD'] === 'POST') {
@@ -656,8 +656,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
                 $json['error'] = ($lang['error_missing_parameters'] ?? '');
             } else {
                 // Charger le modèle et récupérer les données
-                $this->load->model('shopmanager/ebay');
-                $productData = $this->model_shopmanager_ebay->getProduct($marketplace_item_id);
+                $this->load->model('warehouse/marketplace/ebay/api');
+                $productData = $this->model_warehouse_marketplace_ebay_api->getProduct($marketplace_item_id);
              //print("<pre>".print_r ($productData,true )."</pre>");
                 if ($productData) {
                    // $productData= json_decode($productData,true); 
@@ -689,8 +689,8 @@ class Ebay extends \Opencart\System\Engine\Controller {
      * Returns: { success, price_sold, price_list, keyword, api_error }
      */
     public function getMarketPrices(): void {
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/card');
         $json = [];
 
         $keyword = trim($this->request->post['keyword'] ?? '');
@@ -707,7 +707,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $card = $this->model_shopmanager_card_card->getCardById($card_id);
+        $card = $this->model_warehouse_card_card->getCardById($card_id);
         if (empty($card)) {
             $json['error'] = 'Card not found';
             $this->log->write('[getMarketPrices][error] card not found card_id=' . $card_id);
@@ -790,7 +790,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
             $ownBuyNow = [];
 
             if ($excludeItemId !== '') {
-                $ownListingSummary = $this->model_shopmanager_ebay->getOwnListingPriceSummary($excludeItemId, [
+                $ownListingSummary = $this->model_warehouse_marketplace_ebay_api->getOwnListingPriceSummary($excludeItemId, [
                     'site_id' => $siteId,
                     'marketplace_account_id' => 1,
                 ]);
@@ -815,7 +815,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
 
             $keywordsTried = [];
             $keywordsTried[] = $keyword;
-            $marketData = $this->model_shopmanager_ebay->searchAndClassifyActiveItems($keyword, $searchOptions, 1, $excludeItemId);
+            $marketData = $this->model_warehouse_marketplace_ebay_api->searchAndClassifyActiveItems($keyword, $searchOptions, 1, $excludeItemId);
 
             $this->log->write("[getMarketPrices][ebay_output]\n" . print_r($marketData, true));
             $warnings = ob_get_clean();
@@ -842,7 +842,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
                 $buyNowGraded['price'] = round((float)$this->currency->convert((float)$buyNowGraded['price'], (string)($buyNowGraded['currency'] ?? 'USD'), 'CAD'), 2);
             }
 
-            $this->model_shopmanager_card_card->updateCardMarketPrices($card_id, $auctionRaw['price'] ?? null, $buyNowRaw['price'] ?? null);
+            $this->model_warehouse_card_card->updateCardMarketPrices($card_id, $auctionRaw['price'] ?? null, $buyNowRaw['price'] ?? null);
 
             $json['success'] = true;
             $json['card_id'] = $card_id;
@@ -891,7 +891,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
             $json['api_auto_corrections'] = $marketData['auto_corrections'] ?? [];
             $json['api_warnings'] = $marketData['warnings'] ?? [];
             $json['rate_limited'] = $this->isApiRateLimitedMessage($json['api_error']);
-            $json['manual_urls'] = $this->model_shopmanager_ebay->buildManualEbayUrls($keyword);
+            $json['manual_urls'] = $this->model_warehouse_marketplace_ebay_api->buildManualEbayUrls($keyword);
             if ($warnings) {
                 $json['php_warning'] = trim($warnings);
             }
@@ -902,7 +902,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Exception: ' . $e->getMessage() . ' in ' . basename($e->getFile()) . ':' . $e->getLine();
             $json['rate_limited'] = $this->isApiRateLimitedMessage($json['error']);
             if ($keyword !== '') {
-                $json['manual_urls'] = $this->model_shopmanager_ebay->buildManualEbayUrls($keyword);
+                $json['manual_urls'] = $this->model_warehouse_marketplace_ebay_api->buildManualEbayUrls($keyword);
             }
             $this->log->write('[getMarketPrices][exception] card_id=' . $card_id . ' msg=' . $e->getMessage());
         }

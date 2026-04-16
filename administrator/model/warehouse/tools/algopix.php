@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/algopix.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/algopix.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 
 class Algopix extends \Opencart\System\Engine\Model {

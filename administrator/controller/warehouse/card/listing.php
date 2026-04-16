@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/card/card_listing.php
-namespace Opencart\Admin\Controller\Shopmanager\Card;
+// Original: warehouse/card/listing.php
+namespace Opencart\Admin\Controller\Warehouse\Card;
 
 /**
  * Class CardListing
@@ -9,7 +9,7 @@ namespace Opencart\Admin\Controller\Shopmanager\Card;
  *
  * @package Opencart\Admin\Controller\Shopmanager\Card
  */
-class CardListing extends \Opencart\System\Engine\Controller {
+class Listing extends \Opencart\System\Engine\Controller {
     private $error = array();
 
     /**
@@ -18,7 +18,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function index(): void {
-        $data = $this->load->language('shopmanager/card/card_listing');
+        $data = $this->load->language('warehouse/card/listing');
 
         // Filters
         if (isset($this->request->get['filter_listing_id'])) {
@@ -166,20 +166,20 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = [
             'text' => ($data['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/card/card_listing', 'user_token=' . $this->session->data['user_token'] . $url)
+            'href' => $this->url->link('warehouse/card/listing', 'user_token=' . $this->session->data['user_token'] . $url)
         ];
 
-        $data['add'] = $this->url->link('shopmanager/card/card_listing.form', 'user_token=' . $this->session->data['user_token'] . $url);
-        $data['delete'] = $this->url->link('shopmanager/card/card_listing.delete', 'user_token=' . $this->session->data['user_token']);
-        $data['url_update_location'] = html_entity_decode($this->url->link('shopmanager/card/card_listing.updateLocation', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_check_ebay_health'] = html_entity_decode($this->url->link('shopmanager/card/card_listing.checkEbayHealth', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['add'] = $this->url->link('warehouse/card/listing.form', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['delete'] = $this->url->link('warehouse/card/listing.delete', 'user_token=' . $this->session->data['user_token']);
+        $data['url_update_location'] = html_entity_decode($this->url->link('warehouse/card/listing.updateLocation', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_check_ebay_health'] = html_entity_decode($this->url->link('warehouse/card/listing.checkEbayHealth', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
         $data['user_token'] = $this->session->data['user_token'];
 
-        $data['list'] = $this->load->controller('shopmanager/card/card_listing.getList');
+        $data['list'] = $this->load->controller('warehouse/card/listing.getList');
 
         // Load card types for filter dropdown
-        $this->load->model('shopmanager/card/card_type');
-        $data['card_types'] = $this->model_shopmanager_card_card_type->getCardTypes();
+        $this->load->model('warehouse/card/type');
+        $data['card_types'] = $this->model_warehouse_card_type->getCardTypes();
 
         $data['filter_listing_id'] = $filter_listing_id;
         $data['filter_set_name'] = $filter_set_name;
@@ -201,7 +201,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/card_listing', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/listing', $data));
     }
 
     /**
@@ -210,7 +210,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function list(): void {
-        $this->response->setOutput($this->load->controller('shopmanager/card/card_listing.getList'));
+        $this->response->setOutput($this->load->controller('warehouse/card/listing.getList'));
     }
 
     /**
@@ -219,9 +219,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return string
      */
     public function getList(): string {
-        $data = $this->load->language('shopmanager/card/card_listing');
+        $data = $this->load->language('warehouse/card/listing');
 
-        $this->document->addScript('view/javascript/shopmanager/card_listing_list.js');
+        $this->document->addScript('view/javascript/warehouse/card/listing_list.js');
 
         // Filters
         if (isset($this->request->get['filter_listing_id'])) {
@@ -372,10 +372,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $url .= '&limit=' . $this->request->get['limit'];
         }
 
-        $data['action'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['action'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . $url);
 
-        $data['url_update_location'] = html_entity_decode($this->url->link('shopmanager/card/card_listing.updateLocation', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_check_ebay_health'] = html_entity_decode($this->url->link('shopmanager/card/card_listing.checkEbayHealth', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_update_location'] = html_entity_decode($this->url->link('warehouse/card/listing.updateLocation', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_check_ebay_health'] = html_entity_decode($this->url->link('warehouse/card/listing.checkEbayHealth', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
 
         $data['listings'] = [];
 
@@ -397,11 +397,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
             'limit' => $limit
         ];
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
-        $listing_total = $this->model_shopmanager_card_card_listing->getTotalListings($filter_data);
+        $listing_total = $this->model_warehouse_card_listing->getTotalListings($filter_data);
 
-        $results = $this->model_shopmanager_card_card_listing->getListings($filter_data);
+        $results = $this->model_warehouse_card_listing->getListings($filter_data);
 
         foreach ($results as $result) {
             // eBay status and thumb
@@ -414,7 +414,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
                 $ebay_item_id = $result['ebay_item_id'];
                 if (empty($ebay_item_id)) {
                     // If language 1 doesn't have it, get from descriptions
-                    $descriptions = $this->model_shopmanager_card_card_listing->getDescriptions($result['listing_id']);
+                    $descriptions = $this->model_warehouse_card_listing->getDescriptions($result['listing_id']);
                     foreach ($descriptions as $desc) {
                         if (!empty($desc['ebay_item_id'])) {
                             $ebay_item_id = $desc['ebay_item_id'];
@@ -452,10 +452,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
                 'location' => $result['location'] ?? '',
                 'first_image' => $result['first_image'] ?? '',
                 'to_sync' => (int)($result['cards_to_sync'] ?? 0),
-                'edit' => $this->url->link('shopmanager/card/card_listing.form', 'user_token=' . $this->session->data['user_token'] . '&listing_id=' . $result['listing_id'] . $url),
-                'count_no_offer'      => $this->model_shopmanager_card_card_listing->getCardsWithoutOfferCount($result['listing_id']),
-                'count_unpublished'   => $this->model_shopmanager_card_card_listing->getCardsUnpublishedWithOffer($result['listing_id']),
-                'count_google_images' => $this->model_shopmanager_card_card_listing->getGoogleImageCount($result['listing_id']),
+                'edit' => $this->url->link('warehouse/card/listing.form', 'user_token=' . $this->session->data['user_token'] . '&listing_id=' . $result['listing_id'] . $url),
+                'count_no_offer'      => $this->model_warehouse_card_listing->getCardsWithoutOfferCount($result['listing_id']),
+                'count_unpublished'   => $this->model_warehouse_card_listing->getCardsUnpublishedWithOffer($result['listing_id']),
+                'count_google_images' => $this->model_warehouse_card_listing->getGoogleImageCount($result['listing_id']),
                 'health_status'       => (int)($result['health_status'] ?? 0),
                 'health_error'        => $result['health_error'] ?? '',
             ];
@@ -512,17 +512,17 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $url_sort .= '&limit=' . $this->request->get['limit'];
         }
 
-        $data['sort_listing_id'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.listing_id' . '&order=' . ($sort == 'l.listing_id' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_set_name'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.set_name' . '&order=' . ($sort == 'l.set_name' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_card_type'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=ct.name' . '&order=' . ($sort == 'ct.name' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_year'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.year' . '&order=' . ($sort == 'l.year' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_manufacturer'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.brand' . '&order=' . ($sort == 'l.brand' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_variation'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=variation_count' . '&order=' . ($sort == 'variation_count' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_quantity'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=total_quantity' . '&order=' . ($sort == 'total_quantity' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_value']    = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=total_value'    . '&order=' . ($sort == 'total_value'    && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_location'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.location' . '&order=' . ($sort == 'l.location' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_status'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.status' . '&order=' . ($sort == 'l.status' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
-        $data['sort_date_added'] = $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.date_added' . '&order=' . ($sort == 'l.date_added' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_listing_id'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.listing_id' . '&order=' . ($sort == 'l.listing_id' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_set_name'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.set_name' . '&order=' . ($sort == 'l.set_name' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_card_type'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=ct.name' . '&order=' . ($sort == 'ct.name' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_year'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.year' . '&order=' . ($sort == 'l.year' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_manufacturer'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.brand' . '&order=' . ($sort == 'l.brand' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_variation'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=variation_count' . '&order=' . ($sort == 'variation_count' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_quantity'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=total_quantity' . '&order=' . ($sort == 'total_quantity' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_value']    = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=total_value'    . '&order=' . ($sort == 'total_value'    && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_location'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.location' . '&order=' . ($sort == 'l.location' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_status'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.status' . '&order=' . ($sort == 'l.status' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
+        $data['sort_date_added'] = $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . '&sort=l.date_added' . '&order=' . ($sort == 'l.date_added' && $order == 'ASC' ? 'DESC' : 'ASC') . $url_sort);
 
         $data['sort'] = $sort;
         $data['order'] = $order;
@@ -532,7 +532,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             'total' => $listing_total,
             'page' => $page,
             'limit' => $limit,
-            'url' => $this->url->link('shopmanager/card/card_listing.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
+            'url' => $this->url->link('warehouse/card/listing.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
         ]);
 
         $data['results'] = sprintf(($data['text_pagination'] ?? ''), ($listing_total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($listing_total - $limit)) ? $listing_total : ((($page - 1) * $limit) + $limit), $listing_total, ceil($listing_total / $limit));
@@ -542,7 +542,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
         // Pass user_token to template for AJAX calls
         $data['user_token'] = $this->session->data['user_token'];
 
-        return $this->load->view('shopmanager/card/card_listing_list', $data);
+        return $this->load->view('warehouse/card/listing_list', $data);
     }
 
     /**
@@ -551,7 +551,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function form(): void {
-        $data = $this->load->language('shopmanager/card/card_listing');
+        $data = $this->load->language('warehouse/card/listing');
 
         $this->document->setTitle(($data['heading_title'] ?? ''));
 
@@ -594,21 +594,21 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = [
             'text' => ($data['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/card/card_listing', 'user_token=' . $this->session->data['user_token'] . $url)
+            'href' => $this->url->link('warehouse/card/listing', 'user_token=' . $this->session->data['user_token'] . $url)
         ];
 
-        $data['save'] = $this->url->link('shopmanager/card/card_listing.save', 'user_token=' . $this->session->data['user_token']);
-        $data['back'] = $this->url->link('shopmanager/card/card_listing', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['save'] = $this->url->link('warehouse/card/listing.save', 'user_token=' . $this->session->data['user_token']);
+        $data['back'] = $this->url->link('warehouse/card/listing', 'user_token=' . $this->session->data['user_token'] . $url);
 
         $listing_info = [];
         
         if (isset($this->request->get['listing_id'])) {
-            $this->load->model('shopmanager/card/card_listing');
+            $this->load->model('warehouse/card/listing');
 
-            $listing_info = $this->model_shopmanager_card_card_listing->getListing((int)$this->request->get['listing_id']);
+            $listing_info = $this->model_warehouse_card_listing->getListing((int)$this->request->get['listing_id']);
         }
 
-        $this->load->model('shopmanager/card/card_manufacturer');
+        $this->load->model('warehouse/card/manufacturer');
 
         $data['user_token'] = $this->session->data['user_token'];
 
@@ -632,8 +632,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $data['ebay_category_id'] = $listing_info['ebay_category_id'] ?? '';
             
             // Load first 25 cards via model (paginated) — AJAX fetches the rest
-            $this->load->model('shopmanager/card/card');
-            $cards_raw = $this->model_shopmanager_card_card->getCards([
+            $this->load->model('warehouse/card/card');
+            $cards_raw = $this->model_warehouse_card_card->getCards([
                 'filter_listing_id' => $data['listing_id'],
                 'sort'              => 'c.card_number',
                 'order'             => 'ASC',
@@ -643,7 +643,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $data['cards_total'] = $data['variation_count']; // already computed by getListing()
             $data['cards'] = [];
             foreach ($cards_raw as $card) {
-                $images = $this->model_shopmanager_card_card->getCardImageUrls((int)$card['card_id']);
+                $images = $this->model_warehouse_card_card->getCardImageUrls((int)$card['card_id']);
                 $data['cards'][] = [
                     'card_id'     => (int)$card['card_id'],
                     'sku'         => $card['sku']         ?? '',
@@ -670,13 +670,13 @@ class CardListing extends \Opencart\System\Engine\Controller {
             // Load descriptions — batch-based (batch_number=0 global, 1+ per eBay batch)
             $data['card_listing_description'] = [];
             $data['batch_descriptions'] = [];
-            if ($this->model_shopmanager_card_card_listing) {
-                $descriptions = $this->model_shopmanager_card_card_listing->getDescriptions($data['listing_id']);
+            if ($this->model_warehouse_card_listing) {
+                $descriptions = $this->model_warehouse_card_listing->getDescriptions($data['listing_id']);
                 foreach ($descriptions as $lang_id => $desc) {
                     $data['card_listing_description'][$lang_id] = $desc;
                 }
                 // All batches (keyed by batch_number: 0=global, 1+=per batch)
-                $data['batch_descriptions'] = $this->model_shopmanager_card_card_listing->getDescriptions($data['listing_id']);
+                $data['batch_descriptions'] = $this->model_warehouse_card_listing->getDescriptions($data['listing_id']);
             }
             
             // Load specifics
@@ -720,11 +720,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
         }
         
         // Load manufacturers for dropdown
-        $data['manufacturers'] = array_column($this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]), 'name');
+        $data['manufacturers'] = array_column($this->model_warehouse_card_manufacturer->getManufacturers(['filter_status' => 1]), 'name');
         
         // Load card types for dropdown
-        $this->load->model('shopmanager/card/card_type');
-        $data['card_types'] = $this->model_shopmanager_card_card_type->getCardTypes();
+        $this->load->model('warehouse/card/type');
+        $data['card_types'] = $this->model_warehouse_card_type->getCardTypes();
 
         // Weight & length class options for lot shipping dropdowns
         $data['weight_classes'] = [
@@ -744,32 +744,32 @@ class CardListing extends \Opencart\System\Engine\Controller {
         $data['footer'] = $this->load->controller('common/footer');
 
         // URLs (must be set BEFORE rendering partial tab views)
-        $data['url_import_csv']      = html_entity_decode($this->url->link('shopmanager/card/card_listing.importCsv',      'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_confirm_import']  = html_entity_decode($this->url->link('shopmanager/card/card_listing.confirmImport',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_regenerate_cards']= html_entity_decode($this->url->link('shopmanager/card/card_listing.regenerateCards','user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_merge_variants']   = html_entity_decode($this->url->link('shopmanager/card/card_listing.mergeVariants',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_process_merge_groups'] = html_entity_decode($this->url->link('shopmanager/card/card_listing.processMergeGroups', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_regen_preview']        = html_entity_decode($this->url->link('shopmanager/card/card_listing.getRegenPreview',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_migrate_images']         = html_entity_decode($this->url->link('shopmanager/card/card_listing.migrateImages',       'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_sync_offers']             = html_entity_decode($this->url->link('shopmanager/card/card_listing.syncOffers',          'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_republish_offers']        = html_entity_decode($this->url->link('shopmanager/card/card_listing.republishOffers',     'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_save_batch_specifics']    = html_entity_decode($this->url->link('shopmanager/card/card_listing.saveBatchSpecifics',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_get_cards']               = html_entity_decode($this->url->link('shopmanager/card/card.getCards',                   'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_fetch_market_price']      = html_entity_decode($this->url->link('shopmanager/ebay.getMarketPrices', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_add_batch']               = html_entity_decode($this->url->link('shopmanager/card/card_listing.addBatch',            'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_end_batch']               = html_entity_decode($this->url->link('shopmanager/card/card_listing.endBatch',            'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_import_csv']      = html_entity_decode($this->url->link('warehouse/card/listing.importCsv',      'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_confirm_import']  = html_entity_decode($this->url->link('warehouse/card/listing.confirmImport',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_regenerate_cards']= html_entity_decode($this->url->link('warehouse/card/listing.regenerateCards','user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_merge_variants']   = html_entity_decode($this->url->link('warehouse/card/listing.mergeVariants',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_process_merge_groups'] = html_entity_decode($this->url->link('warehouse/card/listing.processMergeGroups', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_regen_preview']        = html_entity_decode($this->url->link('warehouse/card/listing.getRegenPreview',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_migrate_images']         = html_entity_decode($this->url->link('warehouse/card/listing.migrateImages',       'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_sync_offers']             = html_entity_decode($this->url->link('warehouse/card/listing.syncOffers',          'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_republish_offers']        = html_entity_decode($this->url->link('warehouse/card/listing.republishOffers',     'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_save_batch_specifics']    = html_entity_decode($this->url->link('warehouse/card/listing.saveBatchSpecifics',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_get_cards']               = html_entity_decode($this->url->link('warehouse/card/card.getCards',                   'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_fetch_market_price']      = html_entity_decode($this->url->link('warehouse/marketplace/ebay/api.getMarketPrices', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_add_batch']               = html_entity_decode($this->url->link('warehouse/card/listing.addBatch',            'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_end_batch']               = html_entity_decode($this->url->link('warehouse/card/listing.endBatch',            'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
         // Lot eBay URLs
-        $data['url_publish_lot']             = html_entity_decode($this->url->link('shopmanager/card/card_listing.publishLot',          'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_end_lot']                 = html_entity_decode($this->url->link('shopmanager/card/card_listing.endLot',              'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_lot_preview']             = html_entity_decode($this->url->link('shopmanager/card/card_listing.getLotPreview',       'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_save_lot_description']    = html_entity_decode($this->url->link('shopmanager/card/card_listing.saveLotDescription',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_regen_lot_description']   = html_entity_decode($this->url->link('shopmanager/card/card_listing.regenLotDescription', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_generate_lot_images']     = html_entity_decode($this->url->link('shopmanager/card/card_listing.generateLotImages',   'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_publish_lot']             = html_entity_decode($this->url->link('warehouse/card/listing.publishLot',          'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_end_lot']                 = html_entity_decode($this->url->link('warehouse/card/listing.endLot',              'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_lot_preview']             = html_entity_decode($this->url->link('warehouse/card/listing.getLotPreview',       'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_save_lot_description']    = html_entity_decode($this->url->link('warehouse/card/listing.saveLotDescription',  'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_regen_lot_description']   = html_entity_decode($this->url->link('warehouse/card/listing.regenLotDescription', 'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_generate_lot_images']     = html_entity_decode($this->url->link('warehouse/card/listing.generateLotImages',   'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
         $data['lot_image_base_url']          = HTTP_CATALOG . 'image/';
 
        
         // Tab cards rendered before ebay_batches (doesn't need it)
-        $data['tab_cards_html'] = $this->load->view('shopmanager/card/card_listing_tab_cards', $data);
+        $data['tab_cards_html'] = $this->load->view('warehouse/card/listing_tab_cards', $data);
 
         // Count Google images still to migrate
         $data['google_image_count'] = 0;
@@ -777,44 +777,44 @@ class CardListing extends \Opencart\System\Engine\Controller {
         $data['cards_unpublished_count']      = 0;
         $data['ebay_batches']                 = [];
         if ($data['listing_id'] > 0) {
-            $this->load->model('shopmanager/card/card_listing');
-            $data['google_image_count']        = $this->model_shopmanager_card_card_listing->getGoogleImageCount($data['listing_id']);
-            $data['cards_without_offer_count'] = $this->model_shopmanager_card_card_listing->getCardsWithoutOfferCount($data['listing_id']);
-            $data['cards_unpublished_count']   = $this->model_shopmanager_card_card_listing->getCardsUnpublishedWithOffer($data['listing_id']);
-            $data['ebay_batches']              = $this->model_shopmanager_card_card_listing->getBatches($data['listing_id']);
-            $data['batch_totals']              = $this->model_shopmanager_card_card_listing->getBatchTotals($data['listing_id']);
+            $this->load->model('warehouse/card/listing');
+            $data['google_image_count']        = $this->model_warehouse_card_listing->getGoogleImageCount($data['listing_id']);
+            $data['cards_without_offer_count'] = $this->model_warehouse_card_listing->getCardsWithoutOfferCount($data['listing_id']);
+            $data['cards_unpublished_count']   = $this->model_warehouse_card_listing->getCardsUnpublishedWithOffer($data['listing_id']);
+            $data['ebay_batches']              = $this->model_warehouse_card_listing->getBatches($data['listing_id']);
+            $data['batch_totals']              = $this->model_warehouse_card_listing->getBatchTotals($data['listing_id']);
 
             // Lot eBay info — backfill raw_price avant le calcul du total
-            $this->model_shopmanager_card_card->backfillRawPrices($data['listing_id']);
-            $data['lot_info']       = $this->model_shopmanager_card_card_listing->getLotInfo($data['listing_id']);
-            $data['lot_calculated'] = $this->model_shopmanager_card_card_listing->getLotPriceSummary($data['listing_id']);
+            $this->model_warehouse_card_card->backfillRawPrices($data['listing_id']);
+            $data['lot_info']       = $this->model_warehouse_card_listing->getLotInfo($data['listing_id']);
+            $data['lot_calculated'] = $this->model_warehouse_card_listing->getLotPriceSummary($data['listing_id']);
 
             // Images mosaiques -- si vides, le popup front-end se charge de les generer
-            $data['lot_images']       = $this->model_shopmanager_card_card_listing->getLotImages($data['listing_id']);
+            $data['lot_images']       = $this->model_warehouse_card_listing->getLotImages($data['listing_id']);
             $data['lot_images_empty'] = empty($data['lot_images']);
 
             // Auto-génération + sauvegarde systématique du titre et de la description du lot
-            $regenLot = $this->model_shopmanager_card_card_listing->regenAndSaveLotDescription($data['listing_id']);
+            $regenLot = $this->model_warehouse_card_listing->regenAndSaveLotDescription($data['listing_id']);
             $data['lot_title']       = $regenLot['title'];
             $data['lot_description'] = $regenLot['description'];
             // Auto-regenerate descriptions each time the form is opened
             if (!empty($data['ebay_batches'])) {
               
                 
-                $data['batch_descriptions'] = $this->model_shopmanager_card_card_listing->getDescriptions($data['listing_id']);
+                $data['batch_descriptions'] = $this->model_warehouse_card_listing->getDescriptions($data['listing_id']);
             }
         }
 
         // Tab descriptions rendered AFTER ebay_batches is populated
-        $data['tab_descriptions_html'] = $this->load->view('shopmanager/card/card_listing_tab_descriptions', $data);
+        $data['tab_descriptions_html'] = $this->load->view('warehouse/card/listing_tab_descriptions', $data);
         // Warning: listing has >250 cards but batches not assigned yet
         $data['needs_batch_warning'] = (
             $data['listing_id'] > 0 &&
             ($data['variation_count'] ?? 0) > 250 &&
             empty($data['ebay_batches'])
         );
-        $data['url_assign_batches']    = html_entity_decode($this->url->link('shopmanager/card/card_listing.assignBatches',    'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
-        $data['url_update_location']   = html_entity_decode($this->url->link('shopmanager/card/card_listing.updateLocation',   'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_assign_batches']    = html_entity_decode($this->url->link('warehouse/card/listing.assignBatches',    'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
+        $data['url_update_location']   = html_entity_decode($this->url->link('warehouse/card/listing.updateLocation',   'user_token=' . $this->session->data['user_token']), ENT_QUOTES, 'UTF-8');
 
         // Batch i18n — computed key for warning title
         $data['text_needs_batch_warning_title']   = sprintf(($data['text_needs_batch_warning_title'] ?? ''), $data['variation_count'] ?? 0);
@@ -834,27 +834,27 @@ class CardListing extends \Opencart\System\Engine\Controller {
             'grand_total'       => ($data['text_grand_total'] ?? ''),
         ], JSON_UNESCAPED_UNICODE);
 
-        $this->response->setOutput($this->load->view('shopmanager/card/card_listing_form', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/listing_form', $data));
     }
 
     /**
      * Save (update) a card listing from the admin form.
      */
     public function save(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $this->session->data['error'] = ($lang['error_permission'] ?? '');
-            $this->response->redirect($this->url->link('shopmanager/card/card_listing', 'user_token=' . $this->session->data['user_token']));
+            $this->response->redirect($this->url->link('warehouse/card/listing', 'user_token=' . $this->session->data['user_token']));
             return;
         }
 
         $listing_id = (int)($this->request->post['listing_id'] ?? 0);
 
         if ($listing_id) {
-            $this->load->model('shopmanager/card/card_listing');
+            $this->load->model('warehouse/card/listing');
 
-            $this->model_shopmanager_card_card_listing->updateListing($listing_id, [
+            $this->model_warehouse_card_listing->updateListing($listing_id, [
                 'set_name'         => $this->request->post['set_name']         ?? '',
                 'subset'           => $this->request->post['subset']          ?? '',
                 'card_type_id'     => (int)($this->request->post['card_type_id']   ?? 0),
@@ -869,7 +869,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
         }
 
         $this->response->redirect($this->url->link(
-            'shopmanager/card/card_listing.form',
+            'warehouse/card/listing.form',
             'user_token=' . $this->session->data['user_token'] . '&listing_id=' . $listing_id
         ));
     }
@@ -882,19 +882,19 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function autocomplete(): void {
         $json = [];
 
-            if (!$this->user->hasPermission('access', 'shopmanager/card/card_listing')) {
+            if (!$this->user->hasPermission('access', 'warehouse/card/listing')) {
                 $json = [];
                 $this->response->addHeader('Content-Type: application/json');
                 $this->response->setOutput(json_encode($json));
                 return;
             }
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         // Determine which field to autocomplete
         if (isset($this->request->post['filter_set_name'])) {
             $filter_value = $this->request->post['filter_set_name'];
-            $results = $this->model_shopmanager_card_card_listing->getDistinctSetNames($filter_value);
+            $results = $this->model_warehouse_card_listing->getDistinctSetNames($filter_value);
             
             foreach ($results as $result) {
                 if (!empty($result['set_name'])) {
@@ -906,7 +906,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             }
         } elseif (isset($this->request->post['filter_card_type_id'])) {
             $filter_value = $this->request->post['filter_card_type_id'];
-            $results = $this->model_shopmanager_card_card_listing->getDistinctSports($filter_value);
+            $results = $this->model_warehouse_card_listing->getDistinctSports($filter_value);
             
             foreach ($results as $result) {
                 if (!empty($result['sport'])) {
@@ -918,7 +918,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             }
         } elseif (isset($this->request->post['filter_manufacturer'])) {
             $filter_value = $this->request->post['filter_manufacturer'];
-            $results = $this->model_shopmanager_card_card_listing->getDistinctBrands($filter_value);
+            $results = $this->model_warehouse_card_listing->getDistinctBrands($filter_value);
             
             foreach ($results as $result) {
                 if (!empty($result['brand'])) {
@@ -940,11 +940,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function delete(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -952,10 +952,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
         }
 
         if (isset($this->request->post['selected'])) {
-            $this->load->model('shopmanager/card/card_listing');
+            $this->load->model('warehouse/card/listing');
 
             foreach ($this->request->post['selected'] as $listing_id) {
-                $result = $this->model_shopmanager_card_card_listing->deleteListing((int)$listing_id);
+                $result = $this->model_warehouse_card_listing->deleteListing((int)$listing_id);
                 if (!$result['ok']) {
                     $json['error'] = $result['error'] ?? 'Delete failed for listing ' . (int)$listing_id;
                 }
@@ -973,25 +973,25 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function publishToEbay(): void {
         $json = [];
 
-          $this->load->language('shopmanager/card/card_listing');
+          $this->load->language('warehouse/card/listing');
 
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/marketplace/listing');
 
         if (isset($this->request->post['listing_id'])) {
             $listing_id = (int)$this->request->post['listing_id'];
 
             // Récupérer le compte marketplace EN (language_id=1)
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id'        => 10,
                 'filter_language_id' => 1
             ]);
@@ -1003,7 +1003,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
                 return;
             }
 
-            $result = $this->model_shopmanager_ebay->addCardListing(
+            $result = $this->model_warehouse_marketplace_ebay_api->addCardListing(
                 $listing_id,
                 $marketplace_account['site_setting'],
                 $marketplace_account['marketplace_account_id'],
@@ -1054,9 +1054,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function publishMultiple(): void {
         $json = [];
 
-          $this->load->language('shopmanager/card/card_listing');
+          $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1070,9 +1070,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/marketplace/listing');
 
         $listing_ids = array_map('intval', $this->request->post['listing_ids']);
         $results = [];
@@ -1084,7 +1084,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
             // Récupérer les données du listing
             // Récupérer le compte marketplace EN (language_id=1)
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id'        => 10,
                 'filter_language_id' => 1
             ]);
@@ -1104,7 +1104,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $site_setting           = $marketplace_account['site_setting'];
             $marketplace_account_id = $marketplace_account['marketplace_account_id'];
 
-            $result = $this->model_shopmanager_ebay->addCardListing($listing_id, $site_setting, $marketplace_account_id, true);
+            $result = $this->model_warehouse_marketplace_ebay_api->addCardListing($listing_id, $site_setting, $marketplace_account_id, true);
 
             $listing_errors = $result['errors'] ?? [];
 
@@ -1155,7 +1155,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function assignBatches(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1170,16 +1170,16 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         // ── Actually assign batch_name to cards and rebuild oc_card_listing_batch ──
-        $this->model_shopmanager_card_card_listing->recalculateBatches($listing_id);
+        $this->model_warehouse_card_listing->recalculateBatches($listing_id);
 
         // ── Regenerate descriptions (titles, descriptions, specifics per batch) ──
-        $this->model_shopmanager_card_card_listing->regenerateDescriptions($listing_id);
+        $this->model_warehouse_card_listing->regenerateDescriptions($listing_id);
 
-        $batches = $this->model_shopmanager_card_card_listing->getBatchesWithCardIds($listing_id);
-        $savedBatches = $this->model_shopmanager_card_card_listing->getBatches($listing_id);
+        $batches = $this->model_warehouse_card_listing->getBatchesWithCardIds($listing_id);
+        $savedBatches = $this->model_warehouse_card_listing->getBatches($listing_id);
 
   
 
@@ -1195,8 +1195,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $warnings[] = $totalBatches . ' listings eBay seront utilisés. Les cartes sont réparties par plage de numéro (B1 = #1-250, B2 = #251-500…, B99 = spéciaux).';
         }
 
-        $batchDescriptions = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id);
-        $batchTotals       = $this->model_shopmanager_card_card_listing->getBatchTotals($listing_id);
+        $batchDescriptions = $this->model_warehouse_card_listing->getDescriptions($listing_id);
+        $batchTotals       = $this->model_warehouse_card_listing->getBatchTotals($listing_id);
 
         $json['success']           = true;
         $json['batches']           = $savedBatches;
@@ -1217,9 +1217,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function saveBatchSpecifics(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1251,13 +1251,13 @@ class CardListing extends \Opencart\System\Engine\Controller {
             }
         }
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         // Resolve batch_name (logical number from POST) → batch_id FK
-        $batchRow = $this->model_shopmanager_card_card_listing->getEbayBatch($listing_id, $batch_name);
+        $batchRow = $this->model_warehouse_card_listing->getEbayBatch($listing_id, $batch_name);
         $batch_id = (int)($batchRow['batch_id'] ?? 0);
 
-        $this->model_shopmanager_card_card_listing->updateBatchSpecifics($listing_id, $batch_id, $specifics);
+        $this->model_warehouse_card_listing->updateBatchSpecifics($listing_id, $batch_id, $specifics);
 
         $json['success'] = true;
         $json['count']   = count($specifics);
@@ -1270,11 +1270,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
         $json = [];
 
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
 
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1288,9 +1288,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/marketplace/listing');
 
         $listing_ids = array_map('intval', $this->request->post['listing_ids']);
         $results = [];
@@ -1301,7 +1301,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $listing_result = ['listing_id' => $listing_id];
 
             // Récupérer uniquement les descriptions publiées (avec ebay_item_id)
-            $descriptions = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id, 1, true);
+            $descriptions = $this->model_warehouse_card_listing->getDescriptions($listing_id, 1, true);
 
             if (empty($descriptions)) {
                 $listing_result['success'] = false;
@@ -1319,7 +1319,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
                 // Récupérer le marketplace account pour cette langue
                 try {
-                    $mkt = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+                    $mkt = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                         'customer_id' => 10,
                         'filter_language_id' => $description['language_id']
                     ]);
@@ -1337,7 +1337,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
                 // Terminer le listing eBay
                 try {
-                    $result = $this->model_shopmanager_ebay->endCardListing($description['ebay_item_id'], $mkt['marketplace_account_id'], $site_setting, $listing_id, $description['language_id']);
+                    $result = $this->model_warehouse_marketplace_ebay_api->endCardListing($description['ebay_item_id'], $mkt['marketplace_account_id'], $site_setting, $listing_id, $description['language_id']);
                 } catch (\Exception $e) {
                     $result = ['success' => false, 'error' => 'Exception: ' . $e->getMessage()];
                 }
@@ -1346,8 +1346,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
                 if ($result['success'] || $alreadyGone) {
                     // Supprimer l'ebay_item_id de la base de données
                     try {
-                        $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, null, $description['language_id'], (int)$description['batch_id']);
-                        $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, (int)$description['batch_id'], 2, null, $description['language_id']);
+                        $this->model_warehouse_card_listing->updateEbayListingId($listing_id, null, $description['language_id'], (int)$description['batch_id']);
+                        $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, (int)$description['batch_id'], 2, null, $description['language_id']);
                         $ended_count++;
                         if ($alreadyGone) {
                             $end_errors[] = sprintf(($lang['error_end_failed'] ?? ''), $description['language_id'], 'already gone on eBay — DB cleared.');
@@ -1391,12 +1391,12 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function updatePrice(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
         $json = [];
 
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
@@ -1449,11 +1449,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Update listing location via AJAX (inline save in form)
      */
     public function updateLocation(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['success'] = false;
             $json['error']   = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
@@ -1472,8 +1472,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
-        $this->model_shopmanager_card_card_listing->updateLocation($listing_id, $location);
+        $this->load->model('warehouse/card/listing');
+        $this->model_warehouse_card_listing->updateLocation($listing_id, $location);
 
         $json['success']  = true;
         $json['location'] = $location;
@@ -1490,12 +1490,12 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function updateSortOrder(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
         $json = [];
 
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
@@ -1541,10 +1541,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Import CSV - add cards to existing listing (like variant_listing_creator)
      */
     public function importCsv(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1569,10 +1569,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         // Parse CSV
-        $parse_result = $this->model_shopmanager_card_card_listing->parseCSV($this->request->files['file']['tmp_name']);
+        $parse_result = $this->model_warehouse_card_listing->parseCSV($this->request->files['file']['tmp_name']);
         if (!empty($parse_result['error'])) {
             $json['error'] = $parse_result['error'];
             $this->response->addHeader('Content-Type: application/json');
@@ -1595,7 +1595,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
         unset($card);
 
         // Group cards (reuse smartGroupCards logic)
-        $groups = $this->model_shopmanager_card_card_listing->smartGroupCards($cards);
+        $groups = $this->model_warehouse_card_listing->smartGroupCards($cards);
 
         // Return preview HTML for JS to display
         $preview_html = $this->buildImportPreviewHtml($groups);
@@ -1648,10 +1648,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Confirm import - save CSV cards to existing listing
      */
     public function confirmImport(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1672,7 +1672,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         $added = 0;
         foreach ($groups as $group) {
@@ -1693,7 +1693,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
                     'back_image'  => $card['back_image'] ?? '',
                     'all_images'  => $card['all_images'] ?? [],
                 ];
-                $this->model_shopmanager_card_card_listing->addVariationToListing($listing_id, $variation);
+                $this->model_warehouse_card_listing->addVariationToListing($listing_id, $variation);
                 $added++;
             }
         }
@@ -1711,10 +1711,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Regenerate - merge duplicates, consolidate images, rebuild descriptions
      */
     public function regenerateCards(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1734,16 +1734,16 @@ class CardListing extends \Opencart\System\Engine\Controller {
         set_time_limit(300);
         ini_set('memory_limit', '512M');
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         // Step 1: Merge duplicates (passe 1 exact + passe 2 variantes lettres)
-        $result = $this->model_shopmanager_card_card_listing->mergeAndDeduplicateCards($listing_id);
+        $result = $this->model_warehouse_card_listing->mergeAndDeduplicateCards($listing_id);
 
         // Step 2: Recalculate batch totals / stats
-        $this->model_shopmanager_card_card_listing->recalculateBatches($listing_id);
+        $this->model_warehouse_card_listing->recalculateBatches($listing_id);
 
         // Step 3: Regenerate eBay titles + descriptions + marquer to_sync=1
-        $this->model_shopmanager_card_card_listing->regenerateDescriptions($listing_id);
+        $this->model_warehouse_card_listing->regenerateDescriptions($listing_id);
 
         $json['success']              = true;
         $json['merged']               = $result['merged'];
@@ -1770,10 +1770,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Retourne  : { success, merged_card_id, message }
      */
     public function mergeVariants(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1791,12 +1791,12 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
-        $survivor_id = $this->model_shopmanager_card_card_listing->mergeCardGroup($listing_id, $card_ids);
+        $survivor_id = $this->model_warehouse_card_listing->mergeCardGroup($listing_id, $card_ids);
 
-        $this->model_shopmanager_card_card_listing->recalculateBatches($listing_id);
-        $this->model_shopmanager_card_card_listing->regenerateDescriptions($listing_id);
+        $this->model_warehouse_card_listing->recalculateBatches($listing_id);
+        $this->model_warehouse_card_listing->regenerateDescriptions($listing_id);
 
         $json['success']        = true;
         $json['merged_card_id'] = $survivor_id;
@@ -1812,10 +1812,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Calls mergeCardGroup() for each group, then recalculateBatches + regenerateDescriptions.
      */
     public function processMergeGroups(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1835,7 +1835,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         $merged_count  = 0;
         $deleted_count = 0;
@@ -1846,7 +1846,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             if (count($card_ids) < 2) {
                 continue;
             }
-            $this->model_shopmanager_card_card_listing->mergeCardGroup($listing_id, $card_ids);
+            $this->model_warehouse_card_listing->mergeCardGroup($listing_id, $card_ids);
             $merged_count++;
             $deleted_count += count($card_ids) - 1;
         }
@@ -1854,7 +1854,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
         foreach ($orphan_ids as $orphan_id) {
             $orphan_id = (int)$orphan_id;
             if (!$orphan_id) continue;
-            if ($this->model_shopmanager_card_card_listing->cleanupOrphanVariant($listing_id, $orphan_id)) {
+            if ($this->model_warehouse_card_listing->cleanupOrphanVariant($listing_id, $orphan_id)) {
                 $renamed_count++;
             }
         }
@@ -1863,13 +1863,13 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $card_ids    = array_map('intval', (array)($pg['card_ids'] ?? []));
             $survivor_id = (int)($pg['survivor_id'] ?? 0);
             if (count($card_ids) < 2) continue;
-            $this->model_shopmanager_card_card_listing->mergeCardGroup($listing_id, $card_ids, $survivor_id);
+            $this->model_warehouse_card_listing->mergeCardGroup($listing_id, $card_ids, $survivor_id);
             $merged_count++;
             $deleted_count += count($card_ids) - 1;
         }
 
-        $this->model_shopmanager_card_card_listing->recalculateBatches($listing_id);
-        $this->model_shopmanager_card_card_listing->regenerateDescriptions($listing_id);
+        $this->model_warehouse_card_listing->recalculateBatches($listing_id);
+        $this->model_warehouse_card_listing->regenerateDescriptions($listing_id);
 
         $parts = [];
         if ($merged_count)  $parts[] = $merged_count  . ' group(s) merged, ' . $deleted_count . ' card(s) removed';
@@ -1891,9 +1891,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function addBatch(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1910,10 +1910,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
 
-        $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+        $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
             'customer_id'        => 10,
             'filter_language_id' => 1
         ]);
@@ -1925,7 +1925,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $result = $this->model_shopmanager_ebay->addCardListing(
+        $result = $this->model_warehouse_marketplace_ebay_api->addCardListing(
             $listing_id,
             $marketplace_account['site_setting'],
             $marketplace_account['marketplace_account_id'],
@@ -1957,9 +1957,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function endBatch(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1976,11 +1976,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/marketplace/listing');
 
-        $batchDescriptions = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id);
+        $batchDescriptions = $this->model_warehouse_card_listing->getDescriptions($listing_id);
         $desc = $batchDescriptions[$batch_name] ?? null;
 
         if (empty($desc) || empty($desc['ebay_item_id'])) {
@@ -1990,7 +1990,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $mkt = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+        $mkt = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
             'customer_id'        => 10,
             'filter_language_id' => $desc['language_id'] ?? 1
         ]);
@@ -2002,7 +2002,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $result = $this->model_shopmanager_ebay->endCardListing(
+        $result = $this->model_warehouse_marketplace_ebay_api->endCardListing(
             $desc['ebay_item_id'],
             $mkt['marketplace_account_id'],
             $mkt['site_setting'],
@@ -2013,8 +2013,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
         $alreadyGone = !($result['success'] ?? false) && preg_match('/not found|already ended|invalid item|no longer|doesn.t exist|Item.*ended|ended or/i', $result['error'] ?? '');
 
         if (($result['success'] ?? false) || $alreadyGone) {
-            $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, null, $desc['language_id'] ?? 1, (int)$desc['batch_id']);
-            $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, (int)$desc['batch_id'], 2, null, $desc['language_id'] ?? 1);
+            $this->model_warehouse_card_listing->updateEbayListingId($listing_id, null, $desc['language_id'] ?? 1, (int)$desc['batch_id']);
+            $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, (int)$desc['batch_id'], 2, null, $desc['language_id'] ?? 1);
             $json['success'] = true;
             $json['message'] = 'Batch ' . $batch_name . ' terminé.';
             if ($alreadyGone) $json['message'] .= ' (déjà absent sur eBay — DB nettoyée)';
@@ -2029,12 +2029,12 @@ class CardListing extends \Opencart\System\Engine\Controller {
     /**
      * AJAX: Return all regen groups (Pass 1/2/3) for a listing — server-side,
      * queries ALL cards regardless of pagination limit.
-     * GET  ?route=shopmanager/card/card_listing.getRegenPreview&listing_id=X
+     * GET  ?route=warehouse/card/listing.getRegenPreview&listing_id=X
      */
     public function getRegenPreview(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2049,8 +2049,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
-        $groups = $this->model_shopmanager_card_card_listing->getRegenGroups($listing_id);
+        $this->load->model('warehouse/card/listing');
+        $groups = $this->model_warehouse_card_listing->getRegenGroups($listing_id);
 
         $json['success'] = true;
         $json['p1']      = $groups['p1'];
@@ -2068,7 +2068,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function republishOffers(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2086,10 +2086,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
         set_time_limit(300);
 
         try {
-            $this->load->model('shopmanager/marketplace');
-            $this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/marketplace/listing');
+            $this->load->model('warehouse/marketplace/ebay/api');
 
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id'        => 10,
                 'filter_language_id' => 1
             ]);
@@ -2099,7 +2099,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             }
             $marketplace_account_id = $marketplace_account['marketplace_account_id'];
 
-            $result = $this->model_shopmanager_ebay->republishCardOffers($listing_id, $marketplace_account_id);
+            $result = $this->model_warehouse_marketplace_ebay_api->republishCardOffers($listing_id, $marketplace_account_id);
 
             $json['success'] = true;
             $json['result']  = $result;
@@ -2119,7 +2119,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function syncOffers(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2137,10 +2137,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
         set_time_limit(300);
 
         try {
-            $this->load->model('shopmanager/marketplace');
-            $this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/marketplace/listing');
+            $this->load->model('warehouse/marketplace/ebay/api');
 
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id'        => 10,
                 'filter_language_id' => 1
             ]);
@@ -2152,9 +2152,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $marketplace_account_id = $marketplace_account['marketplace_account_id'];
 
             // Mettre à jour inventory_items + offers existants sur eBay avant de créer/syncer de nouveaux offers.
-            $refreshResult = $this->model_shopmanager_ebay->editCardListing($listing_id, $marketplace_account['site_setting'], $marketplace_account_id);
+            $refreshResult = $this->model_warehouse_marketplace_ebay_api->editCardListing($listing_id, $marketplace_account['site_setting'], $marketplace_account_id);
 
-            $result = $this->model_shopmanager_ebay->syncCardOffers($listing_id, $marketplace_account_id);
+            $result = $this->model_warehouse_marketplace_ebay_api->syncCardOffers($listing_id, $marketplace_account_id);
 
             $json['success'] = true;
             $json['refresh'] = $refreshResult;
@@ -2175,7 +2175,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function migrateImages(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2194,11 +2194,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
         ini_set('memory_limit', '512M');
 
         try {
-            $this->load->model('shopmanager/marketplace');
-            $this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/marketplace/listing');
+            $this->load->model('warehouse/marketplace/ebay/api');
 
             // Use customer_id=10, language_id=1 (English CA account)
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id' => 10,
                 'filter_language_id' => 1
             ]);
@@ -2209,7 +2209,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
             $marketplace_account_id = $marketplace_account['marketplace_account_id'];
 
-            $result = $this->model_shopmanager_ebay->migrateImagesToEbay($listing_id, $marketplace_account_id);
+            $result = $this->model_warehouse_marketplace_ebay_api->migrateImagesToEbay($listing_id, $marketplace_account_id);
 
             $json['success'] = true;
             $json['result']  = $result;
@@ -2230,7 +2230,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function batchEbaySync(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2249,10 +2249,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
         ini_set('memory_limit', '512M');
 
         try {
-            $this->load->model('shopmanager/marketplace');
-            $this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/marketplace/listing');
+            $this->load->model('warehouse/marketplace/ebay/api');
 
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id'        => 10,
                 'filter_language_id' => 1
             ]);
@@ -2269,7 +2269,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
                 $sync_mode = 'missing';
             }
 
-            $this->load->model('shopmanager/card/card_listing');
+            $this->load->model('warehouse/card/listing');
 
             $results      = [];
             $total_ok     = 0;
@@ -2284,28 +2284,28 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
                 // 0. Mettre à jour inventory_items + inventory_item_group + offers existants sur eBay
                 try {
-                    $row['refresh'] = $this->model_shopmanager_ebay->editCardListing($listing_id, $marketplace_account['site_setting'], $marketplace_account_id);
+                    $row['refresh'] = $this->model_warehouse_marketplace_ebay_api->editCardListing($listing_id, $marketplace_account['site_setting'], $marketplace_account_id);
                 } catch (\Throwable $t) {
                     $row['refresh'] = ['error' => $t->getMessage()];
                 }
 
                 // 1. Migrate Google images → eBay EPS
                 try {
-                    $row['migrate'] = $this->model_shopmanager_ebay->migrateImagesToEbay($listing_id, $marketplace_account_id);
+                    $row['migrate'] = $this->model_warehouse_marketplace_ebay_api->migrateImagesToEbay($listing_id, $marketplace_account_id);
                 } catch (\Throwable $t) {
                     $row['migrate'] = ['error' => $t->getMessage()];
                 }
 
                 // 2. Sync offer_ids from eBay (mode: missing/all/none)
                 try {
-                    $row['sync'] = $this->model_shopmanager_ebay->syncCardOffers($listing_id, $marketplace_account_id, $sync_mode);
+                    $row['sync'] = $this->model_warehouse_marketplace_ebay_api->syncCardOffers($listing_id, $marketplace_account_id, $sync_mode);
                 } catch (\Throwable $t) {
                     $row['sync'] = ['error' => $t->getMessage()];
                 }
 
                 // 3. Re-publish cards that have offer_id but are not published
                 try {
-                    $row['republish'] = $this->model_shopmanager_ebay->republishCardOffers($listing_id, $marketplace_account_id);
+                    $row['republish'] = $this->model_warehouse_marketplace_ebay_api->republishCardOffers($listing_id, $marketplace_account_id);
                 } catch (\Throwable $t) {
                     $row['republish'] = ['error' => $t->getMessage()];
                 }
@@ -2336,8 +2336,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Pour chaque listing, itère sur ses batches et appelle checkBatchHealth().
      */
     public function checkEbayHealth(): void {
-        $this->load->language('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
+        $this->load->model('warehouse/card/listing');
 
         $json = [
             'success'  => false,
@@ -2345,7 +2345,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             'summary'  => ['checked' => 0, 'ok' => 0, 'errors' => 0],
         ];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2367,12 +2367,12 @@ class CardListing extends \Opencart\System\Engine\Controller {
             $listing_id = (int)$listing_id;
             if (!$listing_id) continue;
 
-            $batches = $this->model_shopmanager_card_card_listing->getBatches($listing_id);
+            $batches = $this->model_warehouse_card_listing->getBatches($listing_id);
             $listing_result = ['listing_id' => $listing_id, 'batches' => []];
 
             foreach ($batches as $batch) {
                 $batch_id = (int)$batch['batch_id'];
-                $check    = $this->model_shopmanager_card_card_listing->checkBatchHealth($listing_id, $batch_id, $marketplace_account_id);
+                $check    = $this->model_warehouse_card_listing->checkBatchHealth($listing_id, $batch_id, $marketplace_account_id);
                 $skipped  = !empty($check['skipped']);
                 $listing_result['batches'][] = [
                     'batch_id'   => $batch_id,
@@ -2390,7 +2390,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
                 }
             }
 
-            $listing_result['health_status'] = $this->model_shopmanager_card_card_listing->getAggregatedHealthStatus($listing_id);
+            $listing_result['health_status'] = $this->model_warehouse_card_listing->getAggregatedHealthStatus($listing_id);
             $json['results'][] = $listing_result;
         }
 
@@ -2408,7 +2408,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function getLotPreview(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
         $listing_id = (int)($this->request->get['listing_id'] ?? 0);
         if (!$listing_id) {
@@ -2418,8 +2418,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
-        $lot        = $this->model_shopmanager_card_card_listing;
+        $this->load->model('warehouse/card/listing');
+        $lot        = $this->model_warehouse_card_listing;
         $summary    = $lot->getLotPriceSummary($listing_id);
         $lotInfo    = $lot->getLotInfo($listing_id);
         $title      = $lot->generateLotTitle($listing_id);
@@ -2441,9 +2441,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function publishLot(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2458,20 +2458,20 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/marketplace/listing');
 
         // Override de prix si fourni
         $price_override = isset($this->request->post['lot_price']) ? (float)$this->request->post['lot_price'] : null;
         if ($price_override > 0) {
-            $this->model_shopmanager_card_card_listing->saveLotPriceOverride($listing_id, $price_override);
+            $this->model_warehouse_card_listing->saveLotPriceOverride($listing_id, $price_override);
         }
 
         // Weight & dimensions si fournis
         $lot_weight = isset($this->request->post['lot_weight']) ? (float)$this->request->post['lot_weight'] : null;
         if ($lot_weight !== null) {
-            $this->model_shopmanager_card_card_listing->saveLotShipping(
+            $this->model_warehouse_card_listing->saveLotShipping(
                 $listing_id,
                 $lot_weight,
                 (int)($this->request->post['lot_weight_class_id'] ?? 5),
@@ -2482,7 +2482,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             );
         }
 
-        $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+        $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
             'customer_id'        => 10,
             'filter_language_id' => 1
         ]);
@@ -2494,7 +2494,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $result = $this->model_shopmanager_ebay->publishLotListing(
+        $result = $this->model_warehouse_marketplace_ebay_api->publishLotListing(
             $listing_id,
             $marketplace_account['site_setting'],
             $marketplace_account['marketplace_account_id']
@@ -2518,9 +2518,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function endLot(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2535,11 +2535,11 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/marketplace/listing');
 
-        $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+        $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
             'customer_id'        => 10,
             'filter_language_id' => 1
         ]);
@@ -2551,7 +2551,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $result = $this->model_shopmanager_ebay->endLotListing(
+        $result = $this->model_warehouse_marketplace_ebay_api->endLotListing(
             $listing_id,
             $marketplace_account['site_setting'],
             $marketplace_account['marketplace_account_id']
@@ -2578,9 +2578,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function saveLotDescription(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2598,8 +2598,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
-        $this->model_shopmanager_card_card_listing->saveLotDescription($listing_id, $title, $description);
+        $this->load->model('warehouse/card/listing');
+        $this->model_warehouse_card_listing->saveLotDescription($listing_id, $title, $description);
 
         $json['success'] = true;
         $json['message'] = ($lang['text_lot_desc_saved_ok'] ?? '') ?: 'Description saved';
@@ -2614,9 +2614,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function regenLotDescription(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2631,8 +2631,8 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
-        $result = $this->model_shopmanager_card_card_listing->regenAndSaveLotDescription($listing_id);
+        $this->load->model('warehouse/card/listing');
+        $result = $this->model_warehouse_card_listing->regenAndSaveLotDescription($listing_id);
 
         $json['success']     = true;
         $json['title']       = $result['title'];
@@ -2648,9 +2648,9 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function generateLotImages(): void {
         $json = [];
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -2665,10 +2665,10 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
         try {
-            $this->model_shopmanager_card_card_listing->generateMosaicImages($listing_id);
+            $this->model_warehouse_card_listing->generateMosaicImages($listing_id);
         } catch (\Exception $e) {
             $json['error'] = $e->getMessage();
             $this->response->addHeader('Content-Type: application/json; charset=utf-8');
@@ -2676,7 +2676,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $images  = $this->model_shopmanager_card_card_listing->getLotImages($listing_id);
+        $images  = $this->model_warehouse_card_listing->getLotImages($listing_id);
         $baseUrl = HTTP_CATALOG . 'image/';
         $urls    = array_map(fn($img) => ['url' => $baseUrl . $img['image_path'], 'path' => $img['image_path']], $images);
 

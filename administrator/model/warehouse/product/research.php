@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/catalog/product_search.php
-namespace Opencart\Admin\Model\Shopmanager\Catalog;
+// Original: warehouse/product/research.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
-class ProductSearch extends \Opencart\System\Engine\Model {
+class Research extends \Opencart\System\Engine\Model {
 
     // ⚡ CACHE EN MÉMOIRE pour éviter requêtes eBay multiples
     private static $cache_search_data = [];
@@ -17,13 +17,13 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     }
     
     // Pattern OC4: Utiliser directement les fonctions de product.php model
-    // editProduct() et editDescription() supprimés - appeler model_shopmanager_catalog_product directement
+    // editProduct() et editDescription() supprimés - appeler model_warehouse_product_product directement
         
     public function feedInfoWithSearchData($data_json) {
         $this->load->model('localisation/language');
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/shipping');
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/order/shipping');
+        $this->load->model('warehouse/tools/ai');
     
         $execution_times = [];
         $n = 0;
@@ -165,7 +165,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
        ?? 0.00000000);
 
       
-       $shippingRates = $this->model_shopmanager_shipping->calculateShippingRates($data)??3.91;
+       $shippingRates = $this->model_warehouse_order_shipping->calculateShippingRates($data)??3.91;
        //print("<pre>".print_r ('233 product_seach',true )."</pre>");
        //print("<pre>".print_r ($data['price'],true )."</pre>");
       //print("<pre>".print_r ($product_search_data ['ebay_pricevariant'],true )."</pre>");
@@ -219,12 +219,12 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                     }
             
                     // Charger le modèle des pays
-                    $this->load->model('shopmanager/localisation/country');
+                    $this->load->model('warehouse/localisation/country');
                     //print("<pre>" . print_r('225:product_search', true) . "</pre>");
                     //print("<pre>" . print_r($value, true) . "</pre>");
             
                     if (!isset($data['made_in_country_id']) || $data['made_in_country_id'] == 0) {
-                        $data['made_in_country_id'] = $this->model_shopmanager_localisation_country->getCountryID($value);
+                        $data['made_in_country_id'] = $this->model_warehouse_localisation_country->getCountryID($value);
                     }
                 }
             }
@@ -321,7 +321,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                     $desc_supp = $data['product_description'][$language_id]['description_supp'] ?? '';
 
                     if (empty($desc_supp) || mb_strlen(strip_tags($desc_supp)) < 20) {
-                        $response = $this->model_shopmanager_ai->getDescriptionSupp($formdata, $title, $category_id);
+                        $response = $this->model_warehouse_tools_ai->getDescriptionSupp($formdata, $title, $category_id);
                     
                         // Si c'est un tableau avec 'html', on prend ça, sinon on prend la chaîne brute
                         $data['product_description'][$language_id]['description_supp'] = $response['html'] ?? $response ?? '';
@@ -353,7 +353,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
         unset($languages['en']);
         foreach ($languages as $code => $language) {
             $language_id = $language['language_id'];
-           // $data['product_description'][$language_id] =  $this->model_shopmanager_catalog_product->TranslateDescription( $data['product_description'][1], ['code' => $code, 'language_id' => $language_id]);
+           // $data['product_description'][$language_id] =  $this->model_warehouse_product_product->TranslateDescription( $data['product_description'][1], ['code' => $code, 'language_id' => $language_id]);
           
         }
         //print("<pre>".print_r ('234product_search',true )."</pre>");
@@ -382,13 +382,13 @@ class ProductSearch extends \Opencart\System\Engine\Model {
 	$n=0;
     $start_time = microtime(true);
                
-        //$this->load->model('shopmanager/translate");
-        $this->load->model('shopmanager/catalog/category');
-        $this->load->model('shopmanager/condition');
+        //$this->load->model('warehouse/tools/translate");
+        $this->load->model('warehouse/product/category');
+        $this->load->model('warehouse/product/condition');
         $this->load->model('localisation/language');
-        $this->load->model('shopmanager/shipping');
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/order/shipping');
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/tools/ai');
        
       // $product_search = [];
       if(isset($product_search['primary_product_category_checkbox'])){
@@ -433,7 +433,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                    // On suppose que le premier prix dans le tableau price est utilisé pour le champ price
             /*       foreach($product_search['price_ebay'] as $condition_marketplace_item_id_key=>$price){
                     //   $product_search['price_with_shipping'] = $price;
-                     //  $shippingRates = $this->model_shopmanager_shipping->calculateShippingRates($product_search);
+                     //  $shippingRates = $this->model_warehouse_order_shipping->calculateShippingRates($product_search);
                        //get_shipping();
                       // $product_search['shipping_cost']=$shippingRates['shipping_cost'];
                      //  $product_search['shipping_carrier']=$shippingRates['shipping_carrier'];
@@ -450,7 +450,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                    if(!isset($product_search['product_id'])){
                         if(isset($price) &&  $price>0){
      /*                       $product_search['price_with_shipping'] = $price??9999;
-                            $shippingRates = $this->model_shopmanager_shipping->calculateShippingRates($product_search);
+                            $shippingRates = $this->model_warehouse_order_shipping->calculateShippingRates($product_search);
                             //get_shipping();
                             $product_search['shipping_cost']=$shippingRates['shipping_cost'];
                             $product_search['shipping_carrier']=$shippingRates['shipping_carrier'];
@@ -461,7 +461,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                         }
                    }elseif($product_search['price_with_shipping'] <=0 || $product_search['price'] <=0){
                     $product_search['price_with_shipping'] = is_numeric($price)?$price:9999;
-                    $shippingRates = $this->model_shopmanager_shipping->calculateShippingRates($product_search);
+                    $shippingRates = $this->model_warehouse_order_shipping->calculateShippingRates($product_search);
                     //get_shipping();
                     $product_search['shipping_cost']=$shippingRates['shipping_cost']??3.79;
                     $product_search['shipping_carrier']=$shippingRates['shipping_carrier'];
@@ -498,9 +498,9 @@ class ProductSearch extends \Opencart\System\Engine\Model {
           //print("<pre>" . print_r($product_search, true) . "</pre>");
           //print("<pre>" . print_r(value: '116:PRODUCTSEARCH.php') . "</pre>");
 
-                    $condition_data =  $this->model_shopmanager_condition->getConditionDetails($category_id,null,$product_search['condition_marketplace_item_id'],$product_search['site_id']??0);
+                    $condition_data =  $this->model_warehouse_product_condition->getConditionDetails($category_id,null,$product_search['condition_marketplace_item_id'],$product_search['site_id']??0);
                }else{
-                    $condition_data =  $this->model_shopmanager_condition->getConditionDetails($category_id,$product_search['condition_id'],null,$product_search['site_id']??0);
+                    $condition_data =  $this->model_warehouse_product_condition->getConditionDetails($category_id,$product_search['condition_id'],null,$product_search['site_id']??0);
                }
                //$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
             //print("<pre>" . print_r(118, true) . "</pre>");
@@ -566,13 +566,13 @@ class ProductSearch extends \Opencart\System\Engine\Model {
       if (isset($product_search['images'])) {
         $image_temp=json_decode(html_entity_decode($product_search['images'][0]),true);
       //print("<pre>" . print_r($image_temp, true) . "</pre>");
-        $product_search['image_temp'] = $this->model_shopmanager_tools->uploadImages($image_temp['url'],null,'pri');
+        $product_search['image_temp'] = $this->model_warehouse_tools_utility->uploadImages($image_temp['url'],null,'pri');
         //$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
         if(count($product_search['images'])>1){
             unset($product_search['images'][0]);
             foreach($product_search['images'] as $key=>$image ){
                 $image=json_decode(html_entity_decode($product_search['images'][$key]),true);
-                $product_search['product_image_temp'][] = $this->model_shopmanager_tools->uploadImages($image['url'],null,'sec');
+                $product_search['product_image_temp'][] = $this->model_warehouse_tools_utility->uploadImages($image['url'],null,'sec');
             }
             
         }
@@ -580,14 +580,14 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     }
         $description_supp = $this->generateDescription($product_search,$category_id);
         //$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
-        $category_info = $this->model_shopmanager_catalog_category->getSpecific($category_id,1);
+        $category_info = $this->model_warehouse_product_category->getSpecific($category_id,1);
         //$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
       //print("<pre>".print_r ($category_info,true )."</pre>");
   //      $category_specific_info = [];
 //        $category_specific_info['specifics']= json_decode($category_info[1]['specifics'],true);
   //print("<pre>".print_r ($category_info[1]['specifics'],true )."</pre>");
         if(isset($product_search['specifics_source'])){
-            $product_search['specifics_source']= $this->model_shopmanager_tools->cleanArray($product_search['specifics_source']);
+            $product_search['specifics_source']= $this->model_warehouse_tools_utility->cleanArray($product_search['specifics_source']);
     
         } 
         //$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
@@ -681,23 +681,23 @@ class ProductSearch extends \Opencart\System\Engine\Model {
             }
 
             // Traduire uniquement les champs non vides
-            $translated_name = !empty($product_description[$default_language_id]['name']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['name'], $language['code']) : '';
-            $translated_meta_title = !empty($product_description[$default_language_id]['meta_title']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['meta_title'], $language['code']) : '';
-            $translated_color = !empty($product_search['color']) ? $this->model_shopmanager_translate->translate($product_search['color'], $language['code']) : '';
+            $translated_name = !empty($product_description[$default_language_id]['name']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['name'], $language['code']) : '';
+            $translated_meta_title = !empty($product_description[$default_language_id]['meta_title']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['meta_title'], $language['code']) : '';
+            $translated_color = !empty($product_search['color']) ? $this->model_warehouse_tools_translate->translate($product_search['color'], $language['code']) : '';
 
             // Remplir la description pour la langue traduite en utilisant les valeurs traduites et celles de la langue par défaut
             $product_description[$language_id] = [
                 'name'                  => $translated_name,
                 'description'           => '',  // Ajouter ici la description traduite si nécessaire
                 'color'                 => $translated_color,
-                'description_supp'      => !empty($product_description[$default_language_id]['description_supp']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['description_supp'] , $language['code']): '',
-                'condition_supp'        => !empty($product_description[$default_language_id]['condition_supp']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['condition_supp'], $language['code']) : '',
-                'included_accessories'  => !empty($product_description[$default_language_id]['included_accessories']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['included_accessories'], $language['code']) : '',
+                'description_supp'      => !empty($product_description[$default_language_id]['description_supp']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['description_supp'] , $language['code']): '',
+                'condition_supp'        => !empty($product_description[$default_language_id]['condition_supp']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['condition_supp'], $language['code']) : '',
+                'included_accessories'  => !empty($product_description[$default_language_id]['included_accessories']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['included_accessories'], $language['code']) : '',
                 'meta_title'            => $translated_meta_title,
-                'meta_description'      => !empty($product_description[$default_language_id]['meta_description']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['meta_description'] , $language['code']): '',
-                'meta_keyword'          => !empty($product_description[$default_language_id]['meta_keyword']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['meta_keyword'] , $language['code']): '',
-                'keyword'               => !empty($product_description[$default_language_id]['keyword']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['keyword'] , $language['code']): '',
-                'tag'                   => !empty($product_description[$default_language_id]['tag']) ? $this->model_shopmanager_translate->translate($product_description[$default_language_id]['tag'] , $language['code']): '',
+                'meta_description'      => !empty($product_description[$default_language_id]['meta_description']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['meta_description'] , $language['code']): '',
+                'meta_keyword'          => !empty($product_description[$default_language_id]['meta_keyword']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['meta_keyword'] , $language['code']): '',
+                'keyword'               => !empty($product_description[$default_language_id]['keyword']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['keyword'] , $language['code']): '',
+                'tag'                   => !empty($product_description[$default_language_id]['tag']) ? $this->model_warehouse_tools_translate->translate($product_description[$default_language_id]['tag'] , $language['code']): '',
                 'specifics'             => isset($specifics[$language_id]) ? $specifics[$language_id] : []                    ];
 
         }
@@ -714,7 +714,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
 		$total_execution_time = array_sum($execution_times);
      //   echo "Temps total d'exécution : " . $total_execution_time . " secondes\n";
     /*    $product_search_specifics=[];
-        $product_search_specifics= $this->model_shopmanager_tools->cleanArray($data['algopix_search']['additionalAttributes']);
+        $product_search_specifics= $this->model_warehouse_tools_utility->cleanArray($data['algopix_search']['additionalAttributes']);
         $data_specifics['category_id']=$product_search['category_id'];
         $data_specifics['product_category']=$product_search['product_category'];
         $data_specifics['category_name']=$product_search['category_name'];
@@ -726,7 +726,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
 
   
     public function cleanTitle($title) {
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/tools/utility');
 
         // Liste des mots à exclure
         $excludeWords = [
@@ -763,7 +763,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     
     
     public function getAllImageUrls($upc_tmp_search = null, $google_search = null, $ebay_search = null, $algopix_search = null, $algopix_search_fr = null, $epid_details = null) {
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/tools/utility');
 
         $all_images = [];
       // Récupérer les images de $algopix_search['images']
@@ -945,7 +945,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     
     
     public function getAllTitles($upc_tmp_search = null, $google_search = null, $ebay_search = null, $algopix_search = null, $algopix_search_fr = null, $epid_details = null) {
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/tools/utility');
 
         //print("<pre>" . print_r( $upc_tmp_search, true) . "</pre>");
         //print("<pre>" . print_r( $google_search, true) . "</pre>");
@@ -1081,8 +1081,8 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     }
     
     public function getManufacturer($manufacturers = []) {
-        $this->load->model('shopmanager/manufacturer');
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/product/manufacturer');
+        $this->load->model('warehouse/tools/ai');
     
         $cleanManufacturers = [];
         $found_manufacturer = [];
@@ -1095,7 +1095,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
             foreach ($manufacturer_words as $word) {
                 if (strlen($word) <= 2) continue; // Ignore les mots courts
     
-                $existingManufacturers = $this->model_shopmanager_manufacturer->getManufacturers(['filter_name' => $word]);
+                $existingManufacturers = $this->model_warehouse_product_manufacturer->getManufacturers(['filter_name' => $word]);
     
                 foreach ($existingManufacturers as $Manufacturer) {
                     $cleanManufacturers[$Manufacturer['manufacturer_id']] = $Manufacturer['name'];
@@ -1112,7 +1112,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                     'name' => $cleanManufacturers[$manufacturer_id]
                 ];
             }
-            $response_data = $this->model_shopmanager_ai->getManufacturer($cleanManufacturers, $manufacturer);
+            $response_data = $this->model_warehouse_tools_ai->getManufacturer($cleanManufacturers, $manufacturer);
             if (isset($response_data['manufacturer_id']) && is_numeric($response_data['manufacturer_id']) && $response_data['manufacturer_id'] != 0) {
                 return [
                     'manufacturer_id' => $response_data['manufacturer_id'],
@@ -1123,7 +1123,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
         }
     
         // Étape 3 : Vérification si le fabricant existe déjà en base
-        $findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturerByName($manufacturer);
+        $findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturerByName($manufacturer);
     
         if (!empty($findmanufacturer)) {
             return [
@@ -1141,7 +1141,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
             'keyword' => strtolower($manufacturer)
         ];
     
-        $manufacturer_id = $this->model_shopmanager_manufacturer->addManufacturer($data_value);
+        $manufacturer_id = $this->model_warehouse_product_manufacturer->addManufacturer($data_value);
     
         return [
             'manufacturer_id' => $manufacturer_id,
@@ -1150,7 +1150,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     }
 
     public function getAllManufacturers($data) {
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/tools/utility');
     
         $sources = ['upc_tmp_search', 'algopix_search', 'algopix_search_fr', 'google_search', 'ebay_search', 'epid_details'];
         $all_manufacturers = [];
@@ -1226,7 +1226,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     
     public function getAllManufacturersOLD($data) {
 
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/tools/utility');
     
         $sources = ['upc_tmp_search', 'algopix_search', 'algopix_search_fr'];
         $all_manufacturers = [];
@@ -1268,7 +1268,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
     }
      
         public function fetchRemoteContent($url) {
-            $this->load->model('shopmanager/tools');
+            $this->load->model('warehouse/tools/utility');
 
             // Initialiser cURL
             $ch = curl_init();
@@ -1308,8 +1308,8 @@ class ProductSearch extends \Opencart\System\Engine\Model {
  
         
             private function generateDescription($data, $category_id = 0) {
-                $this->load->model('shopmanager/tools');
-                $this->load->model('shopmanager/ai');
+                $this->load->model('warehouse/tools/utility');
+                $this->load->model('warehouse/tools/ai');
                 $formdata = [];
                 $title = $data['title'] ?? null;
                 unset($data['manageInfoSources']);
@@ -1471,7 +1471,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 if (isset($data['algopix_search']['channelSpecificAttributes']['style'])) {
                     // Vérifier si c'est un tableau
                     if (is_array($data['algopix_search']['channelSpecificAttributes']['style'])) {
-                        $styles = $this->model_shopmanager_tools->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search']['channelSpecificAttributes']['style']));
+                        $styles = $this->model_warehouse_tools_utility->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search']['channelSpecificAttributes']['style']));
                         $styles = array_filter($styles); // Retirer les styles vides
                         if (!empty($styles)) {
                             $formdata[] = "Style: " . implode(", ", $styles);
@@ -1485,7 +1485,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 // Utilisation ou type d'occasion
                 if (isset($data['algopix_search']['additionalAttributes']['occasionType'])) {
                     if (is_array($data['algopix_search']['additionalAttributes']['occasionType'])) {
-                        $occasions = $this->model_shopmanager_tools->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search']['additionalAttributes']['occasionType']));
+                        $occasions = $this->model_warehouse_tools_utility->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search']['additionalAttributes']['occasionType']));
                         $occasions = array_filter($occasions); // Retirer les occasions vides
                         if (!empty($occasions)) {
                             $formdata[] = "Occasion: " . implode(", ", $occasions);
@@ -1499,7 +1499,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 // Matériaux utilisés
                 if (isset($data['algopix_search']['additionalAttributes']['material'])) {
                     if (is_array($data['algopix_search']['additionalAttributes']['material'])) {
-                        $materials = $this->model_shopmanager_tools->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search']['additionalAttributes']['material']));
+                        $materials = $this->model_warehouse_tools_utility->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search']['additionalAttributes']['material']));
                         $materials = array_filter($materials); // Retirer les matériaux vides
                         if (!empty($materials)) {
                             $formdata[] = "Material: " . implode(", ", $materials);
@@ -1595,7 +1595,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 if (isset($data['algopix_search_fr']['channelSpecificAttributes']['style'])) {
                     // Vérifier si c'est un tableau
                     if (is_array($data['algopix_search_fr']['channelSpecificAttributes']['style'])) {
-                        $styles = $this->model_shopmanager_tools->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search_fr']['channelSpecificAttributes']['style']));
+                        $styles = $this->model_warehouse_tools_utility->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search_fr']['channelSpecificAttributes']['style']));
                         $styles = array_filter($styles); // Retirer les styles vides
                         if (!empty($styles)) {
                             $formdata[] = "Style: " . implode(", ", $styles);
@@ -1609,7 +1609,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 // Utilisation ou type d'occasion
                 if (isset($data['algopix_search_fr']['additionalAttributes']['occasionType'])) {
                     if (is_array($data['algopix_search_fr']['additionalAttributes']['occasionType'])) {
-                        $occasions = $this->model_shopmanager_tools->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search_fr']['additionalAttributes']['occasionType']));
+                        $occasions = $this->model_warehouse_tools_utility->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search_fr']['additionalAttributes']['occasionType']));
                         $occasions = array_filter($occasions); // Retirer les occasions vides
                         if (!empty($occasions)) {
                             $formdata[] = "Occasion: " . implode(", ", $occasions);
@@ -1623,7 +1623,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 // Matériaux utilisés
                 if (isset($data['algopix_search_fr']['additionalAttributes']['material'])) {
                     if (is_array($data['algopix_search_fr']['additionalAttributes']['material'])) {
-                        $materials = $this->model_shopmanager_tools->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search_fr']['additionalAttributes']['material']));
+                        $materials = $this->model_warehouse_tools_utility->cleanArray(array_map([$this, 'convert_one_array_to_string'], $data['algopix_search_fr']['additionalAttributes']['material']));
                         $materials = array_filter($materials); // Retirer les matériaux vides
                         if (!empty($materials)) {
                             $formdata[] = "Material: " . implode(", ", $materials);
@@ -1644,7 +1644,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 }
            //print("<pre>" . print_r($formdata, true) . "</pre>");
 
-                $airesult=$this->model_shopmanager_ai->getDescriptionSupp($formdata, $title, $category_id);
+                $airesult=$this->model_warehouse_tools_ai->getDescriptionSupp($formdata, $title, $category_id);
                 //print("<pre>" . print_r($airesult, true) . "</pre>");
                 $description = htmlspecialchars($airesult['html'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); 
 
@@ -1656,7 +1656,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
             private function getIdentifierValue($identifiers, $type) {
 
           //print("<pre>" . print_r($identifiers, true) . "</pre>");
-          $this->load->model('shopmanager/tools');
+          $this->load->model('warehouse/tools/utility');
                 foreach ($identifiers as $identifier) {
                     if (isset($identifier['type']) && $identifier['type'] === $type) {
                         $value = ($identifier['values']) ?? '';
@@ -1671,7 +1671,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
             
           
             public function filterArrayForSpecifics($inputArray) {
-                $this->load->model('shopmanager/tools');
+                $this->load->model('warehouse/tools/utility');
                 $keysToUnset = [
                     'name',  'description_supp', 'categories', 'currency',
                     'lowest_recorded_price', 'highest_recorded_price', 'images', 'offers',
@@ -1702,7 +1702,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 unset($inputArray['manufacturer']);*/
 
                 // Suppression des clés restantes
-                $inputArray = $this->model_shopmanager_tools->removeEmptyKeys($inputArray);
+                $inputArray = $this->model_warehouse_tools_utility->removeEmptyKeys($inputArray);
 
                 // Sauvegarde et suppression des autres attributs
                 $commonAttributes = $inputArray['commonAttributes'] ?? [];
@@ -1740,7 +1740,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
             
       
         private function filterChannelSpecifics($inputArray) {
-            $this->load->model('shopmanager/tools');
+            $this->load->model('warehouse/tools/utility');
             $result = [];
          //print("<pre>" . print_r(867, true) . "</pre>");
         //print("<pre>" . print_r($inputArray['itemDimensions']['weight']['unit'], true) . "</pre>");
@@ -1881,7 +1881,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                             if (is_string($subValue)) {
                                 // Ignorer les valeurs "unknown"
                                 if (strtolower($subValue) !== 'unknown') {
-                                    $processedArray[] = ($this->model_shopmanager_tools->splitNames($subValue));
+                                    $processedArray[] = ($this->model_warehouse_tools_utility->splitNames($subValue));
                                 }
                            //print("<pre>".print_r (1553,true )."</pre>");
                             //print("<pre>".print_r ($processedArray,true )."</pre>");
@@ -1889,7 +1889,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                               
                                 // Vérifier que 'value' est une chaîne de caractères avant d'utiliser strtolower
                                 if (is_string($subValue['value']) && strtolower($subValue['value']) !== 'unknown') {
-                                    $processedArray[] = (($this->model_shopmanager_tools->splitNames($subValue['value'])));
+                                    $processedArray[] = (($this->model_warehouse_tools_utility->splitNames($subValue['value'])));
                                 } elseif (is_array($subValue['value'])){
                                    
                                   //print("<pre>".print_r (1561,true )."</pre>");
@@ -1903,17 +1903,17 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                                  //print("<pre>".print_r ($subsubkey,true )."</pre>");
                                    //print("<pre>".print_r ($subsubvalue,true )."</pre>");
                                         if (is_string($subsubvalue) && strtolower($subsubvalue) !== 'unknown') {
-                                            $processedArray[] =(($this->model_shopmanager_tools->splitNames($subsubvalue)));
+                                            $processedArray[] =(($this->model_warehouse_tools_utility->splitNames($subsubvalue)));
                                           //print("<pre>".print_r ($processedArray,true )."</pre>");
                                         } elseif (is_array($subsubvalue)){
                                         //print("<pre>".print_r ($subsubvalue,true )."</pre>");
                                             foreach ($subsubvalue as $subsubsubkey => $subsubsubvalue) {
                                           //print("<pre>".print_r ($subsubsubvalue,true )."</pre>");
                                                 if (is_string($subsubsubvalue['value']) && strtolower($subsubsubvalue['value']) !== 'unknown') {
-                                                    $processedArray[] =(($this->model_shopmanager_tools->splitNames($subsubsubvalue['value'])));
+                                                    $processedArray[] =(($this->model_warehouse_tools_utility->splitNames($subsubsubvalue['value'])));
                                                 } 
                                             }
-                               //         $processedArray[] =(($this->model_shopmanager_tools->splitNames($subsubvalue['value'])));
+                               //         $processedArray[] =(($this->model_warehouse_tools_utility->splitNames($subsubvalue['value'])));
                                         }
                                     }
                                 }
@@ -1924,7 +1924,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
         
                         // Ajouter le tableau nettoyé au résultat s'il n'est pas vide
                         if (!empty($processedArray)) {
-                            $result[$key] =($this->model_shopmanager_tools->removeArrayDuplicates($this->model_shopmanager_tools->flattenArray($processedArray)));
+                            $result[$key] =($this->model_warehouse_tools_utility->removeArrayDuplicates($this->model_warehouse_tools_utility->flattenArray($processedArray)));
                         }
                   //print("<pre>".print_r (1569,true )."</pre>");
                         
@@ -1945,7 +1945,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                 if (is_string($value) && strpos($value, '_') !== false) {
                     $value = str_replace('_', ' ', $value);
                     // Ne pas utiliser ucwords(strtolower()) car cela détruit les caractères Unicode (Ș, ă, etc.)
-                    $value = $this->model_shopmanager_tools->cleanStringValue($value);            
+                    $value = $this->model_warehouse_tools_utility->cleanStringValue($value);            
                     
                 }else{
                   //print("<pre>".print_r (1631,true )."</pre>");
@@ -1954,7 +1954,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
                  //print("<pre>".print_r ($value,true )."</pre>");
                 }        
                     // Ajouter la valeur au tableau de résultats si ce n'est pas un tableau
-                    $result[$key] = $this->model_shopmanager_tools->convertToYear(($value));
+                    $result[$key] = $this->model_warehouse_tools_utility->convertToYear(($value));
 
                    
                 }
@@ -1966,7 +1966,7 @@ class ProductSearch extends \Opencart\System\Engine\Model {
 
         // Fonction pour traiter les contributeurs
 private function processContributors($contributors) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
     $result = [];
     $exclusionCriteria = ['amazon', 'unknown', 'not_applicable'];
     // Vérifier si c'est un tableau de contributeurs avec indices 0, 1, 2, etc.
@@ -1989,7 +1989,7 @@ private function processContributors($contributors) {
                     if (is_array($contributor['name'])){
                         $namesArray = $contributor['name'];
                     }else{
-                        $namesArray = $this->model_shopmanager_tools->splitNames($contributor['name']);
+                        $namesArray = $this->model_warehouse_tools_utility->splitNames($contributor['name']);
 
                     }
                     foreach ($namesArray as $name) {
@@ -2006,7 +2006,7 @@ private function processContributors($contributors) {
         if (isset($contributors['name']) && isset($contributors['role'])) {
             //print("<pre>" . print_r($contributors, true) . "</pre>");
             if(is_array($contributors['role'])){
-                $contributors= $this->model_shopmanager_tools->cleanArray($contributors);
+                $contributors= $this->model_warehouse_tools_utility->cleanArray($contributors);
                 if(count( $contributors['name'])==0){
                     $contributors['name'] = $contributors['name'][0];
                     $result[$contributors['role']][] = trim($contributors['name']);
@@ -2016,7 +2016,7 @@ private function processContributors($contributors) {
                
             }else{
                 //print("<pre>" . print_r($contributors, true) . "</pre>");
-                $namesArray = $this->model_shopmanager_tools->splitNames($contributors['name']);
+                $namesArray = $this->model_warehouse_tools_utility->splitNames($contributors['name']);
                //print("<pre>" . print_r($namesArray, true) . "</pre>");
                 foreach ($namesArray as $name) {
                     if (!$this->containsExclusionCriteria($name, $exclusionCriteria)) {
@@ -2032,7 +2032,7 @@ private function processContributors($contributors) {
     return $result;
 }
 private function containsExclusionCriteria($name, $exclusionCriteria) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
 
     foreach ($exclusionCriteria as $criteria) {
         if (stripos($name, $criteria) !== false) {
@@ -2045,7 +2045,7 @@ private function containsExclusionCriteria($name, $exclusionCriteria) {
 
     
 public function getInfoSources($value) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
 
     // Récupérer les informations de la table oc_product_info_sources basées sur le UPC
     $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_info_sources` WHERE upc = '" . $this->db->escape($value) . "' OR  product_id = '" . $this->db->escape($value) . "' ");
@@ -2060,7 +2060,7 @@ public function getInfoSources($value) {
 }
 
 public function addInfoSources($data) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
 
     // Ajouter une nouvelle entrée dans la table oc_product_info_sources
         if(isset($data['upc'])){
@@ -2087,7 +2087,7 @@ public function addInfoSources($data) {
 }
 
 public function editInfoSources($data) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
 
     // Mettre à jour l'enregistrement existant basé sur le UPC
  //print("<pre>" . print_r('1897:prodcut_search.php', true) . "</pre>");
@@ -2139,12 +2139,12 @@ public function getProductMarketplaceItemId(int $product_id): ?string {
 }
 
 public function getInfoSourcesPrice($upc = null, $product_id = null, $marketplace_item_id = null){
-    $this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/ai');
-	$this->load->model('shopmanager/algopix');
-	$this->load->model('shopmanager/upctmp');
-	$this->load->model('shopmanager/google');
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/tools/ai');
+	$this->load->model('warehouse/tools/algopix');
+	$this->load->model('warehouse/tools/upctmp');
+	$this->load->model('warehouse/tools/google');
+    $this->load->model('warehouse/tools/utility');
 
 
     if($upc){    // Récupérer les informations actuelles du produit à partir de la table
@@ -2186,7 +2186,7 @@ public function getInfoSourcesPrice($upc = null, $product_id = null, $marketplac
     }
 
    /* if (!$ebay_search && isset($algopix_search['commonAttributes']['title'])) {
-        $ebay_search = $this->model_shopmanager_ebay->get($algopix_search['commonAttributes']['title'], $data['product_categories'][0]['name_category']??null, null, 100);
+        $ebay_search = $this->model_warehouse_marketplace_ebay_api->get($algopix_search['commonAttributes']['title'], $data['product_categories'][0]['name_category']??null, null, 100);
         $data['ebay_search'] = $ebay_search ?? null;
         $data['epid'] = $ebay_search['epid'] ?? null;
 
@@ -2204,16 +2204,16 @@ public function getInfoSourcesPrice($upc = null, $product_id = null, $marketplac
 }
 
 private function getInfoFromSources($upc = null, $marketplace_item_id = null){
-    $this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/ai');
-	$this->load->model('shopmanager/algopix');
-	$this->load->model('shopmanager/upctmp');
-	$this->load->model('shopmanager/google');
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/tools/ai');
+	$this->load->model('warehouse/tools/algopix');
+	$this->load->model('warehouse/tools/upctmp');
+	$this->load->model('warehouse/tools/google');
+    $this->load->model('warehouse/tools/utility');
 
     $own_ids = $marketplace_item_id ? [$marketplace_item_id] : null;
 
-    $ebay_search = $this->model_shopmanager_ebay->get($upc, null, null, null, 50, $own_ids);
+    $ebay_search = $this->model_warehouse_marketplace_ebay_api->get($upc, null, null, null, 50, $own_ids);
         if (isset($ebay_search['items'][0])) {
             $product_info['ebay_search'] = json_encode($ebay_search['items']);
         } elseif (isset($ebay_search['items'])) {
@@ -2222,7 +2222,7 @@ private function getInfoFromSources($upc = null, $marketplace_item_id = null){
             $product_info['ebay_search'] = null;
         }
         //print("<pre>".print_r ($ebay_search,true )."</pre>");
-    $product_info['ebay_pricevariant'] = $ebay_search['pricevariant']?json_encode($this->model_shopmanager_ebay->calculateMissingPrices($ebay_search['pricevariant'])):null;
+    $product_info['ebay_pricevariant'] = $ebay_search['pricevariant']?json_encode($this->model_warehouse_marketplace_ebay_api->calculateMissingPrices($ebay_search['pricevariant'])):null;
     $product_info['ebay_category'] = $ebay_search['category']?json_encode($ebay_search['category']):null;
     $product_info['ebay_specific_info'] = $ebay_search['specific_info']?json_encode($ebay_search['specific_info']):null;
 
@@ -2235,11 +2235,11 @@ private function getInfoFromSources($upc = null, $marketplace_item_id = null){
         $product_info['epid_details'] = json_encode($ebay_search['epid_details']);
     }
 
-    $product_info['algopix_search'] = json_encode($this->model_shopmanager_algopix->get($upc, 'UPC' , ['ENGLISH_US']));
-    $product_info['algopix_search_fr'] = json_encode($this->model_shopmanager_algopix->get($upc,'UPC' , ['ENGLISH_CA']));
+    $product_info['algopix_search'] = json_encode($this->model_warehouse_tools_algopix->get($upc, 'UPC' , ['ENGLISH_US']));
+    $product_info['algopix_search_fr'] = json_encode($this->model_warehouse_tools_algopix->get($upc,'UPC' , ['ENGLISH_CA']));
    
-    $product_info['upc_tmp_search'] = NULL;// json_encode($this->model_shopmanager_upctmp->get($upc));
-    $product_info['google_search'] = json_encode($this->model_shopmanager_google->get($upc));   
+    $product_info['upc_tmp_search'] = NULL;// json_encode($this->model_warehouse_tools_upctmp->get($upc));
+    $product_info['google_search'] = json_encode($this->model_warehouse_tools_google->get($upc));   
 
     return $product_info;
 }
@@ -2251,10 +2251,10 @@ private function getInfoFromSources($upc = null, $marketplace_item_id = null){
 public function getSpecificsPRODUCTSEARCH($product_id = null,$product_info = null, $category_specific_info = null,$source_value = null,$epid_sources = null) {
 
     $this->load->model('localisation/language');
-    $this->load->model('shopmanager/catalog/product');
-    //$this->load->model('shopmanager/translate");
-    $this->load->model('shopmanager/ai');
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/product/product');
+    //$this->load->model('warehouse/tools/translate");
+    $this->load->model('warehouse/tools/ai');
+    $this->load->model('warehouse/tools/utility');
     $categorySpecifics=[];
     $source_merge=[];
    
@@ -2265,16 +2265,16 @@ $start_time = microtime(true);
 
 if (isset($source_value)) {
     $source_value['Unit Type'] = 'Unit';
-//      $source_value = $this->model_shopmanager_tools->cleanArray($source_value);
+//      $source_value = $this->model_warehouse_tools_utility->cleanArray($source_value);
   //print("<pre>".print_r ('jo107',true )."</pre>");
   //print("<pre>".print_r ($source_value,true )."</pre>");
-//    $categorySpecifics=$this->model_shopmanager_tools->processCategorySpecifics($source_value, $category_specific_info);
+//    $categorySpecifics=$this->model_warehouse_tools_utility->processCategorySpecifics($source_value, $category_specific_info);
    //print("<pre>".print_r ('139:ai.php',true )."</pre>");
    //print("<pre>".print_r ($source_value,true )."</pre>");
-    $source_merge =(isset($epid_sources) && is_array($epid_sources))?$this->model_shopmanager_tools->compareSources( $this->model_shopmanager_tools->cleanArray($epid_sources), $this->model_shopmanager_tools->cleanArray($source_value)):$this->model_shopmanager_tools->cleanArray($source_value);//$source_value;//$this->model_shopmanager_tools->cleanArray($source_value);
+    $source_merge =(isset($epid_sources) && is_array($epid_sources))?$this->model_warehouse_tools_utility->compareSources( $this->model_warehouse_tools_utility->cleanArray($epid_sources), $this->model_warehouse_tools_utility->cleanArray($source_value)):$this->model_warehouse_tools_utility->cleanArray($source_value);//$source_value;//$this->model_warehouse_tools_utility->cleanArray($source_value);
       //print("<pre>".print_r ('139:ai.php',true )."</pre>");
    //print("<pre>".print_r ($source_merge,true )."</pre>");
-    $categorySpecifics=$this->model_shopmanager_tools->processCategorySpecifics($source_merge, $category_specific_info);
+    $categorySpecifics=$this->model_warehouse_tools_utility->processCategorySpecifics($source_merge, $category_specific_info);
  
 
 }
@@ -2314,8 +2314,8 @@ if(!isset($categorySpecifics)){
             } else {
                 $decoded_value = $source_value[$key];
                 if(is_array($decoded_value) && count($decoded_value) >10){
-                  // $this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
-                    $decoded_value=$this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
+                  // $this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
+                    $decoded_value=$this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
                 }
             }
         } else {
@@ -2341,13 +2341,13 @@ if(!isset($categorySpecifics)){
             $categorySpecific = implode('@@', $categorySpecificArray); // Recréer la chaîne avec @@ comme séparateur
         }
       //print("<pre>".print_r ($categorySpecific,true )."</pre>");
-        $value_to_trim=explode('@@',$this->model_shopmanager_tools->escape_special_chars($categorySpecific));
+        $value_to_trim=explode('@@',$this->model_warehouse_tools_utility->escape_special_chars($categorySpecific));
         foreach($value_to_trim as $key_value=>$value){
             $value_to_trim[$key_value]=trim($value);
 
         }
         $resultspecifics[$key]=array (
-            'Name' 	=>$this->model_shopmanager_tools->escape_special_chars($key),
+            'Name' 	=>$this->model_warehouse_tools_utility->escape_special_chars($key),
             'Value' => $value_to_trim
         );
     
@@ -2386,21 +2386,21 @@ $languages = $this->model_localisation_language->getLanguages();
         foreach($languages as $language){
             if( $language['code']=='en'){
                 if(isset($product_id)){
-                    $this->model_shopmanager_catalog_product->editSpecifics($product_id, json_encode($resultspecifics),$language['language_id']);
+                    $this->model_warehouse_product_product->editSpecifics($product_id, json_encode($resultspecifics),$language['language_id']);
                 }
                 $productspecifics[$language['language_id']]=$resultspecifics;
               //print("<pre>".print_r ($productspecifics,true )."</pre>");
             }else{
                $product_specific_info=$resultspecifics;
-           //    $this->load->model('shopmanager/catalog/product_specific');
-             //  $this->model_shopmanager_product_specific->translateMissingTerms();        
+           //    $this->load->model('warehouse/product/product_specific');
+             //  $this->model_warehouse_product_specific->translateMissingTerms();        
            //print("<pre>".print_r ($productspecifics,true )."</pre>");
-                $productspecifics[$language['language_id']]= $this->model_shopmanager_ai->translate_specifics($product_id,$product_specific_info,$language);
+                $productspecifics[$language['language_id']]= $this->model_warehouse_tools_ai->translate_specifics($product_id,$product_specific_info,$language);
 
                //print("<pre>".print_r ('298:ai.php',true )."</pre>");
                //print("<pre>".print_r ($productspecifics,true )."</pre>");
                 if(isset($product_id)){
-                    $this->model_shopmanager_catalog_product->editSpecifics($product_id, json_encode($productspecifics[$language['language_id']]),$language['language_id']);
+                    $this->model_warehouse_product_product->editSpecifics($product_id, json_encode($productspecifics[$language['language_id']]),$language['language_id']);
                 }
                 unset($product_specific_info);
             }
@@ -2419,7 +2419,7 @@ $languages = $this->model_localisation_language->getLanguages();
 
 
 private function processCategorySpecifics($source_value, $category_specific_info) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
 
     $categorySpecifics = [];
     $decoded_string='';
@@ -2466,10 +2466,10 @@ private function processCategorySpecifics($source_value, $category_specific_info
     public function getSpecifics($product_id = null,$product_info = null, $category_specific_info = null,$source_value = null,$epid_sources = null) {
 
         $this->load->model('localisation/language');
-        $this->load->model('shopmanager/catalog/product');
-        //$this->load->model('shopmanager/translate");
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/product/product');
+        //$this->load->model('warehouse/tools/translate");
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/tools/ai');
         $categorySpecifics=[];
         $source_merge=[];
         
@@ -2480,21 +2480,21 @@ private function processCategorySpecifics($source_value, $category_specific_info
 
     if (isset($source_value)) {
         $source_value['Unit Type'] = 'Unit';
-  //      $source_value = $this->model_shopmanager_tools->cleanArray($source_value);
+  //      $source_value = $this->model_warehouse_tools_utility->cleanArray($source_value);
     //print("<pre>".print_r ('jo107',true )."</pre>");
    //print("<pre>".print_r ($source_value,true )."</pre>");
-    //    $categorySpecifics=$this->model_shopmanager_tools->processCategorySpecifics($source_value, $category_specific_info);
+    //    $categorySpecifics=$this->model_warehouse_tools_utility->processCategorySpecifics($source_value, $category_specific_info);
        //print("<pre>".print_r ('139:ai.php',true )."</pre>");
        //print("<pre>".print_r ($source_value,true )."</pre>");
-        $source_merge =isset($epid_sources)?$this->model_shopmanager_tools->compareSources( $this->model_shopmanager_tools->cleanArray($epid_sources), $this->model_shopmanager_tools->cleanArray($source_value)):$this->model_shopmanager_tools->cleanArray($source_value);
-        $source_merge = $this->model_shopmanager_tools->cleanArray($source_merge);
+        $source_merge =isset($epid_sources)?$this->model_warehouse_tools_utility->compareSources( $this->model_warehouse_tools_utility->cleanArray($epid_sources), $this->model_warehouse_tools_utility->cleanArray($source_value)):$this->model_warehouse_tools_utility->cleanArray($source_value);
+        $source_merge = $this->model_warehouse_tools_utility->cleanArray($source_merge);
 
-        //     $source_merge =isset($epid_sources)?$this->model_shopmanager_tools->compareSources( ($epid_sources), ($source_value)):($source_value);
+        //     $source_merge =isset($epid_sources)?$this->model_warehouse_tools_utility->compareSources( ($epid_sources), ($source_value)):($source_value);
 
    
         //print("<pre>".print_r ('139:ai.php',true )."</pre>");
        //print("<pre>".print_r ($source_merge,true )."</pre>");
-        $categorySpecifics=$this->model_shopmanager_tools->processCategorySpecifics($source_merge, $category_specific_info);
+        $categorySpecifics=$this->model_warehouse_tools_utility->processCategorySpecifics($source_merge, $category_specific_info);
      
      //print("<pre>".print_r ('1548product_search.php',true )."</pre>");    
      //print("<pre>".print_r ($source_merge,true )."</pre>");     
@@ -2509,7 +2509,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
          /*   if (!isset($source_value[$aspect['localizedAspectName']]) && $aspect['localizedAspectName']!='Unit Type' && !isset($epid_sources)) {
 
                 // Sinon, utiliser la fonction getSpecific
-                $categorySpecifics[$aspect['localizedAspectName']] = $this->model_shopmanager_ai->getSpecific(
+                $categorySpecifics[$aspect['localizedAspectName']] = $this->model_warehouse_tools_ai->getSpecific(
                     $product_info,
                     $aspect['localizedAspectName'],
                     $aspect['aspectValues'] ?? [],
@@ -2518,7 +2518,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
                 );
             }elseif ((!isset($source_value[$aspect['localizedAspectName']]) && $aspect['localizedAspectName']!='Unit Type' && isset($epid_sources))){
                 $categorySpecifics[$aspect['localizedAspectName']] = '';
-               $categorySpecifics[$aspect['localizedAspectName']] = $this->model_shopmanager_ai->getSpecific(
+               $categorySpecifics[$aspect['localizedAspectName']] = $this->model_warehouse_tools_ai->getSpecific(
                     $product_info,
                     $aspect['localizedAspectName'],
                     $aspect['aspectValues'] ?? [],
@@ -2566,8 +2566,8 @@ private function processCategorySpecifics($source_value, $category_specific_info
                         } else {
                             $decoded_value = $source_value[$key];
                             if(is_array($decoded_value) && count($decoded_value) >10){
-                              // $this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
-                                $decoded_value=$this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
+                              // $this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
+                                $decoded_value=$this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
                             }
                         }
                     } else {
@@ -2593,13 +2593,13 @@ private function processCategorySpecifics($source_value, $category_specific_info
                         $categorySpecific = implode('@@', $categorySpecificArray); // Recréer la chaîne avec @@ comme séparateur
                     }
                   //print("<pre>".print_r ($categorySpecific,true )."</pre>");
-                    $value_to_trim=explode('@@',$this->model_shopmanager_tools->escape_special_chars($categorySpecific));
+                    $value_to_trim=explode('@@',$this->model_warehouse_tools_utility->escape_special_chars($categorySpecific));
                     foreach($value_to_trim as $key_value=>$value){
                         $value_to_trim[$key_value]=trim($value);
 
                     }
                     $resultspecifics[$key]=array (
-                        'Name' 	=>$this->model_shopmanager_tools->escape_special_chars($key),
+                        'Name' 	=>$this->model_warehouse_tools_utility->escape_special_chars($key),
                         'Value' => $value_to_trim
                     );
                 
@@ -2640,21 +2640,21 @@ private function processCategorySpecifics($source_value, $category_specific_info
         foreach($languages as $language){
             if( $language['code']=='en'){
                 if(isset($product_id)){
-                    $this->model_shopmanager_catalog_product->editSpecifics($product_id, json_encode($resultspecifics),$language['language_id']);
+                    $this->model_warehouse_product_product->editSpecifics($product_id, json_encode($resultspecifics),$language['language_id']);
                 }
                 $productspecifics[$language['language_id']]=$resultspecifics;
               //print("<pre>".print_r ($productspecifics,true )."</pre>");
             }else{
                $product_specific_info=$resultspecifics;
-           //    $this->load->model('shopmanager/catalog/product_specific');
-             //  $this->model_shopmanager_product_specific->translateMissingTerms();     
+           //    $this->load->model('warehouse/product/product_specific');
+             //  $this->model_warehouse_product_specific->translateMissingTerms();     
          
-                $productspecifics[$language['language_id']]= $this->model_shopmanager_ai->translate_specifics($product_id,$product_specific_info,$language);
+                $productspecifics[$language['language_id']]= $this->model_warehouse_tools_ai->translate_specifics($product_id,$product_specific_info,$language);
 
                //print("<pre>".print_r ('298:ai.php',true )."</pre>");
                //print("<pre>".print_r ($productspecifics,true )."</pre>");
                 if(isset($product_id)){
-                    $this->model_shopmanager_catalog_product->editSpecifics($product_id, json_encode($productspecifics[$language['language_id']]),$language['language_id']);
+                    $this->model_warehouse_product_product->editSpecifics($product_id, json_encode($productspecifics[$language['language_id']]),$language['language_id']);
                 }
                 unset($product_specific_info);
             }
@@ -2681,27 +2681,27 @@ private function processCategorySpecifics($source_value, $category_specific_info
         $execution_times = [];
         $n = 1;
         $data = [];
-    	$this->load->model('shopmanager/manufacturer');
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/ai');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/condition');
-        $this->load->model('shopmanager/catalog/category');
-        $this->load->model('shopmanager/catalog/product_specific');
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/ocr');
+    	$this->load->model('warehouse/product/manufacturer');
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/tools/ai');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/product/condition');
+        $this->load->model('warehouse/product/category');
+        $this->load->model('warehouse/product/product_specific');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/tools/ocr');
 
         if (!isset($upc) || !is_numeric($upc)) {
             return ['error' => 'Invalid UPC'];
         }
    
         if(isset($product_id)){
-            $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
-			//$product_info['marketplace_accounts_id'] = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
+            $product_info = $this->model_warehouse_product_product->getProduct($product_id);
+			//$product_info['marketplace_accounts_id'] = $this->model_warehouse_marketplace_listing->getMarketplace(['product_id' => $product_id]);
 
             //print("<pre>".print_r ($product_info,true )."</pre>");
         } else{
-            $product_info_array = $this->model_shopmanager_catalog_product->getByUPC($upc);
+            $product_info_array = $this->model_warehouse_product_product->getByUPC($upc);
             $product_info = reset($product_info_array);
         }
         // 1. Récupération des sources d'information produit
@@ -2722,7 +2722,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
 
         // Vérification et nettoyage des doublons dans primaryCategoryId
         if (isset($data['epid_details']['primaryCategoryId'])) {
-            $data['epid_details']['primaryCategoryId'] = $this->model_shopmanager_tools->removeArrayDuplicates($data['epid_details']['primaryCategoryId']);
+            $data['epid_details']['primaryCategoryId'] = $this->model_warehouse_tools_utility->removeArrayDuplicates($data['epid_details']['primaryCategoryId']);
         } else {
             $data['epid_details']['primaryCategoryId'] = '';
         }
@@ -2787,7 +2787,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
         // Récupération des conditions en fonction de la catégorie eBay
         //print("<pre>" . print_r(value: '2028:PRODUCTSEARCH.php') . "</pre>");
         //print("<pre>".print_r ($category_id,true )."</pre>");
-        $data['conditions'] = $this->model_shopmanager_condition->getConditionDetails($category_id);
+        $data['conditions'] = $this->model_warehouse_product_condition->getConditionDetails($category_id);
     
         // 4. Gestion des images et titres
         $data['images'] = $this->getAllImageUrls(
@@ -2819,13 +2819,13 @@ private function processCategorySpecifics($source_value, $category_specific_info
            
         }
 
-        $product_description = isset($product_id)?$this->model_shopmanager_catalog_product->getDescriptions($product_id):null;
+        $product_description = isset($product_id)?$this->model_warehouse_product_product->getDescriptions($product_id):null;
 
 		// Vérifie si le nom en français (language_id = 1) est vide ou trop court
 		$title_source = $product_description[1]['name'] ?? '';
 		$category_id = $data['category_id'] ?? null;
 		if (empty($title_source) || mb_strlen(trim($title_source)) < 5) {
-			$title_result = $this->model_shopmanager_ai->getTitle($data['titles'], $category_id, $data);
+			$title_result = $this->model_warehouse_tools_ai->getTitle($data['titles'], $category_id, $data);
 
 			// Débogage si nécessaire
 			// print("<pre>" . print_r('3670:product_search.php', true) . "</pre>");
@@ -2855,13 +2855,13 @@ private function processCategorySpecifics($source_value, $category_specific_info
         //print("<pre>".print_r ($data['epid_details'],true )."</pre>");
 
         // 7. Association des spécificités produit
-        $category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($category_id, 1);
+        $category_specific_info = $this->model_warehouse_product_category->getSpecific($category_id, 1);
        
         
         $mergeArrayForSpecifics = [];
 
        /* if (!empty($data['epid_details'][0]['aspects'])) {
-            $ebay_sources = $this->model_shopmanager_ebay->formatEpidDetails(
+            $ebay_sources = $this->model_warehouse_marketplace_ebay_api->formatEpidDetails(
                 $data['epid_details'][0]['aspects'], $category_specific_info
             );
             $mergeArrayForSpecifics = $ebay_sources;
@@ -2871,7 +2871,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
 
             $mergeArrayForSpecifics = $data['ebay_specific_info'];
         } elseif (!empty($data['upc_tmp_search']) && !empty($data['algopix_search'])) {
-            $mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources(
+            $mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources(
                 array_merge_recursive($data['upc_tmp_search'], $data['algopix_search']), 
                 $mergeArrayForSpecifics
             );
@@ -2891,7 +2891,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
                 if (empty($mergeArrayForSpecifics)) {
                     $mergeArrayForSpecifics = $data[$key];
                 } else {
-                    $mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources(
+                    $mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources(
                         array_merge_recursive($mergeArrayForSpecifics, $data[$key]),
                         $mergeArrayForSpecifics
                     );
@@ -2911,12 +2911,12 @@ private function processCategorySpecifics($source_value, $category_specific_info
     
         $data['specifics_result'] = $specifics_result; 
         //print("<pre>" . print_r($data['specifics_result'], true) . "</pre>");
-        $mergeArrayForStrings= $this->model_shopmanager_tools->allarrayToString($specifics_result);
+        $mergeArrayForStrings= $this->model_warehouse_tools_utility->allarrayToString($specifics_result);
         //print_r("<pre>" . print_r($mergeArrayForStrings, true) . "</pre>");
         $data_return=[];
-        //$formatEpidDetailsToSpecifics = isset($data['epid_details']['aspects'])?$this->model_shopmanager_ebay->formatEpidDetailsToSpecifics($data['epid_details']['aspects']):[];
+        //$formatEpidDetailsToSpecifics = isset($data['epid_details']['aspects'])?$this->model_warehouse_marketplace_ebay_api->formatEpidDetailsToSpecifics($data['epid_details']['aspects']):[];
         //print("<pre>".print_r ($data['ebay_specific_info'],true )."</pre>");
-        //$mergeArrayForSpecifics =  $this->model_shopmanager_tools->custom_merge_recursive($formatEpidDetailsToSpecifics, $data['ebay_specific_info']);
+        //$mergeArrayForSpecifics =  $this->model_warehouse_tools_utility->custom_merge_recursive($formatEpidDetailsToSpecifics, $data['ebay_specific_info']);
         //print("<pre>".print_r ($mergeArrayForSpecifics,true )."</pre>");
         if(isset($category_specific_info[1]['specifics'])){
             foreach ($category_specific_info[1]['specifics'] as $key => $category_specific) {
@@ -2934,7 +2934,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
         }
         $specifics= $data['ebay_specific_info']??[];
         //print("<pre>".print_r ($data_return,true )."</pre>");
-        /*$specifics = $this->model_shopmanager_tools->compareSources(
+        /*$specifics = $this->model_warehouse_tools_utility->compareSources(
             array_merge_recursive($data['specifics_result'], $data['ebay_specific_info']),$mergeArrayForSpecifics);*/
         
                 foreach ($specifics as $key => $specific) {
@@ -2964,7 +2964,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
             
         //print("<pre>".print_r ($data_return,true )."</pre>");
         //$data['specifics_result']=$data_return??[];
-        $data['specifics_result'] = $this->model_shopmanager_ai->feedEmptySpecifics($data_return,$mergeArrayForStrings);
+        $data['specifics_result'] = $this->model_warehouse_tools_ai->feedEmptySpecifics($data_return,$mergeArrayForStrings);
         //print("<pre>".print_r ($data['specifics_result'],true )."</pre>");
         // Nettoyage des données inutiles
     
@@ -2973,15 +2973,15 @@ private function processCategorySpecifics($source_value, $category_specific_info
         $category_specific_key = [];
     
         foreach ($specifics_result as $specific_key_name => $value) {
-            $replacement_term = $this->model_shopmanager_product_specific->getSpecificKey($specific_key_name, $category_id);
+            $replacement_term = $this->model_warehouse_product_specific->getSpecificKey($specific_key_name, $category_id);
             if ($replacement_term !== 'not_set') {
                 $category_specific_key[$specific_key_name] = [
                     'replacement_term' => $replacement_term, 
                     'key_set' => empty($replacement_term) ? 0 : 1
                 ];
             } else {
-                $suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
-                $this->model_shopmanager_product_specific->addSpecificKey(
+                $suggest_replacement_term = $this->model_warehouse_tools_ai->getSpecificKey($specific_key_name, $category_specifics);
+                $this->model_warehouse_product_specific->addSpecificKey(
                     $specific_key_name, 
                     $category_id, 
                     $suggest_replacement_term ?? ''
@@ -3006,7 +3006,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
         unset($data['google_search']);
         unset($data['ebay_search']);
         unset($data['ebay_specific_info']);
-        $data['epid_specific_info']= $this->model_shopmanager_ebay->formatEpidDetailsToSpecifics($data['epid_details']['aspects']??[])??[];
+        $data['epid_specific_info']= $this->model_warehouse_marketplace_ebay_api->formatEpidDetailsToSpecifics($data['epid_details']['aspects']??[])??[];
 
         //print("<pre>".print_r ('2835 product_search',true )."</pre>");
         //print("<pre>".print_r ($data['images'],true )."</pre>");
@@ -3015,14 +3015,14 @@ private function processCategorySpecifics($source_value, $category_specific_info
             $data['similar_images'] = [];
             $data['image_temp'] = null; // Initialisation
             try {
-                $data['similar_images'] = $this->model_shopmanager_ocr->getBestSimilarImage($first_image_url);
+                $data['similar_images'] = $this->model_warehouse_tools_ocr->getBestSimilarImage($first_image_url);
             } catch (\Throwable $e) {
                 $this->log->write('OCR getBestSimilarImage error: ' . $e->getMessage());
             }
          //print("<pre>".print_r ($data['similar_images'],true )."</pre>");
             if (!empty($data['similar_images']) && is_array($data['similar_images'])) {
                 foreach ($data['similar_images'] as $similar_images) {
-                    $uploaded_image = $this->model_shopmanager_tools->uploadImages($similar_images['url'], null, 'pri');
+                    $uploaded_image = $this->model_warehouse_tools_utility->uploadImages($similar_images['url'], null, 'pri');
         
                     if ($uploaded_image) { // Si l'upload réussit, on garde l'image et on stoppe la boucle
                         $data['image_temp'] = $uploaded_image;
@@ -3035,7 +3035,7 @@ private function processCategorySpecifics($source_value, $category_specific_info
             if (!$data['image_temp']) {
                 //error_log("Aucune image n'a pu être uploadée avec succès.");
             } else {
-                $data = $this->model_shopmanager_tools->transferTempImages($product_id, $data);
+                $data = $this->model_warehouse_tools_utility->transferTempImages($product_id, $data);
                 $data['thumb'] = $this->model_tool_image->resize($data['image'], 100, 100);
             }
         } elseif(!empty($product_info['image'])) {
@@ -3066,12 +3066,12 @@ public function manageInfoSources($upc = null, $source_value_items = null, $prod
         return self::$cache_info_sources[$cache_key];
     }
     
-    $this->load->model('shopmanager/ebay');
-    $this->load->model('shopmanager/ai');
-    $this->load->model('shopmanager/algopix');
-    $this->load->model('shopmanager/upctmp');
-    $this->load->model('shopmanager/google');
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/marketplace/ebay/api');
+    $this->load->model('warehouse/tools/ai');
+    $this->load->model('warehouse/tools/algopix');
+    $this->load->model('warehouse/tools/upctmp');
+    $this->load->model('warehouse/tools/google');
+    $this->load->model('warehouse/tools/utility');
 
     $threshold = 60 * 24 * 60 * 60 * 60; // 7 days in seconds
     $current_time = time();
@@ -3098,7 +3098,7 @@ public function manageInfoSources($upc = null, $source_value_items = null, $prod
             }*/
             $product_info['upc_tmp_search'] = null;
             //print("<pre>".print_r ($product_info,true )."</pre>");
-            $product_info['ebay_pricevariant'] = $product_info['ebay_pricevariant']?json_encode($this->model_shopmanager_ebay->calculateMissingPrices(json_decode($product_info['ebay_pricevariant'],true))):null;
+            $product_info['ebay_pricevariant'] = $product_info['ebay_pricevariant']?json_encode($this->model_warehouse_marketplace_ebay_api->calculateMissingPrices(json_decode($product_info['ebay_pricevariant'],true))):null;
 
         } else {
             $product_info = $this->refreshInfo($upc, $marketplace_item_id);
@@ -3132,13 +3132,13 @@ private function refreshInfo($upc, $marketplace_item_id = null) {
 
     // Récupération des résultats avant intégration dans le tableau final
     
-    $algopix_en_us = $this->model_shopmanager_algopix->get($upc, 'UPC', ['ENGLISH_US']);
+    $algopix_en_us = $this->model_warehouse_tools_algopix->get($upc, 'UPC', ['ENGLISH_US']);
     //print("<pre>" . print_r('3025 product_search', true) . "</pre>");
     //print("<pre>" . print_r($algopix_en_us, true) . "</pre>");
-    $algopix_en_ca = $this->model_shopmanager_algopix->get($upc, 'UPC', ['ENGLISH_CA']);
+    $algopix_en_ca = $this->model_warehouse_tools_algopix->get($upc, 'UPC', ['ENGLISH_CA']);
     //print("<pre>" . print_r('3028 product_search', true) . "</pre>");
     //print("<pre>" . print_r($algopix_en_ca, true) . "</pre>");
-    $google_search = $this->model_shopmanager_google->get($upc);
+    $google_search = $this->model_warehouse_tools_google->get($upc);
     //print("<pre>" . print_r('3031 product_search', true) . "</pre>");
     //print("<pre>" . print_r($google_search, true) . "</pre>");
     $product_name = null;
@@ -3159,7 +3159,7 @@ private function refreshInfo($upc, $marketplace_item_id = null) {
 
 
     $own_ids = $marketplace_item_id ? [$marketplace_item_id] : null;
-    $ebay_search = $this->model_shopmanager_ebay->get($upc, null, null, null, 10, $own_ids, null, 1, $product_name);
+    $ebay_search = $this->model_warehouse_marketplace_ebay_api->get($upc, null, null, null, 10, $own_ids, null, 1, $product_name);
     // Traitements intermédiaires pour clarifier les variables
     $ebay_items = null;
     if (isset($ebay_search['items'][0])) {
@@ -3203,7 +3203,7 @@ private function refreshInfo($upc, $marketplace_item_id = null) {
 
 
 private function buildInfoFromSourceItems($source_value_items) {
-    $ebay_search = $this->model_shopmanager_ebay->buildFinalResult($source_value_items);
+    $ebay_search = $this->model_warehouse_marketplace_ebay_api->buildFinalResult($source_value_items);
     //print("<pre>" . print_r(2339, true) . "</pre>");
     //print("<pre>" . print_r($source_value_items, true) . "</pre>");
     $product_info = [

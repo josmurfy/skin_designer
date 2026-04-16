@@ -1,4 +1,4 @@
-{# Original: shopmanager/maintenance/product_description.twig #}
+{# Original: warehouse/maintenance/description.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -119,7 +119,7 @@ $('#button-reset-filters').on('click', function() {
 
 // Filter function
 function filter() {
-  var url = 'index.php?route=shopmanager/maintenance/product_description.list&user_token=' + USER_TOKEN;
+  var url = 'index.php?route=warehouse/maintenance/description.list&user_token=' + USER_TOKEN;
 
   var filter_product_id = $('#input-product-id').val();
   if (filter_product_id) {
@@ -166,7 +166,7 @@ $('#form-filter input').on('keydown', function(e) {
 function aiSuggestDescriptionSupp(productId) {
   if (confirm('{{ text_confirm }}')) {
     $.ajax({
-      url: 'index.php?route=shopmanager/maintenance/product_description.aiSuggest&user_token=' + USER_TOKEN + '&product_id=' + productId,
+      url: 'index.php?route=warehouse/maintenance/description.aiSuggest&user_token=' + USER_TOKEN + '&product_id=' + productId,
       type: 'get',
       dataType: 'json',
       success: function(json) {

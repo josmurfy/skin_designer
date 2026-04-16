@@ -1,11 +1,11 @@
 <?php
-// Original: shopmanager/card/import/card_set_importer.php
-namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
+// Original: warehouse/card/import/set.php
+namespace Opencart\Admin\Controller\Warehouse\Card\Import;
 
-class CardSetImporter extends \Opencart\System\Engine\Controller {
+class Set extends \Opencart\System\Engine\Controller {
 
     public function index(): void {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
@@ -31,17 +31,17 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             ['text' => ($lang['text_home'] ?? ''),
              'href' => html_entity_decode($this->url->link('common/dashboard','user_token='.$user_token),ENT_QUOTES,'UTF-8')],
             ['text' => ($lang['text_card_import'] ?? ''),
-             'href' => html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer','user_token='.$user_token),ENT_QUOTES,'UTF-8')],
+             'href' => html_entity_decode($this->url->link('warehouse/card/import/set','user_token='.$user_token),ENT_QUOTES,'UTF-8')],
         ];
 
         // Action URLs
-        $data['upload']      = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.upload',      'user_token='.$user_token),ENT_QUOTES,'UTF-8');
-        $data['save']        = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.save',        'user_token='.$user_token),ENT_QUOTES,'UTF-8');
-        $data['delete']      = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.delete',      'user_token='.$user_token),ENT_QUOTES,'UTF-8');
-        $data['truncate']    = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.truncate',    'user_token='.$user_token),ENT_QUOTES,'UTF-8');
-        $data['url_get_list']        = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.getList',        'user_token='.$user_token),ENT_QUOTES,'UTF-8');
-        $data['url_autocomplete']    = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.autocomplete',    'user_token='.$user_token),ENT_QUOTES,'UTF-8');
-        $data['url_find_duplicates'] = html_entity_decode($this->url->link('shopmanager/card/import/card_set_importer.findDuplicates', 'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['upload']      = html_entity_decode($this->url->link('warehouse/card/import/set.upload',      'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['save']        = html_entity_decode($this->url->link('warehouse/card/import/set.save',        'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['delete']      = html_entity_decode($this->url->link('warehouse/card/import/set.delete',      'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['truncate']    = html_entity_decode($this->url->link('warehouse/card/import/set.truncate',    'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['url_get_list']        = html_entity_decode($this->url->link('warehouse/card/import/set.getList',        'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['url_autocomplete']    = html_entity_decode($this->url->link('warehouse/card/import/set.autocomplete',    'user_token='.$user_token),ENT_QUOTES,'UTF-8');
+        $data['url_find_duplicates'] = html_entity_decode($this->url->link('warehouse/card/import/set.findDuplicates', 'user_token='.$user_token),ENT_QUOTES,'UTF-8');
         $data['user_token']  = $user_token;
 
         // Current filter state for template
@@ -52,24 +52,24 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
         $data['limit']       = $limit;
 
         // Initial list (rendered HTML — delegates to getList())
-        $this->load->model('shopmanager/card/import/card_set_importer');
-        $raw_brands = $this->model_shopmanager_card_import_card_set_importer->getDistinctField('brand', '', 999);
+        $this->load->model('warehouse/card/import/set');
+        $raw_brands = $this->model_warehouse_card_import_set->getDistinctField('brand', '', 999);
         $data['brands'] = array_unique(array_map('urldecode', $raw_brands));
         sort($data['brands']);
-        $data['list'] = $this->load->controller('shopmanager/card/import/card_set_importer.getList');
+        $data['list'] = $this->load->controller('warehouse/card/import/set.getList');
 
         $data['header']      = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/import/card_set_importer', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/import/set', $data));
     }
 
     /**
      * AJAX endpoint for jQuery $.load() — called from twig inline JS
      */
     public function list(): void {
-        $this->response->setOutput($this->load->controller('shopmanager/card/import/card_set_importer.getList'));
+        $this->response->setOutput($this->load->controller('warehouse/card/import/set.getList'));
     }
 
     /**
@@ -77,10 +77,10 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Called by index() for initial render and by list() for AJAX reloads.
      */
     public function getList(): string {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
-        $this->load->model('shopmanager/card/import/card_set_importer');
+        $this->load->model('warehouse/card/import/set');
 
         $user_token = $this->session->data['user_token'] ?? '';
 
@@ -158,25 +158,25 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             'sort' => $sort, 'order' => $order, 'start' => $start, 'limit' => $limit,
             'filter_has_sold' => '1',
         ]);
-        $data['cards'] = $this->model_shopmanager_card_import_card_set_importer->getCardPrices($query_params);
-        $data['total'] = $this->model_shopmanager_card_import_card_set_importer->getTotalCardPrices(array_merge($filters, ['filter_has_sold' => '1']));
+        $data['cards'] = $this->model_warehouse_card_import_set->getCardPrices($query_params);
+        $data['total'] = $this->model_warehouse_card_import_set->getTotalCardPrices(array_merge($filters, ['filter_has_sold' => '1']));
 
         // Sort links — OC4 standard with ASC/DESC toggle per column
         // Pattern: if already sorted on this col → flip order; otherwise default ASC
         $ut = $this->session->data['user_token'];
-        $data['sort_card_raw_id']  = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=card_raw_id'  . '&order=' . ($sort == 'card_raw_id'  ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_title']        = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=title'        . '&order=' . ($sort == 'title'        ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_category']     = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=category'     . '&order=' . ($sort == 'category'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_year']         = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=year'         . '&order=' . ($sort == 'year'         ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_brand']        = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=brand'        . '&order=' . ($sort == 'brand'        ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_set_name']     = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=set_name'     . '&order=' . ($sort == 'set_name'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_player']       = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=player'       . '&order=' . ($sort == 'player'       ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_card_number']  = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=card_number'  . '&order=' . ($sort == 'card_number'  ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_ungraded']     = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=ungraded'     . '&order=' . ($sort == 'ungraded'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_grade_9']      = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=grade_9'      . '&order=' . ($sort == 'grade_9'      ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_grade_10']     = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=grade_10'     . '&order=' . ($sort == 'grade_10'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_date_added']   = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=date_added'   . '&order=' . ($sort == 'date_added'   ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
-        $data['sort_best_price']   = $this->url->link('shopmanager/card/import/card_set_importer.list', 'user_token=' . $ut . '&sort=best_price'   . '&order=' . ($sort == 'best_price'   ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'DESC') . $url, true);
+        $data['sort_card_raw_id']  = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=card_raw_id'  . '&order=' . ($sort == 'card_raw_id'  ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_title']        = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=title'        . '&order=' . ($sort == 'title'        ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_category']     = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=category'     . '&order=' . ($sort == 'category'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_year']         = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=year'         . '&order=' . ($sort == 'year'         ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_brand']        = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=brand'        . '&order=' . ($sort == 'brand'        ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_set_name']     = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=set_name'     . '&order=' . ($sort == 'set_name'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_player']       = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=player'       . '&order=' . ($sort == 'player'       ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_card_number']  = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=card_number'  . '&order=' . ($sort == 'card_number'  ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_ungraded']     = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=ungraded'     . '&order=' . ($sort == 'ungraded'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_grade_9']      = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=grade_9'      . '&order=' . ($sort == 'grade_9'      ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_grade_10']     = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=grade_10'     . '&order=' . ($sort == 'grade_10'     ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_date_added']   = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=date_added'   . '&order=' . ($sort == 'date_added'   ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'ASC') . $url, true);
+        $data['sort_best_price']   = $this->url->link('warehouse/card/import/set.list', 'user_token=' . $ut . '&sort=best_price'   . '&order=' . ($sort == 'best_price'   ? ($order == 'ASC' ? 'DESC' : 'ASC') : 'DESC') . $url, true);
         $data['sort']  = $sort;
         $data['order'] = $order;
         $data['limit'] = $limit;
@@ -186,7 +186,7 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             'total' => $data['total'],
             'page'  => $page,
             'limit' => $limit,
-            'url'   => $this->url->link('shopmanager/card/import/card_set_importer.list',
+            'url'   => $this->url->link('warehouse/card/import/set.list',
                 'user_token=' . $this->session->data['user_token'] . $url . '&sort=' . $sort . '&order=' . $order . '&page={page}', true),
             'text'  => ($lang['text_pagination'] ?? ''),
         ]);
@@ -206,7 +206,7 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             $data[$key] = ($lang[$key] ?? '');
         }
 
-        return $this->load->view('shopmanager/card/import/card_set_importer_list', $data);
+        return $this->load->view('warehouse/card/import/set_list', $data);
     }
 
     /**
@@ -214,10 +214,10 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * GET: field=brand&term=Upper
      */
     public function autocomplete(): void {
-        $this->load->model('shopmanager/card/import/card_set_importer');
+        $this->load->model('warehouse/card/import/set');
         $field = $this->request->get['field'] ?? '';
         $term  = trim($this->request->get['term']  ?? '');
-        $values = $this->model_shopmanager_card_import_card_set_importer->getDistinctField($field, $term, 12);
+        $values = $this->model_warehouse_card_import_set->getDistinctField($field, $term, 12);
         $this->response->addHeader('Content-Type: application/json');
         $this->response->setOutput(json_encode($values));
     }
@@ -227,13 +227,13 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Also returns already_imported flag so JS can warn the user.
      */
     public function upload(): void {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
         $json = [];
 
         try {
-            if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_set_importer')) {
+            if (!$this->user->hasPermission('modify', 'warehouse/card/import/set')) {
                 $json['error'] = ($lang['error_permission'] ?? '');
                 $this->sendJsonResponse($json);
                 return;
@@ -256,9 +256,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             ini_set('max_execution_time', '300');
             ini_set('memory_limit', '512M');
 
-            $this->load->model('shopmanager/card/import/card_set_importer');
+            $this->load->model('warehouse/card/import/set');
 
-            $parse_result = $this->model_shopmanager_card_import_card_set_importer->parseCSV($file['tmp_name']);
+            $parse_result = $this->model_warehouse_card_import_set->parseCSV($file['tmp_name']);
             if (!empty($parse_result['error'])) {
                 $json['error'] = $parse_result['error'];
                 $this->sendJsonResponse($json);
@@ -301,7 +301,7 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             $samples   = array_slice($priced, 0, 3);
             $matched   = 0;
             foreach ($samples as $s) {
-                if ($this->model_shopmanager_card_import_card_set_importer->checkCardExistsBySampleRow($s)) {
+                if ($this->model_warehouse_card_import_set->checkCardExistsBySampleRow($s)) {
                     $matched++;
                 }
             }
@@ -311,7 +311,7 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
 
             if (count($samples) > 0 && $matched >= $threshold) {
                 // Duplicate detected — do NOT show preview, show existing DB records instead
-                $db_records = $this->model_shopmanager_card_import_card_set_importer->getCardsByContext($cards, 500);
+                $db_records = $this->model_warehouse_card_import_set->getCardsByContext($cards, 500);
                 $json['success']            = ($lang['text_upload_success'] ?? '');
                 $json['duplicate_detected'] = true;
                 $json['match_count']        = $matched;
@@ -349,13 +349,13 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Save — receives cards array from JS POST body, inserts into DB.
      */
     public function save(): void {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
         $json = [];
 
         try {
-            if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_set_importer')) {
+            if (!$this->user->hasPermission('modify', 'warehouse/card/import/set')) {
                 $json['error'] = ($lang['error_permission'] ?? '');
                 $this->sendJsonResponse($json);
                 return;
@@ -377,10 +377,10 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
                 return;
             }
 
-            $this->load->model('shopmanager/card/import/card_set_importer');
+            $this->load->model('warehouse/card/import/set');
 
-            $batch_result = $this->model_shopmanager_card_import_card_set_importer->addCardPriceBatch($cards);
-            $total_in_db  = $this->model_shopmanager_card_import_card_set_importer->getTotalCardPrices([]);
+            $batch_result = $this->model_warehouse_card_import_set->addCardPriceBatch($cards);
+            $total_in_db  = $this->model_warehouse_card_import_set->getTotalCardPrices([]);
 
             $json['success']       = ($lang['text_upload_success'] ?? '');
             $json['total_in_file'] = count($cards);
@@ -399,12 +399,12 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Delete selected records by IDs
      */
     public function delete(): void {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_set_importer')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/import/set')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->sendJsonResponse($json);
             return;
@@ -417,9 +417,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/import/card_set_importer');
-        $deleted = $this->model_shopmanager_card_import_card_set_importer->deleteCardPrices($selected);
-        $total   = $this->model_shopmanager_card_import_card_set_importer->getTotalCardPrices([]);
+        $this->load->model('warehouse/card/import/set');
+        $deleted = $this->model_warehouse_card_import_set->deleteCardPrices($selected);
+        $total   = $this->model_warehouse_card_import_set->getTotalCardPrices([]);
 
         $json['success']  = $deleted . ' record(s) deleted.';
         $json['total']    = $total;
@@ -431,19 +431,19 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Truncate the entire card_raw table
      */
     public function truncate(): void {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_set_importer')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/import/set')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->sendJsonResponse($json);
             return;
         }
 
-        $this->load->model('shopmanager/card/import/card_set_importer');
-        $this->model_shopmanager_card_import_card_set_importer->truncateCardPrices();
+        $this->load->model('warehouse/card/import/set');
+        $this->model_warehouse_card_import_set->truncateCardPrices();
 
         $json['success'] = 'All records deleted.';
         $json['total']   = 0;
@@ -455,14 +455,14 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * AJAX: scan DB for duplicate records and return results HTML
      */
     public function findDuplicates(): void {
-        $this->load->language('shopmanager/card/import/card_set_importer');
+        $this->load->language('warehouse/card/import/set');
         $data = [];
         
-        $this->load->model('shopmanager/card/import/card_set_importer');
+        $this->load->model('warehouse/card/import/set');
         $json = [];
 
         try {
-            $rows = $this->model_shopmanager_card_import_card_set_importer->findDbDuplicates();
+            $rows = $this->model_warehouse_card_import_set->findDbDuplicates();
 
             if (empty($rows)) {
                 $json['success']         = true;

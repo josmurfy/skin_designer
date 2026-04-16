@@ -1,14 +1,14 @@
 <?php
-// Original: shopmanager/maintenance/image.php
-namespace Opencart\Admin\Controller\Shopmanager\Maintenance;
+// Original: warehouse/maintenance/image.php
+namespace Opencart\Admin\Controller\Warehouse\Maintenance;
 
 class Image extends \Opencart\System\Engine\Controller {
     
     public function index(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $data = [];
         
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         
@@ -109,10 +109,10 @@ class Image extends \Opencart\System\Engine\Controller {
         
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/maintenance/image', 'user_token=' . $this->session->data['user_token'] . $url)
+            'href' => $this->url->link('warehouse/maintenance/image', 'user_token=' . $this->session->data['user_token'] . $url)
         ];
         
-        $data['list'] = $this->load->controller('shopmanager/maintenance/image.getList');
+        $data['list'] = $this->load->controller('warehouse/maintenance/image.getList');
         
         $data['filter_product_id'] = $filter_product_id;
         $data['filter_name'] = $filter_name;
@@ -127,35 +127,35 @@ class Image extends \Opencart\System\Engine\Controller {
         $data['user_token'] = $this->session->data['user_token'];
         
         // Vérifier si validation est nécessaire
-        $data['check_validation_url'] = $this->url->link('shopmanager/maintenance/image.checkValidationStatus', 'user_token=' . $this->session->data['user_token']);
-        $data['create_table_url'] = $this->url->link('shopmanager/maintenance/image.createValidationTable', 'user_token=' . $this->session->data['user_token']);
-        $data['validate_batch_url'] = $this->url->link('shopmanager/maintenance/image.validateBatch', 'user_token=' . $this->session->data['user_token']);
+        $data['check_validation_url'] = $this->url->link('warehouse/maintenance/image.checkValidationStatus', 'user_token=' . $this->session->data['user_token']);
+        $data['create_table_url'] = $this->url->link('warehouse/maintenance/image.createValidationTable', 'user_token=' . $this->session->data['user_token']);
+        $data['validate_batch_url'] = $this->url->link('warehouse/maintenance/image.validateBatch', 'user_token=' . $this->session->data['user_token']);
         
         
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
         
-        $this->response->setOutput($this->load->view('shopmanager/maintenance/image', $data));
+        $this->response->setOutput($this->load->view('warehouse/maintenance/image', $data));
     }
     
     /**
      * Check if validation is needed and get validation status
      */
     public function checkValidationStatus(): void {
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         $json = [];
         
-        $column_exists = $this->model_shopmanager_maintenance_image->maintenanceColumnExists();
+        $column_exists = $this->model_warehouse_maintenance_image->maintenanceColumnExists();
         
         if (!$column_exists) {
-            $total_products = $this->model_shopmanager_maintenance_image->getTotalProducts();
+            $total_products = $this->model_warehouse_maintenance_image->getTotalProducts();
             $json['needs_validation'] = true;
             $json['total_products'] = $total_products;
             $json['validated'] = 0;
             $json['message'] = 'La colonne maintenance_data doit être créée.';
         } else {
-            $total_needing_validation = $this->model_shopmanager_maintenance_image->getTotalNeedingValidation();
+            $total_needing_validation = $this->model_warehouse_maintenance_image->getTotalNeedingValidation();
             
             if ($total_needing_validation > 0) {
                 $json['needs_validation'] = true;
@@ -179,11 +179,11 @@ class Image extends \Opencart\System\Engine\Controller {
     public function createValidationTable(): void {
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             try {
-                $sql = file_get_contents(DIR_APPLICATION . 'controller/shopmanager/install_maintenance_image_table.sql');
+                $sql = file_get_contents(DIR_APPLICATION . 'controller/warehouse/maintenance/install_maintenance_image_table.sql');
                 
                 // Execute each statement
                 $statements = array_filter(array_map('trim', explode(';', $sql)));
@@ -212,16 +212,16 @@ class Image extends \Opencart\System\Engine\Controller {
         $old_error_reporting = error_reporting(0);
         ini_set('display_errors', '0');
         
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             $batch_size = 50;
             $offset = 0; // Always start at 0 since validated products are removed from the query
             
-            $products = $this->model_shopmanager_maintenance_image->getProductsNeedingValidation($offset, $batch_size);
+            $products = $this->model_warehouse_maintenance_image->getProductsNeedingValidation($offset, $batch_size);
             $validated_count = 0;
             $errors = [];
             
@@ -236,7 +236,7 @@ class Image extends \Opencart\System\Engine\Controller {
             }
             
             // Recalculate total after validation
-            $total_to_validate = $this->model_shopmanager_maintenance_image->getTotalNeedingValidation();
+            $total_to_validate = $this->model_warehouse_maintenance_image->getTotalNeedingValidation();
             
             $json['success'] = true;
             $json['validated'] = $validated_count;
@@ -262,10 +262,10 @@ class Image extends \Opencart\System\Engine\Controller {
      * Validate a single product and store results
      */
     private function validateProduct($product_id, $product_data = null): void {
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         
         if (!$product_data) {
-            $product_data = $this->model_shopmanager_maintenance_image->getProduct($product_id);
+            $product_data = $this->model_warehouse_maintenance_image->getProduct($product_id);
         }
         
         if (!$product_data) {
@@ -360,7 +360,7 @@ class Image extends \Opencart\System\Engine\Controller {
         }
         
         // Check secondary images - store ALL of them (not just problematic ones)
-        $secondary_images = $this->model_shopmanager_maintenance_image->getSecondaryImages($product_id);
+        $secondary_images = $this->model_warehouse_maintenance_image->getSecondaryImages($product_id);
         
         $validation['secondary_images_count'] = count($secondary_images);
         $secondary_all = [];
@@ -412,7 +412,7 @@ class Image extends \Opencart\System\Engine\Controller {
         $validation['issue_types'] = array_unique($issues);
         
         // Get existing maintenance_data
-        $product = $this->model_shopmanager_maintenance_image->getProduct($product_id);
+        $product = $this->model_warehouse_maintenance_image->getProduct($product_id);
         $maintenance = [];
         if (!empty($product['maintenance_data'])) {
             $maintenance = json_decode($product['maintenance_data'], true) ?: [];
@@ -464,7 +464,7 @@ class Image extends \Opencart\System\Engine\Controller {
     }
     
     public function list(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $data = [];
         
         
@@ -472,9 +472,9 @@ class Image extends \Opencart\System\Engine\Controller {
     }
     
     public function getList(): string {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $this->load->model('tool/image');
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         
         // Filters
         $filter_product_id = $this->request->get['filter_product_id'] ?? '';
@@ -521,7 +521,7 @@ class Image extends \Opencart\System\Engine\Controller {
         if (isset($this->request->get['sort'])) $url .= '&sort=' . $sort;
         if (isset($this->request->get['order'])) $url .= '&order=' . $order;
         
-        $data['action'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['action'] = $this->url->link('warehouse/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url);
         $data['user_token'] = $this->session->data['user_token'];
         
         // Build filter data for model
@@ -541,8 +541,8 @@ class Image extends \Opencart\System\Engine\Controller {
             'limit' => $limit
         ];
         
-        $results = $this->model_shopmanager_maintenance_image->getProducts($filter_data);
-        $total_filtered = $this->model_shopmanager_maintenance_image->getTotalProductsFiltered($filter_data);
+        $results = $this->model_warehouse_maintenance_image->getProducts($filter_data);
+        $total_filtered = $this->model_warehouse_maintenance_image->getTotalProductsFiltered($filter_data);
         
         $data['products'] = [];
         $data['missing_images'] = 0;
@@ -556,7 +556,7 @@ class Image extends \Opencart\System\Engine\Controller {
             if (!$maintenance || !isset($maintenance['images'])) {
                 $this->validateProduct($product_id, $row);
                 // Recharger les données
-                $fresh = $this->model_shopmanager_maintenance_image->getProduct($product_id);
+                $fresh = $this->model_warehouse_maintenance_image->getProduct($product_id);
                 $maintenance = !empty($fresh['maintenance_data']) ? json_decode($fresh['maintenance_data'], true) : [];
             }
             
@@ -719,7 +719,7 @@ class Image extends \Opencart\System\Engine\Controller {
                 'missing_secondary' => $secondary_missing,
                 'has_missing' => $has_missing,
                 'status_message' => !empty($error_messages) ? implode('<br>', $error_messages) : 'OK',
-                'edit' => $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id)
+                'edit' => $this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id)
             ];
         }
         
@@ -728,7 +728,7 @@ class Image extends \Opencart\System\Engine\Controller {
             'total' => $total_filtered,
             'page'  => $page,
             'limit' => $limit,
-            'url'   => $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
+            'url'   => $this->url->link('warehouse/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
         ]);
         
         $data['results'] = sprintf(($lang['text_displaying'] ?? ''), (($page - 1) * $limit) + 1, min($page * $limit, $total_filtered), $total_filtered, ceil($total_filtered / $limit));
@@ -760,9 +760,9 @@ class Image extends \Opencart\System\Engine\Controller {
         $data['sort'] = $sort;
         $data['order'] = $order;
         
-        $data['sort_product_id'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.product_id&order=' . ($sort == 'p.product_id' && $order == 'ASC' ? 'DESC' : 'ASC'));
-        $data['sort_model'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.model&order=' . ($sort == 'p.model' && $order == 'ASC' ? 'DESC' : 'ASC'));
-        $data['sort_name'] = $this->url->link('shopmanager/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=pd.name&order=' . ($sort == 'pd.name' && $order == 'ASC' ? 'DESC' : 'ASC'));
+        $data['sort_product_id'] = $this->url->link('warehouse/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.product_id&order=' . ($sort == 'p.product_id' && $order == 'ASC' ? 'DESC' : 'ASC'));
+        $data['sort_model'] = $this->url->link('warehouse/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=p.model&order=' . ($sort == 'p.model' && $order == 'ASC' ? 'DESC' : 'ASC'));
+        $data['sort_name'] = $this->url->link('warehouse/maintenance/image.list', 'user_token=' . $this->session->data['user_token'] . $url_sort . '&sort=pd.name&order=' . ($sort == 'pd.name' && $order == 'ASC' ? 'DESC' : 'ASC'));
         $data['entry_language'] = ($lang['entry_language'] ?? '');
         $data['button_print'] = ($lang['button_print'] ?? '');
         $data['button_edit'] = ($lang['button_edit'] ?? '');
@@ -792,17 +792,17 @@ class Image extends \Opencart\System\Engine\Controller {
         $data['text_check_ebay_notify_more'] = ($lang['text_check_ebay_notify_more'] ?? '');
         $data['text_check_ebay_ok'] = ($lang['text_check_ebay_ok'] ?? '');
         
-        return $this->load->view('shopmanager/maintenance/image_list', $data);
+        return $this->load->view('warehouse/maintenance/image_list', $data);
     }
 
     /**
      * Compare eBay image count/names vs DB images (main + secondary) for one product.
      */
     public function checkEbayImageComparison(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -810,9 +810,9 @@ class Image extends \Opencart\System\Engine\Controller {
             if ($product_id <= 0) {
                 $json['error'] = ($lang['error_product_id_required'] ?? 'Product ID is required.');
             } else {
-                $this->load->model('shopmanager/catalog/product');
-                $this->load->model('shopmanager/ebay');
-                $this->load->model('shopmanager/marketplace');
+                $this->load->model('warehouse/product/product');
+                $this->load->model('warehouse/marketplace/ebay/api');
+                $this->load->model('warehouse/marketplace/listing');
 
                 $json = $this->buildEbayImageComparison($product_id, $lang);
             }
@@ -826,14 +826,14 @@ class Image extends \Opencart\System\Engine\Controller {
      * Remove missing images from database
      */
     public function removeMissingImages(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $data = [];
         
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['images']) && is_array($this->request->post['images'])) {
@@ -850,10 +850,10 @@ class Image extends \Opencart\System\Engine\Controller {
                     $image_path = isset($image_data['image_path']) ? $image_data['image_path'] : '';
                     
                     if ($type === 'main') {
-                        $this->model_shopmanager_maintenance_image->updateMainImage($product_id, '');
+                        $this->model_warehouse_maintenance_image->updateMainImage($product_id, '');
                         $removed_count++;
                     } elseif ($type === 'secondary' && $image_path) {
-                        $this->model_shopmanager_maintenance_image->deleteSecondaryImage($product_id, $image_path);
+                        $this->model_warehouse_maintenance_image->deleteSecondaryImage($product_id, $image_path);
                         $removed_count++;
                     }
                 }
@@ -879,10 +879,10 @@ class Image extends \Opencart\System\Engine\Controller {
      * Called from the Image Mismatch tab in the Inventory/Sync dashboard.
      */
     public function bulkImportMismatchImages(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = $lang['error_permission'] ?? 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -892,14 +892,14 @@ class Image extends \Opencart\System\Engine\Controller {
         set_time_limit(600);
         ini_set('memory_limit', '512M');
 
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
         $this->load->model('tool/image');
 
-        $this->load->model('shopmanager/maintenance/image');
-        $rows = $this->model_shopmanager_maintenance_image->getImageMismatchList();
+        $this->load->model('warehouse/maintenance/image');
+        $rows = $this->model_warehouse_maintenance_image->getImageMismatchList();
 
         if (empty($rows)) {
             $json['success'] = true;
@@ -925,8 +925,8 @@ class Image extends \Opencart\System\Engine\Controller {
                 // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
                 try {
                  
-                    $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
-                    $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+                    $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
+                    $this->model_warehouse_marketplace_listing->resetEbayImageCount($product_id);
                     $success_count++;
                     $result = ['success' => true, 'skipped' => false,
                                'image_count' => $oc_count,
@@ -939,8 +939,8 @@ class Image extends \Opencart\System\Engine\Controller {
             } else {
                 // eBay a plus que OC → importer les images eBay dans OC
                 $result = $this->importEbayImagesForProduct($product_id, $lang);
-                $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
-                $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+                $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
+                $this->model_warehouse_marketplace_listing->resetEbayImageCount($product_id);
                
                 if (!empty($result['success'])) {
                     $success_count++;
@@ -977,10 +977,10 @@ class Image extends \Opencart\System\Engine\Controller {
      * Used for the per-row "Import" button in the Image Mismatch tab.
      */
     public function syncImagesForProductWitheBay(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = $lang['error_permission'] ?? 'Permission denied';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -999,35 +999,35 @@ class Image extends \Opencart\System\Engine\Controller {
         set_time_limit(120);
         ini_set('memory_limit', '256M');
 
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
         $this->load->model('tool/image');
 
         // Direction via models uniquement — aucun SQL dans le controller
-        $product    = $this->model_shopmanager_catalog_product->getProduct($product_id);
-        $sec_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+        $product    = $this->model_warehouse_product_product->getProduct($product_id);
+        $sec_images = $this->model_warehouse_product_product->getImages($product_id);
         $oc_count   = ((!empty($product['image']) && $product['image'] !== 'no_image.png') ? 1 : 0)
                     + count($sec_images);
-        $ebay_count = $this->model_shopmanager_marketplace->getEbayImageCount($product_id);
+        $ebay_count = $this->model_warehouse_marketplace_listing->getEbayImageCount($product_id);
 
         if ($oc_count > $ebay_count) {
             // OC a plus que eBay → pousser les images OC vers eBay via ReviseItem complet
           
-            $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
-            $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
-            $this->model_shopmanager_marketplace->resetSyncState($product_id);
+            $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
+            $this->model_warehouse_marketplace_listing->resetEbayImageCount($product_id);
+            $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
             $json = ['success' => true, 'image_count' => $oc_count,
                      'direction' => 'oc_to_ebay',
                      'message' => 'Images OC poussées vers eBay via ReviseItem'];
         } else {
             // eBay a plus (ou égal) → importer les images eBay dans OC
             $result = $this->importEbayImagesForProduct($product_id, $lang);
-            $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
-            $this->model_shopmanager_marketplace->resetEbayImageCount($product_id);
+            $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
+            $this->model_warehouse_marketplace_listing->resetEbayImageCount($product_id);
             if (!empty($result['success'])) {
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
             }
             $json = $result;
             $json['direction'] = 'ebay_to_oc';
@@ -1042,18 +1042,18 @@ class Image extends \Opencart\System\Engine\Controller {
      * Fix image nomenclature and convert to webp
      */
     public function fixImages(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $data = [];
         
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['product_ids']) && is_array($this->request->post['product_ids'])) {
-                $this->load->model('shopmanager/catalog/product');
-                $this->load->model('shopmanager/maintenance/image');
+                $this->load->model('warehouse/product/product');
+                $this->load->model('warehouse/maintenance/image');
                 
                 $fixed_count = 0;
                 $converted_count = 0;
@@ -1078,7 +1078,7 @@ class Image extends \Opencart\System\Engine\Controller {
                     $product_id = (int)$product_id;
                     
                     // Get product main image and all secondary images
-                    $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                    $product = $this->model_warehouse_product_product->getProduct($product_id);
                     if (!$product) {
                         continue;
                     }
@@ -1094,7 +1094,7 @@ class Image extends \Opencart\System\Engine\Controller {
                     }
                     
                     // Add secondary images
-                    $secondary_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+                    $secondary_images = $this->model_warehouse_product_product->getImages($product_id);
                     foreach ($secondary_images as $img) {
                         $images_to_process[] = [
                             'path' => $img['image'],
@@ -1251,7 +1251,7 @@ class Image extends \Opencart\System\Engine\Controller {
                             }
                             
                             // Add to database as secondary image
-                            $this->model_shopmanager_maintenance_image->addSecondaryImage($product_id, $new_path);
+                            $this->model_warehouse_maintenance_image->addSecondaryImage($product_id, $new_path);
                             $orphans_added++;
                             $fixed_count++;
                         }
@@ -1260,7 +1260,7 @@ class Image extends \Opencart\System\Engine\Controller {
                     // Re-validate this product to update its status
                     // Use model method to get fresh product data
                     try {
-                        $product_fresh = $this->model_shopmanager_maintenance_image->getFreshProduct($product_id);
+                        $product_fresh = $this->model_warehouse_maintenance_image->getFreshProduct($product_id);
                         if ($product_fresh) {
                             $this->validateProduct($product_id, $product_fresh);
                         }
@@ -1344,7 +1344,7 @@ class Image extends \Opencart\System\Engine\Controller {
         ];
 
         try {
-            $marketplace_data = $this->model_shopmanager_marketplace->getMarketplace([
+            $marketplace_data = $this->model_warehouse_marketplace_listing->getMarketplace([
                 'product_id' => $product_id,
                 'marketplace_id' => 1
             ]);
@@ -1364,7 +1364,7 @@ class Image extends \Opencart\System\Engine\Controller {
                 return $json;
             }
 
-            $imageUrls = $this->model_shopmanager_ebay->getImages($marketplace_item_id);
+            $imageUrls = $this->model_warehouse_marketplace_ebay_api->getImages($marketplace_item_id);
 
             if (empty($imageUrls) || !is_array($imageUrls)) {
                 $json['skipped'] = true;
@@ -1372,7 +1372,7 @@ class Image extends \Opencart\System\Engine\Controller {
                 return $json;
             }
 
-            $this->model_shopmanager_tools->deleteProductImages($product_id, 'all');
+            $this->model_warehouse_tools_utility->deleteProductImages($product_id, 'all');
 
             $imported_count = 0;
             $primary_set = false;
@@ -1383,10 +1383,10 @@ class Image extends \Opencart\System\Engine\Controller {
                 }
 
                 if (!$primary_set) {
-                    $primary_image = $this->model_shopmanager_tools->uploadImages($image_url, $product_id, 'pri');
+                    $primary_image = $this->model_warehouse_tools_utility->uploadImages($image_url, $product_id, 'pri');
 
                     if ($primary_image) {
-                        $this->model_shopmanager_catalog_product->updateProductImage($product_id, $primary_image);
+                        $this->model_warehouse_product_product->updateProductImage($product_id, $primary_image);
                         $json['product_images']['primary'] = [
                             'image' => $primary_image,
                             'thumb' => $this->model_tool_image->resize($primary_image, 100, 100)
@@ -1398,10 +1398,10 @@ class Image extends \Opencart\System\Engine\Controller {
                     continue;
                 }
 
-                $secondary_image = $this->model_shopmanager_tools->uploadImages($image_url, $product_id, 'sec');
+                $secondary_image = $this->model_warehouse_tools_utility->uploadImages($image_url, $product_id, 'sec');
 
                 if ($secondary_image) {
-                    $this->model_shopmanager_catalog_product->insertProductImage($product_id, $secondary_image);
+                    $this->model_warehouse_product_product->insertProductImage($product_id, $secondary_image);
                     $json['product_images']['secondary'][] = [
                         'image' => $secondary_image,
                         'thumb' => $this->model_tool_image->resize($secondary_image, 100, 100),
@@ -1412,8 +1412,8 @@ class Image extends \Opencart\System\Engine\Controller {
             }
 
             if ($imported_count > 0) {
-                $this->load->model('shopmanager/maintenance/image');
-                $product_fresh = $this->model_shopmanager_maintenance_image->getFreshProduct($product_id);
+                $this->load->model('warehouse/maintenance/image');
+                $product_fresh = $this->model_warehouse_maintenance_image->getFreshProduct($product_id);
 
                 if ($product_fresh) {
                     $this->validateProduct($product_id, $product_fresh);
@@ -1457,7 +1457,7 @@ class Image extends \Opencart\System\Engine\Controller {
             'missing_on_ebay' => [],
         ];
 
-        $marketplace_data = $this->model_shopmanager_marketplace->getMarketplace([
+        $marketplace_data = $this->model_warehouse_marketplace_listing->getMarketplace([
             'product_id' => $product_id,
             'marketplace_id' => 1
         ]);
@@ -1476,7 +1476,7 @@ class Image extends \Opencart\System\Engine\Controller {
             return $result;
         }
 
-        $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $product = $this->model_warehouse_product_product->getProduct($product_id);
         $db_names = [];
 
         if (!empty($product['image'])) {
@@ -1484,7 +1484,7 @@ class Image extends \Opencart\System\Engine\Controller {
             $result['db_main_count'] = 1;
         }
 
-        $secondary_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+        $secondary_images = $this->model_warehouse_product_product->getImages($product_id);
         if (!empty($secondary_images) && is_array($secondary_images)) {
             foreach ($secondary_images as $img) {
                 if (!empty($img['image'])) {
@@ -1498,7 +1498,7 @@ class Image extends \Opencart\System\Engine\Controller {
         $result['db_image_names'] = $db_names;
         $result['db_count'] = count($db_names);
 
-        $ebay_urls = $this->model_shopmanager_ebay->getImages($marketplace_item_id);
+        $ebay_urls = $this->model_warehouse_marketplace_ebay_api->getImages($marketplace_item_id);
         $ebay_names = [];
 
         if (!empty($ebay_urls) && is_array($ebay_urls)) {
@@ -1534,13 +1534,13 @@ class Image extends \Opencart\System\Engine\Controller {
      * Delete remaining files in old directories
      */
     public function deleteRemainingFiles(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $data = [];
         
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['directories']) && is_array($this->request->post['directories'])) {
@@ -1668,14 +1668,14 @@ class Image extends \Opencart\System\Engine\Controller {
      * Add orphan images to product
      */
     public function addOrphanImages(): void {
-        $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('warehouse/maintenance/image');
         $data = [];
         
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         
         $json = [];
         
-        if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/maintenance/image')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             if (isset($this->request->post['product_id']) && isset($this->request->post['images']) && is_array($this->request->post['images'])) {
@@ -1697,10 +1697,10 @@ class Image extends \Opencart\System\Engine\Controller {
                     }
                     
                     if ($type === 'main') {
-                        $this->model_shopmanager_maintenance_image->updateMainImage($product_id, $image_path);
+                        $this->model_warehouse_maintenance_image->updateMainImage($product_id, $image_path);
                         $added_count++;
                     } elseif ($type === 'secondary') {
-                        $this->model_shopmanager_maintenance_image->addSecondaryImage($product_id, $image_path);
+                        $this->model_warehouse_maintenance_image->addSecondaryImage($product_id, $image_path);
                         $added_count++;
                     }
                 }
@@ -1726,12 +1726,12 @@ class Image extends \Opencart\System\Engine\Controller {
         $orphans = [];
         
         // Get all images linked to this product
-        $this->load->model('shopmanager/maintenance/image');
+        $this->load->model('warehouse/maintenance/image');
         $linked_images = [];
         $expected_dir = null;
         
         // Get main image
-        $product = $this->model_shopmanager_maintenance_image->getProduct($product_id);
+        $product = $this->model_warehouse_maintenance_image->getProduct($product_id);
         if (!empty($product['image'])) {
             $linked_images[] = basename($product['image']);
             // Extract directory from main image path
@@ -1739,7 +1739,7 @@ class Image extends \Opencart\System\Engine\Controller {
         }
         
         // Get secondary images
-        $secondary_images = $this->model_shopmanager_maintenance_image->getSecondaryImages($product_id);
+        $secondary_images = $this->model_warehouse_maintenance_image->getSecondaryImages($product_id);
         foreach ($secondary_images as $img) {
             if (!empty($img['image'])) {
                 $linked_images[] = basename($img['image']);

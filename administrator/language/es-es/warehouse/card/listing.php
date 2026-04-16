@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/card_listing.php
+// Original: warehouse/card/listing.php
 // Heading
 $_['heading_title']     = 'Listados de Tarjetas';
 

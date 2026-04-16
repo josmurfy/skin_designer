@@ -1,4 +1,4 @@
-// Original: shopmanager/ebay.js
+// Original: warehouse/marketplace/ebay/api.js
 // ebay.js
 
 function edit() {
@@ -8,14 +8,14 @@ function edit() {
     var formData = $('#form-product' + product_id).serialize();
 
     $.ajax({
-        url: `index.php?route=shopmanager/catalog/product.updateProduct&user_token=${user_token}`,
+        url: `index.php?route=warehouse/product/product.updateProduct&user_token=${user_token}`,
         type: 'POST',
         data: formData,
         dataType: 'json',
         success: function(response) {
             if (response.success) {
                 $.ajax({
-                    url: `index.php?route=shopmanager/ebay.edit&user_token=${user_token}`,
+                    url: `index.php?route=warehouse/marketplace/ebay/api.edit&user_token=${user_token}`,
                     type: 'POST',
                     data: { product_id: product_id },
                     dataType: 'json',
@@ -54,7 +54,7 @@ function editEbayPrice(marketplace_item_id,price) {
     var formData = $('#form-product'  + product_id).serialize();
 
                 $.ajax({
-                    url: `index.php?route=shopmanager/ebay.editPrice&user_token=${user_token}`,
+                    url: `index.php?route=warehouse/marketplace/ebay/api.editPrice&user_token=${user_token}`,
                     type: 'POST',
                     data: { product_id: product_id, marketplace_item_id: marketplace_item_id, price: price },
                     dataType: 'json',
@@ -79,7 +79,7 @@ function removeFromEbay(marketplace_item_id) {
 
     if (marketplace_item_id && confirm(lang.confirm_are_you_sure)) {
         $.ajax({
-            url: `index.php?route=shopmanager/ebay.endListing&user_token=${user_token}`,
+            url: `index.php?route=warehouse/marketplace/ebay/api.endListing&user_token=${user_token}`,
             type: 'POST',
             data: { marketplace_item_id: marketplace_item_id, product_id: product_id,site_id: site_id },
             dataType: 'json',
@@ -105,7 +105,7 @@ function relistToEbay(marketplace_item_id) {
     
     if (marketplace_item_id) {
         $.ajax({
-            url: `index.php?route=shopmanager/ebay.relist&user_token=${user_token}`,
+            url: `index.php?route=warehouse/marketplace/ebay/api.relist&user_token=${user_token}`,
             type: 'POST',
             data: { marketplace_item_id: marketplace_item_id, product_id: product_id, site_id: site_id },
             dataType: 'json',
@@ -132,7 +132,7 @@ function addToEbay() {
     var quantity = document.querySelector('input[name="quantity"]').value;
     var unallocated_quantity = document.querySelector('input[name="unallocated_quantity"]').value;
         $.ajax({
-            url: `index.php?route=shopmanager/ebay.add&user_token=${user_token}`,
+            url: `index.php?route=warehouse/marketplace/ebay/api.add&user_token=${user_token}`,
             type: 'POST',
             data: {  product_id: product_id ,quantity: quantity,  unallocated_quantity: unallocated_quantity,site_id:site_id},
             dataType: 'json',

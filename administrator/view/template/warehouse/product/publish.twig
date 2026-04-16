@@ -1,4 +1,4 @@
-{# Original: shopmanager/list_fast.twig #}
+{# Original: warehouse/product/publish.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -159,7 +159,7 @@ var TEXT_ERROR_LOCATION_UPDATE = '{{ text_error_location_update|escape('js') }}'
 var TEXT_INVALID_QTY = '{{ text_invalid_qty|escape('js') }}';
 
 $('#button-filter').on('click', function() {
-  var url = 'index.php?route=shopmanager/list_fast&user_token={{ user_token }}';
+  var url = 'index.php?route=warehouse/product/publish&user_token={{ user_token }}';
 
   var filter_sku = $('input[name="filter_sku"]').val();
   if (filter_sku) url += '&filter_sku=' + encodeURIComponent(filter_sku);

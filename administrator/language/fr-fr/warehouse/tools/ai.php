@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/ai.php
+// Original: warehouse/tools/ai.php
 // Heading
 $_['heading_title']    = 'Intelligence Artificielle';
 

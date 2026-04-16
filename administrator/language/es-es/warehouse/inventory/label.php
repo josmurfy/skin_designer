@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/print_report.php
+// Original: warehouse/inventory/label.php
 $_['heading_title'] = 'Informe de inventario';
 $_['column_product_id'] = 'ID producto';
 $_['column_name'] = 'Nombre';

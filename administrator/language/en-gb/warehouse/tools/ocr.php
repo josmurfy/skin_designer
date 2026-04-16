@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/ocr.php
+// Original: warehouse/tools/ocr.php
 $_['heading_title'] = 'Image Text Recognition';
 $_['text_image_upload'] = 'Upload Image';
 $_['text_recognized_text'] = 'Recognized Text';

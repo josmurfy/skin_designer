@@ -1,4 +1,4 @@
-// Original: shopmanager/card/card_listing_tab_cards.js
+// Original: warehouse/card/listing_tab_cards.js
 /**
  * card_listing_tab_cards.js
  * Handles all interactions for the #tab-cards panel:
@@ -685,7 +685,7 @@ function htmlspecialchars_decode(str) {
 
                 var userToken = new URLSearchParams(window.location.search).get('user_token');
                 $.ajax({
-                    url: 'index.php?route=shopmanager/card/card_listing.updateSortOrder&user_token=' + userToken,
+                    url: 'index.php?route=warehouse/card/listing.updateSortOrder&user_token=' + userToken,
                     type: 'POST',
                     data: { card_ids: cardIds },
                     dataType: 'json',
@@ -748,7 +748,7 @@ function htmlspecialchars_decode(str) {
         var userToken = new URLSearchParams(window.location.search).get('user_token');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card.updatePrice&user_token=' + userToken,
+            url: 'index.php?route=warehouse/card/card.updatePrice&user_token=' + userToken,
             type: 'POST',
             data: { card_id: cardId, price: newPrice },
             dataType: 'json',
@@ -798,7 +798,7 @@ function htmlspecialchars_decode(str) {
         var userToken = new URLSearchParams(window.location.search).get('user_token');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card.updateRawPrice&user_token=' + userToken,
+            url: 'index.php?route=warehouse/card/card.updateRawPrice&user_token=' + userToken,
             type: 'POST',
             data: { card_id: cardId, raw_price: rawVal },
             dataType: 'json',
@@ -843,7 +843,7 @@ function htmlspecialchars_decode(str) {
         $input.css('outline', '2px solid orange');
         $input.prop('disabled', true).addClass('bg-light');
         var userToken = new URLSearchParams(window.location.search).get('user_token');
-        var ajaxUrl = 'index.php?route=shopmanager/card/card.updateQuantity&user_token=' + userToken;
+        var ajaxUrl = 'index.php?route=warehouse/card/card.updateQuantity&user_token=' + userToken;
 
         $.ajax({
             url: ajaxUrl,
@@ -1067,7 +1067,7 @@ function htmlspecialchars_decode(str) {
         var sku       = $(this).data('sku') || '';
         if (!sku) { alert('No SKU assigned to this card.'); return; }
         var userToken = new URLSearchParams(window.location.search).get('user_token');
-        var url = 'index.php?route=shopmanager/tools.create_label'
+        var url = 'index.php?route=warehouse/tools/utility.create_label'
             + '&sku='        + encodeURIComponent(sku)
             + '&upc='
             + '&quantity=1'

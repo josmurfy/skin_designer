@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/catalog/product_specific.php
-namespace Opencart\Admin\Controller\Shopmanager\Catalog;
+// Original: warehouse/product/product_specific.php
+namespace Opencart\Admin\Controller\Warehouse\Product;
 
-class ProductSpecific extends \Opencart\System\Engine\Controller {
+class Specific extends \Opencart\System\Engine\Controller {
     public function editSpecificKey(): void {
         $json = array();
         
@@ -13,10 +13,10 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $replacement_term = $this->request->get['replacement_term'];
 
             // Charger le modèle
-            $this->load->model('shopmanager/catalog/product_specific');
+            $this->load->model('warehouse/product/product_specific');
 
             // Modifier la clé spécifique
-            $this->model_shopmanager_catalog_product_specific->editSpecificKey($specific_key, $category_id, $replacement_term);
+            $this->model_warehouse_product_specific->editSpecificKey($specific_key, $category_id, $replacement_term);
 
             $json['success'] = 'Specific key updated successfully';
         } else {
@@ -38,10 +38,10 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $category_id = (int)$this->request->get['category_id'];
 
             // Charger le modèle
-            $this->load->model('shopmanager/catalog/product_specific');
+            $this->load->model('warehouse/product/product_specific');
 
             // Supprimer la clé spécifique
-            $this->model_shopmanager_catalog_product_specific->deleteSpecificKey($specific_key, $category_id);
+            $this->model_warehouse_product_specific->deleteSpecificKey($specific_key, $category_id);
 
             $json['success'] = 'Specific key deleted successfully';
         } else {
@@ -64,10 +64,10 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $replacement_term = $this->request->get['replacement_term'];
 
             // Charger le modèle
-            $this->load->model('shopmanager/catalog/product_specific');
+            $this->load->model('warehouse/product/product_specific');
 
             // Ajouter la nouvelle clé spécifique
-            $specific_id = $this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key, $category_id, $replacement_term);
+            $specific_id = $this->model_warehouse_product_specific->addSpecificKey($specific_key, $category_id, $replacement_term);
 
             $json['success'] = 'Specific key added successfully';
             $json['specific_id'] = $specific_id;
@@ -90,10 +90,10 @@ class ProductSpecific extends \Opencart\System\Engine\Controller {
             $category_id = (int)$this->request->get['category_id'];
 
             // Charger le modèle
-            $this->load->model('shopmanager/catalog/product_specific');
+            $this->load->model('warehouse/product/product_specific');
 
             // Récupérer la clé spécifique
-            $replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key, $category_id);
+            $replacement_term = $this->model_warehouse_product_specific->getSpecificKey($specific_key, $category_id);
 
             if ($replacement_term != 'not_set') {
                 $json['exists'] = true;

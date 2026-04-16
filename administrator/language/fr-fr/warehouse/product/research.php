@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/catalog/product_search.php
+// Original: warehouse/product/research.php
 // En-tête
 $_['heading_title'] = 'Recherche d\'informations produit';
 

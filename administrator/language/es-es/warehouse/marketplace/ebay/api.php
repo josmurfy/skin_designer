@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/ebay.php
+// Original: warehouse/marketplace/ebay/api.php
 $_['heading_title'] = 'Gestión de plantillas eBay';
 $_['text_success'] = '¡Éxito: Ha modificado la configuración de la plantilla eBay!';
 $_['text_edit'] = 'Editar plantilla eBay';

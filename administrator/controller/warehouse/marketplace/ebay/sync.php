@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/inventory/sync.php
-namespace Opencart\Admin\Controller\Shopmanager\Inventory;
+// Original: warehouse/marketplace/ebay/sync.php
+namespace Opencart\Admin\Controller\Warehouse\Marketplace\Ebay;
 
 /**
  * Class Sync
@@ -18,12 +18,12 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function index(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
-        $this->document->addScript('view/javascript/shopmanager/inventory/sync.js?v=' . filemtime(DIR_APPLICATION . 'view/javascript/shopmanager/inventory/sync.js'));
+        $this->document->addScript('view/javascript/warehouse/marketplace/ebay/sync.js?v=' . filemtime(DIR_APPLICATION . 'view/javascript/warehouse/marketplace/ebay/sync.js'));
 
         // Breadcrumbs
         $data['breadcrumbs'] = [];
@@ -33,7 +33,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         ];
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/inventory/sync', 'user_token=' . $this->session->data['user_token'])
+            'href' => $this->url->link('warehouse/marketplace/ebay/sync', 'user_token=' . $this->session->data['user_token'])
         ];
 
         // Language strings
@@ -121,7 +121,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['period'] = $period;
 
         // URLs
-        $data['url_get_data'] = $this->url->link('shopmanager/inventory/sync.getData', 'user_token=' . $this->session->data['user_token']);
+        $data['url_get_data'] = $this->url->link('warehouse/marketplace/ebay/sync.getData', 'user_token=' . $this->session->data['user_token']);
         
         $data['user_token'] = $this->session->data['user_token'];
 
@@ -140,22 +140,22 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['not_synced_content']   = $this->getNotSyncedContent();
 
         // Pagination AJAX URLs
-        $data['url_not_imported_tab'] = $this->url->link('shopmanager/inventory/sync.getNotImportedTab', 'user_token=' . $this->session->data['user_token']);
-        $data['url_to_update_tab']    = $this->url->link('shopmanager/inventory/sync.getToUpdateTab',    'user_token=' . $this->session->data['user_token']);
-        $data['url_not_synced_tab']   = $this->url->link('shopmanager/inventory/sync.getNotSyncedTab',   'user_token=' . $this->session->data['user_token']);
+        $data['url_not_imported_tab'] = $this->url->link('warehouse/marketplace/ebay/sync.getNotImportedTab', 'user_token=' . $this->session->data['user_token']);
+        $data['url_to_update_tab']    = $this->url->link('warehouse/marketplace/ebay/sync.getToUpdateTab',    'user_token=' . $this->session->data['user_token']);
+        $data['url_not_synced_tab']   = $this->url->link('warehouse/marketplace/ebay/sync.getNotSyncedTab',   'user_token=' . $this->session->data['user_token']);
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync', $data));
     }
     
     /**
      * Get initial Price Mismatch tab content
      */
     private function getPriceMismatchContent(): string {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         $limit = 20;
         $filter_data = [
@@ -165,8 +165,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => 'ASC'
         ];
         
-        $price_mismatch = $this->model_shopmanager_inventory_sync->getPriceMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalPriceMismatch();
+        $price_mismatch = $this->model_warehouse_marketplace_ebay_sync->getPriceMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalPriceMismatch();
         
         $data['price_mismatch'] = $price_mismatch;
         $data['price_mismatch_total'] = $total;
@@ -185,14 +185,14 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        return $this->load->view('shopmanager/inventory/sync_price_mismatch', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_price_mismatch', $data);
     }
     
     /**
      * Get initial Quantity Mismatch tab content
      */
     private function getQtyMismatchContent(): string {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         $limit = 20;
         $filter_data = [
@@ -202,8 +202,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => 'ASC'
         ];
         
-        $qty_mismatch = $this->model_shopmanager_inventory_sync->getQuantityMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalQuantityMismatch();
+        $qty_mismatch = $this->model_warehouse_marketplace_ebay_sync->getQuantityMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalQuantityMismatch();
         
         $data['qty_mismatch'] = $qty_mismatch;
         $data['qty_mismatch_total'] = $total;
@@ -222,14 +222,14 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        return $this->load->view('shopmanager/inventory/sync_qty_mismatch', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_qty_mismatch', $data);
     }
     
     /**
      * Get initial Specifics Mismatch tab content
      */
     private function getSpecificsMismatchContent(): string {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         $limit = 20;
         $filter_data = [
@@ -239,8 +239,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => 'ASC'
         ];
         
-        $specifics_mismatch = $this->model_shopmanager_inventory_sync->getSpecificsMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalSpecificsMismatch();
+        $specifics_mismatch = $this->model_warehouse_marketplace_ebay_sync->getSpecificsMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalSpecificsMismatch();
         
         $data['specifics_mismatch'] = $specifics_mismatch;
         $data['specifics_mismatch_total'] = $total;
@@ -259,14 +259,14 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        return $this->load->view('shopmanager/inventory/sync_specifics_mismatch', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_specifics_mismatch', $data);
     }
     
     /**
      * Get initial Condition Mismatch tab content
      */
     private function getConditionMismatchContent(): string {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         $limit = 20;
         $filter_data = [
@@ -276,8 +276,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => 'ASC'
         ];
         
-        $condition_mismatch = $this->model_shopmanager_inventory_sync->getConditionMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalConditionMismatch();
+        $condition_mismatch = $this->model_warehouse_marketplace_ebay_sync->getConditionMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalConditionMismatch();
         
         $data['condition_mismatch'] = $condition_mismatch;
         $data['condition_mismatch_total'] = $total;
@@ -296,18 +296,18 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        return $this->load->view('shopmanager/inventory/sync_condition_mismatch', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_condition_mismatch', $data);
     }
     
     /**
      * Get initial Category Mismatch tab content
      */
     private function getCategoryMismatchContent(): string {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $limit    = 50;
-        $all      = $this->model_shopmanager_inventory_sync->getAllCategoryMismatchCandidates();
+        $all      = $this->model_warehouse_marketplace_ebay_sync->getAllCategoryMismatchCandidates();
         $filtered = $this->getFilteredCategoryMismatches($all);
         $total    = count($filtered);
         $rows     = array_slice($filtered, 0, $limit);
@@ -324,7 +324,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['category_mismatch_pagination'] = $total > $limit;
         $data['user_token']                   = $this->session->data['user_token'];
 
-        return $this->load->view('shopmanager/inventory/sync_category_mismatch', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_category_mismatch', $data);
     }
 
     /**
@@ -339,8 +339,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         $upcs = array_filter(array_unique(array_column($rows, 'upc')));
         if (empty($upcs)) return;
 
-        $this->load->model('shopmanager/inventory/sync');
-        $map = $this->model_shopmanager_inventory_sync->getBestCategoryByUpcs(array_values($upcs));
+        $this->load->model('warehouse/marketplace/ebay/sync');
+        $map = $this->model_warehouse_marketplace_ebay_sync->getBestCategoryByUpcs(array_values($upcs));
 
         // Merge into rows
         foreach ($rows as &$row) {
@@ -389,8 +389,8 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Compute the true category mismatch total (PHP-filtered, both conditions).
      */
     private function computeCategoryMismatchTotal(): int {
-        $this->load->model('shopmanager/inventory/sync');
-        $all = $this->model_shopmanager_inventory_sync->getAllCategoryMismatchCandidates();
+        $this->load->model('warehouse/marketplace/ebay/sync');
+        $all = $this->model_warehouse_marketplace_ebay_sync->getAllCategoryMismatchCandidates();
         return count($this->getFilteredCategoryMismatches($all));
     }
 
@@ -398,17 +398,17 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get initial Image Count Mismatch tab content (OC vs eBay)
      */
     private function getImageMismatchContent(): string {
-        $this->load->model('shopmanager/inventory/sync');
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
 
         $limit = 20;
         $filter_data = ['start' => 0, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
 
-        $image_mismatch = $this->model_shopmanager_inventory_sync->getImageMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
+        $image_mismatch = $this->model_warehouse_marketplace_ebay_sync->getImageMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalImageMismatch();
 
-        $backup_mismatch = $this->model_shopmanager_inventory_sync->getImageBackupMismatch($filter_data);
-        $backup_total    = $this->model_shopmanager_inventory_sync->getTotalImageBackupMismatch();
+        $backup_mismatch = $this->model_warehouse_marketplace_ebay_sync->getImageBackupMismatch($filter_data);
+        $backup_total    = $this->model_warehouse_marketplace_ebay_sync->getTotalImageBackupMismatch();
 
         $data['image_mismatch']            = $image_mismatch;
         $data['image_mismatch_total']      = $total;
@@ -430,8 +430,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['backup_mismatch_num_pages']  = ceil($backup_total / $limit);
         $data['backup_mismatch_pagination'] = $backup_total > $limit;
 
-        $resolution_upgrade       = $this->model_shopmanager_inventory_sync->getResolutionUpgradeMismatch(['start' => 0, 'limit' => $limit, 'sort' => 'backup_max_width', 'order' => 'DESC']);
-        $resolution_upgrade_total = $this->model_shopmanager_inventory_sync->getTotalResolutionUpgradeMismatch();
+        $resolution_upgrade       = $this->model_warehouse_marketplace_ebay_sync->getResolutionUpgradeMismatch(['start' => 0, 'limit' => $limit, 'sort' => 'backup_max_width', 'order' => 'DESC']);
+        $resolution_upgrade_total = $this->model_warehouse_marketplace_ebay_sync->getTotalResolutionUpgradeMismatch();
         $data['resolution_upgrade']            = $resolution_upgrade;
         $data['resolution_upgrade_total']      = $resolution_upgrade_total;
         $data['resolution_upgrade_page']       = 1;
@@ -460,21 +460,21 @@ class Sync extends \Opencart\System\Engine\Controller {
             $data[$key] = $lang[$key] ?? '';
         }
 
-        return $this->load->view('shopmanager/inventory/sync_image_mismatch', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_image_mismatch', $data);
     }
 
     /**
      * Get initial Not Imported tab content
      */
     private function getNotImportedContent(): string {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $limit = 50;
         $filter_data = ['start' => 0, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
 
-        $rows  = $this->model_shopmanager_inventory_sync->getNotImported($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalNotImported();
+        $rows  = $this->model_warehouse_marketplace_ebay_sync->getNotImported($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalNotImported();
 
         $data = [];
         $data['not_imported']            = $rows;
@@ -488,21 +488,21 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['not_imported_pagination'] = $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
-        return $this->load->view('shopmanager/inventory/sync_not_imported', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_not_imported', $data);
     }
 
     /**
      * Get initial To Update tab content
      */
     private function getToUpdateContent(): string {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $limit = 50;
         $filter_data = ['start' => 0, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
 
-        $rows  = $this->model_shopmanager_inventory_sync->getToUpdate($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalToUpdate();
+        $rows  = $this->model_warehouse_marketplace_ebay_sync->getToUpdate($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalToUpdate();
 
         $data = [];
         $data['to_update']            = $rows;
@@ -516,21 +516,21 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['to_update_pagination'] = $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
-        return $this->load->view('shopmanager/inventory/sync_to_update', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_to_update', $data);
     }
 
     /**
      * Get initial Not Synced tab content
      */
     private function getNotSyncedContent(): string {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $limit = 50;
         $filter_data = ['start' => 0, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
 
-        $rows  = $this->model_shopmanager_inventory_sync->getProductsNotSynced($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalNotSynced();
+        $rows  = $this->model_warehouse_marketplace_ebay_sync->getProductsNotSynced($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalNotSynced();
 
         $data = [];
         $data['not_synced']            = $rows;
@@ -542,15 +542,15 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['not_synced_pagination'] = $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
-        return $this->load->view('shopmanager/inventory/sync_not_synced', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_not_synced', $data);
     }
 
     /**
      * AJAX: paginate Not Synced tab
      */
     public function getNotSyncedTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
         $limit = 50;
@@ -558,8 +558,8 @@ class Sync extends \Opencart\System\Engine\Controller {
 
         $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
 
-        $rows  = $this->model_shopmanager_inventory_sync->getProductsNotSynced($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalNotSynced();
+        $rows  = $this->model_warehouse_marketplace_ebay_sync->getProductsNotSynced($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalNotSynced();
 
         $data = [];
         $data['not_synced']            = $rows;
@@ -571,7 +571,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['not_synced_pagination'] = $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_not_synced', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_not_synced', $data));
     }
 
     /**
@@ -580,7 +580,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function getData(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
 
@@ -611,38 +611,38 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return array
      */
     private function getAnalyticsData(string $period): array {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $data = [];
 
         // Inventory Stats
-        $data['total_listed_ebay'] = $this->model_shopmanager_inventory_sync->getTotalListedOnEbay();
-        $data['not_imported_count'] = $this->model_shopmanager_inventory_sync->getTotalNotImported();
-        $data['to_update_count']    = $this->model_shopmanager_inventory_sync->getTotalToUpdate();
+        $data['total_listed_ebay'] = $this->model_warehouse_marketplace_ebay_sync->getTotalListedOnEbay();
+        $data['not_imported_count'] = $this->model_warehouse_marketplace_ebay_sync->getTotalNotImported();
+        $data['to_update_count']    = $this->model_warehouse_marketplace_ebay_sync->getTotalToUpdate();
 
         // Sync Issues
-        $data['products_with_errors'] = $this->model_shopmanager_inventory_sync->getProductsWithErrors();
-        $data['products_not_listed'] = $this->model_shopmanager_inventory_sync->getProductsNotListed();
-        $data['quantity_mismatch'] = $this->model_shopmanager_inventory_sync->getQuantityMismatch();
+        $data['products_with_errors'] = $this->model_warehouse_marketplace_ebay_sync->getProductsWithErrors();
+        $data['products_not_listed'] = $this->model_warehouse_marketplace_ebay_sync->getProductsNotListed();
+        $data['quantity_mismatch'] = $this->model_warehouse_marketplace_ebay_sync->getQuantityMismatch();
 
         // Error summary for dashboard
-        $data['error_summary'] = $this->model_shopmanager_inventory_sync->getErrorSummary();
+        $data['error_summary'] = $this->model_warehouse_marketplace_ebay_sync->getErrorSummary();
 
         // Counts for dashboard
         $data['error_count'] = count($data['products_with_errors']);
-        $data['not_synced_count'] = $this->model_shopmanager_inventory_sync->getTotalNotSynced();
+        $data['not_synced_count'] = $this->model_warehouse_marketplace_ebay_sync->getTotalNotSynced();
         $data['not_listed_count'] = count($data['products_not_listed']);
         $data['mismatch_count'] = count($data['quantity_mismatch']);
         
         // Counts for separate mismatch types - use getTotalXXX methods instead of loading all data
-        $data['price_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalPriceMismatch();
-        $data['qty_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalQuantityMismatch();
-        $data['specifics_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalSpecificsMismatch();
-        $data['condition_mismatch_count'] = $this->model_shopmanager_inventory_sync->getTotalConditionMismatch();
+        $data['price_mismatch_count'] = $this->model_warehouse_marketplace_ebay_sync->getTotalPriceMismatch();
+        $data['qty_mismatch_count'] = $this->model_warehouse_marketplace_ebay_sync->getTotalQuantityMismatch();
+        $data['specifics_mismatch_count'] = $this->model_warehouse_marketplace_ebay_sync->getTotalSpecificsMismatch();
+        $data['condition_mismatch_count'] = $this->model_warehouse_marketplace_ebay_sync->getTotalConditionMismatch();
         $data['category_mismatch_count'] = $this->computeCategoryMismatchTotal();
-        $data['image_mismatch_count']          = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
-        $data['backup_image_mismatch_count']   = $this->model_shopmanager_inventory_sync->getTotalImageBackupMismatch();
-        $data['resolution_upgrade_count']      = $this->model_shopmanager_inventory_sync->getTotalResolutionUpgradeMismatch();
+        $data['image_mismatch_count']          = $this->model_warehouse_marketplace_ebay_sync->getTotalImageMismatch();
+        $data['backup_image_mismatch_count']   = $this->model_warehouse_marketplace_ebay_sync->getTotalImageBackupMismatch();
+        $data['resolution_upgrade_count']      = $this->model_warehouse_marketplace_ebay_sync->getTotalResolutionUpgradeMismatch();
         $data['total_mismatch_count']          = $data['price_mismatch_count']
                                                + $data['qty_mismatch_count']
                                                + $data['specifics_mismatch_count']
@@ -653,10 +653,10 @@ class Sync extends \Opencart\System\Engine\Controller {
                                                + $data['resolution_upgrade_count'];
 
         // Slow Moving Products
-        $data['bottom_products'] = $this->model_shopmanager_inventory_sync->getBottomProducts($period, 10);
+        $data['bottom_products'] = $this->model_warehouse_marketplace_ebay_sync->getBottomProducts($period, 10);
 
         // Alerts
-        $data['alerts'] = $this->model_shopmanager_inventory_sync->getAlerts();
+        $data['alerts'] = $this->model_warehouse_marketplace_ebay_sync->getAlerts();
 
         return $data;
     }
@@ -667,7 +667,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function export(): void {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $period = $this->request->get['period'] ?? 'month';
         $data = $this->getAnalyticsData($period);
@@ -707,18 +707,18 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return string
      */
     public function quickStats(): string {
-        $this->load->model('shopmanager/inventory/sync');
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
 
         $data = [];
-        $data['total_products'] = $this->model_shopmanager_inventory_sync->getTotalProducts();
-        $data['low_stock'] = $this->model_shopmanager_inventory_sync->getLowStockCount();
-        $data['pending_orders'] = $this->model_shopmanager_inventory_sync->getPendingOrders();
-        $data['todays_revenue'] = $this->model_shopmanager_inventory_sync->getTodaysRevenue();
+        $data['total_products'] = $this->model_warehouse_marketplace_ebay_sync->getTotalProducts();
+        $data['low_stock'] = $this->model_warehouse_marketplace_ebay_sync->getLowStockCount();
+        $data['pending_orders'] = $this->model_warehouse_marketplace_ebay_sync->getPendingOrders();
+        $data['todays_revenue'] = $this->model_warehouse_marketplace_ebay_sync->getTodaysRevenue();
 
-        return $this->load->view('shopmanager/inventory/sync_widget', $data);
+        return $this->load->view('warehouse/marketplace/ebay/sync_widget', $data);
     }
 
     /**
@@ -729,8 +729,8 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function importMarketplace(): void {
         file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - importMarketplace CALLED\n", FILE_APPEND);
         
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
 
         file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Models loaded\n", FILE_APPEND);
         
@@ -771,7 +771,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             if ($offset > 0 && file_exists($cache_file) && (time() - filemtime($cache_file)) < $cache_ttl) {
                 $response = json_decode(file_get_contents($cache_file), true) ?: [];
             } else {
-                $response = $this->model_shopmanager_ebay->getMyeBaySellingBulk($page, $marketplace_account_id);
+                $response = $this->model_warehouse_marketplace_ebay_api->getMyeBaySellingBulk($page, $marketplace_account_id);
                 // Only cache successful responses — never cache eBay error responses
                 $is_success = !empty($response) && (!isset($response['Ack']) || $response['Ack'] === 'Success' || $response['Ack'] === 'Warning');
                 if ($is_success) {
@@ -837,7 +837,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                         $batch_product_ids[] = (int)$_sku;
                     }
                 }
-                $existing_data_map = $this->model_shopmanager_marketplace->getBulkMarketplaceExistingData($batch_product_ids, 1);
+                $existing_data_map = $this->model_warehouse_marketplace_listing->getBulkMarketplaceExistingData($batch_product_ids, 1);
 
                 // Process each item in the batch
                 foreach ($batch as $item) {
@@ -895,7 +895,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                     
                     if ($needs_getitem) {
                         // GET FULL ITEM DETAILS with GetItem API call (for category, condition, specifics)
-                        $item_details = $this->model_shopmanager_ebay->getItemDetails($item_id, $marketplace_account_id);
+                        $item_details = $this->model_warehouse_marketplace_ebay_api->getItemDetails($item_id, $marketplace_account_id);
                         // file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - GetItem called for $item_id (missing data)\n", FILE_APPEND);
                     } else {
                         // file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Skipped GetItem for $item_id (data already exists)\n", FILE_APPEND);
@@ -977,7 +977,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                     ];
 
                     // Update or insert in product_marketplace table
-                    $this->model_shopmanager_marketplace->upsertProductMarketplace($marketplace_data, null);
+                    $this->model_warehouse_marketplace_listing->upsertProductMarketplace($marketplace_data, null);
 
                     $processed++;
                 }
@@ -995,7 +995,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 // Sweep ended eBay listings: when the full import is done, mark status=0 for items
                 // that were not seen in this run (not in eBay's ActiveList → ended/expired listings)
                 if ($completed && !empty($started_at)) {
-                    $swept = $this->model_shopmanager_marketplace->sweepEndedListings($marketplace_account_id, $started_at);
+                    $swept = $this->model_warehouse_marketplace_listing->sweepEndedListings($marketplace_account_id, $started_at);
                     file_put_contents('/home/n7f9655/public_html/storage_phoenixliquidation/logs/ebay.log', date('Y-m-d H:i:s') . " - Sweep ended listings: $swept rows marked status=0\n", FILE_APPEND);
                     $json['swept'] = $swept;
                 }
@@ -1040,19 +1040,19 @@ class Sync extends \Opencart\System\Engine\Controller {
             $product_id = (int)$this->request->post['product_id'];
 
             // Load models
-            $this->load->model('shopmanager/ebay');
-            $this->load->model('shopmanager/marketplace');
-            $this->load->model('shopmanager/catalog/product');
+            $this->load->model('warehouse/marketplace/ebay/api');
+            $this->load->model('warehouse/marketplace/listing');
+            $this->load->model('warehouse/product/product');
 
             // Get product info
-            $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+            $product = $this->model_warehouse_product_product->getProduct($product_id);
 
             if (empty($product)) {
                 throw new \Exception('Product not found');
             }
 
             // Get marketplace info
-            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+            $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
 
             if (!$marketplace) {
                 throw new \Exception('Product not listed on eBay');
@@ -1063,7 +1063,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $new_quantity = (int)($product['quantity'] ?? 0) + (int)($product['unallocated_quantity'] ?? 0);
             
             // Get marketplace account settings
-            $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
+            $account_info = $this->model_warehouse_marketplace_listing->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
             $site_settings = [];
             
             if ($account_info && !empty($account_info['site_setting'])) {
@@ -1072,7 +1072,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             
             
             // Update quantity on eBay (state management handled by marketplace layer)
-            $response = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
+            $response = $this->model_warehouse_marketplace_listing->editQuantity($product_id, $marketplace_account_id);
 
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
                 $json['success'] = true;
@@ -1103,7 +1103,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncSingleProduct(): void {
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
         $json = [];
 
         try {
@@ -1113,12 +1113,12 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             $product_id = (int)$this->request->post['product_id'];
 
-            $response = $this->model_shopmanager_marketplace->editQuantity($product_id);
+            $response = $this->model_warehouse_marketplace_listing->editQuantity($product_id);
 
             
             if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $this->model_warehouse_marketplace_listing->updateMarketplaceLastSync($product_id);
+                $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                 $json['success'] = true;
                 $json['message'] = 'Product #' . $product_id . ' synced successfully to eBay';
             } else {
@@ -1142,13 +1142,13 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function printMismatchReport(): void {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         $product_id = isset($this->request->get['product_id']) ? (int)$this->request->get['product_id'] : 0;
         
         if ($product_id) {
             // Single product report
-            $products = $this->model_shopmanager_inventory_sync->getQuantityMismatch();
+            $products = $this->model_warehouse_marketplace_ebay_sync->getQuantityMismatch();
             $product = null;
             foreach ($products as $p) {
                 if ($p['product_id'] == $product_id) {
@@ -1165,7 +1165,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $products = [$product];
         } else {
             // All mismatches report
-            $products = $this->model_shopmanager_inventory_sync->getQuantityMismatch();
+            $products = $this->model_warehouse_marketplace_ebay_sync->getQuantityMismatch();
         }
         
         // Generate HTML for printing
@@ -1248,9 +1248,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncPriceToEbay(): void {
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
         
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
@@ -1259,12 +1259,12 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                $product = $this->model_warehouse_product_product->getProduct($product_id);
                 if (!$product) {
                     throw new \Exception("Product not found");
                 }
                 
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 if (!$marketplace) {
                     throw new \Exception("Product not listed on eBay");
                 }
@@ -1273,14 +1273,14 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $marketplace_item_id = $marketplace['marketplace_item_id'];
                 $marketplace_account_id = $marketplace['marketplace_account_id'];
                 
-                $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
+                $account_info = $this->model_warehouse_marketplace_listing->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
                 $site_settings = json_decode($account_info['site_setting'] ?? '{}', true);
                 
-                $response = $this->model_shopmanager_ebay->editPrice($marketplace_item_id, $price, $marketplace_account_id, $site_settings);
+                $response = $this->model_warehouse_marketplace_ebay_api->editPrice($marketplace_item_id, $price, $marketplace_account_id, $site_settings);
                 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                    $this->model_shopmanager_marketplace->updateMarketplacePrice($product_id, $price);
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_marketplace_listing->updateMarketplacePrice($product_id, $price);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = 'Price synced to eBay: $' . number_format($price, 2);
                 } else {
                     $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1301,8 +1301,8 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncPriceFromEbay(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1310,14 +1310,14 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || !isset($marketplace['price'])) {
                     $json['error'] = "Product not listed on eBay";
                     throw new \Exception("Product not listed on eBay");
                 }else{
                     $ebay_price = (float)$marketplace['price'];
-                    $this->model_shopmanager_catalog_product->editProductPrice($product_id, $ebay_price);
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_product_product->editProductPrice($product_id, $ebay_price);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = 'Local price updated from eBay: $' . number_format($ebay_price, 2);
                 }
                 
@@ -1337,7 +1337,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncQuantityToEbay(): void {
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
         $json = [];
         $product_id = (int)($this->request->post['product_id'] ?? 0);
 
@@ -1345,10 +1345,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $response = $this->model_shopmanager_marketplace->editQuantity($product_id);
+                $response = $this->model_warehouse_marketplace_listing->editQuantity($product_id);
 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = 'Quantity synced to eBay';
                 } else {
                     $json['error'] = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1368,8 +1368,8 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncQuantityFromEbay(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1377,7 +1377,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || !isset($marketplace['quantity_listed'])) {
                     $json['error'] = "Product not listed on eBay";
                     throw new \Exception("Product not listed on eBay");
@@ -1386,8 +1386,8 @@ class Sync extends \Opencart\System\Engine\Controller {
 
                     // eBay available = listed - sold  (same formula used in the mismatch detection query)
                     $ebay_quantity = max(0, (int)$marketplace['quantity_listed'] - (int)($marketplace['quantity_sold'] ?? 0));
-                    $this->model_shopmanager_catalog_product->editProductQuantity($product_id, $ebay_quantity);
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_product_product->editProductQuantity($product_id, $ebay_quantity);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = 'Local quantity updated from eBay: ' . $ebay_quantity;
                 }
             } catch (\Exception $e) {
@@ -1405,9 +1405,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncSpecificsToEbay(): void {
-        $this->load->model('shopmanager/ebay');
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/ebay/api');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
         
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
@@ -1416,12 +1416,12 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $product_desc = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                $product_desc = $this->model_warehouse_product_product->getProduct($product_id);
                 if (!$product_desc || empty($product_desc['specifics'])) {
                     throw new \Exception("No local specifics found");
                 }
                 
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 if (!$marketplace) {
                     throw new \Exception("Product not listed on eBay");
                 }
@@ -1430,14 +1430,14 @@ class Sync extends \Opencart\System\Engine\Controller {
                 $marketplace_item_id = $marketplace['marketplace_item_id'];
                 $marketplace_account_id = $marketplace['marketplace_account_id'];
                 
-                $account_info = $this->model_shopmanager_marketplace->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
+                $account_info = $this->model_warehouse_marketplace_listing->getMarketplaceAccount(['marketplace_account_id' => $marketplace_account_id], true);
                 $site_settings = json_decode($account_info['site_setting'] ?? '{}', true);
                 
-                $response = $this->model_shopmanager_ebay->editSpecifics($marketplace_item_id, $specifics, $marketplace_account_id, $site_settings);
+                $response = $this->model_warehouse_marketplace_ebay_api->editSpecifics($marketplace_item_id, $specifics, $marketplace_account_id, $site_settings);
                 
                 if (isset($response['Ack']) && ($response['Ack'] == 'Success' || $response['Ack'] == 'Warning')) {
-                    $this->model_shopmanager_marketplace->updateMarketplaceSpecifics($product_id, $specifics);
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_marketplace_listing->updateMarketplaceSpecifics($product_id, $specifics);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = 'Specifics synced to eBay';
                 } else {
                     $error_msg = $response['Errors']['ShortMessage'] ?? $response['Errors'][0]['ShortMessage'] ?? 'Update failed';
@@ -1458,8 +1458,8 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function syncSpecificsFromEbay(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
         $json = [];
         $product_id = $this->request->post['product_id'] ?? 0;
         
@@ -1467,15 +1467,15 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || empty($marketplace['specifics'])) {
                     $json['error'] = "Product not listed on eBay or no specifics found";
                     throw new \Exception("No eBay specifics found");
                 }else{
                 
                     $ebay_specifics = $marketplace['specifics'];
-                    $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $ebay_specifics, 1);
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_product_product->editProductSpecifics($product_id, $ebay_specifics, 1);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = 'Local specifics updated from eBay';
                 }
             } catch (\Exception $e) {
@@ -1504,11 +1504,11 @@ class Sync extends \Opencart\System\Engine\Controller {
         }
         
         try {
-            $this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/marketplace/ebay/api');
             
             // Get marketplace item ID from database using model
-            $this->load->model('shopmanager/marketplace');
-            $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+            $this->load->model('warehouse/marketplace/listing');
+            $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
             
             if (!$marketplace) {
                 throw new \Exception("Product not found on eBay marketplace");
@@ -1518,7 +1518,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $marketplace_account_id = $marketplace['marketplace_account_id'];
             
             // Call eBay API to get item details
-            $response = $this->model_shopmanager_ebay->getItem($marketplace_item_id, $marketplace_account_id);
+            $response = $this->model_warehouse_marketplace_ebay_api->getItem($marketplace_item_id, $marketplace_account_id);
             
             if (isset($response['error'])) {
                 throw new \Exception("eBay API Error: " . $response['message']);
@@ -1587,13 +1587,13 @@ class Sync extends \Opencart\System\Engine\Controller {
                 'ebay_image_count' => $ebay_image_count,
             ];
 
-            $this->model_shopmanager_marketplace->updateMarketplaceFullRefresh($product_id, $marketplace_data);
+            $this->model_warehouse_marketplace_listing->updateMarketplaceFullRefresh($product_id, $marketplace_data);
 
             // Refresh backup image count + resolution widths (reuses same request, no extra eBay call)
-            $this->load->model('shopmanager/inventory/sync');
+            $this->load->model('warehouse/marketplace/ebay/sync');
             $backup_dir = DIR_OPENCART . 'image_backup/';
             if (is_dir($backup_dir)) {
-                $this->model_shopmanager_inventory_sync->refreshProductResolutionScan((int)$product_id, $backup_dir);
+                $this->model_warehouse_marketplace_ebay_sync->refreshProductResolutionScan((int)$product_id, $backup_dir);
             }
 
             $json['success'] = true;
@@ -1624,10 +1624,10 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Price Mismatch tab with pagination
      */
     public function getPriceMismatchTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         // Pagination parameters
         $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
@@ -1646,8 +1646,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => $order
         ];
         
-        $price_mismatch = $this->model_shopmanager_inventory_sync->getPriceMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalPriceMismatch();
+        $price_mismatch = $this->model_warehouse_marketplace_ebay_sync->getPriceMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalPriceMismatch();
         
         $data['price_mismatch'] = $price_mismatch;
         $data['price_mismatch_total'] = $total;
@@ -1666,17 +1666,17 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_price_mismatch', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_price_mismatch', $data));
     }
     
     /**
      * AJAX method to load Quantity Mismatch tab with pagination
      */
     public function getQtyMismatchTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         // Pagination parameters
         $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
@@ -1695,8 +1695,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => $order
         ];
         
-        $qty_mismatch = $this->model_shopmanager_inventory_sync->getQuantityMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalQuantityMismatch();
+        $qty_mismatch = $this->model_warehouse_marketplace_ebay_sync->getQuantityMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalQuantityMismatch();
         
         $data['qty_mismatch'] = $qty_mismatch;
         $data['qty_mismatch_total'] = $total;
@@ -1715,17 +1715,17 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_qty_mismatch', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_qty_mismatch', $data));
     }
     
     /**
      * AJAX method to load Specifics Mismatch tab with pagination
      */
     public function getSpecificsMismatchTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         // Pagination parameters
         $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
@@ -1744,8 +1744,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => $order
         ];
         
-        $specifics_mismatch = $this->model_shopmanager_inventory_sync->getSpecificsMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalSpecificsMismatch();
+        $specifics_mismatch = $this->model_warehouse_marketplace_ebay_sync->getSpecificsMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalSpecificsMismatch();
         
         $data['specifics_mismatch'] = $specifics_mismatch;
         $data['specifics_mismatch_total'] = $total;
@@ -1764,17 +1764,17 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_specifics_mismatch', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_specifics_mismatch', $data));
     }
     
     /**
      * AJAX method to load Condition Mismatch tab with pagination
      */
     public function getConditionMismatchTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
         
         // Pagination parameters
         $page = isset($this->request->get['page']) ? (int)$this->request->get['page'] : 1;
@@ -1793,8 +1793,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             'order' => $order
         ];
         
-        $condition_mismatch = $this->model_shopmanager_inventory_sync->getConditionMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalConditionMismatch();
+        $condition_mismatch = $this->model_warehouse_marketplace_ebay_sync->getConditionMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalConditionMismatch();
         
         $data['condition_mismatch'] = $condition_mismatch;
         $data['condition_mismatch_total'] = $total;
@@ -1813,17 +1813,17 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['column_location'] = ($lang['column_location'] ?? '');
         $data['column_actions'] = ($lang['column_actions'] ?? '');
         
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_condition_mismatch', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_condition_mismatch', $data));
     }
     
     /**
      * Get Image Count Mismatch Tab - AJAX reload endpoint
      */
     public function getImageMismatchTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
         $data = [];
         
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         // === eBay mismatch pagination ===
         $page  = isset($this->request->get['page'])  ? (int)$this->request->get['page']  : 1;
@@ -1833,8 +1833,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         $order = isset($this->request->get['order']) ? $this->request->get['order'] : 'ASC';
 
         $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => $sort, 'order' => $order];
-        $image_mismatch = $this->model_shopmanager_inventory_sync->getImageMismatch($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalImageMismatch();
+        $image_mismatch = $this->model_warehouse_marketplace_ebay_sync->getImageMismatch($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalImageMismatch();
 
         $data['image_mismatch']            = $image_mismatch;
         $data['image_mismatch_total']      = $total;
@@ -1853,8 +1853,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         $border = isset($this->request->get['border']) ? $this->request->get['border'] : 'ASC';
 
         $bfilter = ['start' => $bstart, 'limit' => $limit, 'sort' => $bsort, 'order' => $border];
-        $backup_mismatch = $this->model_shopmanager_inventory_sync->getImageBackupMismatch($bfilter);
-        $backup_total    = $this->model_shopmanager_inventory_sync->getTotalImageBackupMismatch();
+        $backup_mismatch = $this->model_warehouse_marketplace_ebay_sync->getImageBackupMismatch($bfilter);
+        $backup_total    = $this->model_warehouse_marketplace_ebay_sync->getTotalImageBackupMismatch();
 
         $data['backup_mismatch']            = $backup_mismatch;
         $data['backup_mismatch_total']      = $backup_total;
@@ -1873,8 +1873,8 @@ class Sync extends \Opencart\System\Engine\Controller {
         $rorder = isset($this->request->get['rorder']) ? $this->request->get['rorder'] : 'DESC';
 
         $rfilter = ['start' => $rstart, 'limit' => $limit, 'sort' => $rsort, 'order' => $rorder];
-        $resolution_upgrade       = $this->model_shopmanager_inventory_sync->getResolutionUpgradeMismatch($rfilter);
-        $resolution_upgrade_total = $this->model_shopmanager_inventory_sync->getTotalResolutionUpgradeMismatch();
+        $resolution_upgrade       = $this->model_warehouse_marketplace_ebay_sync->getResolutionUpgradeMismatch($rfilter);
+        $resolution_upgrade_total = $this->model_warehouse_marketplace_ebay_sync->getTotalResolutionUpgradeMismatch();
 
         $data['resolution_upgrade']            = $resolution_upgrade;
         $data['resolution_upgrade_total']      = $resolution_upgrade_total;
@@ -1902,7 +1902,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             $data[$key] = $lang[$key] ?? '';
         }
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_image_mismatch', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_image_mismatch', $data));
     }
 
     /**
@@ -1911,7 +1911,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Called via AJAX button "Scan image_backup".
      */
     public function scanImageBackupCounts(): void {
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $json = [];
         try {
@@ -1925,7 +1925,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 return;
             }
 
-            $stats = $this->model_shopmanager_inventory_sync->scanImageBackupCounts($backup_dir);
+            $stats = $this->model_warehouse_marketplace_ebay_sync->scanImageBackupCounts($backup_dir);
 
             // Purge orphan empty dirs (product_id folders not in DB, with no files)
             $product_dir = $backup_dir . 'data/product/';
@@ -2047,9 +2047,9 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function transferBackupImages(): void {
         ini_set('display_errors', '0');
         $this->response->addHeader('Content-Type: application/json');
-        $this->load->model('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/marketplace/listing');
         $json = [];
         try {
         $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -2078,11 +2078,11 @@ class Sync extends \Opencart\System\Engine\Controller {
         $errors      = [];
 
         // Get current primary image for this product
-        $product      = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $product      = $this->model_warehouse_product_product->getProduct($product_id);
         $current_main = $product['image'] ?? '';
 
         // Get max sort_order in product_image
-        $existing_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+        $existing_images = $this->model_warehouse_product_product->getImages($product_id);
         $next_sort = count($existing_images) ? max(array_column($existing_images, 'sort_order')) + 1 : 1;
 
         foreach ($filenames as $raw_filename) {
@@ -2112,11 +2112,11 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             if ($is_primary && (empty($current_main) || $current_main === 'no_image.png')) {
                 // Set as main image
-                $this->model_shopmanager_catalog_product->setPrimaryImage($product_id, $oc_path);
+                $this->model_warehouse_product_product->setPrimaryImage($product_id, $oc_path);
                 $current_main = $oc_path;
             } else {
                 // Insert as secondary image
-                $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $oc_path);
+                $this->model_warehouse_product_product->addImageIfNotExists($product_id, $oc_path);
                 $next_sort++;
             }
 
@@ -2124,7 +2124,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         }
 
 
-        $this->model_shopmanager_marketplace->resetSyncState($product_id);
+        $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
 
         $json['success']     = true;
         $json['transferred'] = $transferred;
@@ -2144,7 +2144,7 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function deleteBackupImages(): void {
         ini_set('display_errors', '0');
         $this->response->addHeader('Content-Type: application/json');
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
         $json = [];
         try {
         $product_id = isset($this->request->post['product_id']) ? (int)$this->request->post['product_id'] : 0;
@@ -2176,7 +2176,7 @@ class Sync extends \Opencart\System\Engine\Controller {
 
        
         
-        $this->model_shopmanager_marketplace->resetSyncState($product_id);
+        $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
         $json['success'] = true;
         $json['deleted']  = $deleted;
         $json['errors']   = $errors;
@@ -2201,8 +2201,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             $this->response->setOutput(json_encode($json));
             return;
         }
-        $this->load->model('shopmanager/inventory/sync');
-        $this->model_shopmanager_inventory_sync->resetProductImageScan($product_id);
+        $this->load->model('warehouse/marketplace/ebay/sync');
+        $this->model_warehouse_marketplace_ebay_sync->resetProductImageScan($product_id);
         $json['success'] = true;
         $this->response->setOutput(json_encode($json));
     }
@@ -2221,8 +2221,8 @@ class Sync extends \Opencart\System\Engine\Controller {
 
             // ── OC images ─────────────────────────────────────────────────
             $oc_images = [];
-            $this->load->model('shopmanager/catalog/product');
-            $product_data = $this->model_shopmanager_catalog_product->getProduct($product_id);
+            $this->load->model('warehouse/product/product');
+            $product_data = $this->model_warehouse_product_product->getProduct($product_id);
             $main_path = $product_data['image'] ?? '';
             if ($main_path && $main_path !== 'no_image.png' && $main_path !== '') {
                 $abs  = DIR_IMAGE . $main_path;
@@ -2231,7 +2231,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                 restore_error_handler();
                 $oc_images[] = ['role' => 'primary', 'image' => $main_path, 'url' => HTTP_CATALOG . 'image/' . $main_path, 'width' => $info ? $info[0] : 0, 'height' => $info ? $info[1] : 0];
             }
-            $secondary_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+            $secondary_images = $this->model_warehouse_product_product->getImages($product_id);
             foreach ($secondary_images as $row) {
                 $abs  = DIR_IMAGE . $row['image'];
                 set_error_handler(function() { return true; });
@@ -2292,14 +2292,14 @@ class Sync extends \Opencart\System\Engine\Controller {
             $image_path = $this->request->post['image_path'] ?? '';
             $role       = $this->request->post['role'] ?? 'secondary';
             if (!$product_id || !$image_path) { $json['error'] = 'Missing params'; $this->response->setOutput(json_encode($json)); return; }
-            $this->load->model('shopmanager/catalog/product');
-            $this->load->model('shopmanager/marketplace');
+            $this->load->model('warehouse/product/product');
+            $this->load->model('warehouse/marketplace/listing');
             if ($role === 'primary') {
-                $this->model_shopmanager_catalog_product->clearPrimaryImage($product_id);
+                $this->model_warehouse_product_product->clearPrimaryImage($product_id);
             } else {
-                $this->model_shopmanager_catalog_product->deleteImageByPath($product_id, $image_path);
+                $this->model_warehouse_product_product->deleteImageByPath($product_id, $image_path);
             }
-            $this->model_shopmanager_marketplace->setToUpdate($product_id);
+            $this->model_warehouse_marketplace_listing->setToUpdate($product_id);
             $json['success'] = true;
         } catch (\Exception $e) { $json['error'] = 'removeOcImage: ' . $e->getMessage(); }
         $this->response->setOutput(json_encode($json));
@@ -2336,9 +2336,9 @@ class Sync extends \Opencart\System\Engine\Controller {
                 return $rel;
             };
 
-            $this->load->model('shopmanager/catalog/product');
-            $this->load->model('shopmanager/marketplace');
-            $old_primary = $this->model_shopmanager_catalog_product->getProduct($product_id)['image'] ?? '';
+            $this->load->model('warehouse/product/product');
+            $this->load->model('warehouse/marketplace/listing');
+            $old_primary = $this->model_warehouse_product_product->getProduct($product_id)['image'] ?? '';
             $new_old     = $old_primary;
             $new_pri     = $image_path;
 
@@ -2349,16 +2349,16 @@ class Sync extends \Opencart\System\Engine\Controller {
 
                 // Remove stale DB path if file was renamed
                 if ($new_old !== $old_primary) {
-                    $this->model_shopmanager_catalog_product->deleteImageByPath($product_id, $old_primary);
+                    $this->model_warehouse_product_product->deleteImageByPath($product_id, $old_primary);
                 }
                 // Insert demoted primary as secondary
-                $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $new_old);
+                $this->model_warehouse_product_product->addImageIfNotExists($product_id, $new_old);
             }
 
             // Remove new primary from secondary table + set as main
-            $this->model_shopmanager_catalog_product->deleteImagesByPaths($product_id, [$image_path, $new_pri]);
-            $this->model_shopmanager_catalog_product->setPrimaryImage($product_id, $new_pri);
-            $this->model_shopmanager_marketplace->setToUpdate($product_id);
+            $this->model_warehouse_product_product->deleteImagesByPaths($product_id, [$image_path, $new_pri]);
+            $this->model_warehouse_product_product->setPrimaryImage($product_id, $new_pri);
+            $this->model_warehouse_marketplace_listing->setToUpdate($product_id);
             $json['success']     = true;
             $json['new_primary'] = $new_pri;
         } catch (\Exception $e) { $json['error'] = 'setOcImagePrimary: ' . $e->getMessage(); }
@@ -2435,19 +2435,19 @@ class Sync extends \Opencart\System\Engine\Controller {
                 }
             }
 
-            $this->load->model('shopmanager/catalog/product');
-            $this->load->model('shopmanager/marketplace');
+            $this->load->model('warehouse/product/product');
+            $this->load->model('warehouse/marketplace/listing');
             if ($role === 'primary') {
-                $old = $this->model_shopmanager_catalog_product->getProduct($product_id)['image'] ?? '';
+                $old = $this->model_warehouse_product_product->getProduct($product_id)['image'] ?? '';
                 if ($old && $old !== $oc_path) {
-                    $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $old);
+                    $this->model_warehouse_product_product->addImageIfNotExists($product_id, $old);
                 }
-                $this->model_shopmanager_catalog_product->deleteImageByPath($product_id, $oc_path);
-                $this->model_shopmanager_catalog_product->setPrimaryImage($product_id, $oc_path);
+                $this->model_warehouse_product_product->deleteImageByPath($product_id, $oc_path);
+                $this->model_warehouse_product_product->setPrimaryImage($product_id, $oc_path);
             } else {
-                $this->model_shopmanager_catalog_product->addImageIfNotExists($product_id, $oc_path);
+                $this->model_warehouse_product_product->addImageIfNotExists($product_id, $oc_path);
             }
-            $this->model_shopmanager_marketplace->setToUpdate($product_id);
+            $this->model_warehouse_marketplace_listing->setToUpdate($product_id);
             $json['success'] = true;
             $json['oc_path'] = $oc_path;
         } catch (\Exception $e) { $json['error'] = 'transferBackupAsRole: ' . $e->getMessage(); }
@@ -2458,7 +2458,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Sync Category To eBay - Full listing update (like product save)
      */
     public function syncCategoryToEbay(): void {
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
 
         $json = [];
         $product_id = (int)($this->request->post['product_id'] ?? 0);
@@ -2467,8 +2467,8 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
-                $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
+                $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                 $json['success'] = 'Listing updated on eBay';
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -2483,7 +2483,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Bulk Sync Categories To eBay - Full listing update for multiple products
      */
     public function syncCategoryBulkToEbay(): void {
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
 
         $json = [];
         $product_ids = $this->request->post['product_ids'] ?? [];
@@ -2500,10 +2500,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             foreach ($product_ids as $product_id) {
                 $product_id = (int)$product_id;
                 try {
-                    $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
+                    $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
 
                     // Detect real outcome from product_marketplace row: editListing writes error/to_update.
-                    $marketplace_row = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                    $marketplace_row = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                     $has_error = !$marketplace_row || !empty($marketplace_row['error']);
 
                     if ($has_error) {
@@ -2523,8 +2523,8 @@ class Sync extends \Opencart\System\Engine\Controller {
                         $error_count++;
                     } else {
                         // Update succeeded on eBay: clear to_update and keep row out of To Update tab.
-                        $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
-                        $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                        $this->model_warehouse_marketplace_listing->updateMarketplaceLastSync($product_id);
+                        $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                         $updated_ids[] = $product_id;
                         $success_count++;
                     }
@@ -2557,9 +2557,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Sync Category From eBay - Import single category
      */
     public function syncCategoryFromEbay(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/catalog/category');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/product/category');
         
         $json = [];
         $product_id = (int)($this->request->post['product_id'] ?? 0);
@@ -2568,21 +2568,21 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 if (!$marketplace || !isset($marketplace['category_id'])) {
                     throw new \Exception('Product not listed on eBay or no category_id');
                 }
                 $ebay_category_id = (int)$marketplace['category_id'];
 
-                if (!$this->model_shopmanager_catalog_category->getCategory($ebay_category_id)) {
+                if (!$this->model_warehouse_product_category->getCategory($ebay_category_id)) {
                     throw new \Exception("eBay category $ebay_category_id does not exist in local database");
                 }
 
-                $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
+                $this->model_warehouse_product_product->setProductLeafCategory($product_id, $ebay_category_id);
                 if (!empty($marketplace['specifics'])) {
-                    $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
+                    $this->model_warehouse_product_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
                 }
-                $this->model_shopmanager_marketplace->setToUpdate($product_id);
+                $this->model_warehouse_marketplace_listing->setToUpdate($product_id);
                 $json['success'] = "Category imported: $ebay_category_id";
             } catch (\Exception $e) {
                 $json['error'] = $e->getMessage();
@@ -2597,8 +2597,8 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Category Mismatch tab with pagination (reload after fix)
      */
     public function getCategoryMismatchTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
         $limit = 50;
@@ -2610,7 +2610,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         if (!in_array($sort, $allowed_sorts)) $sort = 'product_id';
         if ($order !== 'ASC' && $order !== 'DESC') $order = 'ASC';
 
-        $all      = $this->model_shopmanager_inventory_sync->getAllCategoryMismatchCandidates();
+        $all      = $this->model_warehouse_marketplace_ebay_sync->getAllCategoryMismatchCandidates();
         $filtered = $this->getFilteredCategoryMismatches($all);
 
         // Sort filtered in PHP
@@ -2640,15 +2640,15 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['category_mismatch_pagination'] = $total > $limit;
         $data['user_token']                   = $this->session->data['user_token'];
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_category_mismatch', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_category_mismatch', $data));
     }
 
     /**
      * AJAX: paginate Not Imported tab
      */
     public function getNotImportedTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
         $limit = 50;
@@ -2658,8 +2658,8 @@ class Sync extends \Opencart\System\Engine\Controller {
 
         $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => $sort, 'order' => $order];
 
-        $rows  = $this->model_shopmanager_inventory_sync->getNotImported($filter_data);
-        $total = $this->model_shopmanager_inventory_sync->getTotalNotImported();
+        $rows  = $this->model_warehouse_marketplace_ebay_sync->getNotImported($filter_data);
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalNotImported();
 
         $data = [];
         $data['not_imported']            = $rows;
@@ -2673,22 +2673,22 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['not_imported_pagination'] = $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_not_imported', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_not_imported', $data));
     }
 
     /**
      * AJAX: paginate To Update tab
      */
     public function getToUpdateTab(): void {
-        $this->load->language('shopmanager/inventory/sync');
-        $this->load->model('shopmanager/inventory/sync');
+        $this->load->language('warehouse/marketplace/ebay/sync');
+        $this->load->model('warehouse/marketplace/ebay/sync');
 
         $all   = isset($this->request->get['all']) && $this->request->get['all'] == '1';
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
         $sort  = $this->request->get['sort']  ?? 'product_id';
         $order = $this->request->get['order'] ?? 'ASC';
 
-        $total = $this->model_shopmanager_inventory_sync->getTotalToUpdate();
+        $total = $this->model_warehouse_marketplace_ebay_sync->getTotalToUpdate();
 
         if ($all) {
             $limit = $total;
@@ -2701,7 +2701,7 @@ class Sync extends \Opencart\System\Engine\Controller {
 
         $filter_data = ['start' => $start, 'limit' => $limit, 'sort' => $sort, 'order' => $order];
 
-        $rows  = $this->model_shopmanager_inventory_sync->getToUpdate($filter_data);
+        $rows  = $this->model_warehouse_marketplace_ebay_sync->getToUpdate($filter_data);
 
         $data = [];
         $data['to_update']            = $rows;
@@ -2715,16 +2715,16 @@ class Sync extends \Opencart\System\Engine\Controller {
         $data['to_update_pagination'] = !$all && $total > $limit;
         $data['user_token'] = $this->session->data['user_token'];
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/sync_to_update', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/sync_to_update', $data));
     }
 
     /**
      * Sync Category From Info Source - Applique la meilleure catégorie oc_product_info_sources
      */
     public function syncCategoryFromInfoSource(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/catalog/category');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/product/category');
 
         $json = [];
         $product_id = (int)($this->request->post['product_id'] ?? 0);
@@ -2733,14 +2733,14 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'Product ID required';
         } else {
             try {
-                $product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                $product = $this->model_warehouse_product_product->getProduct($product_id);
                 if (!$product || empty($product['upc'])) {
                     throw new \Exception('Product has no UPC');
                 }
                 $upc = $product['upc'];
 
-                $this->load->model('shopmanager/inventory/sync');
-                $source_rows = $this->model_shopmanager_inventory_sync->getInfoSourcesByUpc($upc);
+                $this->load->model('warehouse/marketplace/ebay/sync');
+                $source_rows = $this->model_warehouse_marketplace_ebay_sync->getInfoSourcesByUpc($upc);
                 if (empty($source_rows)) {
                     throw new \Exception('No info sources found for UPC ' . htmlspecialchars($upc));
                 }
@@ -2765,12 +2765,12 @@ class Sync extends \Opencart\System\Engine\Controller {
                     throw new \Exception('No valid category found in info sources');
                 }
 
-                if (!$this->model_shopmanager_catalog_category->getCategory($best_id)) {
+                if (!$this->model_warehouse_product_category->getCategory($best_id)) {
                     throw new \Exception("Category $best_id from info source not in local database");
                 }
 
-                $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $best_id);
-                $this->model_shopmanager_marketplace->setToUpdate($product_id);
+                $this->model_warehouse_product_product->setProductLeafCategory($product_id, $best_id);
+                $this->model_warehouse_marketplace_listing->setToUpdate($product_id);
 
                 $label = $best_name ? "$best_id - $best_name" : "$best_id";
                 $json['success'] = "Category $label ($best_pct%) applied from info source";
@@ -2787,9 +2787,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Bulk Sync Categories From eBay - Import multiple categories
      */
     public function syncCategoryBulkFromEbay(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/catalog/category');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/product/category');
         
         $json = [];
         $product_ids = $this->request->post['product_ids'] ?? [];
@@ -2805,23 +2805,23 @@ class Sync extends \Opencart\System\Engine\Controller {
                 foreach ($product_ids as $product_id) {
                     $product_id = (int)$product_id;
                     try {
-                        $marketplace = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                        $marketplace = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                         if (!$marketplace || !isset($marketplace['category_id'])) {
                             $errors[] = "Product $product_id: Not on eBay";
                             $error_count++; continue;
                         }
                         $ebay_category_id = (int)$marketplace['category_id'];
 
-                        if (!$this->model_shopmanager_catalog_category->getCategory($ebay_category_id)) {
+                        if (!$this->model_warehouse_product_category->getCategory($ebay_category_id)) {
                             $errors[] = "Product $product_id: Category $ebay_category_id not in database";
                             $error_count++; continue;
                         }
 
-                        $this->model_shopmanager_catalog_product->setProductLeafCategory($product_id, $ebay_category_id);
+                        $this->model_warehouse_product_product->setProductLeafCategory($product_id, $ebay_category_id);
                         if (!empty($marketplace['specifics'])) {
-                            $this->model_shopmanager_catalog_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
+                            $this->model_warehouse_product_product->editProductSpecifics($product_id, $marketplace['specifics'], 1);
                         }
-                        $this->model_shopmanager_marketplace->setToUpdate($product_id);
+                        $this->model_warehouse_marketplace_listing->setToUpdate($product_id);
                         $success_count++;
                     } catch (\Exception $e) {
                         $errors[] = "Product $product_id: " . $e->getMessage();
@@ -2880,8 +2880,8 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function bulkGetItemNotImported(): void {
         $json = [];
 
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         $product_ids = isset($this->request->post['product_ids']) ? $this->request->post['product_ids'] : [];
 
@@ -2896,7 +2896,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             foreach ($product_ids as $product_id) {
                 $product_id = (int)$product_id;
                 try {
-                    $marketplace_row = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                    $marketplace_row = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
 
                     if (!$marketplace_row || empty($marketplace_row['marketplace_item_id'])) {
                         $failed_ids[$product_id] = 'No eBay item ID found in database';
@@ -2907,7 +2907,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                     $item_id               = $marketplace_row['marketplace_item_id'];
                     $marketplace_account_id = (int)($marketplace_row['marketplace_account_id'] ?? 1);
 
-                    $item_details = $this->model_shopmanager_ebay->getItemDetails($item_id, $marketplace_account_id);
+                    $item_details = $this->model_warehouse_marketplace_ebay_api->getItemDetails($item_id, $marketplace_account_id);
 
                     if (!$item_details) {
                         $failed_ids[$product_id] = 'GetItem returned no data for eBay item ' . $item_id;
@@ -2933,7 +2933,7 @@ class Sync extends \Opencart\System\Engine\Controller {
                         }
                     }
 
-                    $this->model_shopmanager_marketplace->updateFromGetItem(
+                    $this->model_warehouse_marketplace_listing->updateFromGetItem(
                         $product_id,
                         $item_details['category_id'] ?? null,
                         $item_details['condition_id'] ?? null,
@@ -2971,8 +2971,8 @@ class Sync extends \Opencart\System\Engine\Controller {
      * POST product_ids[] + marketplace_account_id
      */
     public function bulkPublishToEbay(): void {
-        $this->load->model('shopmanager/marketplace');
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/listing');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         $json = [];
         $product_ids           = $this->request->post['product_ids'] ?? [];
@@ -2990,7 +2990,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             foreach ($product_ids as $product_id) {
                 $product_id = (int)$product_id;
                 try {
-                    $result = $this->model_shopmanager_marketplace->addToMarketplace($product_id, $marketplace_account_id);
+                    $result = $this->model_warehouse_marketplace_listing->addToMarketplace($product_id, $marketplace_account_id);
                     if (isset($result['Ack']) && $result['Ack'] != 'Failure') {
                         $success_count++;
                         $published_ids[] = $product_id;
@@ -3035,7 +3035,7 @@ class Sync extends \Opencart\System\Engine\Controller {
     public function bulkUpdateToEbay(): void {
         ob_start(); // Capture any stray PHP output (warnings, debug echoes) that would corrupt JSON
         set_time_limit(120);
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
 
         $json = [];
         // Accept single product_id to avoid nginx proxy timeout when looping many products
@@ -3045,10 +3045,10 @@ class Sync extends \Opencart\System\Engine\Controller {
             $json['error'] = 'No product_id provided';
         } else {
             try {
-                $this->model_shopmanager_marketplace->updateMarketplaceListings($product_id);
+                $this->model_warehouse_marketplace_listing->updateMarketplaceListings($product_id);
 
                 // Detect real outcome: editListing writes error field on failure
-                $marketplace_row = $this->model_shopmanager_marketplace->getMarketplaceItem($product_id, 1);
+                $marketplace_row = $this->model_warehouse_marketplace_listing->getMarketplaceItem($product_id, 1);
                 $has_error = !$marketplace_row || !empty($marketplace_row['error']);
 
                 if ($has_error) {
@@ -3064,8 +3064,8 @@ class Sync extends \Opencart\System\Engine\Controller {
                     $json['success'] = false;
                     $json['error']   = $err_msg;
                 } else {
-                    $this->model_shopmanager_marketplace->updateMarketplaceLastSync($product_id);
-                    $this->model_shopmanager_marketplace->resetSyncState($product_id);
+                    $this->model_warehouse_marketplace_listing->updateMarketplaceLastSync($product_id);
+                    $this->model_warehouse_marketplace_listing->resetSyncState($product_id);
                     $json['success'] = true;
                 }
             } catch (\Exception $e) {
@@ -3081,7 +3081,7 @@ class Sync extends \Opencart\System\Engine\Controller {
             // If the success path already ran (resetSyncState called), the marketplace error state
             // was wiped — force it back to error so the product stays findable in marketplace errors
             if ($product_id && ($json['success'] ?? false) === true) {
-                $this->model_shopmanager_marketplace->setMarketplaceError($product_id, $error_msg);
+                $this->model_warehouse_marketplace_listing->setMarketplaceError($product_id, $error_msg);
             }
             $json['success'] = false;
             $json['error']   = $error_msg;

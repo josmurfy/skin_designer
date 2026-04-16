@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/product_search.js
+// Original: warehouse/product/research.js
 // ============================================
 // FUNCTIONS DUPLICATED FROM TOOLS.JS (PRODUCTION SAFETY)
 // ============================================
@@ -130,7 +130,7 @@ function filterByCategory() {
 
         if (isRed) {
             // Construire l'URL et ouvrir une nouvelle fenêtre
-            const url = `index.php?route=shopmanager/catalog/category.edit&user_token=${user_token}&category_id=${selectedCategoryId}`;
+            const url = `index.php?route=warehouse/product/category.edit&user_token=${user_token}&category_id=${selectedCategoryId}`;
             window.open(url, 'category'); // Ouvrir dans une nouvelle fenêtre ou onglet
         }
         ChangeCategory(selectedCategoryId);
@@ -221,7 +221,7 @@ function ChangeCategory(category_id) {
 
     if ($.isNumeric(categoryId)) {
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.getDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
+            url: 'index.php?route=warehouse/product/category.getDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
             dataType: 'json',
             success: function(json) {
                 if (!json.erreur) {
@@ -309,7 +309,7 @@ function SearchByName(model = null) {
 
 
     // Envoyer la requête avec fetch
-    fetch(`index.php?route=shopmanager/ebay.searchByName&user_token=${user_token}`, {
+    fetch(`index.php?route=warehouse/marketplace/ebay/api.searchByName&user_token=${user_token}`, {
         method: 'POST',
        
         headers: { 'Content-Type': 'application/json' },
@@ -507,7 +507,7 @@ async function FeedProductForm() {
     }
 
     // Envoyer les données avec fetch
-    return fetch(`index.php?route=shopmanager/catalog/product_search.product_source_info_feed_from_search&user_token=${user_token}`, {
+    return fetch(`index.php?route=warehouse/product/research.product_source_info_feed_from_search&user_token=${user_token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formObject), // Envoyer toutes les données du formulaire
@@ -734,7 +734,7 @@ function SelectRow(checkbox) {
     // Fonction pour appeler `editSpecificKey` via AJAX avec GET
     function editSpecificKey(specificKey, category_id, replacementTerm) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.editSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.editSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id) +
             '&replacement_term=' + encodeURIComponent(replacementTerm);
@@ -752,7 +752,7 @@ function SelectRow(checkbox) {
     // Fonction pour appeler `deleteSpecificKey` via AJAX avec GET
     function deleteSpecificKey(specificKey, category_id) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.deleteSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.deleteSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id);
 
@@ -769,7 +769,7 @@ function SelectRow(checkbox) {
     // Fonction pour appeler `addSpecificKey` via AJAX avec GET
     function addSpecificKey(specificKey, category_id, replacementTerm) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.addSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.addSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id) +
             '&replacement_term=' + encodeURIComponent(replacementTerm);
@@ -787,7 +787,7 @@ function SelectRow(checkbox) {
     // Fonction pour vérifier si une clé spécifique existe déjà via AJAX avec GET
     function checkIfSpecificKeyExists(specificKey, category_id) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.getSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.getSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id);
 
@@ -1702,7 +1702,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (manufacturerName) {
             $.ajax({
-                url: 'index.php?route=shopmanager/manufacturer.add&ajax=true&user_token=' + user_token,
+                url: 'index.php?route=warehouse/product/manufacturer.add&ajax=true&user_token=' + user_token,
                 type: 'post',
                 data: { name: manufacturerName },
                 dataType: 'json',
@@ -1731,7 +1731,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (manufacturerId && manufacturerName) {
             $.ajax({
-                url: 'index.php?route=shopmanager/manufacturer.edit&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
+                url: 'index.php?route=warehouse/product/manufacturer.edit&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
                 type: 'post',
                 data: { name: manufacturerName },
                 dataType: 'json',
@@ -1759,7 +1759,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (manufacturerId) {
             if (confirm(TEXT_CONFIRM_DELETE_MANUFACTURER)) {
                 $.ajax({
-                    url: 'index.php?route=shopmanager/manufacturer.delete&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
+                    url: 'index.php?route=warehouse/product/manufacturer.delete&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
                     type: 'post',
                     dataType: 'json',
                     success: function (response) {
@@ -1806,7 +1806,7 @@ function calculateShippingCost() {
 
         // Envoi de la requête AJAX
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'index.php?route=shopmanager/shipping.get_shipping&user_token=' + user_token, true);
+        xhr.open('POST', 'index.php?route=warehouse/order/shipping.get_shipping&user_token=' + user_token, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function () {
             if (xhr.status === 200) {

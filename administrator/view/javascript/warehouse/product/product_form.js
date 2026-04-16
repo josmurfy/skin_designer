@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/product_form.js
+// Original: warehouse/product/product_form.js
 // product_form.js - Version OpenCart 4.x (Twig) - IDs avec tirets - Updated: 2025-12-17
 
 // ============================================
@@ -236,7 +236,7 @@ function removeSpecificsRow(specifics_row, specificName) {
     var languages = JSON.parse($('#languages-json').val());
 
     $.ajax({
-        url: `index.php?route=shopmanager/catalog/category_specific.excludeSpecific&user_token=${user_token}`,
+        url: `index.php?route=warehouse/product/category_specific.excludeSpecific&user_token=${user_token}`,
         type: 'POST',
         data: {
           
@@ -487,7 +487,7 @@ function getEbayProduct() {
         return;
     }
 
-    fetch(`index.php?route=shopmanager/ebay.getProduct&user_token=${user_token}`, {
+    fetch(`index.php?route=warehouse/marketplace/ebay/api.getProduct&user_token=${user_token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ marketplace_item_id: marketplace_item_id })
@@ -519,7 +519,7 @@ function generateSpecifics(categoryId) {
  showModal('#loadingModal');
 
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product_search.generateSpecifics&product_id=' + product_id + '&category_id=' + categoryId + '&marketplace_item_id=' + marketplace_item_id + '&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/research.generateSpecifics&product_id=' + product_id + '&category_id=' + categoryId + '&marketplace_item_id=' + marketplace_item_id + '&user_token=' + user_token,
         type: 'GET',
         dataType: 'json',
         success: function (response) {
@@ -1219,7 +1219,7 @@ function calculateShippingCost() {
 
         // Envoi de la requête AJAX
         var xhr = new XMLHttpRequest();
-        xhr.open('POST', 'index.php?route=shopmanager/shipping.get_shipping&user_token=' + user_token, true);
+        xhr.open('POST', 'index.php?route=warehouse/order/shipping.get_shipping&user_token=' + user_token, true);
         xhr.setRequestHeader('Content-Type', 'application/json');
         xhr.onload = function () {
             if (xhr.status === 200) {
@@ -1982,7 +1982,7 @@ window.addEventListener('load', function() {
 
         if (manufacturerName) {
             $.ajax({
-                url: 'index.php?route=shopmanager/manufacturer.add&ajax=true&user_token=' + user_token,
+                url: 'index.php?route=warehouse/product/manufacturer.add&ajax=true&user_token=' + user_token,
                 type: 'post',
                 data: { name: manufacturerName },
                 dataType: 'json',
@@ -2010,7 +2010,7 @@ window.addEventListener('load', function() {
 
         if (manufacturerId && manufacturerName) {
             $.ajax({
-                url: 'index.php?route=shopmanager/manufacturer.edit&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
+                url: 'index.php?route=warehouse/product/manufacturer.edit&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
                 type: 'post',
                 data: { name: manufacturerName },
                 dataType: 'json',
@@ -2038,7 +2038,7 @@ window.addEventListener('load', function() {
         if (manufacturerId) {
             if (confirm(TEXT_CONFIRM_DELETE_MANUFACTURER)) {
                 $.ajax({
-                    url: 'index.php?route=shopmanager/manufacturer.delete&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
+                    url: 'index.php?route=warehouse/product/manufacturer.delete&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
                     type: 'post',
                     dataType: 'json',
                     success: function (response) {
@@ -2899,7 +2899,7 @@ function uploadFiles(files, type) {
         }
     }
 
-    var url = 'index.php?route=shopmanager/tools.uploadImagesFiles&product_id=' + product_id + '&user_token=' + user_token;
+    var url = 'index.php?route=warehouse/tools/utility.uploadImagesFiles&product_id=' + product_id + '&user_token=' + user_token;
 
     // Déterminer l'URL d'upload selon le type d'image
     url  += (type === 'principal') ? '&type=pri'  : '&type=sec';
@@ -3074,7 +3074,7 @@ function uploadImages() {
 
     // Envoyer les données au contrôleur via AJAX
     $.ajax({
-        url: 'index.php?route=shopmanager/tools.uploadImagesFiles&user_token=' + user_token,
+        url: 'index.php?route=warehouse/tools/utility.uploadImagesFiles&user_token=' + user_token,
         type: 'post',
         data: formData,
         contentType: false,
@@ -3221,7 +3221,7 @@ function uploadEbayImages() {
     
     // Send request to controller
     $.ajax({
-        url: 'index.php?route=shopmanager/maintenance/image.syncImagesForProductWitheBay&user_token=' + user_token,
+        url: 'index.php?route=warehouse/maintenance/image.syncImagesForProductWitheBay&user_token=' + user_token,
         type: 'post',
         data: formData,
         contentType: false,
@@ -3268,7 +3268,7 @@ function removeProductImage(imagePath, productImageId, rowId) {
     var user_token = document.querySelector('input[name="user_token"]').value;
     
     $.ajax({
-        url: 'index.php?route=shopmanager/tools.deleteProductImagePermanent&user_token=' + user_token,
+        url: 'index.php?route=warehouse/tools/utility.deleteProductImagePermanent&user_token=' + user_token,
         type: 'post',
         data: {
             image_path: imagePath,
@@ -3296,7 +3296,7 @@ function removeImage(image, type, elementSelector) {
 
 
     $.ajax({
-        url: 'index.php?route=shopmanager/tools.deleteProductImage&user_token=' + user_token,
+        url: 'index.php?route=warehouse/tools/utility.deleteProductImage&user_token=' + user_token,
         type: 'post',
         data: { 
             product_id: product_id, 
@@ -3353,7 +3353,7 @@ function editMadeInCountry(product_id) {
 	//document.getElementByName("product[" + product_row +"][made_in_country_id]").value;
 	//alert (item_id +"selected " + mySelect.val());
  	 $.ajax({
-          url: 'index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + user_token,
+          url: 'index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + user_token,
 
 		   method: "POST",
 		  data: {product_id:product_id,
@@ -3398,7 +3398,7 @@ function endListing(product_id, marketplace_item_id, marketplace_account_id, mar
     var btn = $('#end-listing-btn-' + product_id + '-' + marketplace_account_id);
     btn.prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
     $.ajax({
-        url: 'index.php?route=shopmanager/ebay.endListing&user_token=' + user_token,
+        url: 'index.php?route=warehouse/marketplace/ebay/api.endListing&user_token=' + user_token,
         type: 'POST',
         dataType: 'json',
         data: {
@@ -3448,7 +3448,7 @@ function addToMarketplace(product_id,marketplace_account_id,marketplace_id, is_p
   //  var quantity = document.querySelector('input[name="quantity"]').value;
   //  var unallocated_quantity = document.querySelector('input[name="unallocated_quantity"]').value;
         $.ajax({
-            url: `index.php?route=shopmanager/marketplace.addToMarketplace&user_token=${user_token}`,
+            url: `index.php?route=warehouse/marketplace/listing.addToMarketplace&user_token=${user_token}`,
             type: 'POST',
             data: {  product_id: product_id ,marketplace_account_id:marketplace_account_id,marketplace_id: marketplace_id},
             dataType: 'json',
@@ -3535,7 +3535,7 @@ function openPrintLabel(sku = '', upc = '', quantity = 1, location = '', force =
        //upc = '';
     }
 
-    const url = 'index.php?route=shopmanager/tools.create_label' +
+    const url = 'index.php?route=warehouse/tools/utility.create_label' +
         '&sku=' + encodeURIComponent(sku) +
         '&upc=' + encodeURIComponent(upc) +
         '&quantity=' + encodeURIComponent(quantity) +
@@ -3657,7 +3657,7 @@ function syncCountryFields() {
         }
         
         // Charger le modal via AJAX avec le contrôleur
-        const modalUrl = 'index.php?route=shopmanager/country_conflict_popup&user_token=' + user_token + '&made_in_country=' + encodeURIComponent(selectedCountryName) + '&specifics_country=' + encodeURIComponent(specificsValue);
+        const modalUrl = 'index.php?route=warehouse/popup/country_conflict&user_token=' + user_token + '&made_in_country=' + encodeURIComponent(selectedCountryName) + '&specifics_country=' + encodeURIComponent(specificsValue);
         console.log('[COO][syncCountryFields] fetch modal url', modalUrl);
         fetch(modalUrl)
             .then(response => {
@@ -3905,7 +3905,7 @@ function translateAllContent() {
 }
 
 // ─── Rotate image 90° CW ──────────────────────────────────────────────────
-// Appel: shopmanager/tools.rotateImage  POST path=<relatif DIR_OPENCART> degrees=90
+// Appel: warehouse/tools/utility.rotateImage  POST path=<relatif DIR_OPENCART> degrees=90
 $(document).on('click', '.btn-rotate-product-image', function() {
     var $btn      = $(this).prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
     var inputId   = $(this).data('img-input');
@@ -3918,7 +3918,7 @@ $(document).on('click', '.btn-rotate-product-image', function() {
     }
     var userToken = document.querySelector('input[name="user_token"]').value;
     $.ajax({
-        url: 'index.php?route=shopmanager/tools.rotateImage&user_token=' + userToken,
+        url: 'index.php?route=warehouse/tools/utility.rotateImage&user_token=' + userToken,
         type: 'POST',
         dataType: 'json',
         data: { path: 'image/' + imagePath, degrees: 90 },

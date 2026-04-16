@@ -1,11 +1,11 @@
 <?php
-// Original: shopmanager/translate.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/translate.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 class Translate extends \Opencart\System\Engine\Model {
     public function translate(string $text_field, string $targetLanguage): ?string {
         try {
-            $this->load->model('shopmanager/ai');
+            $this->load->model('warehouse/tools/ai');
 
             // Detect if input is already JSON
             $decoded = json_decode($text_field, true);
@@ -13,7 +13,7 @@ class Translate extends \Opencart\System\Engine\Model {
 
             if ($isJson) {
                 // Input is JSON — pass directly to AI translate
-                $result = $this->model_shopmanager_ai->translate($text_field, $targetLanguage);
+                $result = $this->model_warehouse_tools_ai->translate($text_field, $targetLanguage);
                 if (is_string($result)) {
                     return $result;
                 } elseif (is_array($result)) {
@@ -22,7 +22,7 @@ class Translate extends \Opencart\System\Engine\Model {
             } else {
                 // Input is plain text — wrap in JSON array for AI, unwrap result
                 $wrapped = json_encode([$text_field], JSON_UNESCAPED_UNICODE);
-                $result = $this->model_shopmanager_ai->translate($wrapped, $targetLanguage);
+                $result = $this->model_warehouse_tools_ai->translate($wrapped, $targetLanguage);
                 if (is_string($result)) {
                     $arr = json_decode($result, true);
                     if (is_array($arr) && isset($arr[0])) {

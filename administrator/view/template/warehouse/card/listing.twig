@@ -1,4 +1,4 @@
-{# Original: shopmanager/card/card_listing.twig #}
+{# Original: warehouse/card/listing.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -248,10 +248,10 @@ $('#button-filter').on('click', function() {
     }
     
     // Update URL in browser without page reload
-    window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_listing&user_token={{ user_token }}' + url);
+    window.history.pushState({}, null, 'index.php?route=warehouse/card/listing&user_token={{ user_token }}' + url);
     
     // Load list content via AJAX
-    $('#listing').load('index.php?route=shopmanager/card/card_listing.list&user_token={{ user_token }}' + url);
+    $('#listing').load('index.php?route=warehouse/card/listing.list&user_token={{ user_token }}' + url);
 });
 
 // Reset filters
@@ -262,8 +262,8 @@ $('#button-reset-filters').on('click', function() {
     });
     
     // Reload list without filters
-    window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_listing&user_token={{ user_token }}');
-    $('#listing').load('index.php?route=shopmanager/card/card_listing.list&user_token={{ user_token }}');
+    window.history.pushState({}, null, 'index.php?route=warehouse/card/listing&user_token={{ user_token }}');
+    $('#listing').load('index.php?route=warehouse/card/listing.list&user_token={{ user_token }}');
 });
 
 // Trigger filter on Enter key
@@ -277,7 +277,7 @@ $('input[name^=\'filter_\']').on('keydown', function(e) {
 $('#input-set-name').autocomplete({
     'source': function(request, response) {
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token={{ user_token }}&filter_set_name=' + encodeURIComponent(request),
+            url: 'index.php?route=warehouse/card/listing.autocomplete&user_token={{ user_token }}&filter_set_name=' + encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {
@@ -298,7 +298,7 @@ $('#input-set-name').autocomplete({
 $('#input-manufacturer').autocomplete({
     'source': function(request, response) {
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token={{ user_token }}&filter_manufacturer=' + encodeURIComponent(request),
+            url: 'index.php?route=warehouse/card/listing.autocomplete&user_token={{ user_token }}&filter_manufacturer=' + encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/maintenance/image.php
+// Original: warehouse/maintenance/image.php
 // Heading
 $_['heading_title'] = 'Maintenance des Images Produits';
 

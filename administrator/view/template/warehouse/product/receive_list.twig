@@ -1,4 +1,4 @@
-{# Original: shopmanager/fast_add_list.twig #}
+{# Original: warehouse/product/receive_list.twig #}
 {{ header }}
 {{ column_left }}
 <div id="content">
@@ -432,7 +432,7 @@
       var limitLink = '{{ limit_link|default('')|replace({'&amp;':'&'}) }}';
 
       $('#button-filter').on('click', function() {
-        var url = 'index.php?route=shopmanager/fast_add&user_token={{ user_token }}';
+        var url = 'index.php?route=warehouse/product/receive&user_token={{ user_token }}';
 
         var filter_sku = $('input[name="filter_sku"]').val();
         if (filter_sku) url += '&filter_sku=' + encodeURIComponent(filter_sku);

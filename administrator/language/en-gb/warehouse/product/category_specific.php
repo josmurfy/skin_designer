@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/catalog/category_specific.php
+// Original: warehouse/product/category_specific.php
 $_['heading_title'] = 'Category Specifics';
 $_['text_list'] = 'List of Translations';
 $_['text_no_results'] = 'No category specifics found.';

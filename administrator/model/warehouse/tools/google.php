@@ -1,7 +1,7 @@
 <?php
-// Original: shopmanager/google.php
+// Original: warehouse/tools/google.php
 
-namespace Opencart\Admin\Model\Shopmanager;
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 class Google extends \Opencart\System\Engine\Model {
     

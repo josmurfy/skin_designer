@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/list_fast.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/publish.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
-class ListFast extends \Opencart\System\Engine\Model {
+class Publish extends \Opencart\System\Engine\Model {
 
 
 	private $domain;

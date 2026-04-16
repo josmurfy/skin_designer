@@ -1,26 +1,26 @@
 <?php
-// Original: shopmanager/category_specific.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/product/category_specific.php
+namespace Opencart\Admin\Controller\Warehouse\Product;
 
 class CategorySpecific extends \Opencart\System\Engine\Controller {
     private $error = array();
 
 	public function index(): void {
-		$this->load->language('shopmanager/catalog/category_specific');
+		$this->load->language('warehouse/product/category_specific');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/catalog/category_specific');
+		$this->load->model('warehouse/product/category_specific');
 
 		$this->getList();
 	}
 
 	protected function getList() {
-		$this->document->addScript('view/javascript/shopmanager/catalog/category_specific_list.js');
-		$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-		$this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+		$this->document->addScript('view/javascript/warehouse/product/category_specific_list.js');
+		$this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+		$this->document->addScript('view/javascript/warehouse/popup/alert.js');
 
 	
 		// Sorting and pagination parameters
@@ -105,11 +105,11 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 	
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/catalog/category_specific', 'user_token=' . $this->session->data['user_token'] . $url, true)
+			'href' => $this->url->link('warehouse/product/category_specific', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 	
-		$data['add'] = $this->url->link('shopmanager/catalog/category_specific/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
-		$data['delete'] = $this->url->link('shopmanager/catalog/category_specific/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['add'] = $this->url->link('warehouse/product/category_specific/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['delete'] = $this->url->link('warehouse/product/category_specific/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
 	
 		$data['category_specifics'] = array();
 	
@@ -121,9 +121,9 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 			'limit'                => $limit
 		);
 	
-		$category_specific_total = $this->model_shopmanager_catalog_category_specific->getTotalCategorySpecifics($filter_data);
+		$category_specific_total = $this->model_warehouse_product_category_specific->getTotalCategorySpecifics($filter_data);
 	
-		$results = $this->model_shopmanager_catalog_category_specific->getCategorySpecifics($filter_data);
+		$results = $this->model_warehouse_product_category_specific->getCategorySpecifics($filter_data);
 	
 		foreach ($results as $result) {
 			$translations = json_decode($result['translations'], true);
@@ -139,8 +139,8 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 				'specific_name' => $result['specific_name'],
 				'exclude' => $result['exclude']==1?($lang['text_exclude'] ?? ''):($lang['text_not_exclude'] ?? ''),
 				'languages'     => $language_data,
-				'edit'          => $this->url->link('shopmanager/catalog/category_specific/edit', 'user_token=' . $this->session->data['user_token'] . '&specific_name=' . urlencode($result['specific_name']), true),
-				'delete'        => $this->url->link('shopmanager/catalog/category_specific/delete', 'user_token=' . $this->session->data['user_token'] . '&specific_name=' . urlencode($result['specific_name']), true)
+				'edit'          => $this->url->link('warehouse/product/category_specific/edit', 'user_token=' . $this->session->data['user_token'] . '&specific_name=' . urlencode($result['specific_name']), true),
+				'delete'        => $this->url->link('warehouse/product/category_specific/delete', 'user_token=' . $this->session->data['user_token'] . '&specific_name=' . urlencode($result['specific_name']), true)
 			);
 
 		}
@@ -167,8 +167,8 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 		$data['button_save'] = ($lang['button_save'] ?? '');
 
 
-		$data['search_action'] = $this->url->link('shopmanager/catalog/category_specific', 'user_token=' . $this->session->data['user_token'], true);
-		$data['edit_action'] = $this->url->link('shopmanager/catalog/category_specific/edit', 'user_token=' . $this->session->data['user_token'], true);
+		$data['search_action'] = $this->url->link('warehouse/product/category_specific', 'user_token=' . $this->session->data['user_token'], true);
+		$data['edit_action'] = $this->url->link('warehouse/product/category_specific/edit', 'user_token=' . $this->session->data['user_token'], true);
 	
 		$data['entry_specific_name'] = ($lang['entry_specific_name'] ?? '');
 		$data['entry_limit'] = ($lang['entry_limit'] ?? '');
@@ -199,14 +199,14 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 		}
 	
 		// Sorting URLs
-		$data['sort_specific_name'] = $this->url->link('shopmanager/catalog/category_specific', 'user_token=' . $this->session->data['user_token'] . '&sort=specific_name' . $url, true);
+		$data['sort_specific_name'] = $this->url->link('warehouse/product/category_specific', 'user_token=' . $this->session->data['user_token'] . '&sort=specific_name' . $url, true);
 	
 		// Pagination
 		$data['pagination'] = $this->load->controller('common/pagination', [
 			'total' => $category_specific_total,
 			'page'  => $page,
 			'limit' => $limit,
-			'url'   => $this->url->link('shopmanager/catalog/category_specific', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=' . $limit, true)
+			'url'   => $this->url->link('warehouse/product/category_specific', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=' . $limit, true)
 		]);
 		$data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($category_specific_total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($category_specific_total - $limit)) ? $category_specific_total : ((($page - 1) * $limit) + $limit), $category_specific_total, ceil($category_specific_total / $limit));
 	
@@ -218,19 +218,19 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/marketplace/listing_popup');
 	
-		$this->response->setOutput($this->load->view('shopmanager/catalog/category_specific_list', $data));
+		$this->response->setOutput($this->load->view('warehouse/product/category_specific_list', $data));
 	}
 	
 
     public function edit() {
-        $this->load->language('shopmanager/catalog/category_specific');
+        $this->load->language('warehouse/product/category_specific');
         $data = [];
         
-        $this->load->model('shopmanager/catalog/category_specific');
+        $this->load->model('warehouse/product/category_specific');
 
         if (isset($this->request->get['specific_name'])) {
             $specific_name = $this->request->get['specific_name'];
@@ -239,14 +239,14 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
             foreach ($languages as $language) {
                 if (isset($this->request->post['translation_' . $language['code']][$specific_name])) {
                     $translated_value = $this->request->post['translation_' . $language['code']][$specific_name];
-                    $this->model_shopmanager_catalog_category_specific->editTranslation($specific_name, $language['code'], $translated_value);
+                    $this->model_warehouse_product_category_specific->editTranslation($specific_name, $language['code'], $translated_value);
                 }
             }
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
         }
 
-        $this->response->redirect($this->url->link('shopmanager/catalog/category_specific', 'user_token=' . $this->session->data['user_token'], true));
+        $this->response->redirect($this->url->link('warehouse/product/category_specific', 'user_token=' . $this->session->data['user_token'], true));
     }
 
 	public function excludeSpecific() {
@@ -258,10 +258,10 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
             $specific_name = $this->request->post['specific_name'];
 
             // Charge le modèle
-            $this->load->model('shopmanager/catalog/category_specific');
+            $this->load->model('warehouse/product/category_specific');
 
             // Appelle la fonction du modèle pour exclure le "specific"
-            $result = $this->model_shopmanager_catalog_category_specific->excludeSpecific($specific_name);
+            $result = $this->model_warehouse_product_category_specific->excludeSpecific($specific_name);
 
             if ($result) {
                 $json['success'] = 'Specific successfully excluded.';
@@ -277,17 +277,17 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
         $this->response->setOutput(json_encode($json));
     }
 	public function delete() {
-		$this->load->language('shopmanager/catalog/category_specific');
+		$this->load->language('warehouse/product/category_specific');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/catalog/category_specific');
+		$this->load->model('warehouse/product/category_specific');
 
 		if (isset($this->request->post['selected']) && $this->validateDelete()) {
 			foreach ($this->request->post['selected'] as $category_specific_id) {
-				$this->model_shopmanager_catalog_category_specific->deleteCategorySpecific($category_specific_id);
+				$this->model_warehouse_product_category_specific->deleteCategorySpecific($category_specific_id);
 			}
 
 			$this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -306,14 +306,14 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 
-			$this->response->redirect($this->url->link('shopmanager/catalog/category_specific', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/category_specific', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 
 		$this->getList();
 	}
 
 	protected function validateDelete() {
-		if (!$this->user->hasPermission('modify', 'shopmanager/catalog/category_specific')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/category_specific')) {
 			$this->error['warning'] = ($lang['error_permission'] ?? '');
 		}
 

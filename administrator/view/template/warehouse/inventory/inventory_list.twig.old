@@ -204,7 +204,7 @@ function editMadeInCountry(product_id) {
     var made_in_country_id = countrySelect.value;
     
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + user_token,
         method: 'POST',
         data: {
             product_id: product_id,
@@ -340,7 +340,7 @@ $('#scan-apply-country').on('click', function() {
         var user_token = document.querySelector('input[name="user_token"]').value;
         
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + user_token,
+            url: 'index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + user_token,
             method: 'POST',
             data: {
                 product_id: productId,

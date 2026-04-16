@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/card/search.php
-namespace Opencart\Admin\Controller\Shopmanager\Card;
+// Original: warehouse/card/search.php
+namespace Opencart\Admin\Controller\Warehouse\Card;
 
 /**
  * Class Search
@@ -8,7 +8,7 @@ namespace Opencart\Admin\Controller\Shopmanager\Card;
  * Card Value Search — filter cards from oc_card_set by year/category/set/brand/player
  * and display only those worth pulling from a physical box.
  *
- * Uses model: shopmanager/card/card_set (oc_card_set + oc_card_price_sold + oc_card_price_active)
+ * Uses model: warehouse/card/set (oc_card_set + oc_card_price_sold + oc_card_price_active)
  *
  * @package Opencart\Admin\Controller\Shopmanager\Card
  */
@@ -18,7 +18,7 @@ class Search extends \Opencart\System\Engine\Controller {
      * Main page — wrapper with filter panel + AJAX list area
      */
     public function index(): void {
-        $this->load->language('shopmanager/card/search');
+        $this->load->language('warehouse/card/search');
         $data = [];
         
 
@@ -37,22 +37,22 @@ class Search extends \Opencart\System\Engine\Controller {
         ];
         $data['breadcrumbs'][] = [
             'text' => $lang['heading_title'] ?? '',
-            'href' => $this->url->link('shopmanager/card/search', 'user_token=' . $this->session->data['user_token'], true)
+            'href' => $this->url->link('warehouse/card/search', 'user_token=' . $this->session->data['user_token'], true)
         ];
 
         // ── Dropdown options from oc_card_set (cascading context) ──
-        $this->load->model('shopmanager/card/card_set');
+        $this->load->model('warehouse/card/set');
         $context = $this->buildContext($filters);
 
-        $data['options_category'] = $this->model_shopmanager_card_card_set->getFilteredDistinct('category', $context);
-        $data['options_year']     = $this->model_shopmanager_card_card_set->getFilteredDistinct('year', $context);
-        $data['options_brand']    = $this->model_shopmanager_card_card_set->getFilteredDistinct('brand', $context);
-        $data['options_set_name'] = $this->model_shopmanager_card_card_set->getFilteredDistinct('set_name', $context);
-        $data['options_player']   = $this->model_shopmanager_card_card_set->getFilteredDistinct('player', $context);
+        $data['options_category'] = $this->model_warehouse_card_set->getFilteredDistinct('category', $context);
+        $data['options_year']     = $this->model_warehouse_card_set->getFilteredDistinct('year', $context);
+        $data['options_brand']    = $this->model_warehouse_card_set->getFilteredDistinct('brand', $context);
+        $data['options_set_name'] = $this->model_warehouse_card_set->getFilteredDistinct('set_name', $context);
+        $data['options_player']   = $this->model_warehouse_card_set->getFilteredDistinct('player', $context);
 
         $data['user_token'] = $this->session->data['user_token'];
 
-        $this->document->addScript('view/javascript/shopmanager/card/search.js');
+        $this->document->addScript('view/javascript/warehouse/card/search.js');
 
         // Pre-load list if any filter is set
         $has_filter = !empty($filters['filter_year']) || !empty($filters['filter_category'])
@@ -66,14 +66,14 @@ class Search extends \Opencart\System\Engine\Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/search', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/search', $data));
     }
 
     /**
      * AJAX endpoint — returns only the list HTML fragment
      */
     public function list(): void {
-        $this->load->language('shopmanager/card/search');
+        $this->load->language('warehouse/card/search');
         $this->response->setOutput($this->getList());
     }
 
@@ -83,7 +83,7 @@ class Search extends \Opencart\System\Engine\Controller {
      * @return string  Rendered HTML
      */
     public function getList(): string {
-        $this->load->language('shopmanager/card/search');
+        $this->load->language('warehouse/card/search');
 
         $filters = $this->getFiltersFromRequest();
 
@@ -110,22 +110,22 @@ class Search extends \Opencart\System\Engine\Controller {
         ];
 
         // ── Fetch data ──
-        $this->load->model('shopmanager/card/card_set');
+        $this->load->model('warehouse/card/set');
 
-        $results    = $this->model_shopmanager_card_card_set->getCardSets($filter_data);
-        $total      = $this->model_shopmanager_card_card_set->getTotalCardSets($filter_data);
+        $results    = $this->model_warehouse_card_set->getCardSets($filter_data);
+        $total      = $this->model_warehouse_card_set->getTotalCardSets($filter_data);
 
         // ── Enrich with sold data ──
         $sold_bilan = [];
         if (!empty($results)) {
-            $sold_bilan = $this->model_shopmanager_card_card_set->getSoldBilanForCards($results);
+            $sold_bilan = $this->model_warehouse_card_set->getSoldBilanForCards($results);
         }
 
         // ── Enrich with active prices ──
         $active_prices = [];
         if (!empty($results)) {
             $card_raw_ids = array_column($results, 'card_raw_id');
-            $active_prices = $this->model_shopmanager_card_card_set->getActivePricesForCards($card_raw_ids);
+            $active_prices = $this->model_warehouse_card_set->getActivePricesForCards($card_raw_ids);
         }
 
         // ── Business constants (USD) for grading ROI ──
@@ -248,7 +248,7 @@ class Search extends \Opencart\System\Engine\Controller {
         $sort_fields = ['card_number','player','set_name','year','brand','ungraded','grade_9','grade_10','best_price','grading_gain'];
         foreach ($sort_fields as $sf) {
             $data['sort_' . $sf] = $this->url->link(
-                'shopmanager/card/search.list',
+                'warehouse/card/search.list',
                 'user_token=' . $this->session->data['user_token'] . '&sort=' . $sf . $url, true
             );
         }
@@ -258,7 +258,7 @@ class Search extends \Opencart\System\Engine\Controller {
             'total' => $total,
             'page'  => $page,
             'limit' => $limit,
-            'url'   => $this->url->link('shopmanager/card/search.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true),
+            'url'   => $this->url->link('warehouse/card/search.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true),
             'text'  => $lang['text_pagination'] ?? '',
         ]);
 
@@ -273,7 +273,7 @@ class Search extends \Opencart\System\Engine\Controller {
         // Pass filters for active state display
         $data += $filters;
 
-        return $this->load->view('shopmanager/card/search_list', $data);
+        return $this->load->view('warehouse/card/search_list', $data);
     }
 
     /**
@@ -284,14 +284,14 @@ class Search extends \Opencart\System\Engine\Controller {
         $filters = $this->getFiltersFromRequest();
         $context = $this->buildContext($filters);
 
-        $this->load->model('shopmanager/card/card_set');
+        $this->load->model('warehouse/card/set');
 
         $json = [
-            'category' => $this->model_shopmanager_card_card_set->getFilteredDistinct('category', $context),
-            'year'     => $this->model_shopmanager_card_card_set->getFilteredDistinct('year', $context),
-            'brand'    => $this->model_shopmanager_card_card_set->getFilteredDistinct('brand', $context),
-            'set_name' => $this->model_shopmanager_card_card_set->getFilteredDistinct('set_name', $context),
-            'player'   => $this->model_shopmanager_card_card_set->getFilteredDistinct('player', $context),
+            'category' => $this->model_warehouse_card_set->getFilteredDistinct('category', $context),
+            'year'     => $this->model_warehouse_card_set->getFilteredDistinct('year', $context),
+            'brand'    => $this->model_warehouse_card_set->getFilteredDistinct('brand', $context),
+            'set_name' => $this->model_warehouse_card_set->getFilteredDistinct('set_name', $context),
+            'player'   => $this->model_warehouse_card_set->getFilteredDistinct('player', $context),
         ];
 
         $this->response->addHeader('Content-Type: application/json');

@@ -1,10 +1,10 @@
 <?php
-// Original: shopmanager/country_conflict_popup.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/popup/country_conflict.php
+namespace Opencart\Admin\Controller\Warehouse\Popup;
 
-class CountryConflictPopup extends \Opencart\System\Engine\Controller {
+class CountryConflict extends \Opencart\System\Engine\Controller {
     public function index(): void {
-        $this->load->language('shopmanager/country_conflict_popup');
+        $this->load->language('warehouse/popup/country_conflict');
         $data = [];
         
 
@@ -21,6 +21,6 @@ class CountryConflictPopup extends \Opencart\System\Engine\Controller {
 
         // Envoyer le HTML au client
         $this->response->addHeader('Content-Type: text/html; charset=utf-8');
-        $this->response->setOutput($this->load->view('shopmanager/country_conflict_popup', $data));
+        $this->response->setOutput($this->load->view('warehouse/popup/country_conflict', $data));
     }
 }

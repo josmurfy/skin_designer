@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/card_market.php
+// Original: warehouse/card/market.php
 $_['heading_title']           = 'Recherche de marché';
 $_['text_list']               = 'Recherche de marché';
 $_['text_home']               = 'Accueil';

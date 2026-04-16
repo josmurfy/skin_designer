@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/print_report.php
+// Original: warehouse/inventory/label.php
 // Heading
 $_['heading_title'] = 'Inventory Report';
 

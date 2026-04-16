@@ -1,7 +1,7 @@
 <?PHP
-// Original: shopmanager/ai.php
+// Original: warehouse/tools/ai.php
 
-namespace Opencart\Admin\Model\Shopmanager;
+namespace Opencart\Admin\Model\Warehouse\Tools;
 //use GuzzleHttp\Client;
 //use GuzzleHttp\GuzzleHttp\Exception\RequestException;
 
@@ -146,8 +146,8 @@ class Ai extends \Opencart\System\Engine\Model {
     
     public function prompt_ai($user_prompt, $system_prompt, $max_tokens, $temperature, $jsonData = '', $json_name = '') {
         
-        $this->load->model('shopmanager/tools');
-        $output_json_needed = (!empty($json_name))?$this->model_shopmanager_tools->clearArrayValuesAndReturnPrettyJson($jsonData,  $json_name):''; // Convertit en tableau PHP pour s'assurer que c'est un JSON valide
+        $this->load->model('warehouse/tools/utility');
+        $output_json_needed = (!empty($json_name))?$this->model_warehouse_tools_utility->clearArrayValuesAndReturnPrettyJson($jsonData,  $json_name):''; // Convertit en tableau PHP pour s'assurer que c'est un JSON valide
 
         $responseData = $this->sendOpenAiRequest($user_prompt, $system_prompt, $max_tokens, $temperature, $output_json_needed);
         //print("<pre>".print_r('74:AI', true)."</pre>");
@@ -243,9 +243,9 @@ class Ai extends \Opencart\System\Engine\Model {
     public function translate_specifics($product_id = null, $product_specific_info = null, $language = null)
     {
         $this->load->model('localisation/language');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/translate');
-        $this->load->model('shopmanager/catalog/product_specific');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/tools/translate');
+        $this->load->model('warehouse/product/product_specific');
       //print("<pre>".print_r ($product_specific_info,true )."</pre>");
         $execution_times = [];
         $n = 0;
@@ -257,8 +257,8 @@ class Ai extends \Opencart\System\Engine\Model {
             unset($product_specific_info[$key]['specific_info'], $data_value['specific_info']);
     
             // **Traduction du champ 'Name'**
-            $translated_term = $this->model_shopmanager_catalog_product_specific->findtranslated_term($data_value['Name'] ?? '');
-            $product_specific_info[$key]['Name'] = $translated_term ?? $this->model_shopmanager_translate->translate($data_value['Name'], $language['code']);
+            $translated_term = $this->model_warehouse_product_specific->findtranslated_term($data_value['Name'] ?? '');
+            $product_specific_info[$key]['Name'] = $translated_term ?? $this->model_warehouse_tools_translate->translate($data_value['Name'], $language['code']);
     
             //$execution_times[($n++).'_Chargement line:'. __LINE__] = round(microtime(true) - $start_time, 2);
             //$start_time = microtime(true);
@@ -269,10 +269,10 @@ class Ai extends \Opencart\System\Engine\Model {
                     // **Gestion du cas où 'Value' est un tableau**
                     if (is_array($data_value['Value'])) {
                         if (!(count($data_value['Value']) == 1 && (trim($data_value['Value'][0]) == '' || is_numeric($data_value['Value'][0])))) {
-                            $bypassTranslate = $this->model_shopmanager_translate->bypassTranslate($key, json_encode($data_value['Value']), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+                            $bypassTranslate = $this->model_warehouse_tools_translate->bypassTranslate($key, json_encode($data_value['Value']), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
                             
                             if (!isset($bypassTranslate)) {
-                                $json_translate = $this->model_shopmanager_translate->translate(json_encode($data_value['Value'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $language['code']);
+                                $json_translate = $this->model_warehouse_tools_translate->translate(json_encode($data_value['Value'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $language['code']);
     
                                 if (count($data_value['Value']) == 1) {
                                     // **Nettoyage des guillemets français et autres caractères**
@@ -291,9 +291,9 @@ class Ai extends \Opencart\System\Engine\Model {
                         }
                     } else {
                         // **Gestion du cas où 'Value' est une chaîne**
-                        $bypassTranslate = $this->model_shopmanager_translate->bypassTranslate($key, trim($data_value['Value']));
+                        $bypassTranslate = $this->model_warehouse_tools_translate->bypassTranslate($key, trim($data_value['Value']));
                         if (!isset($bypassTranslate)) {
-                            $product_specific_info[$key]['Value'] = $this->model_shopmanager_translate->translate(trim($data_value['Value']), $language['code']);
+                            $product_specific_info[$key]['Value'] = $this->model_warehouse_tools_translate->translate(trim($data_value['Value']), $language['code']);
                         } else {
                             $product_specific_info[$key]['Value'] = $bypassTranslate;
                         }
@@ -307,7 +307,7 @@ class Ai extends \Opencart\System\Engine\Model {
     
         // **Sauvegarde dans la base de données si un product_id est fourni**
         if (isset($product_id)) {
-            $this->model_shopmanager_catalog_product->editSpecifics($product_id, json_encode($product_specific_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $language['language_id']);
+            $this->model_warehouse_product_product->editSpecifics($product_id, json_encode($product_specific_info, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), $language['language_id']);
         }
     
         // **Affichage du temps d'exécution total**
@@ -319,10 +319,10 @@ class Ai extends \Opencart\System\Engine\Model {
     
 
     public function getProductSpecific($product_info = null, $aspectName = null, $aspectValues = null, $aspectConstraint = null, $source_value = null) {
-        $this->load->model('shopmanager/tools');
-        $this->load->model('shopmanager/catalog/category');
-        $this->load->model('shopmanager/catalog/product');
-        $product_description = $this->model_shopmanager_catalog_product->getDescriptions($product_info['product_id']);
+        $this->load->model('warehouse/tools/utility');
+        $this->load->model('warehouse/product/category');
+        $this->load->model('warehouse/product/product');
+        $product_description = $this->model_warehouse_product_product->getDescriptions($product_info['product_id']);
         //print("<pre>".print_r($product_info, true)."</pre>");
         $language_id=1;
         // Extraction des informations principales
@@ -346,7 +346,7 @@ class Ai extends \Opencart\System\Engine\Model {
             $s_value = json_decode($source_value, true);
             $source_value = isset($s_value[$aspectName]) ? 
                 (is_array($s_value[$aspectName]) 
-                ? implode(',', $this->model_shopmanager_tools->flattenArray($s_value[$aspectName])) : $s_value[$aspectName]) 
+                ? implode(',', $this->model_warehouse_tools_utility->flattenArray($s_value[$aspectName])) : $s_value[$aspectName]) 
                 : null;
             
             $source_title = $source_value ? " ({$aspectName}: " . str_replace('2.35:1', '16:9', $source_value) . ')' : '';
@@ -368,7 +368,7 @@ class Ai extends \Opencart\System\Engine\Model {
             $s_value=json_decode($source_value,true);
             $source_value = isset($s_value[$aspectName]) 
             ? (is_array($s_value[$aspectName]) 
-                ? implode(',', $this->model_shopmanager_tools->flattenArray($s_value[$aspectName])) 
+                ? implode(',', $this->model_warehouse_tools_utility->flattenArray($s_value[$aspectName])) 
                 : $s_value[$aspectName]) 
             : null;
             $source = isset($source_value)?' '.$source_value. ',  ':'';
@@ -388,7 +388,7 @@ class Ai extends \Opencart\System\Engine\Model {
         // Ajout des contraintes spécifiques eBay
         $specifics_for_prompt = [];
         
-        $categories_data = $this->model_shopmanager_catalog_category->getSpecific($category_id, $language_id);
+        $categories_data = $this->model_warehouse_product_category->getSpecific($category_id, $language_id);
         $specific_info = $categories_data['specifics'] ?? [];
         if (isset($specific_info['specific_info'])) {
             $specifics_for_prompt[] = $this->getAspectConstraint($specific_info, $aspectName, $condition_name);
@@ -773,8 +773,8 @@ $user_prompt .= ". Here are the constraints for eBay category specifics: " . $sp
 
        public function translate($jsonData, $target_language) {
 
-        $this->load->model('shopmanager/tools');
-		//$this->model_shopmanager_tools->debug_function_trace();
+        $this->load->model('warehouse/tools/utility');
+		//$this->model_warehouse_tools_utility->debug_function_trace();
         // 🛠️ Vérification initiale
         if (empty($jsonData) || empty($target_language)) {
             return ['error' => 'Invalid input data'];
@@ -1104,14 +1104,14 @@ public function getTitle($titles, $category_id, $data = null) {
 
     public function getCategoryID($category_name){
     
-    $this->load->model('shopmanager/ai');
+    $this->load->model('warehouse/tools/ai');
  
-    $this->load->model('shopmanager/catalog/category');
+    $this->load->model('warehouse/product/category');
  
   //  unset($product_info['category_id']);
         if (isset($category_name)) {
       
-    //     $categories1 = $this->model_shopmanager_catalog_category->getCategoriesLeaf(1);
+    //     $categories1 = $this->model_warehouse_product_category->getCategoriesLeaf(1);
             $data_value['filter_leaf']='1';
          
             
@@ -1148,7 +1148,7 @@ public function getTitle($titles, $category_id, $data = null) {
                 $data_value['filter_name'] = $item;
             
                 // Récupère les catégories filtrées
-                $categories_data = $this->model_shopmanager_catalog_category->getCategories($data_value);
+                $categories_data = $this->model_warehouse_product_category->getCategories($data_value);
             
                 // Ajoute les résultats au tableau final
                 $all_results = array_merge($all_results, $categories_data);
@@ -1190,7 +1190,7 @@ public function getTitle($titles, $category_id, $data = null) {
             
                 // Vérifie si category_id est numérique (meilleure pratique)
                 if (is_numeric($category_id)) {
-                    $category_detail = $this->model_shopmanager_catalog_category->getCategoryDetails($category_id);
+                    $category_detail = $this->model_warehouse_product_category->getCategoryDetails($category_id);
             
                     // Vérifie si les détails existent bien
                     if ($category_detail) {
@@ -1391,7 +1391,7 @@ public function getTitle($titles, $category_id, $data = null) {
         
 
     public function reduceArrayValue($array, $name){
-        $this->load->model('shopmanager/ai'); 
+        $this->load->model('warehouse/tools/ai'); 
         $json= json_encode($array, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         $user_prompt = "Reduce this json (".$json.")to include only the top 10 most relevant ".$name." values. Return the reduced array with a maximum of 10 values in JSON format.";
@@ -1501,10 +1501,10 @@ public function getTitle($titles, $category_id, $data = null) {
     }
 
     public function getMadeInCountry($product_info = null) {
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/product/product');
         
         // Get product description
-        $product_description = $this->model_shopmanager_catalog_product->getDescriptions($product_info['product_id']);
+        $product_description = $this->model_warehouse_product_product->getDescriptions($product_info['product_id']);
         $language_id = 1;
         
         // Extract relevant product information

@@ -1,4 +1,4 @@
-{# Original: shopmanager/card/card_listing_form.twig #}
+{# Original: warehouse/card/listing_form.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -593,9 +593,9 @@
 <link href="view/javascript/summernote/summernote.css" rel="stylesheet" />
 <script type="text/javascript" src="view/javascript/summernote/opencart.js"></script>
 
-<script type="text/javascript" src="view/javascript/shopmanager/card/card_listing_form.js?v={{ 'now'|date('U') }}"></script>
+<script type="text/javascript" src="view/javascript/warehouse/card/listing_form.js?v={{ 'now'|date('U') }}"></script>
 {% if listing_id > 0 %}
-<script type="text/javascript" src="view/javascript/shopmanager/card/card_listing_lot.js?v={{ 'now'|date('U') }}"></script>
+<script type="text/javascript" src="view/javascript/warehouse/card/listing_lot.js?v={{ 'now'|date('U') }}"></script>
 {% endif %}
 
 {% if listing_id %}
@@ -643,7 +643,7 @@ var LEGEND_REGEN_GREEN       = '{{ legend_regen_green|escape('js') }}';
 var LEGEND_REGEN_ORANGE      = '{{ legend_regen_orange|escape('js') }}';
 var LEGEND_REGEN_RED         = '{{ legend_regen_red|escape('js') }}';
 </script>
-<script type="text/javascript" src="view/javascript/shopmanager/card/card_listing_import.js"></script>
+<script type="text/javascript" src="view/javascript/warehouse/card/listing_import.js"></script>
 <script type="text/javascript">
 $(document).on('click', '.btn-add-batch', function() {
     var btn = $(this);

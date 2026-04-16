@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/card.php
+// Original: warehouse/card/card.php
 // ====================
 // HEADING
 // ====================

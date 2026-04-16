@@ -1,4 +1,4 @@
-{# Original: shopmanager/catalog/product_search_info.twig #}
+{# Original: warehouse/product/research_info.twig #}
   
 {{ header }}
 {{ column_left }}
@@ -783,7 +783,7 @@ $('input[name="category"]').autocomplete({
     'source': function(request, response) {
         var user_token = document.querySelector('input[name="user_token"]').value;
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
+            url: 'index.php?route=warehouse/product/category/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {
@@ -819,7 +819,7 @@ var categoryId = $(this).val().trim();
       //showAlertPopup(categoryId);
      
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.getCategoryDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
+            url: 'index.php?route=warehouse/product/category.getCategoryDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
             dataType: 'json',
             success: function(json) {
                 if (!json.erreur) {
@@ -902,7 +902,7 @@ $('input[name=\'manufacturer\']').autocomplete({
     var TEXT_ERROR = '{{ text_error|escape('js') }}';
     var TEXT_UPLOAD_ERROR = '{{ text_upload_error|escape('js') }}';
 </script>
-<script type="text/javascript" src="view/javascript/shopmanager/product_search_info.js"></script>
+<script type="text/javascript" src="view/javascript/warehouse/product/research_info.js"></script>
 <script>
 <?php if(isset($condition_id)){?>
 updateCondition('<?php echo $condition_marketplace_item_id; ?>'); 

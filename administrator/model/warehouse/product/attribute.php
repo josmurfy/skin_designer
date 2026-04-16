@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/attribute.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/attribute.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 
 class Attribute extends \Opencart\System\Engine\Model {

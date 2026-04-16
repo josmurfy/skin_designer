@@ -1,4 +1,4 @@
-{# Original: shopmanager/marketplace/marketplace.twig #}
+{# Original: warehouse/marketplace/connection.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -266,7 +266,7 @@ function closeModal(modalmarket) {
 
 // ── AJAX Filter ──
 $('#button-filter').on('click', function() {
-  var url = 'index.php?route=shopmanager/marketplace/marketplace.list&user_token={{ user_token }}';
+  var url = 'index.php?route=warehouse/marketplace/connection.list&user_token={{ user_token }}';
 
   var filter_store_name = $('#input-filter-store-name').val();
   if (filter_store_name) {
@@ -296,7 +296,7 @@ $('#button-clear').on('click', function() {
   $('#input-filter-user-id').val('');
   $('#input-filter-marketplace-id').val('');
   $('#input-filter-status').val('');
-  $('#marketplace').load('index.php?route=shopmanager/marketplace/marketplace.list&user_token={{ user_token }}');
+  $('#marketplace').load('index.php?route=warehouse/marketplace/connection.list&user_token={{ user_token }}');
 });
 
 // ── Intercept sort & pagination links (AJAX) ──
@@ -325,7 +325,7 @@ $('#button-delete').on('click', function() {
       dataType: 'json',
       success: function(json) {
         if (json.success) {
-          $('#marketplace').load('index.php?route=shopmanager/marketplace/marketplace.list&user_token={{ user_token }}');
+          $('#marketplace').load('index.php?route=warehouse/marketplace/connection.list&user_token={{ user_token }}');
         }
       },
       error: function(xhr) {
@@ -383,7 +383,7 @@ $('#btn-save-token').on('click', function() {
 // ── Instruction Popups (existing marketplace connectors) ──
 function instruction_opencart() {
   $.ajax({
-    url: 'index.php?route=shopmanager/opencart/openInstruction&user_token={{ user_token }}',
+    url: 'index.php?route=warehouse/tools/store/openInstruction&user_token={{ user_token }}',
     method: 'POST',
     dataType: 'json',
     success: function(json) { $('#modalmarket-body').html(json['html']); },
@@ -393,7 +393,7 @@ function instruction_opencart() {
 
 function instruction_shopify() {
   $.ajax({
-    url: 'index.php?route=shopmanager/shopify/openInstruction&user_token={{ user_token }}',
+    url: 'index.php?route=warehouse/marketplace/shopify/openInstruction&user_token={{ user_token }}',
     method: 'POST',
     dataType: 'json',
     success: function(json) { $('#modalmarket-body').html(json['html']); }
@@ -402,7 +402,7 @@ function instruction_shopify() {
 
 function instruction_shipstation() {
   $.ajax({
-    url: 'index.php?route=shopmanager/shipstation/openInstruction&user_token={{ user_token }}',
+    url: 'index.php?route=warehouse/marketplace/shipstation/openInstruction&user_token={{ user_token }}',
     method: 'POST',
     dataType: 'json',
     success: function(json) { $('#modalmarket-body').html(json['html']); }

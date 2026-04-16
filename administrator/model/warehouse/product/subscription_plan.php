@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/subscription_plan.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/subscription_plan.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 /**
  * Class Subscription Plan
  *

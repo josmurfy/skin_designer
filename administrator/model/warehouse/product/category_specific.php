@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/catalog/category_specific.php
-namespace Opencart\Admin\Model\Shopmanager\Catalog;
+// Original: warehouse/product/category_specific.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 class CategorySpecific extends \Opencart\System\Engine\Model {
 
@@ -109,9 +109,9 @@ class CategorySpecific extends \Opencart\System\Engine\Model {
         $query = $this->db->query($sql);
     //print("<pre>".print_r($sql, true)."</pre>");
       //print("<pre>".print_r($query, true)."</pre>");
-        $this->load->model('shopmanager/ebay'); 
+        $this->load->model('warehouse/marketplace/ebay/api'); 
         foreach($query->rows as $row){
-            $this->model_shopmanager_ebay->getCategorySpecifics($row['category_id'],$row['site_id'], 1);
+            $this->model_warehouse_marketplace_ebay_api->getCategorySpecifics($row['category_id'],$row['site_id'], 1);
         }
       //  return $query->rows;
     }

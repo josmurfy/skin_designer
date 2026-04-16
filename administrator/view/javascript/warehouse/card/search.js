@@ -1,8 +1,8 @@
-// Original: shopmanager/card/search.js
+// Original: warehouse/card/search.js
 /**
  * Card Value Search — search.js
  *
- * Autonomous JS (décentralisé) pour shopmanager/card/search
+ * Autonomous JS (décentralisé) pour warehouse/card/search
  * Gère: cascading select filters, autoload search, pagination AJAX, tri colonnes
  */
 

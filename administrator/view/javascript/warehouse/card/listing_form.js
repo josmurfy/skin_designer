@@ -1,4 +1,4 @@
-// Original: shopmanager/card/card_listing_form.js
+// Original: warehouse/card/listing_form.js
 /**
  * card_listing_form.js
  * Handles general form interactions (tab-general, tab-ebay specifics).
@@ -534,7 +534,7 @@ function openPrintLabel(sku = '', upc = '', quantity = 1, location = '', force =
         //upc = '';
     }
 
-    const url = 'index.php?route=shopmanager/tools.create_label' +
+    const url = 'index.php?route=warehouse/tools/utility.create_label' +
         '&sku='      + encodeURIComponent(sku      || '') +
         '&upc='      + encodeURIComponent(upc      || '') +
         '&quantity=' + encodeURIComponent(quantity) +

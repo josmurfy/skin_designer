@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/opencart.php
+// Original: warehouse/tools/store.php
 
 $_['text_title']			 = '<p>Your OpenCart store can be connected in just minutes. Please follow the instructions below.</p>
                                 <ol>

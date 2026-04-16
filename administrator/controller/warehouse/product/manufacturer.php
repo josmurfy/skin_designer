@@ -1,18 +1,18 @@
 <?php
-// Original: shopmanager/manufacturer.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/product/manufacturer.php
+namespace Opencart\Admin\Controller\Warehouse\Product;
 
 class Manufacturer extends \Opencart\System\Engine\Controller {
     private $error = array();
 
 	public function index() {
-		$this->load->language('shopmanager/manufacturer');
+		$this->load->language('warehouse/product/manufacturer');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/manufacturer');
+		$this->load->model('warehouse/product/manufacturer');
 
 		$this->getList();
 	}
@@ -22,24 +22,24 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	
 		$json = [];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/manufacturer')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/manufacturer')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
 			return;
 		}
 
-		$this->load->language('shopmanager/manufacturer');
+		$this->load->language('warehouse/product/manufacturer');
 		$data = [];
 		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
-		$this->load->model('shopmanager/manufacturer');
+		$this->load->model('warehouse/product/manufacturer');
 	
 		// Détecter si c'est une requête AJAX
 		$isAjax = isset($this->request->get['ajax']) && $this->request->get['ajax'] == 'true';
 	
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
-			$manufacturer_id = $this->model_shopmanager_manufacturer->addManufacturer($this->request->post);
+			$manufacturer_id = $this->model_warehouse_product_manufacturer->addManufacturer($this->request->post);
 			$this->session->data['success'] = ($lang['text_success'] ?? '');
 	
 			$json['success'] = ($lang['text_success'] ?? '');
@@ -65,7 +65,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 	
-			$this->response->redirect($this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 	
 		if ($isAjax) {
@@ -82,25 +82,25 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 
 		$json = [];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/manufacturer')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/manufacturer')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
 			return;
 		}
 
-		$this->load->language('shopmanager/manufacturer');
+		$this->load->language('warehouse/product/manufacturer');
 		$data = [];
 		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
-		$this->load->model('shopmanager/manufacturer');
+		$this->load->model('warehouse/product/manufacturer');
 
 	
 		// Détecter si c'est une requête AJAX
 		$isAjax = isset($this->request->get['ajax']) && $this->request->get['ajax'] == 'true';
 	
 		if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
-			$this->model_shopmanager_manufacturer->editManufacturer($this->request->get['manufacturer_id'], $this->request->post);
+			$this->model_warehouse_product_manufacturer->editManufacturer($this->request->get['manufacturer_id'], $this->request->post);
 			$this->session->data['success'] = ($lang['text_success'] ?? '');
 	
 			$json['success'] = ($lang['text_success'] ?? '');
@@ -125,7 +125,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 	
-			$this->response->redirect($this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 	
 		if ($isAjax) {
@@ -141,18 +141,18 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	public function delete() {
 		$json = [];
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/manufacturer')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/manufacturer')) {
 			$json['error'] = 'Permission refusée!';
 			$this->response->addHeader('Content-Type: application/json');
 			$this->response->setOutput(json_encode($json));
 			return;
 		}
 
-		$this->load->language('shopmanager/manufacturer');
+		$this->load->language('warehouse/product/manufacturer');
 		$data = [];
 		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
-		$this->load->model('shopmanager/manufacturer');
+		$this->load->model('warehouse/product/manufacturer');
 
 	
 		// Détecter si c'est une requête AJAX
@@ -161,7 +161,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 		if (isset($this->request->post['selected']) && $this->validateDelete()) {
 			foreach ($this->request->post['selected'] as $manufacturer_id) {
 				// Vérifier s'il y a des produits associés avant de supprimer
-				$products = $this->model_shopmanager_manufacturer->getProductsByManufacturerId($manufacturer_id);
+				$products = $this->model_warehouse_product_manufacturer->getProductsByManufacturerId($manufacturer_id);
 				if (!empty($products)) {
 					$json['warning'] = "Ce fabricant est associé à des produits. Veuillez sélectionner un nouveau fabricant pour les produits avant de supprimer.";
 					if ($isAjax) {
@@ -174,7 +174,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 					// Logique à implémenter dans le front-end pour gérer cette situation.
 				} else {
 					// Supprimer le fabricant s'il n'a pas de produits associés
-					$this->model_shopmanager_manufacturer->deleteManufacturer($manufacturer_id);
+					$this->model_warehouse_product_manufacturer->deleteManufacturer($manufacturer_id);
 					$json['success'] = ($lang['text_success'] ?? '');
 				}
 			}
@@ -201,7 +201,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 				$url .= '&page=' . $this->request->get['page'];
 			}
 	
-			$this->response->redirect($this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 	
 		if ($isAjax) {
@@ -257,11 +257,11 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true)
+			'href' => $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 
-		$data['add'] = $this->url->link('shopmanager/manufacturer/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
-		$data['delete'] = $this->url->link('shopmanager/manufacturer/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['add'] = $this->url->link('warehouse/product/manufacturer/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['delete'] = $this->url->link('warehouse/product/manufacturer/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
 		$data['manufacturers'] = array();
 
@@ -272,16 +272,16 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 			'limit' => $this->config->get('config_limit_admin')
 		);
 
-		$manufacturer_total = $this->model_shopmanager_manufacturer->getTotalManufacturers();
+		$manufacturer_total = $this->model_warehouse_product_manufacturer->getTotalManufacturers();
 
-		$results = $this->model_shopmanager_manufacturer->getManufacturers($filter_data);
+		$results = $this->model_warehouse_product_manufacturer->getManufacturers($filter_data);
 
 		foreach ($results as $result) {
 			$data['manufacturers'][] = array(
 				'manufacturer_id' => $result['manufacturer_id'],
 				'name'            => $result['name'],
 				'sort_order'      => $result['sort_order'],
-				'edit'            => $this->url->link('shopmanager/manufacturer/edit', 'user_token=' . $this->session->data['user_token'] . '&manufacturer_id=' . $result['manufacturer_id'] . $url, true)
+				'edit'            => $this->url->link('warehouse/product/manufacturer/edit', 'user_token=' . $this->session->data['user_token'] . '&manufacturer_id=' . $result['manufacturer_id'] . $url, true)
 			);
 		}
 
@@ -331,8 +331,8 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 			$url .= '&page=' . $this->request->get['page'];
 		}
 
-		$data['sort_name'] = $this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . '&sort=name' . $url, true);
-		$data['sort_sort_order'] = $this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . '&sort=sort_order' . $url, true);
+		$data['sort_name'] = $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . '&sort=name' . $url, true);
+		$data['sort_sort_order'] = $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . '&sort=sort_order' . $url, true);
 
 		$url = '';
 
@@ -348,7 +348,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 			'total' => $manufacturer_total,
 			'page'  => $page,
 			'limit' => $this->config->get('config_limit_admin'),
-			'url'   => $this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true)
+			'url'   => $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true)
 		]);
 
 		$data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($manufacturer_total) ? (($page - 1) * $this->config->get('config_limit_admin')) + 1 : 0, ((($page - 1) * $this->config->get('config_limit_admin')) > ($manufacturer_total - $this->config->get('config_limit_admin'))) ? $manufacturer_total : ((($page - 1) * $this->config->get('config_limit_admin')) + $this->config->get('config_limit_admin')), $manufacturer_total, ceil($manufacturer_total / $this->config->get('config_limit_admin')));
@@ -359,11 +359,11 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/marketplace/listing_popup');
 
-		$this->response->setOutput($this->load->view('shopmanager/manufacturer_list', $data));
+		$this->response->setOutput($this->load->view('warehouse/product/manufacturer_list', $data));
 	}
 
 	protected function getForm() {
@@ -429,19 +429,19 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true)
+			'href' => $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 
 		if (!isset($this->request->get['manufacturer_id'])) {
-			$data['action'] = $this->url->link('shopmanager/manufacturer/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+			$data['action'] = $this->url->link('warehouse/product/manufacturer/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
 		} else {
-			$data['action'] = $this->url->link('shopmanager/manufacturer/edit', 'user_token=' . $this->session->data['user_token'] . '&manufacturer_id=' . $this->request->get['manufacturer_id'] . $url, true);
+			$data['action'] = $this->url->link('warehouse/product/manufacturer/edit', 'user_token=' . $this->session->data['user_token'] . '&manufacturer_id=' . $this->request->get['manufacturer_id'] . $url, true);
 		}
 
-		$data['cancel'] = $this->url->link('shopmanager/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['cancel'] = $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
 		if (isset($this->request->get['manufacturer_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
-			$manufacturer_info = $this->model_shopmanager_manufacturer->getManufacturer($this->request->get['manufacturer_id']);
+			$manufacturer_info = $this->model_warehouse_product_manufacturer->getManufacturer($this->request->get['manufacturer_id']);
 		}
 
 		$data['user_token'] = $this->session->data['user_token'];
@@ -461,7 +461,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 		if (isset($this->request->post['manufacturer_store'])) {
 			$data['manufacturer_store'] = $this->request->post['manufacturer_store'];
 		} elseif (isset($this->request->get['manufacturer_id'])) {
-			$data['manufacturer_store'] = $this->model_shopmanager_manufacturer->getManufacturerStores($this->request->get['manufacturer_id']);
+			$data['manufacturer_store'] = $this->model_warehouse_product_manufacturer->getManufacturerStores($this->request->get['manufacturer_id']);
 		} else {
 			$data['manufacturer_store'] = array(0);
 		}
@@ -505,15 +505,15 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/marketplace/listing_popup');
 
-		$this->response->setOutput($this->load->view('shopmanager/manufacturer_form', $data));
+		$this->response->setOutput($this->load->view('warehouse/product/manufacturer_form', $data));
 	}
 
 	protected function validateForm() {
-		if (!$this->user->hasPermission('modify', 'shopmanager/manufacturer')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/manufacturer')) {
 			$this->error['warning'] = $this->language->get('error_permission');
 		}
 
@@ -524,9 +524,9 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 
 		$keyword = $this->request->post['keyword'] ?? '';
 		if (mb_strlen($keyword) > 0) {
-			$this->load->model('shopmanager/url_alias');
+			$this->load->model('warehouse/url_alias');
 
-			$url_alias_info = $this->model_shopmanager_url_alias->getUrlAlias($keyword);
+			$url_alias_info = $this->model_warehouse_url_alias->getUrlAlias($keyword);
 
 			if ($url_alias_info && isset($this->request->get['manufacturer_id']) && $url_alias_info['query'] != 'manufacturer_id=' . $this->request->get['manufacturer_id']) {
 				$this->error['keyword'] = $this->language->get('error_keyword');
@@ -541,14 +541,14 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 	}
 
 	protected function validateDelete() {
-		if (!$this->user->hasPermission('modify', 'shopmanager/manufacturer')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/manufacturer')) {
 			$this->error['warning'] = ($lang['error_permission'] ?? '');
 		}
 
-		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('warehouse/product/product');
 
 		foreach ($this->request->post['selected'] as $manufacturer_id) {
-			$product_total = $this->model_shopmanager_catalog_product->getTotalProductsByManufacturerId($manufacturer_id);
+			$product_total = $this->model_warehouse_product_product->getTotalProductsByManufacturerId($manufacturer_id);
 
 			if ($product_total) {
 				$this->error['warning'] = sprintf(($lang['error_product'] ?? ''), $product_total);
@@ -562,7 +562,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 		$json = array();
 
 		if (isset($this->request->get['filter_name'])) {
-			$this->load->model('shopmanager/manufacturer');
+			$this->load->model('warehouse/product/manufacturer');
 
 			$filter_data = array(
 				'filter_name' => $this->request->get['filter_name'],
@@ -570,7 +570,7 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 				'limit'       => 5
 			);
 
-			$results = $this->model_shopmanager_manufacturer->getManufacturers($filter_data);
+			$results = $this->model_warehouse_product_manufacturer->getManufacturers($filter_data);
 
 			foreach ($results as $result) {
 				$json[] = array(

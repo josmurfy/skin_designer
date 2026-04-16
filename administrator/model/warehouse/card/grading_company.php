@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/card/card_grading_company.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/grading_company.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
-class CardGradingCompany extends \Opencart\System\Engine\Model {
+class GradingCompany extends \Opencart\System\Engine\Model {
 
     private array $defaultCompanies = [
         'PSA', 'BGS', 'BGSX', 'SGC', 'CSA', 'HGA', 'GAI', 'ACE', 'CGC', 'KSA'

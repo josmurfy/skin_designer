@@ -1,4 +1,4 @@
-{# Original: shopmanager/order_list.twig #}
+{# Original: warehouse/order/order_list.twig #}
 
 
   <div class="container-fluid">
@@ -38,7 +38,7 @@
                       <td class="text-left">{{ order.sales_record_number }}</td>
                       <td class="text-left">
                         {% if order.com == 'CARD_' and order.listing_id %}
-                          <a href="index.php?route=shopmanager/card/card_listing.form&listing_id={{ order.listing_id }}&user_token={{ user_token }}" target="_blank">{{ order.image|raw }}</a>
+                          <a href="index.php?route=warehouse/card/listing.form&listing_id={{ order.listing_id }}&user_token={{ user_token }}" target="_blank">{{ order.image|raw }}</a>
                         {% else %}
                           {{ order.image|raw }}
                         {% endif %}
@@ -101,7 +101,7 @@
                   <tr class="product-row">
                     <td class="text-left">
                       {% if o.com == 'CARD_' and o.listing_id %}
-                        <a href="index.php?route=shopmanager/card/card_listing.form&listing_id={{ o.listing_id }}&user_token={{ user_token }}" target="_blank">{{ o.image|raw }}</a>
+                        <a href="index.php?route=warehouse/card/listing.form&listing_id={{ o.listing_id }}&user_token={{ user_token }}" target="_blank">{{ o.image|raw }}</a>
                       {% else %}
                         {{ o.image|raw }}
                       {% endif %}

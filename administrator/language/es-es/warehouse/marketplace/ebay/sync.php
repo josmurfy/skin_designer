@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/inventory/sync.php
+// Original: warehouse/marketplace/ebay/sync.php
 // Encabezado
 $_['heading_title'] = 'Sincronización y problemas';
 

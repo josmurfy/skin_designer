@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/list_fast.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/product/publish.php
+namespace Opencart\Admin\Controller\Warehouse\Product;
 
-class ListFast extends \Opencart\System\Engine\Controller {
+class Publish extends \Opencart\System\Engine\Controller {
     private $error = array();
 
     // Méthode principale : index
@@ -10,41 +10,41 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		ini_set('display_errors', 1);
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
-        $this->load->language('shopmanager/list_fast');
+        $this->load->language('warehouse/product/publish');
         $data = [];
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/list_fast');
+        $this->load->model('warehouse/product/publish');
 
         $this->getList();
     }
 
 	public function list(): void {
-		$this->load->language('shopmanager/list_fast');
+		$this->load->language('warehouse/product/publish');
 		$data = [];
 		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/list_fast');
+		$this->load->model('warehouse/product/publish');
 		$this->getList(true);
 	}
 	public function delete() {
-		$this->load->language('shopmanager/catalog/product');
+		$this->load->language('warehouse/product/product');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/catalog/product');
-		$this->load->model('shopmanager/tools');
+		$this->load->model('warehouse/product/product');
+		$this->load->model('warehouse/tools/utility');
 
 		if (isset($this->request->post['selected']) && $this->validateDelete()) {
 		//	//print("<pre>".print_r ($this->request->post['selected'] ,true )."</pre>");
 		//	echo count($this->request->post['selected']);
 			foreach ($this->request->post['selected'] as $product_id) {
-				$this->model_shopmanager_catalog_product->deleteProduct($product_id);
-				$this->model_shopmanager_tools->deleteProductImagesFiles($product_id);
+				$this->model_warehouse_product_product->deleteProduct($product_id);
+				$this->model_warehouse_tools_utility->deleteProductImagesFiles($product_id);
 				
 				
 			}
@@ -122,25 +122,25 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 			
 
-			$this->response->redirect($this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 
 		$this->getList();
 	}
 	public function enable() {
-		$this->load->language('shopmanager/catalog/product');
+		$this->load->language('warehouse/product/product');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('warehouse/product/product');
 
 		if (isset($this->request->post['selected'])) {
 		//	//print("<pre>".print_r ($this->request->post['selected'] ,true )."</pre>");
 		//	echo count($this->request->post['selected']);
 			foreach ($this->request->post['selected'] as $product_id) {
-				$this->model_shopmanager_catalog_product->enableProduct($product_id);
+				$this->model_warehouse_product_product->enableProduct($product_id);
 			}
 
 			$this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -215,25 +215,25 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				$url .= '&limit=' . $this->request->get['limit'];
 			}
 
-			$this->response->redirect($this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 
 		$this->getList();
 	}
 	public function disable() {
-		$this->load->language('shopmanager/catalog/product');
+		$this->load->language('warehouse/product/product');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('warehouse/product/product');
 
 		if (isset($this->request->post['selected'])) {
 		//	//print("<pre>".print_r ($this->request->post['selected'] ,true )."</pre>");
 		//	echo count($this->request->post['selected']);
 			foreach ($this->request->post['selected'] as $product_id) {
-				$this->model_shopmanager_catalog_product->enableProduct($product_id,0);
+				$this->model_warehouse_product_product->enableProduct($product_id,0);
 			}
 
 			$this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -307,23 +307,23 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				$url .= '&limit=' . $this->request->get['limit'];
 			}
 
-			$this->response->redirect($this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 
 		$this->getList();
 	}
 	public function copy() {
-		$this->load->language('shopmanager/catalog/product');
+		$this->load->language('warehouse/product/product');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('warehouse/product/product');
 
 		if (isset($this->request->post['selected']) && $this->validateCopy()) {
 			foreach ($this->request->post['selected'] as $product_id) {
-				$this->model_shopmanager_catalog_product->copyProduct($product_id);
+				$this->model_warehouse_product_product->copyProduct($product_id);
 			}
 
 			$this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -395,13 +395,13 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				$url .= '&limit=' . $this->request->get['limit'];
 			}
 
-			$this->response->redirect($this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 
 		$this->getList();
 	}
 	protected function validateDelete() {
-		if (!$this->user->hasPermission('modify', 'shopmanager/catalog/product')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/product')) {
 			$this->error['warning'] = ($lang['error_permission'] ?? '');
 		}
 
@@ -409,7 +409,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	}
 
 	protected function validateCopy() {
-		if (!$this->user->hasPermission('modify', 'shopmanager/catalog/product')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/product/product')) {
 			$this->error['warning'] = ($lang['error_permission'] ?? '');
 		}
 
@@ -420,8 +420,8 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$json = array();
 
 		if (isset($this->request->get['filter_name']) || isset($this->request->get['filter_model'])) {
-			$this->load->model('shopmanager/catalog/product');
-			$this->load->model('shopmanager/option');
+			$this->load->model('warehouse/product/product');
+			$this->load->model('warehouse/product/option');
 
 			if (isset($this->request->get['filter_sku'])) {
 				$filter_sku = $this->request->get['filter_sku'];
@@ -476,21 +476,21 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				'limit'        		=> $limit
 			);
 
-			$results = $this->model_shopmanager_catalog_product->getProducts($filter_data);
+			$results = $this->model_warehouse_product_product->getProducts($filter_data);
 
 			foreach ($results as $result) {
 				$option_data = array();
 
-				$product_options = $this->model_shopmanager_catalog_product->getProductOptions($result['product_id']);
+				$product_options = $this->model_warehouse_product_product->getProductOptions($result['product_id']);
 
 				foreach ($product_options as $product_option) {
-					$option_info = $this->model_shopmanager_option->getOption($product_option['option_id']);
+					$option_info = $this->model_warehouse_product_option->getOption($product_option['option_id']);
 
 					if ($option_info) {
 						$product_option_value_data = array();
 
 						foreach ($product_option['product_option_value'] as $product_option_value) {
-							$option_value_info = $this->model_shopmanager_option->getOptionValue($product_option_value['option_value_id']);
+							$option_value_info = $this->model_warehouse_product_option->getOptionValue($product_option_value['option_value_id']);
 
 							if ($option_value_info) {
 								$product_option_value_data[] = array(
@@ -532,11 +532,11 @@ class ListFast extends \Opencart\System\Engine\Controller {
     // Méthode : getList
 	protected function getList(bool $only_list = false) {
 
-	//	$this->document->addScript('view/javascript/shopmanager/catalog/product_list.js');
-	//	$this->document->addScript('view/javascript/shopmanager/catalog/product_search.js');
-		$this->document->addScript('view/javascript/shopmanager/list_fast_list.js');
-		$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-		$this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+	//	$this->document->addScript('view/javascript/warehouse/product/product_list.js');
+	//	$this->document->addScript('view/javascript/warehouse/product/research.js');
+		$this->document->addScript('view/javascript/warehouse/product/publish_list.js');
+		$this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+		$this->document->addScript('view/javascript/warehouse/popup/alert.js');
 
 	//	$this->document->addScript('view/javascript/fontawesome/css/fontawesome.css');
 		
@@ -732,17 +732,17 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true)
+			'href' => $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 
-		$data['product_search'] = $this->url->link('shopmanager/list_fast.product_search', 'user_token=' . $this->session->data['user_token']. $url, true);
-		$data['print_report'] = $this->url->link('shopmanager/print_report', 'type_report=list_fast&user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['product_search'] = $this->url->link('warehouse/product/publish.product_search', 'user_token=' . $this->session->data['user_token']. $url, true);
+		$data['print_report'] = $this->url->link('warehouse/inventory/label', 'type_report=list_fast&user_token=' . $this->session->data['user_token'] . $url, true);
 
-		$data['add'] = $this->url->link('shopmanager/list_fast/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
-		$data['copy'] = $this->url->link('shopmanager/list_fast/copy', 'user_token=' . $this->session->data['user_token'] . $url, true);
-		$data['delete'] = $this->url->link('shopmanager/list_fast/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
-		$data['enable'] = $this->url->link('shopmanager/list_fast/enable', 'user_token=' . $this->session->data['user_token'] . $url, true);
-		$data['disable'] = $this->url->link('shopmanager/list_fast/disable', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['add'] = $this->url->link('warehouse/product/publish/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['copy'] = $this->url->link('warehouse/product/publish/copy', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['delete'] = $this->url->link('warehouse/product/publish/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['enable'] = $this->url->link('warehouse/product/publish/enable', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['disable'] = $this->url->link('warehouse/product/publish/disable', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
 		$data['products'] = array();
 
@@ -772,9 +772,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$this->load->model('tool/image');
 
 	
-		$product_total = $this->model_shopmanager_list_fast->getTotalProducts($filter_data);
+		$product_total = $this->model_warehouse_product_publish->getTotalProducts($filter_data);
 
-		$results = $this->model_shopmanager_list_fast->getProducts($filter_data);
+		$results = $this->model_warehouse_product_publish->getProducts($filter_data);
 
 		
 		
@@ -787,7 +787,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 			$special = false;
 
-			$product_specials = $this->model_shopmanager_list_fast->getProductSpecials($result['product_id']);
+			$product_specials = $this->model_warehouse_product_publish->getProductSpecials($result['product_id']);
 
 			foreach ($product_specials  as $product_special) {
 				if (($product_special['date_start'] == '0000-00-00' || strtotime($product_special['date_start']) < time()) && ($product_special['date_end'] == '0000-00-00' || strtotime($product_special['date_end']) > time())) {
@@ -816,10 +816,10 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				'has_specifics'   => $result['has_specifics'] ? ($lang['text_set'] ?? '') : ($lang['text_not_set'] ?? ''),
 				'status'     => $result['status'] ? ($lang['text_enabled'] ?? '') : ($lang['text_disabled'] ?? ''),
 				'edit' => ($result['has_specifics'] && $result['has_sources']) 
-					? $this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'] . $url, true) 
+					? $this->url->link('warehouse/product/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'] . $url, true) 
 					: ($result['has_sources'] 
 						? "javascript:void(0);\" onclick=\"fastProductSearch(" . $result['product_id'] . ",'" . $result['upc'] . "')"
-						: $this->url->link('shopmanager/list_fast.product_search', 'view=fast_list&user_token=' . $this->session->data['user_token'] . '&upc=' . $result['upc'] . '&product_id=' . $result['product_id'] . '&condition_id=' . $result['condition_id'] . $url, true)
+						: $this->url->link('warehouse/product/publish.product_search', 'view=fast_list&user_token=' . $this->session->data['user_token'] . '&upc=' . $result['upc'] . '&product_id=' . $result['product_id'] . '&condition_id=' . $result['condition_id'] . $url, true)
 					)
 
 							);
@@ -1024,19 +1024,19 @@ class ListFast extends \Opencart\System\Engine\Controller {
 			$url .= '&limit=' . $this->request->get['limit'];
 		} 
 
-		$data['sort_condition_id'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.condition_id' . $url, true);
-		$data['sort_marketplace_item_id'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.marketplace_item_id' . $url, true);
-		$data['sort_epid'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=pis.epid' . $url, true);
-		$data['sort_name'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name' . $url, true);
-		$data['sort_model'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.model' . $url, true);
-		$data['sort_price'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.price' . $url, true);
-		$data['sort_quantity'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity' . $url, true);
-        $data['sort_unallocated_quantity'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.unallocated_quantity' . $url, true);
-		$data['sort_location'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.location' . $url, true);
-		$data['sort_sources'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=has_sources' . $url, true);
-		$data['sort_specifics'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=has_specifics' . $url, true);
-        $data['sort_status'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.status' . $url, true);
-		$data['sort_order'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . '&sort=p.sort_order' . $url, true);
+		$data['sort_condition_id'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.condition_id' . $url, true);
+		$data['sort_marketplace_item_id'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.marketplace_item_id' . $url, true);
+		$data['sort_epid'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=pis.epid' . $url, true);
+		$data['sort_name'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name' . $url, true);
+		$data['sort_model'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.model' . $url, true);
+		$data['sort_price'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.price' . $url, true);
+		$data['sort_quantity'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity' . $url, true);
+        $data['sort_unallocated_quantity'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.unallocated_quantity' . $url, true);
+		$data['sort_location'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.location' . $url, true);
+		$data['sort_sources'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=has_sources' . $url, true);
+		$data['sort_specifics'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=has_specifics' . $url, true);
+        $data['sort_status'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.status' . $url, true);
+		$data['sort_order'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . '&sort=p.sort_order' . $url, true);
 
 		$url = '';
 
@@ -1110,12 +1110,12 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 		
 
-		$data['limit_link'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=', true);
+		$data['limit_link'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=', true);
 		$data['pagination'] = $this->load->controller('common/pagination', [
 			'total' => $product_total,
 			'page'  => $page,
 			'limit' => $limit,
-			'url'   => $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=' . $limit, true)
+			'url'   => $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=' . $limit, true)
 		]);
 
 		$data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($product_total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($product_total - $limit)) ? $product_total : ((($page - 1) * $limit) + $limit), $product_total, ceil($product_total / $limit));
@@ -1140,26 +1140,26 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$data['limit'] = $limit;
 
 		if ($only_list) {
-			$this->response->setOutput($this->load->view('shopmanager/list_fast_list', $data));
+			$this->response->setOutput($this->load->view('warehouse/product/publish_list', $data));
 			return;
 		}
 
-		$data['list'] = $this->load->view('shopmanager/list_fast_list', $data);
+		$data['list'] = $this->load->view('warehouse/product/publish_list', $data);
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/popup/alert');
 
-		$this->response->setOutput($this->load->view('shopmanager/list_fast', $data));
+		$this->response->setOutput($this->load->view('warehouse/product/publish', $data));
 		
 	}
 
     // Méthode : getForm
     protected function getForm() {
-        $this->document->addScript('view/javascript/shopmanager/list_fast_form.js');
-        $this->document->addScript('view/javascript/shopmanager/condition.js');
+        $this->document->addScript('view/javascript/warehouse/product/publish_form.js');
+        $this->document->addScript('view/javascript/warehouse/product/condition.js');
         $data['heading_title'] = ($lang['heading_title'] ?? '');
 
         $data['button_save'] = ($lang['button_save'] ?? '');
@@ -1259,11 +1259,11 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'] . $url, true)
+			'href' => $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
         // Définir les boutons d'action
-        $data['action'] = !isset($this->request->get['product_id']) ? $this->url->link('shopmanager/list_fast/add', 'user_token=' . $this->session->data['user_token'], true) : $this->url->link('shopmanager/list_fast/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'], true);
-        $data['cancel'] = $this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'], true);
+        $data['action'] = !isset($this->request->get['product_id']) ? $this->url->link('warehouse/product/publish/add', 'user_token=' . $this->session->data['user_token'], true) : $this->url->link('warehouse/product/publish/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'], true);
+        $data['cancel'] = $this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'], true);
 
         $data['user_token'] = $this->session->data['user_token'];
 
@@ -1278,7 +1278,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 
         if (isset($this->request->get['product_id'])) {
-            $product_info = $this->model_shopmanager_list_fast->getProduct($this->request->get['product_id']);
+            $product_info = $this->model_warehouse_product_publish->getProduct($this->request->get['product_id']);
         }else{
             $product_info= null;
         }
@@ -1323,17 +1323,17 @@ class ListFast extends \Opencart\System\Engine\Controller {
         if (isset($this->request->post['product_category'])) {
 			$categories = $this->request->post['product_category'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$categories = $this->model_shopmanager_catalog_product->getProductCategories($this->request->get['product_id']);
+			$categories = $this->model_warehouse_product_product->getProductCategories($this->request->get['product_id']);
 		} else {
 		
 			$categories = array();
 		}
 		$data['product_categories'] = array();
-		$this->load->model('shopmanager/catalog/category');
+		$this->load->model('warehouse/product/category');
 
 		foreach ($categories as $category_id) {
 		//	//print("<pre>".print_r ($category_id,true )."</pre>");
-			$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+			$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 			//print("<pre>".print_r ($category_info,true )."</pre>");
 			if ($category_info) {
 				$data['product_categories'][] = array(
@@ -1346,12 +1346,12 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				}*/
 			}
 		}
-        $this->load->model('shopmanager/condition');
+        $this->load->model('warehouse/product/condition');
 
 		if(isset($data['category_id'])){
 					// Conditions
-			$data['conditions']=$this->model_shopmanager_condition->getConditionDetails($data['category_id']);
-	//		$data['conditions'] =  $this->model_shopmanager_condition->getConditionDetails($data['category_id'],$product_info['condition_id']??null);
+			$data['conditions']=$this->model_warehouse_product_condition->getConditionDetails($data['category_id']);
+	//		$data['conditions'] =  $this->model_warehouse_product_condition->getConditionDetails($data['category_id'],$product_info['condition_id']??null);
 			
 			$data['conditions']=$data['conditions'][1];
 		//	//print("<pre>".print_r ($data['conditions'],true )."</pre>");
@@ -1396,22 +1396,22 @@ class ListFast extends \Opencart\System\Engine\Controller {
         $data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/popup/alert');
 
-        $this->response->setOutput($this->load->view('shopmanager/list_fast_form', $data));
+        $this->response->setOutput($this->load->view('warehouse/product/publish_form', $data));
     }
 
   
 	public function add() {
-		$this->load->language('shopmanager/list_fast');
+		$this->load->language('warehouse/product/publish');
 		$data = [];
 		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 	
-		$this->load->model('shopmanager/list_fast');
-		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('warehouse/product/publish');
+		$this->load->model('warehouse/product/product');
 	
 		// Initialiser la variable $product_id à null
 		$product_id = null;
@@ -1421,13 +1421,13 @@ class ListFast extends \Opencart\System\Engine\Controller {
 			$url = '';
 	
 			// Vérifier si le produit existe déjà avec l'UPC et la condition donnée
-			$data = $this->model_shopmanager_list_fast->checkProductExists($this->request->post['upc'], $this->request->post['condition_id']);
+			$data = $this->model_warehouse_product_publish->checkProductExists($this->request->post['upc'], $this->request->post['condition_id']);
 			if (isset($data) && $data) {
 				// Incrémenter la quantité si le produit existe déjà
-				$this->model_shopmanager_list_fast->incrementQuantity($data['product_id'], $this->request->post['unallocated_quantity']);
+				$this->model_warehouse_product_publish->incrementQuantity($data['product_id'], $this->request->post['unallocated_quantity']);
 				
 				if ($data['total_quantity'] < 1) {
-					$this->model_shopmanager_catalog_product->editProductSku($data['product_id']);
+					$this->model_warehouse_product_product->editProductSku($data['product_id']);
 					$sku = $data['product_id'];
 				} else {
 					$sku = $data['sku'];
@@ -1440,13 +1440,13 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				$this->request->post['sku'] = rand(10000000, 99999999);
 				
 				// Remplir les champs par défaut si nécessaire
-				$this->request->post = $this->model_shopmanager_list_fast->populateDefaultValues($this->request->post);
+				$this->request->post = $this->model_warehouse_product_publish->populateDefaultValues($this->request->post);
 				
 				// Ajouter le produit à la base de données
-				$product_id = $this->model_shopmanager_catalog_product->addProduct($this->request->post);
+				$product_id = $this->model_warehouse_product_product->addProduct($this->request->post);
 				
 				// Mettre à jour le SKU avec l'ID du produit si nécessaire
-				$this->model_shopmanager_catalog_product->editProductSku($product_id);
+				$this->model_warehouse_product_product->editProductSku($product_id);
 				$sku = $product_id;
 				$this->session->data['success'] = ($lang['text_success_add_product'] ?? '');
 			}
@@ -1458,7 +1458,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				
 				// Construire le script JavaScript pour ouvrir la fenêtre d'impression
 				$script = "<script type='text/javascript'>
-                var printWindow = window.open('index.php?route=shopmanager/tools.create_label&text=" . $sku . "&quantity=" . $quantity . "&upc=" . $upc . "&user_token=" . $this->session->data['user_token'] . "', 'printWindow', 'width=288,height=96');
+                var printWindow = window.open('index.php?route=warehouse/tools/utility.create_label&text=" . $sku . "&quantity=" . $quantity . "&upc=" . $upc . "&user_token=" . $this->session->data['user_token'] . "', 'printWindow', 'width=288,height=96');
                 printWindow.print();
            </script>";
 				 /*	setTimeout(function() {
@@ -1468,7 +1468,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 			}
 			
 			// Rediriger vers la page de succès ou de liste si nécessaire
-			// $this->response->redirect($this->url->link('shopmanager/list_fast/add', 'user_token=' . $this->session->data['user_token'] . $url, true));
+			// $this->response->redirect($this->url->link('warehouse/product/publish/add', 'user_token=' . $this->session->data['user_token'] . $url, true));
 		}
 	
 		$this->getForm();
@@ -1476,21 +1476,21 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	
     // Méthode : edit (Modification d'un produit existant)
     public function edit() {
-        $this->load->language('shopmanager/list_fast');
+        $this->load->language('warehouse/product/publish');
         $data = [];
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/list_fast');
+        $this->load->model('warehouse/product/publish');
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
-            $this->load->model('shopmanager/catalog/product');
-            $this->model_shopmanager_catalog_product->editProduct((int)$this->request->get['product_id'], $this->request->post);
-            $this->load->model('shopmanager/marketplace');
-            $this->model_shopmanager_marketplace->setToUpdate((int)$this->request->get['product_id']);
+            $this->load->model('warehouse/product/product');
+            $this->model_warehouse_product_product->editProduct((int)$this->request->get['product_id'], $this->request->post);
+            $this->load->model('warehouse/marketplace/listing');
+            $this->model_warehouse_marketplace_listing->setToUpdate((int)$this->request->get['product_id']);
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
-            $this->response->redirect($this->url->link('shopmanager/list_fast', 'user_token=' . $this->session->data['user_token'], true));
+            $this->response->redirect($this->url->link('warehouse/product/publish', 'user_token=' . $this->session->data['user_token'], true));
         }
 
         $this->getForm();
@@ -1498,7 +1498,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
     // Méthode de validation du formulaire
     protected function validateForm() {
-        if (!$this->user->hasPermission('modify', 'shopmanager/list_fast')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/product/publish')) {
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
@@ -1529,12 +1529,12 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		// Charger le modèle
 		$start_time = microtime(true);
 
-		$this->load->model('shopmanager/list_fast');
-		$this->load->model('shopmanager/catalog/product_search');
-		$this->load->model('shopmanager/catalog/product');
-		$this->load->model('shopmanager/condition');
-		$this->load->model('shopmanager/catalog/category');
-		$this->load->model('shopmanager/catalog/product_specific');
+		$this->load->model('warehouse/product/publish');
+		$this->load->model('warehouse/product/research');
+		$this->load->model('warehouse/product/product');
+		$this->load->model('warehouse/product/condition');
+		$this->load->model('warehouse/product/category');
+		$this->load->model('warehouse/product/product_specific');
 
 		// Définir les variables de texte
 
@@ -1561,11 +1561,11 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	
 				$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true);
 			
-				$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+				$product_info = $this->model_warehouse_product_product->getProduct($product_id);
 				
 				
 	
-			$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
+			$product_info_source = $this->model_warehouse_product_research->manageProductInfoSources($product_info['upc']);
 		
 
 			// Afficher les temps d'exécution pour le débogage
@@ -1581,7 +1581,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	$start_time = microtime(true);
 
 
-	//$product_info['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+	//$product_info['images'] = !empty($google_search) ? $this->model_warehouse_product_research->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 	// Ajout des informations Algopix et eBay
 
@@ -1617,12 +1617,12 @@ class ListFast extends \Opencart\System\Engine\Controller {
 			// Charger le modèle
 			$start_time = microtime(true);
 
-			$this->load->model('shopmanager/list_fast');
-			$this->load->model('shopmanager/catalog/product_search');
-			$this->load->model('shopmanager/catalog/product');
-			$this->load->model('shopmanager/condition');
-			$this->load->model('shopmanager/catalog/category');
-			$this->load->model('shopmanager/catalog/product_specific');
+			$this->load->model('warehouse/product/publish');
+			$this->load->model('warehouse/product/research');
+			$this->load->model('warehouse/product/product');
+			$this->load->model('warehouse/product/condition');
+			$this->load->model('warehouse/product/category');
+			$this->load->model('warehouse/product/product_specific');
 
 			// Définir les variables de texte
 
@@ -1643,7 +1643,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true);
 				
-					$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+					$product_info = $this->model_warehouse_product_product->getProduct($product_id);
 					
 					
 		
@@ -1657,7 +1657,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				
 					
 				
-					//$product_info['product_description'] = $this->model_shopmanager_catalog_product->getProductDescriptions($product_id);
+					//$product_info['product_description'] = $this->model_warehouse_product_product->getProductDescriptions($product_id);
 					
 				//	//print("<pre>".print_r ($product_info['product_description'] ,true )."</pre>");
 				
@@ -1670,7 +1670,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				
 					// Images
 					
-					$product_images = $this->model_shopmanager_catalog_product->getProductImages($product_id);
+					$product_images = $this->model_warehouse_product_product->getProductImages($product_id);
 					
 				
 					$product_info['product_images'] = array();
@@ -1692,10 +1692,10 @@ class ListFast extends \Opencart\System\Engine\Controller {
 						);
 					}
 						// Categories
-						$this->load->model('shopmanager/catalog/category');
+						$this->load->model('warehouse/product/category');
 				
 						
-						$categories = $this->model_shopmanager_catalog_product->getProductCategories($product_id);
+						$categories = $this->model_warehouse_product_product->getProductCategories($product_id);
 					
 				
 						
@@ -1704,7 +1704,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 						$product_info['product_categories'] = array();
 					
 						foreach ($categories as $category_id) {
-							$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+							$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 							//print("<pre>".print_r ($category_info,true )."</pre>");
 							if ($category_info) {
 								$product_info['product_categories'][] = array(
@@ -1718,22 +1718,22 @@ class ListFast extends \Opencart\System\Engine\Controller {
 								}*/
 							}
 						}
-						$this->load->model('shopmanager/condition');
+						$this->load->model('warehouse/product/condition');
 				
 						if(isset($product_info['category_id'])){
 									// Conditions
-							$product_info['conditions']=$this->model_shopmanager_condition->getConditionDetails($product_info['category_id']);
-					//		$product_info['conditions'] =  $this->model_shopmanager_condition->getConditionDetails($product_info['category_id'],$product_info['condition_id']??null);
+							$product_info['conditions']=$this->model_warehouse_product_condition->getConditionDetails($product_info['category_id']);
+					//		$product_info['conditions'] =  $this->model_warehouse_product_condition->getConditionDetails($product_info['category_id'],$product_info['condition_id']??null);
 						//	//print("<pre>".print_r ($product_info['category_id'],true )."</pre>"); 
-							$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($product_info['category_id']);
+							$category_specific_info = $this->model_warehouse_product_category->getSpecific($product_info['category_id']);
 						//	//print("<pre>".print_r ($category_specific_info,true )."</pre>"); 
-							$category_leaf = $this->model_shopmanager_catalog_category->getCategoryLeaf($product_info['category_id']);
+							$category_leaf = $this->model_warehouse_product_category->getCategoryLeaf($product_info['category_id']);
 				
 							if (!is_array($category_specific_info[1]['specifics'])) {
 								
 								if($category_leaf ==1){
 								//	//print("<pre>".print_r ('getform:2631',true )."</pre>");
-									$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
+									$this->response->redirect($this->url->link('warehouse/product/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
 								}else{
 									$this->error['category']= ($lang['error_category_not_leaf'] ?? '');
 								}
@@ -1741,7 +1741,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 						}
 					//	//print("<pre>" . print_r($product_info['product_categories'], true) . "</pre>");
 				
-				$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
+				$product_info_source = $this->model_warehouse_product_research->manageProductInfoSources($product_info['upc']);
 				// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 			//	//print("<pre>" . print_r('3501:product.php', true) . "</pre>");
 			// 	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
@@ -1779,12 +1779,12 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				}
 
 			//	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
-			//	//print("<pre>" . print_r($this->model_shopmanager_ebay->get($upc),true) . "</pre>");
+			//	//print("<pre>" . print_r($this->model_warehouse_marketplace_ebay_api->get($upc),true) . "</pre>");
 																
-			//	//print("<pre>" . print_r($this->model_shopmanager_ebay->findProductIDByGTIN($upc), true) . "</pre>");
+			//	//print("<pre>" . print_r($this->model_warehouse_marketplace_ebay_api->findProductIDByGTIN($upc), true) . "</pre>");
 				// 4. Récupérer ou rafraîchir les informations sur le produit en fonction de l'UPC
 				
-				//$this->model_shopmanager_ebay->getProductDetailsByepid('25046076135');
+				//$this->model_warehouse_marketplace_ebay_api->getProductDetailsByepid('25046076135');
 				// 7. Si l'API eBay n'a pas retourné de résultats et que nous avons un titre d'Algopix, tenter de récupérer via eBay à nouveau
 			
 
@@ -1818,7 +1818,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$start_time = microtime(true);
 
 
-		//$product_info['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+		//$product_info['images'] = !empty($google_search) ? $this->model_warehouse_product_research->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 		// Ajout des informations Algopix et eBay
 
@@ -1826,7 +1826,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 
 				if (isset($upc_tmp_search['error']) && isset($algopix_search['commonAttributes'] ['title'])) { 
-					$upc_tmp_search = $this->model_shopmanager_upctmp->search($algopix_search['commonAttributes'] ['title']);
+					$upc_tmp_search = $this->model_warehouse_tools_upctmp->search($algopix_search['commonAttributes'] ['title']);
 				}
 				$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 				$start_time = microtime(true);
@@ -1834,7 +1834,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				//	//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 				if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-					$this->response->redirect($this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id, true));
+					$this->response->redirect($this->url->link('warehouse/product/product/edit', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id, true));
 				}
 
 				if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -1858,7 +1858,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				// 
 				if (!isset($category_id) && !isset($product_info['category_name']) && isset($algopix_search['channelSpecificAttributes'] ['productType'])){
 					$category_name = str_replace('_', ' ',$algopix_search['channelSpecificAttributes'] ['productType']);
-					$category_info = $this->model_shopmanager_ai->getCategoryID($category_name);
+					$category_info = $this->model_warehouse_tools_ai->getCategoryID($category_name);
 					if(isset($category_info)){
 						$category_id=trim($category_info['category_id'])??null;
 						$product_info['category_id']  = $category_id;
@@ -1870,7 +1870,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				}
 
 					$conditions = $category_id 
-						? $this->model_shopmanager_condition->getConditionDetails($category_id) 
+						? $this->model_warehouse_product_condition->getConditionDetails($category_id) 
 						: [];
 
 					$product_info['conditions'] = $conditions[1] ?? [];
@@ -1878,17 +1878,17 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 					$start_time = microtime(true);
 
-					$product_info['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$epid_details??null);
+					$product_info['images']  = $this->model_warehouse_product_research->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$epid_details??null);
 
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 					$start_time = microtime(true);
 
-					$product_info['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$epid_details??null);
+					$product_info['titles']  = $this->model_warehouse_product_research->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$epid_details??null);
 
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
 					$start_time = microtime(true);
 
-					$product_info['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($product_info);
+					$product_info['manufacturers'] = $this->model_warehouse_product_research->getAllManufacturers($product_info);
 						//print("<pre>" . print_r($product_info['manufacturers'], true) . "</pre>");
 
 					$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);
@@ -1902,7 +1902,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				//	//print("<pre>" . print_r('3650:product.php', true) . "</pre>");
 			//	//print("<pre>" . print_r($product_info, true) . "</pre>");
 					if(isset($product_info['manufacturers'])){
-						$manufacturer_result=(isset($product_info['manufacturers']))?$this->model_shopmanager_ai->getManufacturer($product_info['manufacturers']):null;
+						$manufacturer_result=(isset($product_info['manufacturers']))?$this->model_warehouse_tools_ai->getManufacturer($product_info['manufacturers']):null;
 						$product_info['manufacturer_id']=$manufacturer_result['manufacturer_id']??0;
 						$product_info['manufacturer']=$manufacturer_result['manufacturer']??'';
 						$product_info['brand']=$manufacturer_result['manufacturer']??'';
@@ -1919,13 +1919,13 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					$start_time = microtime(true);
 
 
-					$product_description = isset($product_id)?$this->model_shopmanager_catalog_product->getProductDescriptions($product_id):null;
+					$product_description = isset($product_id)?$this->model_warehouse_product_product->getProductDescriptions($product_id):null;
 
 					// Vérifie si le nom en français (language_id = 1) est vide ou trop court
 					$title_source = $product_description[1]['name'] ?? '';
 					//$category_id = $data['category_id'] ?? null;
 					if (empty($title_source) || mb_strlen(trim($title_source)) < 5) {
-						$title_result = $this->model_shopmanager_ai->getTitle($product_info['titles'], $category_id, $product_info);
+						$title_result = $this->model_warehouse_tools_ai->getTitle($product_info['titles'], $category_id, $product_info);
 			
 						// Débogage si nécessaire
 						// print("<pre>" . print_r('3670:product_search.php', true) . "</pre>");
@@ -1951,16 +1951,16 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					$start_time = microtime(true);
 					if (isset($product_info['marketplace_item_id']) || $product_info['marketplace_item_id']>0 && $category_leaf ==1 ) {
 
-						$ebay_specific_info=$this->model_shopmanager_ebay->getProductSpecifics($product_info['marketplace_item_id']);
+						$ebay_specific_info=$this->model_warehouse_marketplace_ebay_api->getProductSpecifics($product_info['marketplace_item_id']);
 					//	//print("<pre>" . print_r(('3687:product.php'), true) . "</pre>");
 					//	//print("<pre>" . print_r(($ebay_specific_info), true) . "</pre>");
 
 					}
 
 					// Si les deux sont null, $mergeArrayForSpecifics reste un tableau vide
-					$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($category_id,1);
+					$category_specific_info = $this->model_warehouse_product_category->getSpecific($category_id,1);
 					if(isset($epid_details)){
-						$ebay_sources = $this->model_shopmanager_ebay->formatEpidDetails($epid_details['aspects'],$category_specific_info);
+						$ebay_sources = $this->model_warehouse_marketplace_ebay_api->formatEpidDetails($epid_details['aspects'],$category_specific_info);
 						$product_info['epid_sources_json'] = json_encode($ebay_sources);
 					}else{
 						$product_info['epid_sources_json'] = '';
@@ -1971,7 +1971,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 					// Si les deux variables ne sont pas null, faire array_merge_recursive
 					if (is_null($upc_tmp_search) && is_null($algopix_search) && !is_null($ebay_specific_info)) {
-						$mergeArrayForSpecifics = $this->model_shopmanager_ebay->formatActualDetails($ebay_specific_info);
+						$mergeArrayForSpecifics = $this->model_warehouse_marketplace_ebay_api->formatActualDetails($ebay_specific_info);
 					}elseif (!is_null($upc_tmp_search) && !is_null($algopix_search)) {
 						$mergeArrayForSpecifics = array_merge_recursive($upc_tmp_search, $algopix_search);
 					}
@@ -1994,7 +1994,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
 					$mergeArrayForSpecifics['category_name'] = $product_info['category_name'];
 					$mergeArrayForSpecifics['category_id']= $product_info['category_id'];
-					$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+					$mergeArrayForSpecificsResult = $this->model_warehouse_product_research->filterArrayForSpecifics($mergeArrayForSpecifics);
 				
 					unset($mergeArrayForSpecificsResult['error']);
 					unset($mergeArrayForSpecificsResult['category_name']);
@@ -2034,7 +2034,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 						//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 						// Vérifier si la clé existe dans la base de données
-						$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $category_id);
+						$replacement_term = $this->model_warehouse_product_specific->getSpecificKey($specific_key_name, $category_id);
 
 					//	//print("<pre>" . print_r($replacement_term, true) . "</pre>");
 					//	$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true);
@@ -2055,14 +2055,14 @@ class ListFast extends \Opencart\System\Engine\Controller {
 							
 							if ($replacement_term == 'not_set') {
 							// Si la clé n'existe pas dans la base, obtenir un terme suggéré via la fonction getSpecificsKey()
-								$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
+								$suggest_replacement_term = $this->model_warehouse_tools_ai->getSpecificKey($specific_key_name, $category_specifics);
 							//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 								if(isset($suggest_replacement_term)){
-									$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
+									$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
 									unset($category_specifics[$suggest_replacement_term]);
 									$key_set=2;
 								}else{
-									$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, '');
+									$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $category_id, '');
 									$key_set=0;
 								}
 							}else{
@@ -2098,14 +2098,14 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	
 
 	public function product_feed() {
-			$this->load->language('shopmanager/catalog/product_search');
+			$this->load->language('warehouse/product/research');
 			$data = [];
 			
-			$this->load->model('shopmanager/catalog/product_search');
-			$this->load->model('shopmanager/catalog/product');
-			$this->load->model('shopmanager/ai');
-			$this->load->model('shopmanager/ebay');
-			$this->load->model('shopmanager/catalog/product_specific');
+			$this->load->model('warehouse/product/research');
+			$this->load->model('warehouse/product/product');
+			$this->load->model('warehouse/tools/ai');
+			$this->load->model('warehouse/marketplace/ebay/api');
+			$this->load->model('warehouse/product/product_specific');
 		
 			if ($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request->post)) {
 				// Logique pour sauvegarder les données sélectionnées
@@ -2114,7 +2114,7 @@ class ListFast extends \Opencart\System\Engine\Controller {
 			//print("<pre>" . print_r($save_data, true) . "</pre>");
 			// $selected_data = $this->request->post['save_data'];
 			if(isset($this->request->post['product_id'])){
-					$product_info=$this->model_shopmanager_catalog_product->getProduct($this->request->post['product_id']);
+					$product_info=$this->model_warehouse_product_product->getProduct($this->request->post['product_id']);
 					foreach ($product_info as $key => $value) {
 						if (!array_key_exists($key, $this->request->post)) {
 							$this->request->post[$key] =  $value;
@@ -2128,10 +2128,10 @@ class ListFast extends \Opencart\System\Engine\Controller {
 					$specifics_select = $this->request->post['specifics_select'];
 
 					// Appeler la méthode updateProductSpecifics pour mettre à jour les "specifics"
-					$this->model_shopmanager_catalog_product->updateProductSpecifics($specifics_checkbox, $specifics_select, $this->request->post['category_id']);
+					$this->model_warehouse_product_product->updateProductSpecifics($specifics_checkbox, $specifics_select, $this->request->post['category_id']);
 				}*/
-		//   $this->request->post=$this->model_shopmanager_catalog_product_search->feedPostArray($this->model_shopmanager_catalog_product_search->cleanArray($this->request->post));
-			$this->request->post=$this->model_shopmanager_catalog_product_search->processProductSearchData($this->request->post);
+		//   $this->request->post=$this->model_warehouse_product_research->feedPostArray($this->model_warehouse_product_research->cleanArray($this->request->post));
+			$this->request->post=$this->model_warehouse_product_research->processProductSearchData($this->request->post);
 		//	//print("<pre>" . print_r($this->request->post, true) . "</pre>");
 				// Traitez les données sélectionnées ici (par exemple, en les enregistrant dans la base de données)
 				// Exemple simplifié d'enregistrement des données
@@ -2143,16 +2143,16 @@ class ListFast extends \Opencart\System\Engine\Controller {
 				if(!isset($this->request->post['product_id'])){
 					
 					
-				$product_id=$this->model_shopmanager_catalog_product->addProduct($this->request->post);
+				$product_id=$this->model_warehouse_product_product->addProduct($this->request->post);
 
 				$this->session->data['success'] = ($lang['text_success'] ?? '');
-$result=$this->model_shopmanager_ebay->addListing($product_id, 0);
+$result=$this->model_warehouse_marketplace_ebay_api->addListing($product_id, 0);
 		
 			//	//print("<pre>" . print_r($result, true) . "</pre>");
 
 				if ($result['Ack']!='Failure') {
 					
-						$this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
+						$this->model_warehouse_product_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
 						$json['success'] = true;
 						$json['message'] = $result['ItemID'];
 					} else {
@@ -2162,8 +2162,8 @@ $result=$this->model_shopmanager_ebay->addListing($product_id, 0);
 				}else{
 					$product_id=$this->request->post['product_id'];
 					
-					$product_info['product_image']=$this->model_shopmanager_catalog_product->getProductImages($product_id);
-					$product_info['product_description']=$this->model_shopmanager_catalog_product->getProductDescriptions($product_id);
+					$product_info['product_image']=$this->model_warehouse_product_product->getProductImages($product_id);
+					$product_info['product_description']=$this->model_warehouse_product_product->getProductDescriptions($product_id);
 
 					if (isset($this->request->post['images'])){
 						unset($product_info['image']);
@@ -2176,9 +2176,9 @@ $result=$this->model_shopmanager_ebay->addListing($product_id, 0);
 					//	}
 					}
 				//	//print("<pre>" . print_r($product_info, true) . "</pre>");
-					$this->model_shopmanager_catalog_product->editProduct($product_id,$product_info);
-					$this->load->model('shopmanager/marketplace');
-					$this->model_shopmanager_marketplace->setToUpdate($product_id);
+					$this->model_warehouse_product_product->editProduct($product_id,$product_info);
+					$this->load->model('warehouse/marketplace/listing');
+					$this->model_warehouse_marketplace_listing->setToUpdate($product_id);
 					
 				}
 
@@ -2265,7 +2265,7 @@ $result=$this->model_shopmanager_ebay->addListing($product_id, 0);
 				}
 				$url .= '&updated=yes';
 
-				$this->response->redirect($this->url->link('shopmanager/catalog/product/edit', 'user_token=' . $this->session->data['user_token'] . $url, true));
+				$this->response->redirect($this->url->link('warehouse/product/product/edit', 'user_token=' . $this->session->data['user_token'] . $url, true));
 			}
 
 			$this->getForm();

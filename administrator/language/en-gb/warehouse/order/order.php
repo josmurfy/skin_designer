@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/order.php
+// Original: warehouse/order/order.php
 // Heading
 $_['heading_title']         = 'Orders';
 

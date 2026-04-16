@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/ebay.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/marketplace/ebay/api.php
+namespace Opencart\Admin\Model\Warehouse\Marketplace\Ebay;
 
-class Ebay extends \Opencart\System\Engine\Model {
+class Api extends \Opencart\System\Engine\Model {
 
     private $conditionsCache = [];
 
@@ -10,12 +10,12 @@ class Ebay extends \Opencart\System\Engine\Model {
 
        
         // Charger les modèles nécessaires
-        $this->load->model('shopmanager/ebaytemplate');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/ebay/template');
+        $this->load->model('warehouse/product/product');
     
         // Récupérer les informations du produit
 
-        $productDescriptionEbay = $this->model_shopmanager_ebaytemplate->getEbayTemplate($product,$site_setting,$marketplace_account_id);
+        $productDescriptionEbay = $this->model_warehouse_marketplace_ebay_template->getEbayTemplate($product,$site_setting,$marketplace_account_id);
     //"<pre>".print_r ($productDescriptionEbay,true )."</pre>");
         // Construire l'élément Quantity si nécessaire
         $quantity = is_numeric($quantity) ? "<Quantity>".$quantity."</Quantity>" : '';
@@ -35,7 +35,7 @@ class Ebay extends \Opencart\System\Engine\Model {
         $response = $this->makeCurlRequest('https://api.ebay.com/ws/api.dll', $headers, $postFields);
         $responseXml = simplexml_load_string($response);
         $responseArray = json_decode(json_encode($responseXml), true);
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
             
             if (isset($responseArray['ErrorLanguage'])) {
                 $error = json_encode($responseArray);
@@ -44,11 +44,11 @@ class Ebay extends \Opencart\System\Engine\Model {
             } else {
                 $error = json_encode($responseArray);
             }
-        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
         if ($_pm_row) {
             $_pm_row['error'] = $error;
             $_pm_row['to_update'] = empty($error) ? 0 : 9;
-            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+            $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
         }
 
          
@@ -95,7 +95,7 @@ private function runCardBatchOperations(array  $template_data,array  $site_setti
                 if ($upload_result['success'] && isset($upload_result['ebay_url'])) {
                     $ebay_image_urls[] = $upload_result['ebay_url'];
                     if (!empty($variation['card_id'])) {
-                        $this->model_shopmanager_card_card->updateCardImageUrl(
+                        $this->model_warehouse_card_card->updateCardImageUrl(
                             (int)$variation['card_id'],
                             $external_url,
                             $upload_result['ebay_url']
@@ -158,9 +158,9 @@ private function runCardBatchOperations(array  $template_data,array  $site_setti
  * et skip les batches déjà publiés (ebay_item_id non-null).
  */
 public function addCardListing(int $listing_id, $site_setting = [], $marketplace_account_id = null, $cleanup = true, $migrate_images = false, $only_batch_name = null): array {
-    $this->load->model('shopmanager/card/card_listing');
-    $this->load->model('shopmanager/card/card');
-    $this->load->model('shopmanager/ebaytemplate');
+    $this->load->model('warehouse/card/listing');
+    $this->load->model('warehouse/card/card');
+    $this->load->model('warehouse/marketplace/ebay/template');
 
     if (!$listing_id) {
         return ['errors' => [['message' => 'listing_id manquant']]];
@@ -172,16 +172,16 @@ public function addCardListing(int $listing_id, $site_setting = [], $marketplace
     }
 
     // 1. Données du listing (set_name, sport, brand, year, ebay_category_id, etc.)
-    $listing_data = $this->model_shopmanager_card_card_listing->getListing($listing_id);
+    $listing_data = $this->model_warehouse_card_listing->getListing($listing_id);
     if (empty($listing_data)) {
         return ['errors' => [['message' => "Listing #{$listing_id} introuvable."]]];
     }
 
     // Merge exact duplicates before publishing so no duplicate Customized values reach eBay
-    $this->model_shopmanager_card_card_listing->mergeAndDeduplicateCards($listing_id);
+    $this->model_warehouse_card_listing->mergeAndDeduplicateCards($listing_id);
 
     // 2. Descriptions par batch (indexées par batch_name, contiennent title/description/specifics/ebay_item_id)
-    $batchDescriptions = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id);
+    $batchDescriptions = $this->model_warehouse_card_listing->getDescriptions($listing_id);
     if (empty($batchDescriptions)) {
         return ['errors' => [['message' => "Aucun batch configuré pour listing #{$listing_id}."]]];
     }
@@ -211,7 +211,7 @@ public function addCardListing(int $listing_id, $site_setting = [], $marketplace
             'specifics'  => $firstDesc['specifics'] ?? [],
             'variations' => [],
         ]);
-        $locationTemplate    = $this->model_shopmanager_ebaytemplate->getEbayTemplateCardListing($locationData, $site_setting, $marketplace_account_id);
+        $locationTemplate    = $this->model_warehouse_marketplace_ebay_template->getEbayTemplateCardListing($locationData, $site_setting, $marketplace_account_id);
         $merchantLocationKey = $this->ensureInventoryLocation($locationTemplate, $headers);
         sleep(1);
 
@@ -237,7 +237,7 @@ public function addCardListing(int $listing_id, $site_setting = [], $marketplace
 //$this->log->write("[addCardListing] Batch {$batchNumber} description preview: " . substr($batchDesc['description'] ?? '', 0, 100) . '...');
             // Cartes du batch — filter par batch_id FK (c.batch_id)
             $batchFkId  = (int)($batchDesc['batch_id'] ?? 0);
-            $batchCards = $this->model_shopmanager_card_card->getCards([
+            $batchCards = $this->model_warehouse_card_card->getCards([
                 'filter_listing_id' => $listing_id,
                 'filter_batch_name'   => $batchFkId,
             ]);
@@ -255,7 +255,7 @@ public function addCardListing(int $listing_id, $site_setting = [], $marketplace
             ]);
 
             // Template eBay : getEbayTemplateCardListing utilise listing_data['description'] en priorité
-            $batchTemplate = $this->model_shopmanager_ebaytemplate->getEbayTemplateCardListing($batchListingData, $site_setting, $marketplace_account_id);
+            $batchTemplate = $this->model_warehouse_marketplace_ebay_template->getEbayTemplateCardListing($batchListingData, $site_setting, $marketplace_account_id);
             $batchTemplate['aspects'] = $this->formatAspects($batchTemplate['aspects']);
 
             //$this->log->write("[addCardListing] Batch {$batchNumber} - title: '{$batchTemplate['title']}'");
@@ -282,17 +282,17 @@ public function addCardListing(int $listing_id, $site_setting = [], $marketplace
             $batchResult = $this->runCardBatchOperations($batchTemplate, $site_setting, $headers,$merchantLocationKey, $migrate_images);
 
             // Sauvegarder le batch en DB (saveEbayBatch uses logical batch_name)
-            $this->model_shopmanager_card_card_listing->saveEbayBatch($listing_id, $batchLogicalNum, [
+            $this->model_warehouse_card_listing->saveEbayBatch($listing_id, $batchLogicalNum, [
                 'group_key'       => $batchTemplate['group_key'],
                 'variation_count' => count($batchCards),
             ]);
 
             // Persister l'ebay_item_id et le statut de publication (use FK batch_id)
             if (!empty($batchResult['ebay_item_id'])) {
-                $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, $batchResult['ebay_item_id'], 1, $batchFkId);
-                $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
+                $this->model_warehouse_card_listing->updateEbayListingId($listing_id, $batchResult['ebay_item_id'], 1, $batchFkId);
+                $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
             } else {
-                $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
+                $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
             }
 
             $results['batches'][$batchNumber] = $batchResult;
@@ -414,9 +414,9 @@ private function buildEndItemRequest($marketplace_item_id, $site_setting) {
   
 public function buildFinalResult($items,$marketplace_item_id = [], $marketplace_account_id = 1, $upc = null, $product_name = null) {
 
-    $this->load->model('shopmanager/tools');
-    $this->load->model('shopmanager/catalog/category');
-    $this->load->model('shopmanager/ai');
+    $this->load->model('warehouse/tools/utility');
+    $this->load->model('warehouse/product/category');
+    $this->load->model('warehouse/tools/ai');
   
     $items = isset($items[0]) ? $items : array($items);
     $cleanitems=[];
@@ -440,7 +440,7 @@ public function buildFinalResult($items,$marketplace_item_id = [], $marketplace_
             $categoryName = $data['name'];
             $site_setting= $data['site_id'];
             $percentage = ($count / $totalItems) * 100;
-            $specifics= $this->model_shopmanager_catalog_category->getSpecific($category_id, 1); 
+            $specifics= $this->model_warehouse_product_category->getSpecific($category_id, 1); 
             $categoryPercentages[] = array(
                 'category_id'   => $category_id,
                 'site_id'   => $site_setting,
@@ -449,7 +449,7 @@ public function buildFinalResult($items,$marketplace_item_id = [], $marketplace_
                 'percent'      => number_format($percentage, 0)
             );
         }
-        $product_name = $this->model_shopmanager_ai->getShortTitle($product_name,$categoryPercentages[0]['category_id'],'english');
+        $product_name = $this->model_warehouse_tools_ai->getShortTitle($product_name,$categoryPercentages[0]['category_id'],'english');
         $cleanitems = $this->cleanItems($items, $product_name,$upc);
         
         $items = count($cleanitems)>0?$cleanitems:$items;
@@ -531,14 +531,14 @@ public function buildFinalResult($items,$marketplace_item_id = [], $marketplace_
             $epid[]=$value['epid'];
         }
         $finalResults['epid'] = is_array($epid) 
-        ? $this->model_shopmanager_tools->removeArrayDuplicates($epid) 
+        ? $this->model_warehouse_tools_utility->removeArrayDuplicates($epid) 
         : ($epid !== null ? [$epid] : null);
     
         
     
-        $finalResults['epid_details'] = isset($epid_info)?($this->model_shopmanager_ebay->getDetailsByepid($epid_info, $marketplace_account_id, $upc)):null;
+        $finalResults['epid_details'] = isset($epid_info)?($this->model_warehouse_marketplace_ebay_api->getDetailsByepid($epid_info, $marketplace_account_id, $upc)):null;
         //"<pre>".print_r($finalResults['epid_details'], true)."</pre>");
-        $formatEpidDetailsToSpecifics = isset($finalResults['epid_details']['aspects'])?$this->model_shopmanager_ebay->formatEpidDetailsToSpecifics($finalResults['epid_details']['aspects'],$upc):null;
+        $formatEpidDetailsToSpecifics = isset($finalResults['epid_details']['aspects'])?$this->model_warehouse_marketplace_ebay_api->formatEpidDetailsToSpecifics($finalResults['epid_details']['aspects'],$upc):null;
     
     }
 
@@ -560,7 +560,7 @@ public function buildFinalResult($items,$marketplace_item_id = [], $marketplace_
         $categoryName = $data['name'];
         $site_setting= $data['site_id'];
         $percentage = ($count / $totalItems) * 100;
-        $specifics= $this->model_shopmanager_catalog_category->getSpecific($category_id, 1); 
+        $specifics= $this->model_warehouse_product_category->getSpecific($category_id, 1); 
         $categoryPercentages[] = array(
             'category_id'   => $category_id,
             'site_id'   => $site_setting,
@@ -1512,7 +1512,7 @@ private function createInventoryItemGroup($template_data, $headers, $site_settin
 		$responseXml = simplexml_load_string($response);
 		$responseArray = json_decode(json_encode($responseXml), true);
 
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
             
         if (isset($responseArray['ErrorLanguage'])) {
             $error = json_encode($responseArray);
@@ -1522,11 +1522,11 @@ private function createInventoryItemGroup($template_data, $headers, $site_settin
             $error = json_encode($responseArray);
         }
 
-        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
         if ($_pm_row) {
             $_pm_row['error'] = $error;
             $_pm_row['to_update'] = empty($error) ? 0 : 9;
-            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+            $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
         }
 
         //$responseArray = json_decode($response, true);
@@ -1571,7 +1571,7 @@ private function deleteInventoryItemGroup($group_key, $headers): array {
  */
 private function deleteInventoryItems($template_data, $headers, $site_setting): array {
     $results = [];
-    $this->load->model('shopmanager/card/card');
+    $this->load->model('warehouse/card/card');
 
         // ── Étape 1 : supprimer les offers eBay liées à ce listing (B1)
         //    Les offers doivent être supprimées AVANT les inventory items
@@ -1611,7 +1611,7 @@ private function deleteInventoryItems($template_data, $headers, $site_setting): 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         // Fermer le handle curl
-        $this->model_shopmanager_card_card->updateCardOffer($variation['card_id']);
+        $this->model_warehouse_card_card->updateCardOffer($variation['card_id']);
         // Log pour debugging
         //$this->log->write('eBay deleteInventoryItem: SKU=' . $sku . ' HTTP=' . $httpCode . ' Response=' . substr($response, 0, 200));
         
@@ -1752,8 +1752,8 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
    
     public function editListing($product, $updquantity = 0, $site_setting = [], $marketplace_accounts = []) {
         $this->log->write('[edit() START] product_id=' . ($product['product_id'] ?? 'NULL') . ' category_id=' . ($product['category_id'] ?? 'NULL') . ' qty=' . $updquantity . ' accounts=' . count($marketplace_accounts));
-        $this->load->model('shopmanager/ebaytemplate');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/marketplace/ebay/template');
+        $this->load->model('warehouse/product/product');
         $this->load->model('localisation/currency');
         $this->log->write('[edit() currency key] ' . ($site_setting['Currency']['Currency'] ?? 'MISSING'));
         $currency_info = $this->model_localisation_currency->getCurrencyByCode($site_setting['Currency']['Currency']);
@@ -1769,7 +1769,7 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             $quantity = is_numeric($updquantity) ? "<Quantity>$updquantity</Quantity>" : '';
             $site_setting = $marketplace['site_setting'];
 
-            $productDescriptionEbay = $this->model_shopmanager_ebaytemplate->getEbayTemplate($product, $site_setting, $marketplace_account_id);
+            $productDescriptionEbay = $this->model_warehouse_marketplace_ebay_template->getEbayTemplate($product, $site_setting, $marketplace_account_id);
             $postFields = $this->buildReviseItemRequest($marketplace_item_id, $product['category_id'], $productDescriptionEbay, $quantity, $site_setting);
             $this->log->write('[edit() postFields product_id=' . $product['product_id'] . '] ' . $postFields);
             $headers = $this->buildEbayHeaders("ReviseItem", 1371, $marketplace_account_id);
@@ -1847,7 +1847,7 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             $responseArray['marketplace_account_id'] = $marketplace_account_id;
             $responseArray['product_id'] = $product['product_id'];
             $this->editPrice($marketplace_item_id, $product['price'],$product['made_in_country_id'] ,$site_setting,$marketplace_account_id);
-            $this->load->model('shopmanager/marketplace');
+            $this->load->model('warehouse/marketplace/listing');
 
             if (isset($responseArray['ErrorLanguage'])) {
                 $error = json_encode($responseArray);
@@ -1857,14 +1857,14 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
                 $error = json_encode($responseArray);
             }
 
-            $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? $marketplace_item_id);
+            $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($responseArray['ItemID'] ?? $marketplace_item_id);
             if ($_pm_row) {
                 $_pm_row['error'] = $error;
                 $_pm_row['to_update'] = empty($error) ? 0 : 9;
                 if (empty($error) && !empty($product['category_id'])) {
                     $_pm_row['category_id'] = (int)$product['category_id'];
                 }
-                $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+                $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
             }
         }
         return $responseArray;
@@ -1883,7 +1883,7 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
         $response = $this->makeCurlRequest('https://api.ebay.com/ws/api.dll', $headers, $postFields);
         $responseXml = simplexml_load_string($response);
         $responseArray = json_decode(json_encode($responseXml), true);
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
             
         if (isset($responseArray['ErrorLanguage'])) {
             $error = json_encode($responseArray);
@@ -1893,11 +1893,11 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             $error = json_encode($responseArray);
         }
 
-        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
         if ($_pm_row) {
             $_pm_row['error'] = $error;
             $_pm_row['to_update'] = empty($error) ? 0 : 9;
-            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+            $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
         }
 
         return $responseArray;
@@ -1930,7 +1930,7 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
 		$response	=	$this->makeCurlRequest('https://api.ebay.com/ws/api.dll', $headers, $postFields) ;
 		$responseXml = simplexml_load_string($response);
 		$responseArray = json_decode(json_encode($responseXml), true);
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
             
         if (isset($responseArray['ErrorLanguage'])) {
             $error = json_encode($responseArray);
@@ -1940,11 +1940,11 @@ public function processPendingDeletes(int $listing_id, array $headers): array {
             $error = json_encode($responseArray);
         }
 
-        $_pm_row = $this->model_shopmanager_marketplace->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
+        $_pm_row = $this->model_warehouse_marketplace_listing->getProductMarketplaceRow($responseArray['ItemID'] ?? null);
         if ($_pm_row) {
             $_pm_row['error'] = $error;
             $_pm_row['to_update'] = empty($error) ? 0 : 9;
-            $this->model_shopmanager_marketplace->editProductMarketplace($_pm_row);
+            $this->model_warehouse_marketplace_listing->editProductMarketplace($_pm_row);
         }
 
 		return $responseArray;
@@ -2061,14 +2061,14 @@ public function endCardListing($ebay_item_id, $marketplace_account_id, $site_set
         // Réinitialiser les données eBay en base de données
         if ($listing_id) {
             try {
-                $this->load->model('shopmanager/card/card_listing');
-                $this->load->model('shopmanager/card/card');
+                $this->load->model('warehouse/card/listing');
+                $this->load->model('warehouse/card/card');
 
-                $listing_data = $this->model_shopmanager_card_card_listing->getListing($listing_id);
+                $listing_data = $this->model_warehouse_card_listing->getListing($listing_id);
 
                 // Réinitialiser chaque carte : offer_id = NULL, published = 0
                 foreach (($listing_data['variations'] ?? []) as $variation) {
-                    $this->model_shopmanager_card_card->updateCardOffer((int)$variation['card_id']);
+                    $this->model_warehouse_card_card->updateCardOffer((int)$variation['card_id']);
                 }
 
                 // Effacer ebay_item_id, publis et date_published pour toutes les descriptions du listing
@@ -2331,7 +2331,7 @@ private function formatAspects($aspects) {
             foreach($epid_details as $epid_detail){		
                 if(isset($category_specific[$epid_detail['localizedName']])){
                     $data_return[$epid_detail['localizedName']] = $epid_detail['localizedValues'][0];
-                 //$data_return[$epid_detail['localizedName']] = $this->model_shopmanager_tools->splitNames($epid_detail['localizedValues'][0]);
+                 //$data_return[$epid_detail['localizedName']] = $this->model_warehouse_tools_utility->splitNames($epid_detail['localizedValues'][0]);
                 }				
             }
         //"<pre>".print_r ('1627:ebay.php',true )."</pre>");
@@ -2360,7 +2360,7 @@ private function formatAspects($aspects) {
                         'VerifiedSource' => 'yes'
                     );
                     
-                 //$data_return[$epid_detail['localizedName']] = $this->model_shopmanager_tools->splitNames($epid_detail['localizedValues'][0]);
+                 //$data_return[$epid_detail['localizedName']] = $this->model_warehouse_tools_utility->splitNames($epid_detail['localizedValues'][0]);
                				
             }
         //"<pre>".print_r ('1627:ebay.php',true )."</pre>");
@@ -2375,17 +2375,17 @@ private function formatAspects($aspects) {
 
 
 public function get($gtin = null, $keyword = null, $sold = null, $order = null, $limit = 50, $marketplace_item_id = null, $permutation = null, $marketplace_account_id = 1, $product_name = null, $getCategoryLeafID = false) {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
  
     // Génération des mots-clés en fonction des permutations
     $keywords = [];
     if (isset($keyword)) {
         if ($permutation) {
-            $keywords = $this->model_shopmanager_tools->generateKeywordPermutations(
-                $this->model_shopmanager_tools->cleanString(htmlspecialchars_decode($keyword))
+            $keywords = $this->model_warehouse_tools_utility->generateKeywordPermutations(
+                $this->model_warehouse_tools_utility->cleanString(htmlspecialchars_decode($keyword))
             );
         } else {
-            $keywords[] = $this->model_shopmanager_tools->cleanString(htmlspecialchars_decode($keyword));
+            $keywords[] = $this->model_warehouse_tools_utility->cleanString(htmlspecialchars_decode($keyword));
         }
     }
 
@@ -2483,8 +2483,8 @@ public function getApiCredentials($marketplace_account_id = 1) {
     // Récupérer les informations d'authentification de l'API eBay
    // $marketplace_account_id = 1;
 //"<pre>".print_r($marketplace_account_id, true)."</pre>");
-   $this->load->model('shopmanager/marketplace');
-   $connectionapi= $this->model_shopmanager_marketplace->getMarketplaceAccount(['customer_id' => 10,'filter_marketplace_account_id' => $marketplace_account_id ]);
+   $this->load->model('warehouse/marketplace/listing');
+   $connectionapi= $this->model_warehouse_marketplace_listing->getMarketplaceAccount(['customer_id' => 10,'filter_marketplace_account_id' => $marketplace_account_id ]);
   
    //$connectionapi=isset($connectionapi[$marketplace_account_id])?$connectionapi[$marketplace_account_id]:$connectionapi;
   
@@ -2580,9 +2580,9 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
 		
 		}
         $this->load->model('localisation/language');
-        $this->load->model('shopmanager/catalog/category');
-        $this->load->model('shopmanager/translate');
-        //$this->load->model('shopmanager/translate");
+        $this->load->model('warehouse/product/category');
+        $this->load->model('warehouse/tools/translate');
+        //$this->load->model('warehouse/tools/translate");
         $languages = $this->model_localisation_language->getLanguages();
 
         foreach ($languages as $language) {
@@ -2591,7 +2591,7 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
             
             if ($lang_code == 'en') {
                 //print("<pre>".print_r ($category_specific_infoEN,true )."</pre>");
-                $this->model_shopmanager_catalog_category->editSpecifics($category_id, $language['language_id'], $category_specific_infoEN);
+                $this->model_warehouse_product_category->editSpecifics($category_id, $language['language_id'], $category_specific_infoEN);
                 $categoryspecifics[$language['language_id']] = json_decode($category_specific_infoEN, true);
                 $language_default=$language['language_id'];
             } else {
@@ -2599,7 +2599,7 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
         
                 foreach ($category_specific_info as $key => $data) {
                     // Vérifier si une valeur pour la langue existe déjà dans la base de données
-                    $existingTranslation = $this->model_shopmanager_catalog_category->getSpecificNameByLanguage($data['localizedAspectName'], $lang_code);
+                    $existingTranslation = $this->model_warehouse_product_category->getSpecificNameByLanguage($data['localizedAspectName'], $lang_code);
                     
                     if ($existingTranslation) {
                         if($existingTranslation!='exclude'){
@@ -2608,21 +2608,21 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
                         }else{
                            unset($categoryspecifics[$language_default][$key] );
                            $category_specific_infoEN=json_encode($categoryspecifics[$language_default]);
-                           $this->model_shopmanager_catalog_category->editSpecifics($category_id, $language_default, $category_specific_infoEN);
+                           $this->model_warehouse_product_category->editSpecifics($category_id, $language_default, $category_specific_infoEN);
                         
                         }
                     } else {
                         // Sinon, appeler la fonction translate et sauvegarder la nouvelle valeur
-                        $translatedValue = isset($data['localizedAspectName'])?$this->model_shopmanager_translate->translate($data['localizedAspectName'], $lang_code):'';
+                        $translatedValue = isset($data['localizedAspectName'])?$this->model_warehouse_tools_translate->translate($data['localizedAspectName'], $lang_code):'';
                         $category_specific_info[$key]['localizedAspectName'] = $translatedValue;
                         
                         // Ajouter la nouvelle traduction dans la base de données
-                        $this->model_shopmanager_catalog_category->addSpecificTranslation($data['localizedAspectName'], $lang_code, $translatedValue);
+                        $this->model_warehouse_product_category->addSpecificTranslation($data['localizedAspectName'], $lang_code, $translatedValue);
                     }
                 }
 
                 // Traduire les aspectValues pour les aspects SELECTION_ONLY
-                $this->load->model('shopmanager/ai');
+                $this->load->model('warehouse/tools/ai');
                 foreach ($category_specific_info as $key => $data) {
                     if (isset($data['aspectConstraint']['aspectMode']) && 
                         $data['aspectConstraint']['aspectMode'] === 'SELECTION_ONLY' &&
@@ -2631,7 +2631,7 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
                         $enValues = array_column($data['aspectValues'], 'localizedValue');
                         if (empty($enValues)) continue;
 
-                        $translatedValues = $this->model_shopmanager_ai->translate(
+                        $translatedValues = $this->model_warehouse_tools_ai->translate(
                             json_encode($enValues, JSON_UNESCAPED_UNICODE), 
                             $lang_code
                         );
@@ -2648,7 +2648,7 @@ public function getCategorySpecifics($category_id,$site_id = 0,$marketplace_acco
                 }
         
                 // Mettre à jour les spécificités de la catégorie avec les nouvelles traductions
-                $this->model_shopmanager_catalog_category->editSpecifics($category_id, $language['language_id'], json_encode($category_specific_info));
+                $this->model_warehouse_product_category->editSpecifics($category_id, $language['language_id'], json_encode($category_specific_info));
                 $categoryspecifics[$language['language_id']] = $category_specific_info;
         
                 unset($category_specific_info);
@@ -2838,7 +2838,7 @@ public function getDetailProduct($marketplace_item_id, $upc ) {
     public function getDetailProductSellers(&$items, $formatEpidDetailsToSpecifics = null, $upc = null) {
         //"<pre>".print_r(2038, true)."</pre>");
         //"<pre>".print_r ($formatEpidDetailsToSpecifics,true )."</pre>");
-        $this->load->model('shopmanager/ai');
+        $this->load->model('warehouse/tools/ai');
         $specifics_list = [];
         $specifics_list_final = [];
         if (!empty($formatEpidDetailsToSpecifics)) {
@@ -2896,7 +2896,7 @@ public function getDetailProduct($marketplace_item_id, $upc ) {
             ];
         }
         //"<pre>".print_r ($specifics_list_final,true )."</pre>");
-        $specifics_list_final=$this->model_shopmanager_ai->cleanSpecifics($specifics_list_final);
+        $specifics_list_final=$this->model_warehouse_tools_ai->cleanSpecifics($specifics_list_final);
         //"<pre>".print_r ($specifics_list_final,true )."</pre>");
 
         return $specifics_list_final;
@@ -3630,10 +3630,10 @@ public function getProduct($marketplace_item_id, $quantity = 1, $zipCode = "1291
 private function initializePriceVariants($category_id, $site_setting = []) {
 //"<pre>".print_r (1092,true )."</pre>");
 //"<pre>".print_r ($site_setting,true )."</pre>");
-    $this->load->model('shopmanager/condition');
+    $this->load->model('warehouse/product/condition');
     //"<pre>" . print_r(value: '1419:ebaY.php') . "</pre>");
 
-    $conditions=$this->model_shopmanager_condition->getConditionDetails($category_id);
+    $conditions=$this->model_warehouse_product_condition->getConditionDetails($category_id);
     //"<pre>".print_r ($conditions,true )."</pre>"); 
     $conditions = isset($conditions['1']) && is_array($conditions['1']) ? $conditions['1'] : [];
   //"<pre>".print_r ($conditions,true )."</pre>"); 
@@ -4172,8 +4172,8 @@ private function initializePriceVariants($category_id, $site_setting = []) {
         $items = [];
         $graderCodes = ['PSA', 'BGS', 'BGSX', 'SGC', 'CSA', 'HGA', 'GAI', 'ACE', 'CGC', 'KSA'];
         try {
-            $this->load->model('shopmanager/card/card_grading_company');
-            $activeCodes = $this->model_shopmanager_card_card_grading_company->getActiveCodes();
+            $this->load->model('warehouse/card/grading_company');
+            $activeCodes = $this->model_warehouse_card_grading_company->getActiveCodes();
             if (!empty($activeCodes)) {
                 $graderCodes = $activeCodes;
             }
@@ -4424,8 +4424,8 @@ private function initializePriceVariants($category_id, $site_setting = []) {
 
         $graderCodes = ['PSA', 'BGS', 'BGSX', 'SGC', 'CSA', 'HGA', 'GAI', 'ACE', 'CGC', 'KSA'];
         try {
-            $this->load->model('shopmanager/card/card_grading_company');
-            $activeCodes = $this->model_shopmanager_card_card_grading_company->getActiveCodes();
+            $this->load->model('warehouse/card/grading_company');
+            $activeCodes = $this->model_warehouse_card_grading_company->getActiveCodes();
             if (!empty($activeCodes)) {
                 $graderCodes = $activeCodes;
             }
@@ -5031,7 +5031,7 @@ private function publishInventoryOffer($template_data, $site_setting, $headers, 
     //$this->log->write('[publishInventoryOffer] bulkCreateOffer count=' . count($offerDataBatch));
     $createResults = $this->doBulkCreateOffer($offerDataBatch, $headers);
 
-    $this->load->model('shopmanager/card/card');
+    $this->load->model('warehouse/card/card');
     $offers = []; // successfully created: ['sku', 'card_id', 'offerId', 'status']
 
     foreach ($createResults as $sku => $res) {
@@ -5049,7 +5049,7 @@ private function publishInventoryOffer($template_data, $site_setting, $headers, 
             $this->log->write('[publishInventoryOffer] bulkCreate FAILED sku=' . $sku . ' ' . $errorMsg);
             $errors[] = ['sku' => $sku, 'httpCode' => $res['statusCode'], 'error' => $errorMsg];
             if ($card_id > 0) {
-                $this->model_shopmanager_card_card->updateCardOffer($card_id, '', 0,
+                $this->model_warehouse_card_card->updateCardOffer($card_id, '', 0,
                     'Offer creation failed: ' . $errorMsg);
             }
         }
@@ -5073,7 +5073,7 @@ private function publishInventoryOffer($template_data, $site_setting, $headers, 
         $card_id = $offer['card_id'];
         //$this->log->write('[publishInventoryOffer] marking sku=' . $offer['sku'] . ' offerId=' . $offer['offerId'] . ' published=' . $isPublished);
         if ($card_id > 0) {
-            $this->model_shopmanager_card_card->updateCardOffer($card_id, $offer['offerId'], $isPublished, $errorStr);
+            $this->model_warehouse_card_card->updateCardOffer($card_id, $offer['offerId'], $isPublished, $errorStr);
         }
         $publishedOffers[] = [
             'sku'       => $offer['sku'],
@@ -5238,25 +5238,25 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
      */
     public function editCardListing(int $listing_id, $site_setting = [], $marketplace_account_id = null): array {
 
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card');
-        $this->load->model('shopmanager/ebaytemplate');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/card');
+        $this->load->model('warehouse/marketplace/ebay/template');
 
         if (!$listing_id) {
             return ['errors' => [['message' => 'listing_id manquant']]];
         }
 
         // 1. Données du listing
-        $listing_data = $this->model_shopmanager_card_card_listing->getListing($listing_id);
+        $listing_data = $this->model_warehouse_card_listing->getListing($listing_id);
         if (empty($listing_data)) {
             return ['errors' => [['message' => "Listing #{$listing_id} introuvable."]]];
         }
 
         // Merge exact duplicates before publishing so no duplicate Customized values reach eBay
-        $this->model_shopmanager_card_card_listing->mergeAndDeduplicateCards($listing_id);
+        $this->model_warehouse_card_listing->mergeAndDeduplicateCards($listing_id);
 
         // 2. Descriptions par batch (indexées par batch_name)
-        $batchDescriptions = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id);
+        $batchDescriptions = $this->model_warehouse_card_listing->getDescriptions($listing_id);
         if (empty($batchDescriptions)) {
             return ['errors' => [['message' => "Aucun batch configuré pour listing #{$listing_id}."]]];
         }
@@ -5295,7 +5295,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 'specifics'  => $firstDesc['specifics'] ?? [],
                 'variations' => [],
             ]);
-            $locationTemplate    = $this->model_shopmanager_ebaytemplate->getEbayTemplateCardListing($locationData, $site_setting, $marketplace_account_id);
+            $locationTemplate    = $this->model_warehouse_marketplace_ebay_template->getEbayTemplateCardListing($locationData, $site_setting, $marketplace_account_id);
             $merchantLocationKey = $this->ensureInventoryLocation($locationTemplate, $headers);
             sleep(1);
 
@@ -5326,7 +5326,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
 
                 // Cartes du batch — filter par batch_id FK (c.batch_id)
                 $batchFkId  = (int)($batchDesc['batch_id'] ?? 0);
-                $batchCards = $this->model_shopmanager_card_card->getCards([
+                $batchCards = $this->model_warehouse_card_card->getCards([
                     'filter_listing_id' => $listing_id,
                     'filter_batch_name'   => $batchFkId,
                 ]);
@@ -5344,7 +5344,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 ]);
 
                 // Template eBay
-                $batchTemplate = $this->model_shopmanager_ebaytemplate->getEbayTemplateCardListing($batchListingData, $site_setting, $marketplace_account_id);
+                $batchTemplate = $this->model_warehouse_marketplace_ebay_template->getEbayTemplateCardListing($batchListingData, $site_setting, $marketplace_account_id);
                 $batchTemplate['aspects'] = $this->formatAspects($batchTemplate['aspects']);
                 foreach ($batchTemplate['variations'] as $i => $v) {
                     $batchTemplate['variations'][$i]['aspects'] = $this->formatAspects($v['aspects']);
@@ -5402,13 +5402,13 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                         if (!empty($updateResult['error'])) {
                             $errMsg = (string)$updateResult['error'];
                             $this->log->write("[editCardListing] updateOffer FAILED card_id={$card_id} offer_id={$offer_id} error={$errMsg}");
-                            $this->model_shopmanager_card_card->updateCardOffer($card_id, $offer_id, 0, 'Update failed: ' . $errMsg);
+                            $this->model_warehouse_card_card->updateCardOffer($card_id, $offer_id, 0, 'Update failed: ' . $errMsg);
                             $batchResult['errors'][] = ['card_id' => $card_id, 'error' => $errMsg];
                             $results['errors'][]     = ['card_id' => $card_id, 'error' => $errMsg];
                         } else {
                             $batchResult['offers_updated']++;
                             //$this->log->write("[editCardListing] updateOffer OK card_id={$card_id} offer_id={$offer_id}");
-                            $this->model_shopmanager_card_card->clearCardSyncFlag($card_id);
+                            $this->model_warehouse_card_card->clearCardSyncFlag($card_id);
                         }
                     } else {
                         // B) Pas d'offer_id — l'inventory_item existe déjà (ÉTAPE 1) ; créer l'offer
@@ -5456,7 +5456,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                         } else {
                             $errMsg = $createRes['error'] ?? 'createOffer failed HTTP ' . ($createRes['statusCode'] ?? '?');
                             $this->log->write("[editCardListing] createOffer FAILED card_id={$cid} sku={$sku} error={$errMsg}");
-                            $this->model_shopmanager_card_card->updateCardOffer($cid, '', 0, $errMsg);
+                            $this->model_warehouse_card_card->updateCardOffer($cid, '', 0, $errMsg);
                             $batchResult['errors'][] = ['card_id' => $cid, 'error' => $errMsg];
                             $results['errors'][]     = ['card_id' => $cid, 'error' => $errMsg];
                         }
@@ -5470,14 +5470,14 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 $listingId = $pubRes['listingId'] ?? null;
 
                 if ($pubRes['published'] && !empty($listingId)) {
-                    $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, $listingId, 1, $batchFkId);
-                    $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
+                    $this->model_warehouse_card_listing->updateEbayListingId($listing_id, $listingId, 1, $batchFkId);
+                    $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
                     $batchResult['ebay_item_id']            = $listingId;
                     $results['ebay_item_ids'][$batchNumber] = $listingId;
                 } else {
                     $errMsg = $pubRes['error'] ?? 'publishByInventoryItemGroup failed';
                     $this->log->write("[editCardListing] publish FAILED batch={$batchNumber} error={$errMsg}");
-                    $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
+                    $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
                     $batchResult['errors'][] = ['batch' => $batchNumber, 'error' => $errMsg];
                     $results['errors'][]     = ['batch' => $batchNumber, 'error' => $errMsg];
                 }
@@ -5488,13 +5488,13 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                     $pubErrStr   = $pubRes['published'] ? '' : ($pubRes['error'] ?? 'publish failed');
                     foreach ($newlyCreatedOffers as $sku => $offerId) {
                         $cid = $cardsToCreate[$sku]['card_id'];
-                        $this->model_shopmanager_card_card->updateCardOffer($cid, $offerId, $isPublished, $pubErrStr);
+                        $this->model_warehouse_card_card->updateCardOffer($cid, $offerId, $isPublished, $pubErrStr);
                         //$this->log->write("[editCardListing] saveNewOffer card_id={$cid} sku={$sku} offerId={$offerId} published={$isPublished}");
                     }
                 }
 
                 // Sauvegarder group_key en DB
-                $this->model_shopmanager_card_card_listing->saveEbayBatch($listing_id, $batchNumber, [
+                $this->model_warehouse_card_listing->saveEbayBatch($listing_id, $batchNumber, [
                     'group_key'       => $batchTemplate['group_key'],
                     'variation_count' => count($batchCards),
                 ]);
@@ -5536,8 +5536,8 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
         // Headers with Content-Type + Content-Language (required for PUT offer + POST publish)
         $headers = $this->buildRestHeaders($marketplace_account_id, true, true);
 
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/card');
 
         // Reconstruct real eBay SKU (same logic as syncCardOffers / addCardListing)
         $connectionapi = $this->getApiCredentials($marketplace_account_id);
@@ -5546,7 +5546,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
             : json_decode($connectionapi['site_setting'] ?? '{}', true);
         $country_code  = $siteSetting['Currency']['Country'] ?? 'CA';
 
-        $cards = $this->model_shopmanager_card_card_listing->getCardsUnpublishedWithOfferRows($listing_id);
+        $cards = $this->model_warehouse_card_listing->getCardsUnpublishedWithOfferRows($listing_id);
         if (empty($cards)) {
             return ['listing_id' => $listing_id, 'total' => 0,
                     'published' => 0, 'failed' => 0, 'details' => []];
@@ -5587,7 +5587,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
             if (!empty($refreshResult['error'])) {
                 $errorMsg = (string)$refreshResult['error'];
                 $this->log->write('[republishCardOffers] updateOffer FAILED card_id=' . $card_id . ' error=' . $errorMsg);
-                $this->model_shopmanager_card_card->updateCardOffer($card_id, $offer_id, 0, 'Refresh failed: ' . $errorMsg);
+                $this->model_warehouse_card_card->updateCardOffer($card_id, $offer_id, 0, 'Refresh failed: ' . $errorMsg);
                 $details[] = ['card_id' => $card_id, 'offer_id' => $offer_id,
                               'result' => 'failed', 'error' => 'Refresh failed: ' . $errorMsg];
                 $failed_count++;
@@ -5607,7 +5607,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
             $marketplaceId = $countryMap[$country_code] ?? 'EBAY_CA';
 
             // Load stored batches — fall back to single-batch if none recorded yet
-            $dbBatches = $this->model_shopmanager_card_card_listing->getBatches($listing_id);
+            $dbBatches = $this->model_warehouse_card_listing->getBatches($listing_id);
 
             if (empty($dbBatches)) {
                 // Aucun batch enregistré — impossible de publier sans group_key
@@ -5642,7 +5642,7 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 if (empty($groupKey)) {
                     $this->log->write('[republishCardOffers] ERREUR batch=' . $batchNumber . ' — group_key manquant dans oc_card_listing_batch');
                     foreach ($batchOffers as $offer_id => $card_id) {
-                        $this->model_shopmanager_card_card->updateCardOffer($card_id, $offer_id, 0, 'group_key manquant');
+                        $this->model_warehouse_card_card->updateCardOffer($card_id, $offer_id, 0, 'group_key manquant');
                         $details[] = ['card_id' => $card_id, 'offer_id' => $offer_id, 'result' => 'failed', 'error' => 'group_key manquant', 'batch' => $batchNumber];
                         $failed_count++;
                     }
@@ -5657,26 +5657,26 @@ private function publishOffer($offerId, $headers, $retryCount = 0): array {
                 $listingId   = $pubRes['listingId'] ?? '';
 
                 // Update DB status for this batch (saveEbayBatch uses logical name; update calls use FK)
-                $this->model_shopmanager_card_card_listing->saveEbayBatch($listing_id, $batchNumber, [
+                $this->model_warehouse_card_listing->saveEbayBatch($listing_id, $batchNumber, [
                     'group_key' => $groupKey,
                 ]);
                 if ($isPublished) {
-                    $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, $listingId, 1, $batchFkId);
-                    $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
+                    $this->model_warehouse_card_listing->updateEbayListingId($listing_id, $listingId, 1, $batchFkId);
+                    $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
                 } else {
-                    $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
+                    $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
                 }
 
                 foreach ($batchOffers as $offer_id => $card_id) {
                     if ($isPublished) {
                         //$this->log->write('[republishCardOffers] SUCCESS card_id=' . $card_id . ' offer_id=' . $offer_id . ' listingId=' . $listingId);
-                        $this->model_shopmanager_card_card->updateCardOffer($card_id, $offer_id, 1, '');
+                        $this->model_warehouse_card_card->updateCardOffer($card_id, $offer_id, 1, '');
                         $details[] = ['card_id' => $card_id, 'offer_id' => $offer_id,
                                       'result' => 'published', 'listing_id' => $listingId, 'batch' => $batchNumber];
                         $published_count++;
                     } else {
                         $this->log->write('[republishCardOffers] FAILED card_id=' . $card_id . ' offer_id=' . $offer_id . ' error=' . $errorMsg);
-                        $this->model_shopmanager_card_card->updateCardOffer($card_id, $offer_id, 0, $errorMsg);
+                        $this->model_warehouse_card_card->updateCardOffer($card_id, $offer_id, 0, $errorMsg);
                         $details[] = ['card_id' => $card_id, 'offer_id' => $offer_id,
                                       'result' => 'failed', 'error' => $errorMsg, 'batch' => $batchNumber];
                         $failed_count++;
@@ -5764,12 +5764,12 @@ private function supportsVariations($countryCode): bool {
             ];
         }
 
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/card');
 
         $cards = ($mode === 'all')
-            ? $this->model_shopmanager_card_card_listing->getAllCardRows($listing_id)
-            : $this->model_shopmanager_card_card_listing->getCardsWithoutOfferRows($listing_id);
+            ? $this->model_warehouse_card_listing->getAllCardRows($listing_id)
+            : $this->model_warehouse_card_listing->getCardsWithoutOfferRows($listing_id);
         if (empty($cards)) {
             return ['listing_id' => $listing_id, 'total' => 0,
                     'synced' => 0, 'not_found' => 0, 'failed' => 0, 'details' => []];
@@ -5794,7 +5794,7 @@ private function supportsVariations($countryCode): bool {
 
             if ($result['error']) {
                 $errorMsg = 'cURL error: ' . $result['error'];
-                $this->model_shopmanager_card_card->updateCardOffer($card_id, '', 0, $errorMsg);
+                $this->model_warehouse_card_card->updateCardOffer($card_id, '', 0, $errorMsg);
                 $details[] = ['card_id' => $card_id, 'sku' => $sku, 'result' => 'failed', 'error' => $errorMsg];
                 $failed++;
                 continue;
@@ -5809,7 +5809,7 @@ private function supportsVariations($countryCode): bool {
                 $status    = $offer['status']  ?? '';
                 $published = ($status === 'PUBLISHED') ? 1 : 0;
 
-                $this->model_shopmanager_card_card->updateCardOffer($card_id, $offerId, $published, '');
+                $this->model_warehouse_card_card->updateCardOffer($card_id, $offerId, $published, '');
                 $details[] = ['card_id' => $card_id, 'sku' => $sku,
                               'offer_id' => $offerId, 'status' => $status,
                               'published' => $published, 'result' => 'synced'];
@@ -5850,7 +5850,7 @@ private function supportsVariations($countryCode): bool {
 
             } else {
                 $errorMsg = $data['errors'][0]['message'] ?? ('HTTP ' . $httpCode);
-                $this->model_shopmanager_card_card->updateCardOffer($card_id, '', 0, $errorMsg);
+                $this->model_warehouse_card_card->updateCardOffer($card_id, '', 0, $errorMsg);
                 $details[] = ['card_id' => $card_id, 'sku' => $sku, 'result' => 'failed', 'error' => $errorMsg];
                 $failed++;
             }
@@ -5872,7 +5872,7 @@ private function supportsVariations($countryCode): bool {
                 } else {
                     $errorMsg = $createRes['error'] ?? 'create failed HTTP ' . $createRes['statusCode'];
                     $this->log->write('[syncCardOffers] bulkCreate FAILED sku=' . $sku . ' card_id=' . $card_id . ' ' . $errorMsg);
-                    $this->model_shopmanager_card_card->updateCardOffer($card_id, '', 0, $errorMsg);
+                    $this->model_warehouse_card_card->updateCardOffer($card_id, '', 0, $errorMsg);
                     $details[] = ['card_id' => $card_id, 'sku' => $sku, 'result' => 'failed', 'error' => $errorMsg];
                     $failed++;
                 }
@@ -5881,12 +5881,12 @@ private function supportsVariations($countryCode): bool {
             // Publish created offers per batch — one publishByInventoryItemGroup call per batch
             if (!empty($offerIdsToPublish)) {
                 // Load stored batches — erreur si aucun batch enregistré
-                $dbBatches = $this->model_shopmanager_card_card_listing->getBatches($listing_id);
+                $dbBatches = $this->model_warehouse_card_listing->getBatches($listing_id);
                 if (empty($dbBatches)) {
                     $this->log->write('[syncCardOffers] ERREUR: aucun batch pour listing ' . $listing_id . ' — appelez recalculateBatches() d\'abord');
                     foreach ($offerIdsToPublish as $offerId => $sku) {
                         $card_id = $toCreate[$sku]['card_id'];
-                        $this->model_shopmanager_card_card->updateCardOffer($card_id, '', 0, 'batch manquant — recalculateBatches requis');
+                        $this->model_warehouse_card_card->updateCardOffer($card_id, '', 0, 'batch manquant — recalculateBatches requis');
                         $details[] = ['card_id' => $card_id, 'sku' => $sku, 'result' => 'failed', 'error' => 'batch manquant'];
                         $failed++;
                     }
@@ -5914,7 +5914,7 @@ private function supportsVariations($countryCode): bool {
                         $this->log->write('[syncCardOffers] ERREUR batch=' . $batchNumber . ' — group_key manquant dans oc_card_listing_batch');
                         foreach ($batchOffers as $offerId => $sku) {
                             $card_id = $toCreate[$sku]['card_id'];
-                            $this->model_shopmanager_card_card->updateCardOffer($card_id, '', 0, 'group_key manquant');
+                            $this->model_warehouse_card_card->updateCardOffer($card_id, '', 0, 'group_key manquant');
                             $details[] = ['card_id' => $card_id, 'sku' => $sku, 'result' => 'failed', 'error' => 'group_key manquant', 'batch' => $batchNumber];
                             $failed++;
                         }
@@ -5928,20 +5928,20 @@ private function supportsVariations($countryCode): bool {
                     $listingId   = $pubRes['listingId'] ?? '';
 
                     // Persist ebay_item_id for this batch (saveEbayBatch uses logical name; update calls use FK)
-                    $this->model_shopmanager_card_card_listing->saveEbayBatch($listing_id, $batchNumber, [
+                    $this->model_warehouse_card_listing->saveEbayBatch($listing_id, $batchNumber, [
                         'group_key' => $groupKey,
                     ]);
                     if ($isPublished) {
-                        $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, $listingId, 1, $batchFkId);
-                        $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
+                        $this->model_warehouse_card_listing->updateEbayListingId($listing_id, $listingId, 1, $batchFkId);
+                        $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 1, date('Y-m-d H:i:s'));
                     } else {
-                        $this->model_shopmanager_card_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
+                        $this->model_warehouse_card_listing->updateBatchPublishedStatus($listing_id, $batchFkId, 0);
                     }
 
                     foreach ($batchOffers as $offerId => $sku) {
                         $card_id = $toCreate[$sku]['card_id'];
                         //$this->log->write('[syncCardOffers] publishByGroup sku=' . $sku . ' card_id=' . $card_id . ' published=' . $isPublished . ' error=' . $errorStr);
-                        $this->model_shopmanager_card_card->updateCardOffer($card_id, $offerId, $isPublished, $errorStr);
+                        $this->model_warehouse_card_card->updateCardOffer($card_id, $offerId, $isPublished, $errorStr);
                         $details[] = [
                             'card_id'   => $card_id,
                             'sku'       => $sku,
@@ -5973,7 +5973,7 @@ private function supportsVariations($countryCode): bool {
     }
 
     private function updateCategoryCount(&$categoryCounts, $item) {
-    $this->load->model('shopmanager/condition');
+    $this->load->model('warehouse/product/condition');
   //"<pre>" . print_r(value: '829:ebay') . "</pre>");
     $category_id = $item['leafCategoryIds'][0];
     $categoryName = $item['categories'][0]['categoryName'];
@@ -5996,7 +5996,7 @@ private function supportsVariations($countryCode): bool {
     // Récupérer les informations des conditions pour la catégorie
     //"<pre>" . print_r(value: '1173:ebaY.php') . "</pre>");
 
-    $conditions_info = $this->model_shopmanager_condition->getConditionDetails($category_id);
+    $conditions_info = $this->model_warehouse_product_condition->getConditionDetails($category_id);
 
     // Stocker les valeurs condition_marketplace_item_id qui ont des doublons
     $duplicateTracker = [];
@@ -6047,8 +6047,8 @@ private function supportsVariations($countryCode): bool {
      */
     private function updateInventoryItemImages(string $sku, int $card_id, $marketplace_account_id): void {
         // Charger le modèle card pour récupérer les images
-        $this->load->model('shopmanager/card/card');
-        $imageUrls = $this->model_shopmanager_card_card->getCardImageUrls($card_id);
+        $this->load->model('warehouse/card/card');
+        $imageUrls = $this->model_warehouse_card_card->getCardImageUrls($card_id);
 
         //$this->log->write('[updateInventoryItemImages] START sku=' . $sku . ' card_id=' . $card_id . ' images_from_db=' . count($imageUrls));
 
@@ -6109,14 +6109,14 @@ private function supportsVariations($countryCode): bool {
      * @param array  $headers   Write headers (Content-Type + Content-Language)
      */
     private function putInventoryItemForCard(string $sku, int $card_id, string $merchantLocationKey, array $headers): void {
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/card');
 
         // Fetch the card's title + a first image from DB
-        $cardRow = $this->model_shopmanager_card_card->getCard($card_id);
+        $cardRow = $this->model_warehouse_card_card->getCard($card_id);
         $rawTitle = $cardRow['title'] ?? ($cardRow['player_name'] ?? 'Trading Card');
         $title    = substr(html_entity_decode($rawTitle, ENT_QUOTES | ENT_HTML5, 'UTF-8'), 0, 80);
 
-        $images = $this->model_shopmanager_card_card->getCardImageUrls($card_id);
+        $images = $this->model_warehouse_card_card->getCardImageUrls($card_id);
         if (empty($images)) {
             $images = ['https://i.ebayimg.com/images/g/placeholder.jpg'];
         }
@@ -6569,9 +6569,9 @@ private function uploadImageToEbay($imageUrl, $headers): array {
      * @return array ['success', 'ebay_item_id', 'error']
      */
     public function publishLotListing(int $listing_id, array $site_setting = [], int $marketplace_account_id = 1): array {
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
 
-        $lot = $this->model_shopmanager_card_card_listing;
+        $lot = $this->model_warehouse_card_listing;
 
         // ── Prix ──────────────────────────────────────────────────────────────
         $lotInfo  = $lot->getLotInfo($listing_id);
@@ -6719,8 +6719,8 @@ private function uploadImageToEbay($imageUrl, $headers): array {
      * @return array ['success', 'error']
      */
     public function endLotListing(int $listing_id, array $site_setting = [], int $marketplace_account_id = 1): array {
-        $this->load->model('shopmanager/card/card_listing');
-        $lot     = $this->model_shopmanager_card_card_listing;
+        $this->load->model('warehouse/card/listing');
+        $lot     = $this->model_warehouse_card_listing;
         $lotInfo = $lot->getLotInfo($listing_id);
 
         $ebay_item_id = $lotInfo['lot_ebay_item_id'] ?? '';

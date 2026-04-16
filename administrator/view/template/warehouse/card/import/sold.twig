@@ -1,4 +1,4 @@
-{# Original: shopmanager/card/import/card_sold_importer.twig #}
+{# Original: warehouse/card/import/sold.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -323,7 +323,7 @@
     function loadList(extraParams) {
         $('#sold-list').html('<div class="text-center p-4"><i class="fa-solid fa-circle-notch fa-spin fa-2x text-muted"></i></div>');
         $.ajax({
-            url: 'index.php?route=shopmanager/card/import/card_sold_importer.list&user_token={{ user_token }}' + (extraParams || buildFilterUrl()),
+            url: 'index.php?route=warehouse/card/import/sold.list&user_token={{ user_token }}' + (extraParams || buildFilterUrl()),
             type: 'GET',
             success: function(html) {
                 $('#sold-list').html(html);
@@ -336,7 +336,7 @@
     }
 
     $('#button-filter').on('click', function() {
-        window.history.pushState({}, null, 'index.php?route=shopmanager/card/import/card_sold_importer&user_token={{ user_token }}' + buildFilterUrl());
+        window.history.pushState({}, null, 'index.php?route=warehouse/card/import/sold&user_token={{ user_token }}' + buildFilterUrl());
         loadList('');
     });
 
@@ -345,7 +345,7 @@
         $('#filter-brand, #filter-grader').val('');
         $('#filter-missing-card-number').prop('checked', false);
         $('#input-limit').val('25');
-        window.history.pushState({}, null, 'index.php?route=shopmanager/card/import/card_sold_importer&user_token={{ user_token }}');
+        window.history.pushState({}, null, 'index.php?route=warehouse/card/import/sold&user_token={{ user_token }}');
         loadList('');
     });
 
@@ -361,7 +361,7 @@
         $('#' + inputId).on('input', function() {
             var term = $(this).val();
             if (term.length < 1) { $('#' + ulId).removeClass('show').empty(); return; }
-            $.getJSON('index.php?route=shopmanager/card/import/card_sold_importer.autocomplete&user_token={{ user_token }}&field=' + field + '&term=' + encodeURIComponent(term), function(values) {
+            $.getJSON('index.php?route=warehouse/card/import/sold.autocomplete&user_token={{ user_token }}&field=' + field + '&term=' + encodeURIComponent(term), function(values) {
                 var ul = $('#' + ulId);
                 ul.empty();
                 values.forEach(function(v) {
@@ -408,6 +408,6 @@
     var TEXT_SEARCH_NONE      = '{{ text_search_none|escape("js") }}';
 
 </script>
-<script src="view/javascript/shopmanager/card/import/card_sold_importer.js?v=20260330a"></script>
+<script src="view/javascript/warehouse/card/import/sold.js?v=20260330a"></script>
 
 {{ footer }}

@@ -1,4 +1,4 @@
-// Original: shopmanager/card/card_listing_import.js
+// Original: warehouse/card/listing_import.js
 /**
  * card_listing_import.js
  * Handles the Import CSV and Regenerate tab in card_listing_form

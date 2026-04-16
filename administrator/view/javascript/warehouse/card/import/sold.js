@@ -1,4 +1,4 @@
-// Original: shopmanager/card/import/card_sold_importer.js
+// Original: warehouse/card/import/sold.js
 /**
  * card_import_sold.js
  * Autonomous JS — no shared dependencies (intentional duplication)

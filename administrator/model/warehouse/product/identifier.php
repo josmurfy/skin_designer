@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/identifier.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/identifier.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 /**
  * Class Identifier
  *

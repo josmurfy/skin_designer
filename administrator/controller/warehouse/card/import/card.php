@@ -1,11 +1,11 @@
 <?php
-// Original: shopmanager/card/import/card_importer.php
-namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
+// Original: warehouse/card/import/card.php
+namespace Opencart\Admin\Controller\Warehouse\Card\Import;
 
-class CardImporter extends \Opencart\System\Engine\Controller {
+class Card extends \Opencart\System\Engine\Controller {
     
     public function index(): void {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
         
@@ -22,7 +22,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         ];
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/card/import/card_importer', 'user_token=' . $user_token)
+            'href' => $this->url->link('warehouse/card/import/card', 'user_token=' . $user_token)
         ];
         
         // Language strings for Twig
@@ -113,15 +113,15 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $data['button_ok'] = ($lang['button_ok'] ?? '');
         
         // URLs
-        $data['upload'] = html_entity_decode($this->url->link('shopmanager/card/import/card_importer.upload', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
-        $data['generate'] = html_entity_decode($this->url->link('shopmanager/card/import/card_importer.generate', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
+        $data['upload'] = html_entity_decode($this->url->link('warehouse/card/import/card.upload', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
+        $data['generate'] = html_entity_decode($this->url->link('warehouse/card/import/card.generate', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8');
         $data['user_token'] = $user_token;
         
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
         
-        $this->response->setOutput($this->load->view('shopmanager/card/import/card_importer', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/import/card', $data));
     }
     
     /**
@@ -129,7 +129,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates request, processes file, returns JSON response
      */
     public function upload(): void {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
         
@@ -160,7 +160,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      */
     private function validateUploadRequest(): ?string {
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/import/card')) {
             return ($lang['error_permission'] ?? '');
         }
         
@@ -190,8 +190,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         ini_set('memory_limit', '512M');
         
         // Step 1: Parse CSV (model handles parsing logic)
-        $this->load->model('shopmanager/card/card_listing');
-        $parse_result = $this->model_shopmanager_card_card_listing->parseCSV($file['tmp_name']);
+        $this->load->model('warehouse/card/listing');
+        $parse_result = $this->model_warehouse_card_listing->parseCSV($file['tmp_name']);
         if (!empty($parse_result['error'])) {
             return ['error' => $parse_result['error']];
         }
@@ -202,7 +202,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $cards = $this->lookupAndSetPrices($cards);
         
         // Step 2: Group cards (model handles grouping logic)
-        $groups = $this->model_shopmanager_card_card_listing->smartGroupCards($cards);
+        $groups = $this->model_warehouse_card_listing->smartGroupCards($cards);
         //error_log('Grouped Cards: ' . print_r($groups, true) . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');       
 
         // Step 2.5: Check for existing listings
@@ -226,7 +226,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
     }
 
     private function injectPreviewMarketPrices(array $groups): array {
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         $rateLimited = false;
         $rateLimitedError = '';
@@ -336,13 +336,13 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Groups with existing_listing_id field added
      */
     private function checkExistingListings(array $groups): array {
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card_type');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/type');
         
         foreach ($groups as &$group) {
             // Listing exists = au moins un titre de carte trouvé dans oc_card
             $titles = array_column($group['cards'], 'title');
-            $existing_id = $this->model_shopmanager_card_card_listing->findListingByCardTitles($titles);
+            $existing_id = $this->model_warehouse_card_listing->findListingByCardTitles($titles);
 
             // Fallback : chercher par set_name + card_type_id si titre non trouvé
             $group['set_name_match'] = false;
@@ -350,8 +350,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 $set_name = trim($group['set_name'] ?? $group['set'] ?? '');
                 $category = trim($group['cards'][0]['category'] ?? '');
                 if ($set_name !== '') {
-                    $card_type_id = $this->model_shopmanager_card_card_type->getCardTypeIdByName($category);
-                    $existing_id  = $this->model_shopmanager_card_card_listing->findListingBySetName($set_name, $card_type_id);
+                    $card_type_id = $this->model_warehouse_card_type->getCardTypeIdByName($category);
+                    $existing_id  = $this->model_warehouse_card_listing->findListingBySetName($set_name, $card_type_id);
                     if ($existing_id > 0) {
                         $group['set_name_match'] = true;
                     }
@@ -363,8 +363,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
 
             // If listing exists, fetch location + flag each card
             if ($existing_id > 0) {
-                $group['existing_location'] = $this->model_shopmanager_card_card_listing->getListingLocation($existing_id);
-                $existing_cards = $this->model_shopmanager_card_card_listing->getExistingCardsForListing($existing_id);
+                $group['existing_location'] = $this->model_warehouse_card_listing->getListingLocation($existing_id);
+                $existing_cards = $this->model_warehouse_card_listing->getExistingCardsForListing($existing_id);
                 foreach ($group['cards'] as &$card) {
                     // merge=1 when price < 10 (same rule as twig hidden input)
                     $merge       = (isset($card['sale_price']) && (float)$card['sale_price'] < 10) ? 1 : 0;
@@ -408,7 +408,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Cards with sale_price set from DB
      */
     private function lookupAndSetPrices(array $cards): array {
-        $this->load->model('shopmanager/card/import/card_set_importer');
+        $this->load->model('warehouse/card/import/set');
 
         foreach ($cards as &$card) {
             $card_number = trim($card['card_number'] ?? '');
@@ -418,7 +418,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             $category    = trim($card['category']    ?? '');
 
             // Get ALL matching rows first
-            $rows = $this->model_shopmanager_card_import_card_set_importer
+            $rows = $this->model_warehouse_card_import_set
                 ->getPriceRowsByCard($card_number, $player, $brand, $year, $category);
 
             // DEBUG: calculate old CSV price for comparison display
@@ -436,7 +436,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             if (count($rows) > 1) {
                 $candidates = [];
                 foreach ($rows as $row) {
-                    $usd = $this->model_shopmanager_card_import_card_set_importer->getLowestImporterUsdPriceFromRow($row);
+                    $usd = $this->model_warehouse_card_import_set->getLowestImporterUsdPriceFromRow($row);
                     $cad = $this->currency->convert($usd, 'USD', 'CAD');
                     $candidates[] = [
                         'label'    => trim(implode(' · ', array_filter([
@@ -457,7 +457,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             }
 
             $db_price = count($rows) === 1
-                ? $this->model_shopmanager_card_import_card_set_importer->getLowestImporterUsdPriceFromRow($rows[0])
+                ? $this->model_warehouse_card_import_set->getLowestImporterUsdPriceFromRow($rows[0])
                 : 0.0;
 
             if ($db_price >= 0.99) {
@@ -572,10 +572,10 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates request, generates CSV file, returns download link
      */
     public function generate(): void {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
         
         $json = [];
         
@@ -610,7 +610,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return string|null Error message or null if valid
      */
     private function validateGenerateRequest(): ?string {
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/import/card')) {
             return ($lang['error_permission'] ?? '');
         }
         return null;
@@ -653,9 +653,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         if (!is_dir(DIR_UPLOAD)) {
             mkdir(DIR_UPLOAD, 0755, true);
         }
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
         // Generate eBay CSV content (model handles CSV logic)
-        $ebay_csv = $this->model_shopmanager_card_card_listing->generateEbayCSV($cards, $config);
+        $ebay_csv = $this->model_warehouse_card_listing->generateEbayCSV($cards, $config);
         
         if (!$ebay_csv) {
             return ['error' => ($lang['error_generation_failed'] ?? '')];
@@ -676,7 +676,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'success' => ($lang['text_generate_success'] ?? ''),
             'filename' => $filename,
             'download_url' => $this->url->link(
-                'shopmanager/card/import/card_importer.download',
+                'warehouse/card/import/card.download',
                 'file=' . $filename . '&user_token=' . $user_token
             ),
             'total_rows' => count($cards)
@@ -688,12 +688,12 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates file existence and sends file to browser
      */
     public function download(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
+        $lang = $this->load->language('warehouse/card/import/card');
         $data = [];
         
         
         // Validate permission
-        if (!$this->user->hasPermission('access', 'shopmanager/card/import/card_importer')) {
+        if (!$this->user->hasPermission('access', 'warehouse/card/import/card')) {
             $this->response->setOutput('Error: ' . ($lang['error_permission'] ?? ''));
             return;
         }
@@ -727,14 +727,14 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * AJAX endpoint for brand validation
      */
     public function validateManufacturer(): void {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
         
         $json = [];
         
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/import/card')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
@@ -746,8 +746,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 $json['error'] = 'Manufacturer name is required';
             } else {
                 // Check if exists
-                $this->load->model('shopmanager/card/card_listing');
-                $exists = $this->model_shopmanager_card_card_listing->checkManufacturerExists($name);
+                $this->load->model('warehouse/card/listing');
+                $exists = $this->model_warehouse_card_listing->checkManufacturerExists($name);
                 
                 $json['success'] = true;
                 $json['exists'] = $exists;
@@ -764,14 +764,14 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * AJAX endpoint for adding new brand
      */
     public function addManufacturer(): void {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
         
         $json = [];
         
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_importer')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/import/card')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
@@ -783,8 +783,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 $json['error'] = 'Manufacturer name is required';
             } else {
                 // Add manufacturer
-                $this->load->model('shopmanager/card/card_listing');
-                $manufacturer_id = $this->model_shopmanager_card_card_listing->addManufacturer($name);
+                $this->load->model('warehouse/card/listing');
+                $manufacturer_id = $this->model_warehouse_card_listing->addManufacturer($name);
                 
                 if ($manufacturer_id > 0) {
                     $json['success'] = true;
@@ -806,16 +806,16 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Returns ungraded + graded auction/list prices in CAD.
      */
     public function getMarketPricesPreview(): void {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         $json = [];
         $startedAt = microtime(true);
 
-        $hasAccessPermission = $this->user->hasPermission('access', 'shopmanager/card/import/card_importer');
-        $hasModifyPermission = $this->user->hasPermission('modify', 'shopmanager/card/import/card_importer');
+        $hasAccessPermission = $this->user->hasPermission('access', 'warehouse/card/import/card');
+        $hasModifyPermission = $this->user->hasPermission('modify', 'warehouse/card/import/card');
         if (!$hasAccessPermission && !$hasModifyPermission) {
             $cards = $this->request->post['cards'] ?? [];
             $permissionError = ($lang['error_permission'] ?? 'Permission denied');
@@ -896,7 +896,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                             'keyword' => $remainingKeyword,
                             'rate_limited' => true,
                             'api_error' => $json['error'],
-                            'manual_urls' => $this->model_shopmanager_ebay->buildManualEbayUrls($remainingKeyword)
+                            'manual_urls' => $this->model_warehouse_marketplace_ebay_api->buildManualEbayUrls($remainingKeyword)
                         ];
                     }
 
@@ -978,7 +978,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 'keyword' => $keyword,
                 'error' => 'keyword too short (min 3 chars)',
                 'rate_limited' => false,
-                'manual_urls' => $this->model_shopmanager_ebay->buildManualEbayUrls($keyword)
+                'manual_urls' => $this->model_warehouse_marketplace_ebay_api->buildManualEbayUrls($keyword)
             ];
         }
 
@@ -992,9 +992,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 'category_id'    => '261328',
             ];
 
-            $marketData = $this->model_shopmanager_ebay->searchAndClassifyActiveItems($keyword, $searchOptions, 1);
+            $marketData = $this->model_warehouse_marketplace_ebay_api->searchAndClassifyActiveItems($keyword, $searchOptions, 1);
             $apiError = (string)($marketData['error'] ?? '');
-            $manualUrls = $this->model_shopmanager_ebay->buildManualEbayUrls($keyword);
+            $manualUrls = $this->model_warehouse_marketplace_ebay_api->buildManualEbayUrls($keyword);
 
             if ($this->isApiRateLimitedMessage($apiError)) {
                 return [
@@ -1052,7 +1052,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 'keyword' => $keyword,
                 'error' => $error,
                 'rate_limited' => $this->isApiRateLimitedMessage($error),
-                'manual_urls' => $this->model_shopmanager_ebay->buildManualEbayUrls($keyword)
+                'manual_urls' => $this->model_warehouse_marketplace_ebay_api->buildManualEbayUrls($keyword)
             ];
         }
     }
@@ -1083,22 +1083,22 @@ class CardImporter extends \Opencart\System\Engine\Controller {
     }
 
     private function getPreviewTable(array $groups): string {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card_type');
-        $this->load->model('shopmanager/card/card_manufacturer');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/type');
+        $this->load->model('warehouse/card/manufacturer');
         
         $user_token = isset($this->session->data['user_token']) ? $this->session->data['user_token'] : '';
         
         $data = [
             'groups' => $groups, // Pass grouped structure
             'manufacturers' => array_column(
-                $this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]),
+                $this->model_warehouse_card_manufacturer->getManufacturers(['filter_status' => 1]),
                 'name'
             ),
-            'card_types' => $this->model_shopmanager_card_card_type->getCardTypes(),
+            'card_types' => $this->model_warehouse_card_type->getCardTypes(),
             'user_token' => $user_token,
             'column_card_title' => ($lang['column_card_title'] ?? ''),
             'column_price' => ($lang['column_price'] ?? ''),
@@ -1132,7 +1132,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'text_market_manual_graded' => ($lang['text_market_manual_graded'] ?? ''),
             'text_market_manual_sold_graded' => ($lang['text_market_manual_sold_graded'] ?? ''),
             'text_market_apply_raw_buy_now' => ($lang['text_market_apply_raw_buy_now'] ?? ''),
-            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('shopmanager/card/import/card_importer.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
+            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('warehouse/card/import/card.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
             'text_already_exists' => ($lang['text_already_exists'] ?? ''),
             'text_placeholder_location' => ($lang['text_placeholder_location'] ?? ''),
             'text_total_prefix' => ($lang['text_total_prefix'] ?? ''),
@@ -1186,7 +1186,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'text_market_checking' => ($lang['text_market_checking'] ?? ''),
             'text_market_api_limit_reached' => ($lang['text_market_api_limit_reached'] ?? ''),
             'text_market_fallback_kept' => ($lang['text_market_fallback_kept'] ?? ''),
-            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('shopmanager/card/import/card_importer.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
+            'url_fetch_market_price_preview' => html_entity_decode($this->url->link('warehouse/card/import/card.getMarketPricesPreview', 'user_token=' . $user_token), ENT_QUOTES, 'UTF-8'),
             
             // Preview list table
             'text_already_exists' => ($lang['text_already_exists'] ?? ''),
@@ -1199,8 +1199,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             'column_qty' => ($lang['column_qty'] ?? '')*/
         ];
         //error_log('Preview Table Data: ' . print_r($data, true) . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
-       // error_log('view' . $this->load->view('shopmanager/card/import/card_importer_list', $data)  . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
-        return $this->load->view('shopmanager/card/import/card_importer_list', $data);
+       // error_log('view' . $this->load->view('warehouse/card/import/card_list', $data)  . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
+        return $this->load->view('warehouse/card/import/card_list', $data);
     }
 
     // =====================================================
@@ -1211,11 +1211,11 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Install database tables
      */
     public function installTables(): void {
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
         
         $json = [];
         
-        if ($this->model_shopmanager_card_card_listing->install()) {
+        if ($this->model_warehouse_card_listing->install()) {
             $json['success'] = true;
             $json['message'] = 'Multi-variation tables installed successfully!';
         } else {
@@ -1235,7 +1235,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $json = [];
         
         try {
-            $this->load->model('shopmanager/card/card_listing');
+            $this->load->model('warehouse/card/listing');
             
             // Validate request method
             if ($this->request->server['REQUEST_METHOD'] != 'POST') {
@@ -1279,9 +1279,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Ensure database tables are installed
      */
     private function ensureDatabaseTables(): void {
-        $this->load->model('shopmanager/card/card_listing');
-        if (!$this->model_shopmanager_card_card_listing->isInstalled()) {
-            $this->model_shopmanager_card_card_listing->install();
+        $this->load->model('warehouse/card/listing');
+        if (!$this->model_warehouse_card_listing->isInstalled()) {
+            $this->model_warehouse_card_listing->install();
         }
     }
     
@@ -1290,7 +1290,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Groups, config data or error
      */
     private function getSaveListingsInput(): array {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $groups = $this->request->post['groups'] ?? [];
         
         if (empty($groups)) {
@@ -1432,7 +1432,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $saved_listings = [];
         $published_listings = [];
 
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
         
         foreach ($groups_data as $group_index => $group_data) {
             // Step 1: Reconstruct group structure from form data
@@ -1445,7 +1445,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             
             // Step 2: Convert group to listing format (model handles business logic)
             try {
-                $listing_data = $this->model_shopmanager_card_card_listing->convertGroupToListing($group, $config);
+                $listing_data = $this->model_warehouse_card_listing->convertGroupToListing($group, $config);
             } catch (\Exception $e) {
                 // Log the error and skip this group
                 error_log('Error converting group to listing: ' . $e->getMessage() . ' Group: ' . json_encode($group));
@@ -1458,7 +1458,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
             
             // Step 3: Save to database (model handles SQL)
             try {
-                $listing_id = $this->model_shopmanager_card_card_listing->saveListing($listing_data);
+                $listing_id = $this->model_warehouse_card_listing->saveListing($listing_data);
             } catch (\Exception $e) {
                 // Log the error and skip this listing
                 error_log('Error saving listing: ' . $e->getMessage() . ' Data: ' . json_encode($listing_data));
@@ -1494,7 +1494,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
            
             // Update location if listing already existed and location was provided
             if ($group['is_existing'] && $group['existing_listing_id'] > 0) {
-                $this->model_shopmanager_card_card_listing->updateListingLocation(
+                $this->model_warehouse_card_listing->updateListingLocation(
                     $group['existing_listing_id'],
                     $group['location']
                 );
@@ -1604,27 +1604,27 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         $user_token = isset($this->session->data['user_token']) ? $this->session->data['user_token'] : '';
         
         // Redirect to card_listing list page
-        $this->response->redirect($this->url->link('shopmanager/card/card_listing', 'user_token=' . $user_token));
+        $this->response->redirect($this->url->link('warehouse/card/listing', 'user_token=' . $user_token));
     }
     
     /**
      * View single listing details
      */
     public function viewListing(): void {
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
         
         $user_token = isset($this->session->data['user_token']) ? $this->session->data['user_token'] : '';
         $listing_id = $this->request->get['listing_id'] ?? 0;
         
         if (!$listing_id) {
-            $this->response->redirect($this->url->link('shopmanager/card/card_listing', 'user_token=' . $user_token));
+            $this->response->redirect($this->url->link('warehouse/card/listing', 'user_token=' . $user_token));
             return;
         }
         
-        $listing = $this->model_shopmanager_card_card_listing->getListing($listing_id);
+        $listing = $this->model_warehouse_card_listing->getListing($listing_id);
         
         if (empty($listing)) {
-            $this->response->redirect($this->url->link('shopmanager/card/card_listing', 'user_token=' . $user_token));
+            $this->response->redirect($this->url->link('warehouse/card/listing', 'user_token=' . $user_token));
             return;
         }
         
@@ -1641,7 +1641,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Delete listing
      */
     public function deleteListing(): void {
-        $this->load->model('shopmanager/card/card_listing');
+        $this->load->model('warehouse/card/listing');
         
         $json = [];
         
@@ -1650,7 +1650,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         if (!$listing_id) {
             $json['error'] = 'Invalid listing ID';
         } else {
-            $result = $this->model_shopmanager_card_card_listing->deleteListing($listing_id);
+            $result = $this->model_warehouse_card_listing->deleteListing($listing_id);
             if ($result['ok']) {
                 $json['success'] = true;
                 $json['message'] = 'Listing deleted successfully';
@@ -1670,14 +1670,14 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Result array with success/error status
      */
     public function publishToEbay($listing_id = null): array {
-        $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('warehouse/card/import/card');
         $data = [];
         
         
         try {
-            $this->load->model('shopmanager/ebay');
-            $this->load->model('shopmanager/card/card_listing');
-            $this->load->model('shopmanager/marketplace');
+            $this->load->model('warehouse/marketplace/ebay/api');
+            $this->load->model('warehouse/card/listing');
+            $this->load->model('warehouse/marketplace/listing');
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -1693,9 +1693,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
         }
         
         try {
-            $listing_data = $this->model_shopmanager_card_card_listing->getListing($listing_id);
+            $listing_data = $this->model_warehouse_card_listing->getListing($listing_id);
            
-            $listing_data['descriptions'] = $this->model_shopmanager_card_card_listing->getDescriptions($listing_id);
+            $listing_data['descriptions'] = $this->model_warehouse_card_listing->getDescriptions($listing_id);
 
             // Get marketplace account
             $response = [];
@@ -1703,7 +1703,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 
             // AVANT de créer le listing
             foreach ($listing_data['descriptions'] as $description) {
-                $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+                $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                     'customer_id' => 10,'filter_language_id' => $description['language_id']
                 ]);
                 if (empty($marketplace_account) || !isset($marketplace_account['site_setting']) || !isset($marketplace_account['marketplace_account_id'])) {
@@ -1714,12 +1714,12 @@ class CardImporter extends \Opencart\System\Engine\Controller {
                 $marketplace_account_id = $marketplace_account['marketplace_account_id'];
 
                 if(!isset($description['ebay_item_id']) || empty($description['ebay_item_id'])) {
-                    $response = $this->model_shopmanager_ebay->addCardListing($listing , $site_setting, $marketplace_account_id, false);
+                    $response = $this->model_warehouse_marketplace_ebay_api->addCardListing($listing , $site_setting, $marketplace_account_id, false);
                     if (isset($response['ebay_item_id'])) {
-                        $this->model_shopmanager_card_card_listing->updateEbayListingId($listing_id, $response['ebay_item_id'], $description['language_id']);
+                        $this->model_warehouse_card_listing->updateEbayListingId($listing_id, $response['ebay_item_id'], $description['language_id']);
                         $error = empty($response['errors']) ? '' : json_encode($response['errors']);
                         if(!empty($error)) {
-                            $this->model_shopmanager_marketplace->editCardListingERROR($listing_id,$response['ebay_item_id'],$error);
+                            $this->model_warehouse_marketplace_listing->editCardListingERROR($listing_id,$response['ebay_item_id'],$error);
                         }
                     }
                 }

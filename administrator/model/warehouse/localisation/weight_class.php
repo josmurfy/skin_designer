@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/localisation/weight_class.php
+// Original: warehouse/localisation/weight_class.php
 
 
-namespace Opencart\Admin\Model\Shopmanager\Localisation;
+namespace Opencart\Admin\Model\Warehouse\Localisation;
 
 class WeightClass extends \Opencart\System\Engine\Model {
 

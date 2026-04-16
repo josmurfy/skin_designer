@@ -1,4 +1,4 @@
-// Original: shopmanager/maintenance/image_list.js
+// Original: warehouse/maintenance/image_list.js
 /**
  * ShopManager - Maintenance Image List
  * Page liste produits (opérations bulk eBay, fix, orphelins, suppression)
@@ -73,7 +73,7 @@ $(document).off('click.maintenanceImageList', '#remove-selected-images').on('cli
     $('#remove-details').append('<div class="text-info"><i class="fa-solid fa-hourglass-start"></i> Sending request...</div>');
 
     $.ajax({
-        url: 'index.php?route=shopmanager/maintenance/image.removeMissingImages&user_token=' + MAINT_IMAGE_TOKEN,
+        url: 'index.php?route=warehouse/maintenance/image.removeMissingImages&user_token=' + MAINT_IMAGE_TOKEN,
         type: 'post',
         data: { images: imagesToRemove },
         dataType: 'json',
@@ -89,9 +89,9 @@ $(document).off('click.maintenanceImageList', '#remove-selected-images').on('cli
                 $('#remove-details').append('<div class="text-success"><i class="fa-solid fa-check-circle"></i> ' + json['success'] + '</div>');
 
                 setTimeout(function() {
-                    var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
+                    var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
                     if (url === '') {
-                        url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN;
+                        url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN;
                     }
                     $('#report').load(url);
                     hideModal(document.getElementById('removeProgressModal'));
@@ -166,7 +166,7 @@ $(document).off('click.maintenanceImageList', '#add-orphan-images-btn').on('clic
 
     for (const productId in productImages) {
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.addOrphanImages&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=warehouse/maintenance/image.addOrphanImages&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: {
                 product_id: productId,
@@ -178,8 +178,8 @@ $(document).off('click.maintenanceImageList', '#add-orphan-images-btn').on('clic
                 if (json['error']) { console.error('Product ' + productId + ': ' + json['error']); }
                 if (completed === totalProducts) {
                     showToast('Orphan images have been added.', 'success');
-                    var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
-                    if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
+                    var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
+                    if (url === '') { url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                     $('#report').load(url);
                 }
             },
@@ -188,8 +188,8 @@ $(document).off('click.maintenanceImageList', '#add-orphan-images-btn').on('clic
                 console.error('Error for product ' + productId + ': ' + thrownError);
                 if (completed === totalProducts) {
                     showToast('Orphan images have been added with some errors. Check console.', 'warning');
-                    var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
-                    if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
+                    var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
+                    if (url === '') { url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                     $('#report').load(url);
                 }
             }
@@ -297,7 +297,7 @@ $(document).off('click.maintenanceImageList', '#btn-check-ebay-images-selected')
         $('#check-ebay-current-status').text(TEXT_CHECK_EBAY_PROCESSING.replace('%1$d', currentIndex + 1).replace('%2$d', totalProducts).replace('%3$s', productId));
 
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.checkEbayImageComparison&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=warehouse/maintenance/image.checkEbayImageComparison&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: { product_id: productId },
             dataType: 'json',
@@ -374,8 +374,8 @@ $(document).off('click.maintenanceImageList', '#btn-import-ebay-selected').on('c
 
             setTimeout(function() {
                 $('#import-ebay-products-list').append('<div class="alert alert-info mt-2 p-2"><i class="fa-solid fa-sync"></i> ' + TEXT_IMPORT_EBAY_REFRESHING + '</div>');
-                var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
-                if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
+                var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
+                if (url === '') { url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                 $('#report').load(url, function() { hideModal(document.getElementById('importEbayProgressModal')); });
             }, 1200);
             return;
@@ -394,7 +394,7 @@ $(document).off('click.maintenanceImageList', '#btn-import-ebay-selected').on('c
         $('#import-ebay-products-list').scrollTop($('#import-ebay-products-list')[0].scrollHeight);
 
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.syncImagesForProductWitheBay&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=warehouse/maintenance/image.syncImagesForProductWitheBay&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: { product_id: productId },
             dataType: 'json',
@@ -477,8 +477,8 @@ $(document).off('click.maintenanceImageList', '#btn-fix-selected').on('click.mai
             } else {
                 setTimeout(function() {
                     $('#fix-products-list').append('<div class="alert alert-success mt-2 p-2"><i class="fa-solid fa-sync"></i> Refreshing product list...</div>');
-                    var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
-                    if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
+                    var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
+                    if (url === '') { url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                     $('#report').load(url, function() { hideModal(document.getElementById('fixProgressModal')); });
                 }, 1500);
             }
@@ -501,7 +501,7 @@ $(document).off('click.maintenanceImageList', '#btn-fix-selected').on('click.mai
         const productOrphans = orphansToAdd.filter(o => o.product_id == productId);
 
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.fixImages&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=warehouse/maintenance/image.fixImages&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: {
                 product_ids: [productId],
@@ -560,7 +560,7 @@ function handleRemainingFiles(remainingFiles, modalId) {
         $('#fix-products-list').append('<div class="alert alert-info mb-2 p-2"><i class="fa-solid fa-trash-alt"></i> Deleting ' + fileCount + ' file(s)...</div>');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/maintenance/image.deleteRemainingFiles&user_token=' + MAINT_IMAGE_TOKEN,
+            url: 'index.php?route=warehouse/maintenance/image.deleteRemainingFiles&user_token=' + MAINT_IMAGE_TOKEN,
             type: 'post',
             data: { directories: directories },
             dataType: 'json',
@@ -574,8 +574,8 @@ function handleRemainingFiles(remainingFiles, modalId) {
                 }
                 setTimeout(function() {
                     $('#fix-products-list').append('<div class="alert alert-success mt-2 p-2"><i class="fa-solid fa-sync"></i> Refreshing product list...</div>');
-                    var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
-                    if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
+                    var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
+                    if (url === '') { url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
                     $('#report').load(url, function() { hideModal(document.getElementById(modalId)); });
                 }, 1500);
             },
@@ -590,8 +590,8 @@ function handleRemainingFiles(remainingFiles, modalId) {
         $('#fix-details').append('<div class="text-info"><i class="fa-solid fa-info-circle"></i> Old files were kept in place</div>');
 
         setTimeout(function() {
-            var url = window.location.search.replace('?route=shopmanager/maintenance/image', '?route=shopmanager/maintenance/image.list');
-            if (url === '') { url = '?route=shopmanager/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
+            var url = window.location.search.replace('?route=warehouse/maintenance/image', '?route=warehouse/maintenance/image.list');
+            if (url === '') { url = '?route=warehouse/maintenance/image.list&user_token=' + MAINT_IMAGE_TOKEN; }
             $('#report').load(url);
             hideModal(document.getElementById(modalId));
         }, 1500);

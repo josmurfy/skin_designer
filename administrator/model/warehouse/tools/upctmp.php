@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/upctmp.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/upctmp.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 class Upctmp extends \Opencart\System\Engine\Model {
     private ?int $lastRequestTime = null;

@@ -1,4 +1,4 @@
-// Original: shopmanager/ai.js
+// Original: warehouse/tools/ai.js
 // ============================================
 // FUNCTIONS DUPLICATED FROM TOOLS.JS (PRODUCTION SAFETY)
 // ============================================
@@ -181,7 +181,7 @@ function getProductSpecific(aspectName, callback) {
     
     // Use apiQueue to prevent 429 errors
     apiQueue.add(async () => {
-        return await fetch('index.php?route=shopmanager/ai.getProductSpecific&user_token=' + user_token, {
+        return await fetch('index.php?route=warehouse/tools/ai.getProductSpecific&user_token=' + user_token, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -214,7 +214,7 @@ function getProductSpecificMARDE(aspectName, callback) {
     const user_token = document.querySelector('input[name="user_token"]').value;
 
     apiQueue.add(async () => {
-        return await fetch('index.php?route=shopmanager/ai.getProductSpecific&user_token=' + user_token + '&aspect_name=' + encodeURIComponent(aspectName));
+        return await fetch('index.php?route=warehouse/tools/ai.getProductSpecific&user_token=' + user_token + '&aspect_name=' + encodeURIComponent(aspectName));
     })
         .then(async response => {
             const text = await response.text();
@@ -508,7 +508,7 @@ async function verifySpecific(row, finish = 'false') {
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const response = await apiQueue.add(async () => {
-                return await fetch('index.php?route=shopmanager/ai.prompt_ai&user_token=' + user_token, {
+                return await fetch('index.php?route=warehouse/tools/ai.prompt_ai&user_token=' + user_token, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
@@ -747,7 +747,7 @@ function verifySpecificOLD(row, finish = 'false') {
 
     appendLoadingMessage(`[IA] Vérification de '${specificName}'...`, 'info');
 
-    return fetch('index.php?route=shopmanager/ai.prompt_ai&user_token=' + user_token, {
+    return fetch('index.php?route=warehouse/tools/ai.prompt_ai&user_token=' + user_token, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -909,7 +909,7 @@ function verifySpecificOLDNEW(row) {
         temperature: 0   
     };
 
-    return fetch('index.php?route=shopmanager/ai.prompt_ai&user_token=' + user_token, {
+    return fetch('index.php?route=warehouse/tools/ai.prompt_ai&user_token=' + user_token, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -2741,7 +2741,7 @@ function fetchTranslationData(data, targetFieldElement, targetId, summernote) {
     formData.append('targetLanguage', data.targetLanguage);
 
     apiQueue.add(async () => {
-        return await fetch('index.php?route=shopmanager/ai.translate&user_token=' + user_token, {
+        return await fetch('index.php?route=warehouse/tools/ai.translate&user_token=' + user_token, {
             method: 'POST',
             body: formData // FormData gère automatiquement les en-têtes
         });
@@ -3178,7 +3178,7 @@ async function fetchAiImage(data) {
     var ButtonDownload = $('#ai-suggest-image-download-btn');
 
     Button.prop('disabled', true).text('Generating...');
-    const response = await fetch('index.php?route=shopmanager/ai.prompt_ai_image&user_token=' + user_token, {
+    const response = await fetch('index.php?route=warehouse/tools/ai.prompt_ai_image&user_token=' + user_token, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -3363,7 +3363,7 @@ async function fetchAi(data) {
         var user_token = document.querySelector('input[name="user_token"]').value;
         $('#ai-suggest-entry-name-btn1').prop('disabled', true).text('Generating...');
 
-        const response = await fetch('index.php?route=shopmanager/ai.prompt_ai&user_token=' + user_token, {
+        const response = await fetch('index.php?route=warehouse/tools/ai.prompt_ai&user_token=' + user_token, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

@@ -1,4 +1,4 @@
-{# Original: shopmanager/catalog/category.twig #}
+{# Original: warehouse/product/category.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -105,7 +105,7 @@ $('#button-repair').on('click', function(e) {
     var element = this;
 
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/category.repair&user_token={{ user_token }}',
+        url: 'index.php?route=warehouse/product/category.repair&user_token={{ user_token }}',
         dataType: 'json',
         beforeSend: function() {
             $(element).button('loading');
@@ -121,7 +121,7 @@ $('#button-repair').on('click', function(e) {
             if (json['success']) {
                 $('#alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa-solid fa-check-circle"></i> ' + json['success'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
 
-                $('#category').load('index.php?route=shopmanager/catalog/category.list&user_token={{ user_token }}');
+                $('#category').load('index.php?route=warehouse/product/category.list&user_token={{ user_token }}');
             }
         },
         error: function(xhr, ajaxOptions, thrownError) {
@@ -174,15 +174,15 @@ $('#button-filter').on('click', function() {
     if (limit && limit !== '' && limit !== null && limit !== 'null') {
         url += '&limit=' + encodeURIComponent(limit);
     }
-    window.history.pushState({}, null, 'index.php?route=shopmanager/catalog/category&user_token={{ user_token }}' + url);
+    window.history.pushState({}, null, 'index.php?route=warehouse/product/category&user_token={{ user_token }}' + url);
 
-    $('#category').load('index.php?route=shopmanager/catalog/category.list&user_token={{ user_token }}' + url);
+    $('#category').load('index.php?route=warehouse/product/category.list&user_token={{ user_token }}' + url);
 });
 
 $('#input-name').autocomplete({
     'source': function(request, response) {
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.autocomplete&user_token={{ user_token }}&filter_name=' + encodeURIComponent(request),
+            url: 'index.php?route=warehouse/product/category.autocomplete&user_token={{ user_token }}&filter_name=' + encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 json.unshift({

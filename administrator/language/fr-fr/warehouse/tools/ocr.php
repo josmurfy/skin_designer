@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/ocr.php
+// Original: warehouse/tools/ocr.php
 $_['heading_title'] = 'Reconnaissance de texte dans les images';
 $_['text_image_upload'] = 'Télécharger une image';
 $_['text_recognized_text'] = 'Texte reconnu';

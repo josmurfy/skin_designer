@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/download.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/download.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 
 class Download extends \Opencart\System\Engine\Model {

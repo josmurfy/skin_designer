@@ -1,4 +1,4 @@
-// Original: shopmanager/marketplace_error_popup.js
+// Original: warehouse/popup/marketplace_error.js
 function getPopupElement() {
     return document.getElementById('popup-error');
 }
@@ -83,8 +83,8 @@ function showErrorPopup (product_id) {
         return;
     }
 
-    var ajaxUrl = `index.php?route=shopmanager/marketplace_error_popup.index&user_token=${encodeURIComponent(user_token)}&product_id=${encodeURIComponent(product_id)}`;
-    var fallbackUrl = `index.php?route=shopmanager/marketplace_error_popup&user_token=${encodeURIComponent(user_token)}&product_id=${encodeURIComponent(product_id)}`;
+    var ajaxUrl = `index.php?route=warehouse/popup/marketplace_error.index&user_token=${encodeURIComponent(user_token)}&product_id=${encodeURIComponent(product_id)}`;
+    var fallbackUrl = `index.php?route=warehouse/popup/marketplace_error&user_token=${encodeURIComponent(user_token)}&product_id=${encodeURIComponent(product_id)}`;
     
     console.log('📡 AJAX URL:', ajaxUrl);
     console.log('📡 FALLBACK URL:', fallbackUrl);
@@ -158,7 +158,7 @@ function showErrorPopupOLD(marketplace_account_id, marketplace_item_id, error, p
     var user_token = document.querySelector('input[name="user_token"]').value;
 
     $.ajax({
-        url: `index.php?route=shopmanager/marketplace_error_popup&user_token=${user_token}&marketplace_item_id=${marketplace_item_id}`,
+        url: `index.php?route=warehouse/popup/marketplace_error&user_token=${user_token}&marketplace_item_id=${marketplace_item_id}`,
         dataType: 'html',
         success: function(html) {
             $('body').append(html);
@@ -209,7 +209,7 @@ $(document).on('click', '#popup-error .btn-fix-issue', function() {
         : (window.USER_TOKEN || '');
     hidePopupModal();
     if (product_id && user_token) {
-        window.location.href = 'index.php?route=shopmanager/catalog/product.form&user_token=' + user_token + '&product_id=' + product_id;
+        window.location.href = 'index.php?route=warehouse/product/product.form&user_token=' + user_token + '&product_id=' + product_id;
     }
 });
 

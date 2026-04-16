@@ -1,4 +1,4 @@
-{# Original: shopmanager/catalog/product_form.twig #}
+{# Original: warehouse/product/product_form.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -578,8 +578,8 @@
             </button>
             <button type="button"
                 class="btn btn-info"
-                onclick="window.open('index.php?route=shopmanager/google&user_token={{ user_token }}&query={{ product_description[1]['name']|url_encode }}', 'search_name', 'width=1200,height=800,resizable=yes,scrollbars=yes'); 
-                         window.open('index.php?route=shopmanager/google&user_token={{ user_token }}&query={{ upc|url_encode }}', 'search_upc', 'width=1200,height=800,resizable=yes,scrollbars=yes');">
+                onclick="window.open('index.php?route=warehouse/tools/google&user_token={{ user_token }}&query={{ product_description[1]['name']|url_encode }}', 'search_name', 'width=1200,height=800,resizable=yes,scrollbars=yes'); 
+                         window.open('index.php?route=warehouse/tools/google&user_token={{ user_token }}&query={{ upc|url_encode }}', 'search_upc', 'width=1200,height=800,resizable=yes,scrollbars=yes');">
                 <i class="fa fa-search"></i> {{ button_google_search }}
             </button>
         </div>
@@ -1869,7 +1869,7 @@ $('#input-category').autocomplete({
 
         // Recherche par nom
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.autocomplete&user_token=' + user_token + '&filter_name=' + encodeURIComponent(request),
+            url: 'index.php?route=warehouse/product/category.autocomplete&user_token=' + user_token + '&filter_name=' + encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {
@@ -1900,7 +1900,7 @@ function fetchCategoryById(categoryInput) {
     if (!$.isNumeric(categoryInput) || categoryInput === '') return;
     var user_token = document.querySelector('input[name="user_token"]').value;
     var site_id = $('#site-id').val() || '';
-    var url = 'index.php?route=shopmanager/catalog/category.getDetails&user_token=' + user_token + '&site_id=' + encodeURIComponent(site_id) + '&category_id=' + encodeURIComponent(categoryInput);
+    var url = 'index.php?route=warehouse/product/category.getDetails&user_token=' + user_token + '&site_id=' + encodeURIComponent(site_id) + '&category_id=' + encodeURIComponent(categoryInput);
     console.log('[fetchCategoryById] URL:', url);
     $.ajax({
         url: url,
@@ -1983,7 +1983,7 @@ $('#product-category-').on('click', '.btn', function() {
 $('#input-filter').autocomplete({
 	'source': function(request, response) {
 		$.ajax({
-			url: 'index.php?route=shopmanager/filter.autocomplete&user_token={{ user_token }}&filter_name=' +  encodeURIComponent(request),
+			url: 'index.php?route=warehouse/catalog/filter.autocomplete&user_token={{ user_token }}&filter_name=' +  encodeURIComponent(request),
 			dataType: 'json',
 			success: function(json) {
 				response($.map(json, function(item) {

@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/category_list.js
+// Original: warehouse/product/category_list.js
 function handleDelete(categoryId) {
     checkCategory(categoryId);
     if (confirm(confirmMessage)) {
@@ -57,7 +57,7 @@ $(document).ready(function() {
         var user_token = document.querySelector('input[name="user_token"]').value;
       //  alert(user_token);
 
-        var url = 'index.php?route=shopmanager/catalog/category&user_token=' + user_token;
+        var url = 'index.php?route=warehouse/product/category&user_token=' + user_token;
     
         var filter_category_id = $('input[name=\'filter_category_id\']').val();
     

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/opencart.php
+// Original: warehouse/tools/store.php
 $_['text_title'] = '<p>Su tienda OpenCart puede conectarse en minutos. Por favor siga las instrucciones a continuación.</p>';
 
 $_['entry_version']   = 'Versión';

@@ -1,4 +1,4 @@
-{# Original: shopmanager/inventory/sync_image_mismatch.twig #}
+{# Original: warehouse/marketplace/ebay/sync_image_mismatch.twig #}
 {# Image Count Mismatch Tab — Section 1: OC vs eBay  |  Section 2: OC vs Backup #}
 <style>
 .backup-card-selected {
@@ -135,7 +135,7 @@
                       title="{{ button_fix_single_image }}">
                 <i class="fa-solid fa-images"></i>
               </button>
-              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}"
+              <a href="index.php?route=warehouse/product/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}"
                  class="btn btn-sm btn-primary" title="{{ column_actions }}">
                 <i class="fa-solid fa-edit"></i>
               </a>
@@ -498,15 +498,15 @@
 <script>
 (function() {
 
-  var URL_BULK_FIX      = 'index.php?route=shopmanager/maintenance/image.bulkImportMismatchImages&user_token={{ user_token }}';
-  var URL_FIX_SINGLE    = 'index.php?route=shopmanager/maintenance/image.syncImagesForProductWitheBay&user_token={{ user_token }}';
-  var URL_IMAGES_FULL = 'index.php?route=shopmanager/inventory/sync.getProductImagesFull&user_token={{ user_token }}';
-  var URL_REMOVE_OC   = 'index.php?route=shopmanager/inventory/sync.removeOcImage&user_token={{ user_token }}';
-  var URL_SET_PRIMARY = 'index.php?route=shopmanager/inventory/sync.setOcImagePrimary&user_token={{ user_token }}';
-  var URL_XFER_ROLE   = 'index.php?route=shopmanager/inventory/sync.transferBackupAsRole&user_token={{ user_token }}';
-  var URL_DEL_BACKUP   = 'index.php?route=shopmanager/inventory/sync.deleteBackupImages&user_token={{ user_token }}';
-  var URL_RESET_SCAN  = 'index.php?route=shopmanager/inventory/sync.resetProductImageScan&user_token={{ user_token }}';
-  var URL_ROTATE      = 'index.php?route=shopmanager/tools.rotateImage&user_token={{ user_token }}';
+  var URL_BULK_FIX      = 'index.php?route=warehouse/maintenance/image.bulkImportMismatchImages&user_token={{ user_token }}';
+  var URL_FIX_SINGLE    = 'index.php?route=warehouse/maintenance/image.syncImagesForProductWitheBay&user_token={{ user_token }}';
+  var URL_IMAGES_FULL = 'index.php?route=warehouse/marketplace/ebay/sync.getProductImagesFull&user_token={{ user_token }}';
+  var URL_REMOVE_OC   = 'index.php?route=warehouse/marketplace/ebay/sync.removeOcImage&user_token={{ user_token }}';
+  var URL_SET_PRIMARY = 'index.php?route=warehouse/marketplace/ebay/sync.setOcImagePrimary&user_token={{ user_token }}';
+  var URL_XFER_ROLE   = 'index.php?route=warehouse/marketplace/ebay/sync.transferBackupAsRole&user_token={{ user_token }}';
+  var URL_DEL_BACKUP   = 'index.php?route=warehouse/marketplace/ebay/sync.deleteBackupImages&user_token={{ user_token }}';
+  var URL_RESET_SCAN  = 'index.php?route=warehouse/marketplace/ebay/sync.resetProductImageScan&user_token={{ user_token }}';
+  var URL_ROTATE      = 'index.php?route=warehouse/tools/utility.rotateImage&user_token={{ user_token }}';
 
   var TEXT_CONFIRM_BULK_FIX = '{{ text_bulk_fix_confirm|escape('js') }}';
 
@@ -529,7 +529,7 @@
   // ─── Reload entire tab ────────────────────────────────────────────────────
   function loadImageMismatchTab(page, sort, order, bpage, bsort, border, rpage, rsort, rorder) {
     $.ajax({
-      url: 'index.php?route=shopmanager/inventory/sync.getImageMismatchTab&user_token={{ user_token }}',
+      url: 'index.php?route=warehouse/marketplace/ebay/sync.getImageMismatchTab&user_token={{ user_token }}',
       type: 'GET',
       data: { page: page, sort: sort, order: order,
               bpage: bpage || 1, bsort: bsort || 'product_id', border: border || 'ASC',

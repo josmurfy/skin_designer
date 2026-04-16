@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/product_search_info.js
+// Original: warehouse/product/research_info.js
 // ============================================
 // FUNCTIONS DUPLICATED FROM TOOLS.JS (PRODUCTION SAFETY)
 // ============================================
@@ -233,7 +233,7 @@ function SelectRow(checkbox) {
     // Fonction pour appeler `editSpecificKey` via AJAX avec GET
     function editSpecificKey(specificKey, category_id, replacementTerm) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.editSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.editSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id) +
             '&replacement_term=' + encodeURIComponent(replacementTerm);
@@ -251,7 +251,7 @@ function SelectRow(checkbox) {
     // Fonction pour appeler `deleteSpecificKey` via AJAX avec GET
     function deleteSpecificKey(specificKey, category_id) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.deleteSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.deleteSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id);
 
@@ -268,7 +268,7 @@ function SelectRow(checkbox) {
     // Fonction pour appeler `addSpecificKey` via AJAX avec GET
     function addSpecificKey(specificKey, category_id, replacementTerm) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.addSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.addSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id) +
             '&replacement_term=' + encodeURIComponent(replacementTerm);
@@ -286,7 +286,7 @@ function SelectRow(checkbox) {
     // Fonction pour vérifier si une clé spécifique existe déjà via AJAX avec GET
     function checkIfSpecificKeyExists(specificKey, category_id) {
         var user_token = document.querySelector('input[name="user_token"]').value;
-        var url = 'index.php?route=shopmanager/catalog/product_specific.getSpecificKey&user_token=' + user_token +
+        var url = 'index.php?route=warehouse/product/product_specific.getSpecificKey&user_token=' + user_token +
             '&specific_key=' + encodeURIComponent(specificKey) +
             '&category_id=' + encodeURIComponent(category_id);
 
@@ -945,7 +945,7 @@ $('input[name="category"]').autocomplete({
     'source': function(request, response) {
         var user_token = document.querySelector('input[name="user_token"]').value;
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
+            url: 'index.php?route=warehouse/product/category/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {
@@ -971,7 +971,7 @@ $('input[name="category"]').autocomplete({
 document.addEventListener('DOMContentLoaded', function() {
     if (typeof initImageDragAndDrop === 'function') {
         initImageDragAndDrop(
-            'index.php?route=shopmanager/tools.uploadImagesFiles&type=pri',
+            'index.php?route=warehouse/tools/utility.uploadImagesFiles&type=pri',
             function(response, container, productId) {
                 // Success callback - reload page or update UI
                 if (response.success) {

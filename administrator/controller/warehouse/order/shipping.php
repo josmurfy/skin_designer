@@ -1,32 +1,32 @@
 <?php
-// Original: shopmanager/shipping.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/order/shipping.php
+namespace Opencart\Admin\Controller\Warehouse\Order;
 
 class Shipping extends \Opencart\System\Engine\Controller {
     public function create_usps_acceptance() {
-        $this->load->model('shopmanager/shipping');
+        $this->load->model('warehouse/order/shipping');
         
         $apiUrl = 'https://api.usps.com/scan-forms/v3/scan-form';
 
        
             $trackingNumbers = ['9400108105464382564745'];
 
-        $data = $this->model_shopmanager_shipping->prepareScanFormData($trackingNumbers);
-        $response = $this->model_shopmanager_shipping->sendUSPSRequest($apiUrl, $data);
+        $data = $this->model_warehouse_order_shipping->prepareScanFormData($trackingNumbers);
+        $response = $this->model_warehouse_order_shipping->sendUSPSRequest($apiUrl, $data);
 
        /* if ($response['status'] == 201) {
             $responseBody = json_decode($response['body'], true);
             echo 'SCAN Form créé avec succès.';
-            $this->model_shopmanager_shipping->savePDF($responseBody['SCANFormImage']);
+            $this->model_warehouse_order_shipping->savePDF($responseBody['SCANFormImage']);
         } else {
             echo 'Erreur: ' . $response['body'];
         }*/
     }
 
     public function get_shipping(){
-        $this->load->model('shopmanager/shipping');
-        $this->load->model('shopmanager/catalog/product');
-        $this->load->model('shopmanager/catalog/category');
+        $this->load->model('warehouse/order/shipping');
+        $this->load->model('warehouse/product/product');
+        $this->load->model('warehouse/product/category');
         $json = array();
 
         // Toujours vérifier la méthode de requête
@@ -43,17 +43,17 @@ class Shipping extends \Opencart\System\Engine\Controller {
             // Vérification des paramètres
             if (isset($data['product_id']) && isset($data['weight']) &&
                 isset($data['length'])  && isset($data['width']) && isset($data['height']) ) {
-                $product_info = $this->model_shopmanager_catalog_product->getProduct($data['product_id']);
+                $product_info = $this->model_warehouse_product_product->getProduct($data['product_id']);
                 $product_info['weight']=$data['weight'];
                 $product_info['length']=$data['length'];
                 $product_info['width']=$data['width'];
                 $product_info['height']=$data['height'];
                 // Categories
 		  
-                $categories = $this->model_shopmanager_catalog_product->getCategories($data['product_id']);
+                $categories = $this->model_warehouse_product_product->getCategories($data['product_id']);
 
                 foreach ($categories as $category_id) {
-                    $category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+                    $category_info = $this->model_warehouse_product_category->getCategory($category_id);
                     //print("<pre>".print_r ($category_info,true )."</pre>");
                     if ($category_info) {
 
@@ -76,7 +76,7 @@ class Shipping extends \Opencart\System\Engine\Controller {
                 $json['message'] = 'Méthode de requête non autorisée.';
             }
                         // Calcul des tarifs d'expédition
-                    $shippingRates = $this->model_shopmanager_shipping->calculateShippingRates($product_info);
+                    $shippingRates = $this->model_warehouse_order_shipping->calculateShippingRates($product_info);
 
                     // Conversion USD → CAD
                     if ($shippingRates['shipping_cost'] < 9999) {
@@ -89,7 +89,7 @@ class Shipping extends \Opencart\System\Engine\Controller {
                     $product_info['shipping_cost'] =  $shippingRates['shipping_cost'];
                     $product_info['shipping_carrier'] = $shippingRates['shipping_carrier'];
                     // Mise à jour des tarifs dans la base de données
-            //     $this->model_shopmanager_catalog_product->editProduct($data['product_id'],$product_info);
+            //     $this->model_warehouse_product_product->editProduct($data['product_id'],$product_info);
 
                     if ($shippingRates) {
                         $json['success'] = true;

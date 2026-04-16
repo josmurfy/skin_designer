@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/fast_add.php
+// Original: warehouse/product/receive.php
 // Encabezado
 $_['heading_title'] = 'Adición rápida de productos';
 

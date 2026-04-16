@@ -1,4 +1,4 @@
-// Original: shopmanager/card/card_list.js
+// Original: warehouse/card/card_list.js
 // ============================================
 // LOADING POPUP UTILITY
 // ============================================
@@ -115,7 +115,7 @@ function updateCardLocation(cardId, newLocation) {
     var user_token = document.querySelector('input[name="user_token"]').value;
 
     $.ajax({
-        url: 'index.php?route=shopmanager/card/card.updateLocation&user_token=' + user_token,
+        url: 'index.php?route=warehouse/card/card.updateLocation&user_token=' + user_token,
         type: 'POST',
         data: {
             card_id: cardId,
@@ -197,7 +197,7 @@ $(document).ready(function() {
         showLoadingPopup('Fusion en cours...');
 
         var url = typeof URL_MERGE_CARDS !== 'undefined' ? URL_MERGE_CARDS
-                : 'index.php?route=shopmanager/card/card.mergeCards&user_token=' + (typeof USER_TOKEN !== 'undefined' ? USER_TOKEN : '');
+                : 'index.php?route=warehouse/card/card.mergeCards&user_token=' + (typeof USER_TOKEN !== 'undefined' ? USER_TOKEN : '');
 
         $.ajax({
             url: url,

@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/tools.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/tools/utility.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
-class Tools extends \Opencart\System\Engine\Model {
+class Utility extends \Opencart\System\Engine\Model {
 
   
     // Fonction pour retourner la chaîne la plus longue dans un tableau
@@ -596,8 +596,8 @@ public function extractImageUrls($htmlContent) {
     $imageUrls = [];
 	
 	if(is_numeric($htmlContent)){
-		$this->load->model('shopmanager/ebay');
-		$imageUrls=$this->model_shopmanager_ebay->getProductImages(trim($htmlContent)); 
+		$this->load->model('warehouse/marketplace/ebay/api');
+		$imageUrls=$this->model_warehouse_marketplace_ebay_api->getProductImages(trim($htmlContent)); 
       //print("<pre>" . print_r(448, true) . "</pre>");
 	  //print("<pre>" . print_r($imageUrls, true) . "</pre>");
       return $imageUrls;
@@ -995,7 +995,7 @@ private function allWordsGreaterThan($words, $length) {
 
 
 public function addProductImage($product_id, $file, $type = 'pri') {
-    $this->load->model('shopmanager/tools');
+    $this->load->model('warehouse/tools/utility');
 
     // Calculer le sous-dossier à partir des deux premiers chiffres du product_id
     $sub_dir = str_pad(substr($product_id, 0, 2), 2, '0', STR_PAD_LEFT);
@@ -1007,7 +1007,7 @@ public function addProductImage($product_id, $file, $type = 'pri') {
     }
 
     // Détermine l'extension de l'image
-    $extension_new = $this->model_shopmanager_tools->getImageExtension($file['name']);
+    $extension_new = $this->model_warehouse_tools_utility->getImageExtension($file['name']);
     $filename_rand = $product_id . $type . mt_rand(1, 99999);
     $filename = $filename_rand . $extension_new;
     $target_file = $upload_dir . $filename;
@@ -1039,7 +1039,7 @@ public function addProductImage($product_id, $file, $type = 'pri') {
             $filename = $webp_filename;
         } else {
             // Convertir l'image en WebP (JPG, PNG, etc.)
-            if ($this->model_shopmanager_tools->convertToWebp($target_file, $webp_file_path)) {
+            if ($this->model_warehouse_tools_utility->convertToWebp($target_file, $webp_file_path)) {
                 // Utiliser le fichier WebP dans la base de données et supprimer l'original
                 unlink($target_file);
                 $filename = $webp_filename;
@@ -1187,24 +1187,24 @@ public function compareSources($epid_sources, $source_value) {
   //print("<pre>".print_r ('jo114',true )."</pre>");
  //print("<pre>".print_r ($epid_sources,true )."</pre>");
  //print("<pre>".print_r ($source_value,true )."</pre>");
- $this->load->model('shopmanager/tools');
- $this->load->model('shopmanager/ai');
+ $this->load->model('warehouse/tools/utility');
+ $this->load->model('warehouse/tools/ai');
     foreach ($source_value as $key => $value) {
         // Si la clé existe dans epid_sources, on priorise sa valeur
         if (isset($epid_sources[$key])) {
             if( is_array($value) && !is_array($epid_sources[$key])){
                 if(count($value) >10){
-                    // $this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
-                    //$value=$this->model_shopmanager_ai->reduceArrayValue($value,$key);
+                    // $this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
+                    //$value=$this->model_warehouse_tools_ai->reduceArrayValue($value,$key);
                 }
                 $finalArray[$key]= $value;
                 $finalArray[$key][]=$epid_sources[$key];
             }elseif (is_array($value) && is_array($epid_sources[$key]) && (count($value) <> count($epid_sources[$key]))){
                 if(count($value) >10){
-                    // $this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
-                    //$value=$this->model_shopmanager_ai->reduceArrayValue($value,$key);
+                    // $this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
+                    //$value=$this->model_warehouse_tools_ai->reduceArrayValue($value,$key);
                 }
-                $finalArray[$key] = $this->model_shopmanager_tools->cleanArray(array_merge_recursive($epid_sources[$key],$value));
+                $finalArray[$key] = $this->model_warehouse_tools_utility->cleanArray(array_merge_recursive($epid_sources[$key],$value));
             }else{
                 $finalArray[$key] = $epid_sources[$key];
             }
@@ -1214,8 +1214,8 @@ public function compareSources($epid_sources, $source_value) {
             // Sinon, on utilise la valeur de source_value
             
             if(is_array($value) && count($value) >10){
-                // $this->model_shopmanager_ai->reduceArrayValue($decoded_value,$key);
-                $finalArray[$key]= $value; //$this->model_shopmanager_ai->reduceArrayValue($value,$key);
+                // $this->model_warehouse_tools_ai->reduceArrayValue($decoded_value,$key);
+                $finalArray[$key]= $value; //$this->model_warehouse_tools_ai->reduceArrayValue($value,$key);
             }else{
                 $finalArray[$key] = $value;
             }
@@ -1499,8 +1499,8 @@ public function debug_function_trace() {
     echo "<pre>";
     foreach ($trace as $entry) {
         if (!isset($entry['file'])) continue;
-        // Afficher uniquement les fichiers contenant "shopmanager"
-        if (strpos($entry['file'], 'shopmanager') !== false) {
+        // Afficher uniquement les fichiers contenant "warehouse"
+        if (strpos($entry['file'], 'warehouse') !== false) {
             echo "Fichier : " . $entry['file'] . " - Ligne : " . $entry['line'] . "\n";
         }
     }

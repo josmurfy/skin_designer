@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/localisation/country.php
-namespace Opencart\Admin\Model\Shopmanager\Localisation;
+// Original: warehouse/localisation/country.php
+namespace Opencart\Admin\Model\Warehouse\Localisation;
 /**
  * Class Country
  *

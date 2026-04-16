@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/print_report.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/inventory/label.php
+namespace Opencart\Admin\Controller\Warehouse\Inventory;
 
-class PrintReport extends \Opencart\System\Engine\Controller {
+class Label extends \Opencart\System\Engine\Controller {
     public function index(): void {
         if (!isset($this->request->get['user_token']) || !$this->user->isLogged()) {
             $this->response->redirect($this->url->link('common/login', '', true));
@@ -11,10 +11,10 @@ class PrintReport extends \Opencart\System\Engine\Controller {
         if (isset($this->request->get['type_report'])) {
             $type_report=$this->request->get['type_report'];
         }
-        $this->load->language('shopmanager/print_report');
+        $this->load->language('warehouse/inventory/label');
         $data = [];
         
-        $this->load->model('shopmanager/'.$type_report);
+        $this->load->model('warehouse/'.$type_report);
         $this->load->model('tool/image'); // Pour redimensionner les images
 
         if (isset($this->request->get['filter_sku'])) {
@@ -144,7 +144,7 @@ class PrintReport extends \Opencart\System\Engine\Controller {
 			'start'           => ($page - 1) * $limit,
 			'limit'           => $limit //$this->config->get('config_limit_admin')
 		); 
-        $products = $this->{"model_shopmanager_" .strtolower($type_report)}->getProducts($filter_data);
+        $products = $this->{"model_warehouse_" .strtolower($type_report)}->getProducts($filter_data);
 
         foreach ($products as $product) {
             $data['products'][] = array(
@@ -174,6 +174,6 @@ class PrintReport extends \Opencart\System\Engine\Controller {
         $data['user_token'] = $this->session->data['user_token'];
 
         // Chargement du template
-        $this->response->setOutput($this->load->view('shopmanager/print_report', $data));
+        $this->response->setOutput($this->load->view('warehouse/inventory/label', $data));
     }
 }

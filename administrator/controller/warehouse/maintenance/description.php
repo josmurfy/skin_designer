@@ -1,18 +1,18 @@
 <?php
-// Original: shopmanager/maintenance/product_description.php
-namespace Opencart\Admin\Controller\Shopmanager\Maintenance;
+// Original: warehouse/maintenance/description.php
+namespace Opencart\Admin\Controller\Warehouse\Maintenance;
 
-class ProductDescription extends \Opencart\System\Engine\Controller {
+class Description extends \Opencart\System\Engine\Controller {
 	
 	public function index(): void {
-		$this->load->language('shopmanager/maintenance/product_description');
+		$this->load->language('warehouse/maintenance/description');
 		$data = [];
 		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 		
-		// Add shopmanager CSS for image popups
-		$this->document->addStyle('view/stylesheet/shopmanager.css');
+		// Add warehouse CSS for image popups
+		$this->document->addStyle('view/stylesheet/warehouse.css');
 
 		$data['breadcrumbs'] = [];
 
@@ -23,7 +23,7 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = [
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/maintenance/product_description', 'user_token=' . $this->session->data['user_token'])
+			'href' => $this->url->link('warehouse/maintenance/description', 'user_token=' . $this->session->data['user_token'])
 		];
 
 		$data['list'] = $this->getList();
@@ -44,11 +44,11 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
 
-		$this->response->setOutput($this->load->view('shopmanager/maintenance/product_description', $data));
+		$this->response->setOutput($this->load->view('warehouse/maintenance/description', $data));
 	}
 
 	public function list(): void {
-		$this->load->language('shopmanager/maintenance/product_description');
+		$this->load->language('warehouse/maintenance/description');
 		$data = [];
 		
 
@@ -56,7 +56,7 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 	}
 
 	protected function getList(): string {
-		$this->load->model('shopmanager/maintenance/product_description');
+		$this->load->model('warehouse/maintenance/description');
 		$this->load->model('tool/image');
 
 		if (isset($this->request->get['page'])) {
@@ -113,8 +113,8 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 			$filter_data['filter_quantity_to'] = (int)$this->request->get['filter_quantity_to'];
 		}
 
-		$product_total = $this->model_shopmanager_maintenance_product_description->getTotalOutdatedProducts($filter_data);
-		$results = $this->model_shopmanager_maintenance_product_description->getOutdatedProducts($filter_data);
+		$product_total = $this->model_warehouse_maintenance_description->getTotalOutdatedProducts($filter_data);
+		$results = $this->model_warehouse_maintenance_description->getOutdatedProducts($filter_data);
 
 		foreach ($results as $result) {
 			// Préparer l'image
@@ -137,7 +137,7 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 				'has_condition_supp' => !empty($result['condition_supp']),
 				'has_description_supp' => !empty($result['description_supp']),
 				'missing_fields' => $this->getMissingFieldsCount($result),
-				'edit' => $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'])
+				'edit' => $this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'])
 			];
 		}
 
@@ -185,7 +185,7 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 			'total' => $product_total,
 			'page'  => $page,
 			'limit' => $limit,
-			'url'   => $this->url->link('shopmanager/maintenance/product_description.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
+			'url'   => $this->url->link('warehouse/maintenance/description.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}')
 		]);
 
 		$data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($product_total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($product_total - $limit)) ? $product_total : ((($page - 1) * $limit) + $limit), $product_total, ceil($product_total / $limit));
@@ -223,16 +223,16 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 			$url .= '&order=ASC';
 		}
 
-		$data['sort_id'] = $this->url->link('shopmanager/maintenance/product_description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.product_id' . $url);
-		$data['sort_name'] = $this->url->link('shopmanager/maintenance/product_description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name' . $url);
-		$data['sort_quantity'] = $this->url->link('shopmanager/maintenance/product_description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity' . $url);
-		$data['sort_modified'] = $this->url->link('shopmanager/maintenance/product_description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.date_modified' . $url);
-		$data['sort_missing'] = $this->url->link('shopmanager/maintenance/product_description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=missing_fields' . $url);
+		$data['sort_id'] = $this->url->link('warehouse/maintenance/description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.product_id' . $url);
+		$data['sort_name'] = $this->url->link('warehouse/maintenance/description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name' . $url);
+		$data['sort_quantity'] = $this->url->link('warehouse/maintenance/description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity' . $url);
+		$data['sort_modified'] = $this->url->link('warehouse/maintenance/description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.date_modified' . $url);
+		$data['sort_missing'] = $this->url->link('warehouse/maintenance/description.list', 'user_token=' . $this->session->data['user_token'] . '&sort=missing_fields' . $url);
 
 		$data['sort'] = $sort;
 		$data['order'] = $order;
 
-		return $this->load->view('shopmanager/maintenance/product_description_list', $data);
+		return $this->load->view('warehouse/maintenance/description_list', $data);
 	}
 
 	private function getMissingFieldsCount(array $product): int {
@@ -254,7 +254,7 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 	}
 
 	public function aiSuggest(): void {
-		$this->load->language('shopmanager/maintenance/product_description');
+		$this->load->language('warehouse/maintenance/description');
 		$data = [];
 		
 
@@ -270,7 +270,7 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 			// Appeler la fonction AI existante (à adapter selon votre implémentation)
 			// Cette route devrait rediriger vers le même système que product_form
 			$json['success'] = ($lang['text_ai_triggered'] ?? '');
-			$json['redirect'] = $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id);
+			$json['redirect'] = $this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id);
 		}
 
 		$this->response->addHeader('Content-Type: application/json');

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/order.php
+// Original: warehouse/order/order.php
 // Encabezado
 $_['heading_title']         = 'Pedidos';
 

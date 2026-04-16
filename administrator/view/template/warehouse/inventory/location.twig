@@ -1,4 +1,4 @@
-{# Original: shopmanager/inventory/location.twig #}
+{# Original: warehouse/inventory/location.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -63,8 +63,8 @@ var TEXT_ERROR_SAVE_COUNTRY           = '{{ text_error_save_country|escape('js')
 var TEXT_ERROR_SAVE_COUNTRY_GENERIC   = '{{ text_error_save_country_generic|escape('js') }}';
 var USER_TOKEN = '{{ user_token }}';
 </script>
-<script type="text/javascript" src="view/javascript/shopmanager/sound.js"></script>
-<script type="text/javascript" src="view/javascript/shopmanager/inventory/location.js"></script>
+<script type="text/javascript" src="view/javascript/warehouse/sound.js"></script>
+<script type="text/javascript" src="view/javascript/warehouse/inventory/location.js"></script>
 <script type="text/javascript"><!--
 // Init inventory on page load
 if (typeof window.reinitInventory === 'function') {
@@ -90,14 +90,14 @@ $('#button-filter').on('click', function() {
         url += '&filter_location=' + encodeURIComponent(filter_location);
     }
 
-    window.history.pushState({}, null, 'index.php?route=shopmanager/inventory/location&user_token=' + USER_TOKEN + url);
-    $('#inventory').load('index.php?route=shopmanager/inventory/location.list&user_token=' + USER_TOKEN + url);
+    window.history.pushState({}, null, 'index.php?route=warehouse/inventory/location&user_token=' + USER_TOKEN + url);
+    $('#inventory').load('index.php?route=warehouse/inventory/location.list&user_token=' + USER_TOKEN + url);
 });
 
 $('#form-filter').on('reset', function() {
     setTimeout(function() {
-        window.history.pushState({}, null, 'index.php?route=shopmanager/inventory/location&user_token=' + USER_TOKEN);
-        $('#inventory').load('index.php?route=shopmanager/inventory/location.list&user_token=' + USER_TOKEN);
+        window.history.pushState({}, null, 'index.php?route=warehouse/inventory/location&user_token=' + USER_TOKEN);
+        $('#inventory').load('index.php?route=warehouse/inventory/location.list&user_token=' + USER_TOKEN);
     }, 10);
 });
 //--></script>

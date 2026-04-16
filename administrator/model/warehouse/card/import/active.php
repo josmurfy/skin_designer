@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/card/import/card_price_active.php
-namespace Opencart\Admin\Model\Shopmanager\Card\Import;
+// Original: warehouse/card/import/active.php
+namespace Opencart\Admin\Model\Warehouse\Card\Import;
 
-class CardPriceActive extends \Opencart\System\Engine\Model {
+class Active extends \Opencart\System\Engine\Model {
 
     // ------------------------------------------------------------------ //
     //  oc_card_price_raw — temporary eBay listings before matching

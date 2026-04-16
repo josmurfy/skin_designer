@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/condition.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/condition.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 class Condition extends \Opencart\System\Engine\Model {
 	
@@ -55,13 +55,13 @@ class Condition extends \Opencart\System\Engine\Model {
 
     public function getConditionDetails($category_id = null, $condition_id = null, $condition_marketplace_item_id = null, $site_id = 0) {
         // Construction de la clause WHERE pour condition_id
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         if (is_array($category_id)) {
             $category_id = reset($category_id);
         }
 
-        //$this->load->model('shopmanager/translate");
+        //$this->load->model('warehouse/tools/translate");
         //print("<pre>".print_r ($category_id,true )."</pre>");
             //print("<pre>".print_r ($condition_id,true )."</pre>");
             //print("<pre>".print_r ($condition_marketplace_item_id,true )."</pre>");
@@ -86,7 +86,7 @@ class Condition extends \Opencart\System\Engine\Model {
             $site_id = $row_condition['site_id'];
           
             if (!isset($row_condition['conditions_ebay']) || !is_array($conditions_ebay)) {
-                $conditions_ebay = $this->model_shopmanager_ebay->getConditionsByCategory($category_id, 1, $site_id);
+                $conditions_ebay = $this->model_warehouse_marketplace_ebay_api->getConditionsByCategory($category_id, 1, $site_id);
                 if ($conditions_ebay && is_array($conditions_ebay)) {
                     foreach ($conditions_ebay as $condition_ebay => $name) {
                         $query = $this->db->query("SELECT *
@@ -123,7 +123,7 @@ class Condition extends \Opencart\System\Engine\Model {
                                                           prefix = '" . $this->db->escape($rows_cond_name['prefix']) . "', 
                                                           name = '" . $this->db->escape($text_field) . "'");
                                     $condition_id_index = $this->db->getLastId();
-                                    $text_field_translated = $this->model_shopmanager_translate->translate($text_field, 'Fr');
+                                    $text_field_translated = $this->model_warehouse_tools_translate->translate($text_field, 'Fr');
                                     $this->db->query("INSERT INTO " . DB_PREFIX . "condition 
                                                       SET condition_id_index = '" . (int)$condition_id_index . "', 
                                                           condition_id = '" . (int)$matching_key . "', 

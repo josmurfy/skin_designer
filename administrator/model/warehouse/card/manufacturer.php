@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/card/card_manufacturer.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/manufacturer.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
-class CardManufacturer extends \Opencart\System\Engine\Model {
+class Manufacturer extends \Opencart\System\Engine\Model {
 
     /**
      * Get all manufacturers, including comma-separated card type names via JOIN

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/marketplace/marketplace.php
+// Original: warehouse/marketplace/connection.php
 $_['heading_title']                     = 'Conectar mis tiendas Marketplace';
 $_['heading_title_account']            = 'Conectar mis tiendas Marketplace';
 $_['heading_title_add']                = 'Agregar cuenta Marketplace';

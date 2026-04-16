@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/import/card_importer.php
+// Original: warehouse/card/import/card.php
 // Heading
 $_['heading_title']    = 'Importateur de Cartes en Bloc';
 

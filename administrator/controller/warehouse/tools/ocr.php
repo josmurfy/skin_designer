@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/ocr.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/tools/ocr.php
+namespace Opencart\Admin\Controller\Warehouse\Tools;
 
 class Ocr extends \Opencart\System\Engine\Controller {
     public function index(): void {
@@ -8,7 +8,7 @@ class Ocr extends \Opencart\System\Engine\Controller {
 		
       
 
-        $this->load->language('shopmanager/ocr');
+        $this->load->language('warehouse/tools/ocr');
         $data = [];
         
         
@@ -35,12 +35,12 @@ class Ocr extends \Opencart\System\Engine\Controller {
       
       // echo 'allo31ocr'; 
 
-      $this->response->setOutput($this->load->view('shopmanager/ocr', $data));
+      $this->response->setOutput($this->load->view('warehouse/tools/ocr', $data));
      
     }
 
     public function upload(): void {
-        $this->load->language('shopmanager/ocr');
+        $this->load->language('warehouse/tools/ocr');
         $data = [];
         
         $json = [];
@@ -51,9 +51,9 @@ class Ocr extends \Opencart\System\Engine\Controller {
   //print("<pre>" . print_r($this->request->files['image'], true) . "</pre>");
                
         if (isset($this->request->files['image']) && is_file($this->request->files['image']['tmp_name'])) {
-            $this->load->model('shopmanager/ocr');
+            $this->load->model('warehouse/tools/ocr');
           
-            $text = $this->model_shopmanager_ocr->recognizeText($this->request->files['image']['tmp_name']);
+            $text = $this->model_warehouse_tools_ocr->recognizeText($this->request->files['image']['tmp_name']);
        //$text='';
             if ($text) {
                 $json['success'] = true;

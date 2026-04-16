@@ -94,14 +94,14 @@ $('#button-filter').on('click', function() {
         url += '&filter_location=' + encodeURIComponent(filter_location);
     }
 
-    window.history.pushState({}, null, 'index.php?route=shopmanager/inventory&user_token={{ user_token }}' + url);
-    $('#inventory').load('index.php?route=shopmanager/inventory.list&user_token={{ user_token }}' + url);
+    window.history.pushState({}, null, 'index.php?route=warehouse/inventory/inventory&user_token={{ user_token }}' + url);
+    $('#inventory').load('index.php?route=warehouse/inventory/inventory.list&user_token={{ user_token }}' + url);
 });
 
 $('#form-filter').on('reset', function() {
     setTimeout(function() {
-        window.history.pushState({}, null, 'index.php?route=shopmanager/inventory&user_token={{ user_token }}');
-        $('#inventory').load('index.php?route=shopmanager/inventory.list&user_token={{ user_token }}');
+        window.history.pushState({}, null, 'index.php?route=warehouse/inventory/inventory&user_token={{ user_token }}');
+        $('#inventory').load('index.php?route=warehouse/inventory/inventory.list&user_token={{ user_token }}');
     }, 10);
 });
 //--></script>

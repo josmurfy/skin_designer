@@ -1,4 +1,4 @@
-// Original: shopmanager/ocr.js
+// Original: warehouse/tools/ocr.js
 // ============================================
 // FUNCTIONS DUPLICATED FROM TOOLS.JS (PRODUCTION SAFETY)
 // ============================================
@@ -335,7 +335,7 @@ for (let [key, value] of formData.entries()) {
 }
     // Envoyer la requête
     try {
-        const response = await fetch(`index.php?route=shopmanager/ocr.upload&user_token=${user_token}`, {
+        const response = await fetch(`index.php?route=warehouse/tools/ocr.upload&user_token=${user_token}`, {
             method: 'POST',
             body: formData,
         });

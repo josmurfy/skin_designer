@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/recurring.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/recurring.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 class Recurring extends \Opencart\System\Engine\Model {
 

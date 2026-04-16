@@ -1,4 +1,4 @@
-{# Original: shopmanager/catalog/product.twig #}
+{# Original: warehouse/product/product.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -340,9 +340,9 @@
               url += '&limit=' + encodeURIComponent(limit);
           }
 
-           window.history.pushState({}, null, 'index.php?route=shopmanager/catalog/product&user_token={{ user_token }}' + url);
+           window.history.pushState({}, null, 'index.php?route=warehouse/product/product&user_token={{ user_token }}' + url);
 
-          $('#product').load('index.php?route=shopmanager/catalog/product.list&user_token={{ user_token }}' + url, function() {
+          $('#product').load('index.php?route=warehouse/product/product.list&user_token={{ user_token }}' + url, function() {
               if (typeof window.reinitImagePreview === 'function') {
                   window.reinitImagePreview();
               }
@@ -367,9 +367,9 @@
         });
           // Limit
           var limit = $('select[name=\'limit\']').val();
-           window.history.pushState({}, null, 'index.php?route=shopmanager/catalog/product&user_token={{ user_token }}' + url);
+           window.history.pushState({}, null, 'index.php?route=warehouse/product/product&user_token={{ user_token }}' + url);
 
-          $('#product').load('index.php?route=shopmanager/catalog/product.list&user_token={{ user_token }}' + url, function() {
+          $('#product').load('index.php?route=warehouse/product/product.list&user_token={{ user_token }}' + url, function() {
               if (typeof window.reinitImagePreview === 'function') {
                   window.reinitImagePreview();
               }

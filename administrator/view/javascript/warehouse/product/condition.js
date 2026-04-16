@@ -1,4 +1,4 @@
-// Original: shopmanager/condition.js
+// Original: warehouse/product/condition.js
 // Fonction pour récupérer les détails de condition selon le category_id
 function getConditionDetails(categoryId) {
 
@@ -7,7 +7,7 @@ function getConditionDetails(categoryId) {
 
     if ($.isNumeric(categoryId)) {
         $.ajax({
-            url: 'index.php?route=shopmanager/condition.getConditionDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
+            url: 'index.php?route=warehouse/product/condition.getConditionDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
             dataType: 'json',
             success: function(json) {
                 if (!json.erreur) {

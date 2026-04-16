@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/google.php
+// Original: warehouse/tools/google.php
 // Heading
 $_['heading_title'] = 'Google Image Search';
 

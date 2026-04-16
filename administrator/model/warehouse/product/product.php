@@ -1,10 +1,10 @@
 <?php
-// Original: shopmanager/catalog/product.php
-namespace Opencart\Admin\Model\Shopmanager\Catalog;
+// Original: warehouse/product/product.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 /**
  * Class Product
  *
- * Can be loaded using $this->load->model('shopmanager/catalog/product');
+ * Can be loaded using $this->load->model('warehouse/product/product');
  *
  * @package Opencart\Admin\Model\Shopmanager
  */
@@ -62,9 +62,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *     'image'                         => ''
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_id = $this->model_shopmanager_catalog_product->addProduct($product_data);
+	 * $product_id = $this->model_warehouse_product_product->addProduct($product_data);
 	 */
 	public function addProduct(array $data): int {
 
@@ -99,15 +99,15 @@ class Product extends \Opencart\System\Engine\Model {
 		}
 
 		if (isset($data['image_temp'])) {
-			$this->load->model('shopmanager/tools');
-			$this->model_shopmanager_tools->transferTempImages($product_id,$data); 
+			$this->load->model('warehouse/tools/utility');
+			$this->model_warehouse_tools_utility->transferTempImages($product_id,$data); 
 		}
 		
 		// Conditions
 		if(isset($data['category_id'])){
-			$this->load->model('shopmanager/condition');
+			$this->load->model('warehouse/product/condition');
 			
-			$data['conditions']=$this->model_shopmanager_condition->getConditionDetails($data['category_id'],$data['condition_id'],$data['condition_marketplace_item_id']??null);			
+			$data['conditions']=$this->model_warehouse_product_condition->getConditionDetails($data['category_id'],$data['condition_id'],$data['condition_marketplace_item_id']??null);			
 		}
 
 		if ($data['sku']=='' && $data['condition_id']==1000){
@@ -119,14 +119,14 @@ class Product extends \Opencart\System\Engine\Model {
 		
 		// Description
 		foreach ($data['product_description'] as $language_id => $value) {
-			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $data);
+			$this->model_warehouse_product_product->addDescription($product_id, (int)$language_id, $data);
 		}
-		$this->model_shopmanager_catalog_product->refreshDescriptions($product_id);
+		$this->model_warehouse_product_product->refreshDescriptions($product_id);
 
 		// Code
 		if (isset($data['product_code'])) {
 			foreach ($data['product_code'] as $product_code) {
-				$this->model_shopmanager_catalog_product->addCode($product_id, $product_code);
+				$this->model_warehouse_product_product->addCode($product_id, $product_code);
 
 			}
 		}
@@ -134,7 +134,7 @@ class Product extends \Opencart\System\Engine\Model {
 		// Categories
 		if (isset($data['product_category'])) {
 			foreach ($data['product_category'] as $category_id) {
-				$this->model_shopmanager_catalog_product->addCategory($product_id, $category_id);
+				$this->model_warehouse_product_product->addCategory($product_id, $category_id);
 
 			}
 		}
@@ -142,28 +142,28 @@ class Product extends \Opencart\System\Engine\Model {
 		// Filters
 		if (isset($data['product_filter'])) {
 			foreach ($data['product_filter'] as $filter_id) {
-				$this->model_shopmanager_catalog_product->addFilter($product_id, $filter_id);
+				$this->model_warehouse_product_product->addFilter($product_id, $filter_id);
 			}
 		}
 
 		// Stores
 		if (isset($data['product_store'])) {
 			foreach ($data['product_store'] as $store_id) {
-				$this->model_shopmanager_catalog_product->addStore($product_id, $store_id);
+				$this->model_warehouse_product_product->addStore($product_id, $store_id);
 			}
 		}
 
 		// Downloads
 		if (isset($data['product_download'])) {
 			foreach ($data['product_download'] as $download_id) {
-				$this->model_shopmanager_catalog_product->addDownload($product_id, $download_id);
+				$this->model_warehouse_product_product->addDownload($product_id, $download_id);
 			}
 		}
 
 		// Related
 		if (isset($data['product_related'])) {
 			foreach ($data['product_related'] as $related_id) {
-				$this->model_shopmanager_catalog_product->addRelated($product_id, $related_id);
+				$this->model_warehouse_product_product->addRelated($product_id, $related_id);
 			}
 		}
 
@@ -172,10 +172,10 @@ class Product extends \Opencart\System\Engine\Model {
 			foreach ($data['product_attribute'] as $product_attribute) {
 				if ($product_attribute['attribute_id']) {
 					// Removes duplicates
-					$this->model_shopmanager_catalog_product->deleteAttributes($product_id, $product_attribute['attribute_id']);
+					$this->model_warehouse_product_product->deleteAttributes($product_id, $product_attribute['attribute_id']);
 
 					foreach ($product_attribute['product_attribute_description'] as $language_id => $product_attribute_description) {
-						$this->model_shopmanager_catalog_product->addAttribute($product_id, $product_attribute['attribute_id'], $language_id, $product_attribute_description);
+						$this->model_warehouse_product_product->addAttribute($product_id, $product_attribute['attribute_id'], $language_id, $product_attribute_description);
 					}
 				}
 			}
@@ -184,28 +184,28 @@ class Product extends \Opencart\System\Engine\Model {
 		// Options
 		if (isset($data['product_option'])) {
 			foreach ($data['product_option'] as $product_option) {
-				$this->model_shopmanager_catalog_product->addOption($product_id, $product_option);
+				$this->model_warehouse_product_product->addOption($product_id, $product_option);
 			}
 		}
 
 		// Subscription
 		if (isset($data['product_subscription'])) {
 			foreach ($data['product_subscription'] as $product_subscription) {
-				$this->model_shopmanager_catalog_product->addSubscription($product_id, $product_subscription);
+				$this->model_warehouse_product_product->addSubscription($product_id, $product_subscription);
 			}
 		}
 
 		// Discounts
 		if (isset($data['product_discount'])) {
 			foreach ($data['product_discount'] as $product_discount) {
-				$this->model_shopmanager_catalog_product->addDiscount($product_id, $product_discount);
+				$this->model_warehouse_product_product->addDiscount($product_id, $product_discount);
 			}
 		}
 
 		// Images
 		if (isset($data['product_image'])) {
 			foreach ($data['product_image'] as $product_image) {
-				$this->model_shopmanager_catalog_product->addImage($product_id, $product_image);
+				$this->model_warehouse_product_product->addImage($product_id, $product_image);
 
 			}
 		}
@@ -214,7 +214,7 @@ class Product extends \Opencart\System\Engine\Model {
 		if (isset($data['product_reward'])) {
 			foreach ($data['product_reward'] as $customer_group_id => $product_reward) {
 				if ((int)$product_reward['points'] > 0) {
-					$this->model_shopmanager_catalog_product->addReward($product_id, $customer_group_id, $product_reward);
+					$this->model_warehouse_product_product->addReward($product_id, $customer_group_id, $product_reward);
 				}
 			}
 		}
@@ -234,7 +234,7 @@ class Product extends \Opencart\System\Engine\Model {
 		if (isset($data['product_layout'])) {
 			foreach ($data['product_layout'] as $store_id => $layout_id) {
 				if ($layout_id) {
-					$this->model_shopmanager_catalog_product->addLayout($product_id, $store_id, $layout_id);
+					$this->model_warehouse_product_product->addLayout($product_id, $store_id, $layout_id);
 				}
 			}
 		}
@@ -292,9 +292,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *     'sort_order'                    => 0,
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->editProduct($product_id, $product_data);
+	 * $this->model_warehouse_product_product->editProduct($product_id, $product_data);
 	 */
 	public function editProduct(int $product_id, array $data): void {
 		// Charger les models nécessaires
@@ -323,108 +323,108 @@ class Product extends \Opencart\System\Engine\Model {
 				WHERE `product_id` = '" . (int)$product_id . "'");
 
 		// Description
-		$this->model_shopmanager_catalog_product->deleteDescriptions($product_id);
+		$this->model_warehouse_product_product->deleteDescriptions($product_id);
 
 		foreach ($data['product_description'] as $language_id => $value) {
-			$this->model_shopmanager_catalog_product->addDescription($product_id, (int)$language_id, $data);
+			$this->model_warehouse_product_product->addDescription($product_id, (int)$language_id, $data);
 		}
-		$this->model_shopmanager_catalog_product->refreshDescriptions($product_id);
+		$this->model_warehouse_product_product->refreshDescriptions($product_id);
 
 		// Code
-		$this->model_shopmanager_catalog_product->deleteCodes($product_id);
+		$this->model_warehouse_product_product->deleteCodes($product_id);
 
 		if (isset($data['product_code'])) {
 			foreach ($data['product_code'] as $product_code) {
-				$this->model_shopmanager_catalog_product->addCode($product_id, $product_code);
+				$this->model_warehouse_product_product->addCode($product_id, $product_code);
 
 			}
 		}
 
 		// Categories
-		$this->model_shopmanager_catalog_product->deleteCategories($product_id);
+		$this->model_warehouse_product_product->deleteCategories($product_id);
 
 		if (isset($data['product_category'])) {
 			foreach ($data['product_category'] as $category_id) {
-				$this->model_shopmanager_catalog_product->addCategory($product_id, $category_id);
+				$this->model_warehouse_product_product->addCategory($product_id, $category_id);
 			}
 		}
 
 		// Filters
-		$this->model_shopmanager_catalog_product->deleteFilters($product_id);
+		$this->model_warehouse_product_product->deleteFilters($product_id);
 
 		if (isset($data['product_filter'])) {
 			foreach ($data['product_filter'] as $filter_id) {
-				$this->model_shopmanager_catalog_product->addFilter($product_id, $filter_id);
+				$this->model_warehouse_product_product->addFilter($product_id, $filter_id);
 			}
 		}
 
 		// Stores
-		$this->model_shopmanager_catalog_product->deleteStores($product_id);
+		$this->model_warehouse_product_product->deleteStores($product_id);
 
 		if (isset($data['product_store'])) {
 			foreach ($data['product_store'] as $store_id) {
-				$this->model_shopmanager_catalog_product->addStore($product_id, $store_id);
+				$this->model_warehouse_product_product->addStore($product_id, $store_id);
 			}
 		}
 
 		// Downloads
-		$this->model_shopmanager_catalog_product->deleteDownloads($product_id);
+		$this->model_warehouse_product_product->deleteDownloads($product_id);
 
 		if (isset($data['product_download'])) {
 			foreach ($data['product_download'] as $download_id) {
-				$this->model_shopmanager_catalog_product->addDownload($product_id, $download_id);
+				$this->model_warehouse_product_product->addDownload($product_id, $download_id);
 			}
 		}
 
 		// Related
-		$this->model_shopmanager_catalog_product->deleteRelated($product_id);
+		$this->model_warehouse_product_product->deleteRelated($product_id);
 
 		if (isset($data['product_related'])) {
 			foreach ($data['product_related'] as $related_id) {
-				$this->model_shopmanager_catalog_product->addRelated($product_id, $related_id);
+				$this->model_warehouse_product_product->addRelated($product_id, $related_id);
 			}
 		}
 
 		// Attributes
-		$this->model_shopmanager_catalog_product->deleteAttributes($product_id);
+		$this->model_warehouse_product_product->deleteAttributes($product_id);
 
 		if (!empty($data['product_attribute'])) {
 			foreach ($data['product_attribute'] as $product_attribute) {
 				if ($product_attribute['attribute_id']) {
 					// Removes duplicates
-					$this->model_shopmanager_catalog_product->deleteAttributes($product_id, $product_attribute['attribute_id']);
+					$this->model_warehouse_product_product->deleteAttributes($product_id, $product_attribute['attribute_id']);
 
 					foreach ($product_attribute['product_attribute_description'] as $language_id => $product_attribute_description) {
-						$this->model_shopmanager_catalog_product->addAttribute($product_id, $product_attribute['attribute_id'], $language_id, $product_attribute_description);
+						$this->model_warehouse_product_product->addAttribute($product_id, $product_attribute['attribute_id'], $language_id, $product_attribute_description);
 					}
 				}
 			}
 		}
 
 		// Options
-		$this->model_shopmanager_catalog_product->deleteOptions($product_id);
+		$this->model_warehouse_product_product->deleteOptions($product_id);
 
 		if (isset($data['product_option'])) {
 			foreach ($data['product_option'] as $product_option) {
-				$this->model_shopmanager_catalog_product->addOption($product_id, $product_option);
+				$this->model_warehouse_product_product->addOption($product_id, $product_option);
 			}
 		}
 
 		// Subscription
-		$this->model_shopmanager_catalog_product->deleteSubscriptions($product_id);
+		$this->model_warehouse_product_product->deleteSubscriptions($product_id);
 
 		if (isset($data['product_subscription'])) {
 			foreach ($data['product_subscription'] as $product_subscription) {
-				$this->model_shopmanager_catalog_product->addSubscription($product_id, $product_subscription);
+				$this->model_warehouse_product_product->addSubscription($product_id, $product_subscription);
 			}
 		}
 
 		// Discounts
-		$this->model_shopmanager_catalog_product->deleteDiscounts($product_id);
+		$this->model_warehouse_product_product->deleteDiscounts($product_id);
 
 		if (isset($data['product_discount'])) {
 			foreach ($data['product_discount'] as $product_discount) {
-				$this->model_shopmanager_catalog_product->addDiscount($product_id, $product_discount);
+				$this->model_warehouse_product_product->addDiscount($product_id, $product_discount);
 			}
 		}
 
@@ -432,29 +432,29 @@ class Product extends \Opencart\System\Engine\Model {
 		if (isset($data['image'])) {
 			$this->db->query("UPDATE " . DB_PREFIX . "product SET image = '" . $this->db->escape($data['image']) . "' WHERE product_id = '" . (int)$product_id . "'");
 		}
-		$this->model_shopmanager_catalog_product->deleteImages($product_id);
+		$this->model_warehouse_product_product->deleteImages($product_id);
 
 		if (isset($data['product_image'])) {
 			foreach ($data['product_image'] as $product_image) {
-				$this->model_shopmanager_catalog_product->addImage($product_id, $product_image);
+				$this->model_warehouse_product_product->addImage($product_id, $product_image);
 			}
 		}
 
 		if (isset($data['image_temp'])) {
-			$this->load->model('shopmanager/tools');
+			$this->load->model('warehouse/tools/utility');
 			if(!isset($data['product_image'])){
-				$this->model_shopmanager_tools->deleteProductImagesFiles($product_id);
+				$this->model_warehouse_tools_utility->deleteProductImagesFiles($product_id);
 			}
-			$this->model_shopmanager_tools->transferTempImages($product_id,$data);
+			$this->model_warehouse_tools_utility->transferTempImages($product_id,$data);
 		}
 
 		// Rewards
-		$this->model_shopmanager_catalog_product->deleteRewards($product_id);
+		$this->model_warehouse_product_product->deleteRewards($product_id);
 
 		if (isset($data['product_reward'])) {
 			foreach ($data['product_reward'] as $customer_group_id => $value) {
 				if ((int)$value['points'] > 0) {
-					$this->model_shopmanager_catalog_product->addReward($product_id, $customer_group_id, $value);
+					$this->model_warehouse_product_product->addReward($product_id, $customer_group_id, $value);
 				}
 			}
 		}
@@ -471,12 +471,12 @@ class Product extends \Opencart\System\Engine\Model {
 		}
 
 		// Layout
-		$this->model_shopmanager_catalog_product->deleteLayouts($product_id);
+		$this->model_warehouse_product_product->deleteLayouts($product_id);
 
 		if (isset($data['product_layout'])) {
 			foreach ($data['product_layout'] as $store_id => $layout_id) {
 				if ($layout_id) {
-					$this->model_shopmanager_catalog_product->addLayout($product_id, $store_id, $layout_id);
+					$this->model_warehouse_product_product->addLayout($product_id, $store_id, $layout_id);
 				}
 			}
 		}
@@ -493,14 +493,14 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->copyProduct($product_id);
+	 * $this->model_warehouse_product_product->copyProduct($product_id);
 	 */
 	public function copyProduct(int $product_id): int {
 		$new_product_id = 0;
 
-		$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+		$product_info = $this->model_warehouse_product_product->getProduct($product_id);
 
 		if ($product_info) {
 			$product_data = $product_info;
@@ -512,20 +512,20 @@ class Product extends \Opencart\System\Engine\Model {
 			$product_data['marketplace_item_id'] = 0;
 			//$product_data['image'] ='';
 
-			$product_data['product_attribute'] = $this->model_shopmanager_catalog_product->getAttributes($product_id);
-			$product_data['product_code'] = $this->model_shopmanager_catalog_product->getCodes($product_id);
-			$product_data['product_category'] = $this->model_shopmanager_catalog_product->getCategories($product_id);
-			$product_data['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
-			$product_data['product_discount'] = $this->model_shopmanager_catalog_product->getDiscounts($product_id);
-			$product_data['product_download'] = $this->model_shopmanager_catalog_product->getDownloads($product_id);
-			$product_data['product_filter'] = $this->model_shopmanager_catalog_product->getFilters($product_id);
-			$product_data['product_image'] = $this->model_shopmanager_catalog_product->getImages($product_id);
-			$product_data['product_layout'] = $this->model_shopmanager_catalog_product->getLayouts($product_id);
-			$product_data['product_option'] = $this->model_shopmanager_catalog_product->getOptions($product_id);
-			$product_data['product_subscription'] = $this->model_shopmanager_catalog_product->getSubscriptions($product_id);
-			$product_data['product_related'] = $this->model_shopmanager_catalog_product->getRelated($product_id);
-			$product_data['product_reward'] = $this->model_shopmanager_catalog_product->getRewards($product_id);
-			$product_data['product_store'] = $this->model_shopmanager_catalog_product->getStores($product_id);
+			$product_data['product_attribute'] = $this->model_warehouse_product_product->getAttributes($product_id);
+			$product_data['product_code'] = $this->model_warehouse_product_product->getCodes($product_id);
+			$product_data['product_category'] = $this->model_warehouse_product_product->getCategories($product_id);
+			$product_data['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
+			$product_data['product_discount'] = $this->model_warehouse_product_product->getDiscounts($product_id);
+			$product_data['product_download'] = $this->model_warehouse_product_product->getDownloads($product_id);
+			$product_data['product_filter'] = $this->model_warehouse_product_product->getFilters($product_id);
+			$product_data['product_image'] = $this->model_warehouse_product_product->getImages($product_id);
+			$product_data['product_layout'] = $this->model_warehouse_product_product->getLayouts($product_id);
+			$product_data['product_option'] = $this->model_warehouse_product_product->getOptions($product_id);
+			$product_data['product_subscription'] = $this->model_warehouse_product_product->getSubscriptions($product_id);
+			$product_data['product_related'] = $this->model_warehouse_product_product->getRelated($product_id);
+			$product_data['product_reward'] = $this->model_warehouse_product_product->getRewards($product_id);
+			$product_data['product_store'] = $this->model_warehouse_product_product->getStores($product_id);
 
 			foreach ($product_data['product_option'] as $po => $product_option) {
 				$product_data['product_option'][$po]['product_option_id'] = 0;
@@ -537,7 +537,7 @@ class Product extends \Opencart\System\Engine\Model {
 				}
 			}
 
-			$new_product_id = $this->model_shopmanager_catalog_product->addProduct($product_data);
+			$new_product_id = $this->model_warehouse_product_product->addProduct($product_data);
 		}
 
 		return $new_product_id;
@@ -554,37 +554,37 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteProduct($product_id);
+	 * $this->model_warehouse_product_product->deleteProduct($product_id);
 	 */
 	public function deleteProduct(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product` WHERE `product_id` = '" . (int)$product_id . "'");
 
-		$this->model_shopmanager_catalog_product->deleteAttributes($product_id);
-		$this->model_shopmanager_catalog_product->deleteCodes($product_id);
-		$this->model_shopmanager_catalog_product->deleteCategories($product_id);
-		$this->model_shopmanager_catalog_product->deleteDescriptions($product_id);
-		$this->model_shopmanager_catalog_product->deleteDiscounts($product_id);
-		$this->model_shopmanager_catalog_product->deleteDownloads($product_id);
-		$this->model_shopmanager_catalog_product->deleteFilters($product_id);
-		$this->model_shopmanager_catalog_product->deleteImages($product_id);
-		$this->model_shopmanager_catalog_product->deleteLayouts($product_id);
-		$this->model_shopmanager_catalog_product->deleteOptions($product_id);
-		$this->model_shopmanager_catalog_product->deleteRelated($product_id);
-		$this->model_shopmanager_catalog_product->deleteReports($product_id);
-		$this->model_shopmanager_catalog_product->deleteRewards($product_id);
-		$this->model_shopmanager_catalog_product->deleteStores($product_id);
-		$this->model_shopmanager_catalog_product->deleteSubscriptions($product_id);
+		$this->model_warehouse_product_product->deleteAttributes($product_id);
+		$this->model_warehouse_product_product->deleteCodes($product_id);
+		$this->model_warehouse_product_product->deleteCategories($product_id);
+		$this->model_warehouse_product_product->deleteDescriptions($product_id);
+		$this->model_warehouse_product_product->deleteDiscounts($product_id);
+		$this->model_warehouse_product_product->deleteDownloads($product_id);
+		$this->model_warehouse_product_product->deleteFilters($product_id);
+		$this->model_warehouse_product_product->deleteImages($product_id);
+		$this->model_warehouse_product_product->deleteLayouts($product_id);
+		$this->model_warehouse_product_product->deleteOptions($product_id);
+		$this->model_warehouse_product_product->deleteRelated($product_id);
+		$this->model_warehouse_product_product->deleteReports($product_id);
+		$this->model_warehouse_product_product->deleteRewards($product_id);
+		$this->model_warehouse_product_product->deleteStores($product_id);
+		$this->model_warehouse_product_product->deleteSubscriptions($product_id);
 
-		$this->load->model('shopmanager/tools');	
-		$this->model_shopmanager_tools->deleteProductImagesFiles($product_id);
+		$this->load->model('warehouse/tools/utility');	
+		$this->model_warehouse_tools_utility->deleteProductImagesFiles($product_id);
 	
 
 		// Review
-		$this->load->model('shopmanager/review');
+		$this->load->model('warehouse/review');
 
-		$this->model_shopmanager_review->deleteReviewsByProductId($product_id);
+		$this->model_warehouse_review->deleteReviewsByProductId($product_id);
 
 		// SEO
 		$this->load->model('design/seo_url');
@@ -596,7 +596,7 @@ class Product extends \Opencart\System\Engine\Model {
 
 		$this->model_marketing_coupon->deleteProductsByProductId($product_id);
 
-		$this->model_shopmanager_catalog_product->editMasterId($product_id, 0);
+		$this->model_warehouse_product_product->editMasterId($product_id, 0);
 
 		$this->cache->delete('product');
 	}
@@ -611,15 +611,15 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_id = $this->model_shopmanager_catalog_product->addVariant($master_id, $data);
+	 * $product_id = $this->model_warehouse_product_product->addVariant($master_id, $data);
 	 */
 	public function addVariant(int $master_id, array $data): int {
 		$product_data = [];
 
 		// Use master values to override the values
-		$master_info = $this->model_shopmanager_catalog_product->getProduct($master_id);
+		$master_info = $this->model_warehouse_product_product->getProduct($master_id);
 
 		if ($master_info) {
 			// We use the override to override the master product values
@@ -645,7 +645,7 @@ class Product extends \Opencart\System\Engine\Model {
 			}
 
 			// Descriptions
-			$product_descriptions = $this->model_shopmanager_catalog_product->getDescriptions($master_id);
+			$product_descriptions = $this->model_warehouse_product_product->getDescriptions($master_id);
 
 			foreach ($product_descriptions as $language_id => $product_description) {
 				foreach ($product_description as $key => $value) {
@@ -658,37 +658,37 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Attributes
 			if (!isset($override['product_attribute'])) {
-				$product_data['product_attribute'] = $this->model_shopmanager_catalog_product->getAttributes($master_id);
+				$product_data['product_attribute'] = $this->model_warehouse_product_product->getAttributes($master_id);
 			}
 
 			// Category
 			if (!isset($override['product_category'])) {
-				$product_data['product_category'] = $this->model_shopmanager_catalog_product->getCategories($master_id);
+				$product_data['product_category'] = $this->model_warehouse_product_product->getCategories($master_id);
 			}
 
 			// Discounts
 			if (!isset($override['product_discount'])) {
-				$product_data['product_discount'] = $this->model_shopmanager_catalog_product->getDiscounts($master_id);
+				$product_data['product_discount'] = $this->model_warehouse_product_product->getDiscounts($master_id);
 			}
 
 			// Downloads
 			if (!isset($override['product_download'])) {
-				$product_data['product_download'] = $this->model_shopmanager_catalog_product->getDownloads($master_id);
+				$product_data['product_download'] = $this->model_warehouse_product_product->getDownloads($master_id);
 			}
 
 			// Filters
 			if (!isset($override['product_filter'])) {
-				$product_data['product_filter'] = $this->model_shopmanager_catalog_product->getFilters($master_id);
+				$product_data['product_filter'] = $this->model_warehouse_product_product->getFilters($master_id);
 			}
 
 			// Images
 			if (!isset($override['product_image'])) {
-				$product_data['product_image'] = $this->model_shopmanager_catalog_product->getImages($master_id);
+				$product_data['product_image'] = $this->model_warehouse_product_product->getImages($master_id);
 			}
 
 			// Layouts
 			if (!isset($override['product_layout'])) {
-				$product_data['product_layout'] = $this->model_shopmanager_catalog_product->getLayouts($master_id);
+				$product_data['product_layout'] = $this->model_warehouse_product_product->getLayouts($master_id);
 			}
 
 			// Options
@@ -696,17 +696,17 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Subscriptions
 			if (!isset($override['product_subscription'])) {
-				$product_data['product_subscription'] = $this->model_shopmanager_catalog_product->getSubscriptions($master_id);
+				$product_data['product_subscription'] = $this->model_warehouse_product_product->getSubscriptions($master_id);
 			}
 
 			// Related
 			if (!isset($override['product_related'])) {
-				$product_data['product_related'] = $this->model_shopmanager_catalog_product->getRelated($master_id);
+				$product_data['product_related'] = $this->model_warehouse_product_product->getRelated($master_id);
 			}
 
 			// Rewards
 			if (!isset($override['product_reward'])) {
-				$product_data['product_reward'] = $this->model_shopmanager_catalog_product->getRewards($master_id);
+				$product_data['product_reward'] = $this->model_warehouse_product_product->getRewards($master_id);
 			}
 
 			// SEO
@@ -714,7 +714,7 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Stores
 			if (!isset($override['product_store'])) {
-				$product_data['product_store'] = $this->model_shopmanager_catalog_product->getStores($master_id);
+				$product_data['product_store'] = $this->model_warehouse_product_product->getStores($master_id);
 			}
 		}
 
@@ -737,7 +737,7 @@ class Product extends \Opencart\System\Engine\Model {
 		}
 
 		// Product add with master product overridden values
-		return $this->model_shopmanager_catalog_product->addProduct($product_data);
+		return $this->model_warehouse_product_product->addProduct($product_data);
 	}
 
 	/**
@@ -751,15 +751,15 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->editVariant($master_id, $product_id, $data);
+	 * $this->model_warehouse_product_product->editVariant($master_id, $product_id, $data);
 	 */
 	public function editVariant(int $master_id, int $product_id, array $data): void {
 		$product_data = [];
 
 		// Use master values to override the values
-		$master_info = $this->model_shopmanager_catalog_product->getProduct($master_id);
+		$master_info = $this->model_warehouse_product_product->getProduct($master_id);
 
 		if ($master_info) {
 			// We use the override to override the master product values
@@ -785,7 +785,7 @@ class Product extends \Opencart\System\Engine\Model {
 			}
 
 			// Description
-			$product_descriptions = $this->model_shopmanager_catalog_product->getDescriptions($master_id);
+			$product_descriptions = $this->model_warehouse_product_product->getDescriptions($master_id);
 
 			foreach ($product_descriptions as $language_id => $product_description) {
 				foreach ($product_description as $key => $value) {
@@ -797,37 +797,37 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Attributes
 			if (!isset($override['product_attribute'])) {
-				$product_data['product_attribute'] = $this->model_shopmanager_catalog_product->getAttributes($master_id);
+				$product_data['product_attribute'] = $this->model_warehouse_product_product->getAttributes($master_id);
 			}
 
 			// Category
 			if (!isset($override['product_category'])) {
-				$product_data['product_category'] = $this->model_shopmanager_catalog_product->getCategories($master_id);
+				$product_data['product_category'] = $this->model_warehouse_product_product->getCategories($master_id);
 			}
 
 			// Discounts
 			if (!isset($override['product_discount'])) {
-				$product_data['product_discount'] = $this->model_shopmanager_catalog_product->getDiscounts($master_id);
+				$product_data['product_discount'] = $this->model_warehouse_product_product->getDiscounts($master_id);
 			}
 
 			// Downloads
 			if (!isset($override['product_download'])) {
-				$product_data['product_download'] = $this->model_shopmanager_catalog_product->getDownloads($master_id);
+				$product_data['product_download'] = $this->model_warehouse_product_product->getDownloads($master_id);
 			}
 
 			// Filters
 			if (!isset($override['product_filter'])) {
-				$product_data['product_filter'] = $this->model_shopmanager_catalog_product->getFilters($master_id);
+				$product_data['product_filter'] = $this->model_warehouse_product_product->getFilters($master_id);
 			}
 
 			// Images
 			if (!isset($override['product_image'])) {
-				$product_data['product_image'] = $this->model_shopmanager_catalog_product->getImages($master_id);
+				$product_data['product_image'] = $this->model_warehouse_product_product->getImages($master_id);
 			}
 
 			// Layouts
 			if (!isset($override['product_layout'])) {
-				$product_data['product_layout'] = $this->model_shopmanager_catalog_product->getLayouts($master_id);
+				$product_data['product_layout'] = $this->model_warehouse_product_product->getLayouts($master_id);
 			}
 
 			// Options
@@ -835,17 +835,17 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Subscription
 			if (!isset($override['product_subscription'])) {
-				$product_data['product_subscription'] = $this->model_shopmanager_catalog_product->getSubscriptions($master_id);
+				$product_data['product_subscription'] = $this->model_warehouse_product_product->getSubscriptions($master_id);
 			}
 
 			// Related
 			if (!isset($override['product_related'])) {
-				$product_data['product_related'] = $this->model_shopmanager_catalog_product->getRelated($master_id);
+				$product_data['product_related'] = $this->model_warehouse_product_product->getRelated($master_id);
 			}
 
 			// Rewards
 			if (!isset($override['product_reward'])) {
-				$product_data['product_reward'] = $this->model_shopmanager_catalog_product->getRewards($master_id);
+				$product_data['product_reward'] = $this->model_warehouse_product_product->getRewards($master_id);
 			}
 
 			// SEO
@@ -853,7 +853,7 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Stores
 			if (!isset($override['product_store'])) {
-				$product_data['product_store'] = $this->model_shopmanager_catalog_product->getStores($master_id);
+				$product_data['product_store'] = $this->model_warehouse_product_product->getStores($master_id);
 			}
 		}
 
@@ -876,7 +876,7 @@ class Product extends \Opencart\System\Engine\Model {
 		}
 
 		// Override the variant product data with the master product values
-		$this->model_shopmanager_catalog_product->editProduct($product_id, $product_data);
+		$this->model_warehouse_product_product->editProduct($product_id, $product_data);
 	}
 
 	/**
@@ -889,16 +889,16 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->editVariants($product_id, $data);
+	 * $this->model_warehouse_product_product->editVariants($product_id, $data);
 	 */
 	public function editVariants(int $master_id, array $data): void {
 		// product_option should not be passed to product variants
 		unset($data['product_option']);
 
 		// If product is master update variants
-		$products = $this->model_shopmanager_catalog_product->getProducts(['filter_master_id' => $master_id]);
+		$products = $this->model_warehouse_product_product->getProducts(['filter_master_id' => $master_id]);
 
 		foreach ($products as $product) {
 			$product_data = [];
@@ -927,7 +927,7 @@ class Product extends \Opencart\System\Engine\Model {
 			}
 
 			// Descriptions
-			$product_descriptions = $this->model_shopmanager_catalog_product->getDescriptions($product['product_id']);
+			$product_descriptions = $this->model_warehouse_product_product->getDescriptions($product['product_id']);
 
 			foreach ($product_descriptions as $language_id => $product_description) {
 				foreach ($product_description as $key => $value) {
@@ -940,60 +940,60 @@ class Product extends \Opencart\System\Engine\Model {
 
 			// Attributes
 			if (isset($override['product_attribute'])) {
-				$product_data['product_attribute'] = $this->model_shopmanager_catalog_product->getAttributes($product['product_id']);
+				$product_data['product_attribute'] = $this->model_warehouse_product_product->getAttributes($product['product_id']);
 			}
 
 			// Category
 			if (isset($override['product_category'])) {
-				$product_data['product_category'] = $this->model_shopmanager_catalog_product->getCategories($product['product_id']);
+				$product_data['product_category'] = $this->model_warehouse_product_product->getCategories($product['product_id']);
 			}
 
 			// Discounts
 			if (isset($override['product_discount'])) {
-				$product_data['product_discount'] = $this->model_shopmanager_catalog_product->getDiscounts($product['product_id']);
+				$product_data['product_discount'] = $this->model_warehouse_product_product->getDiscounts($product['product_id']);
 			}
 
 			// Downloads
 			if (isset($override['product_download'])) {
-				$product_data['product_download'] = $this->model_shopmanager_catalog_product->getDownloads($product['product_id']);
+				$product_data['product_download'] = $this->model_warehouse_product_product->getDownloads($product['product_id']);
 			}
 
 			// Filters
 			if (isset($override['product_filter'])) {
-				$product_data['product_filter'] = $this->model_shopmanager_catalog_product->getFilters($product['product_id']);
+				$product_data['product_filter'] = $this->model_warehouse_product_product->getFilters($product['product_id']);
 			}
 
 			// Images
 			if (isset($override['product_image'])) {
-				$product_data['product_image'] = $this->model_shopmanager_catalog_product->getImages($product['product_id']);
+				$product_data['product_image'] = $this->model_warehouse_product_product->getImages($product['product_id']);
 			}
 
 			// Layouts
 			if (isset($override['product_layout'])) {
-				$product_data['product_layout'] = $this->model_shopmanager_catalog_product->getLayouts($product['product_id']);
+				$product_data['product_layout'] = $this->model_warehouse_product_product->getLayouts($product['product_id']);
 			}
 
 			// Subscription
 			if (isset($override['product_subscription'])) {
-				$product_data['product_subscription'] = $this->model_shopmanager_catalog_product->getSubscriptions($product['product_id']);
+				$product_data['product_subscription'] = $this->model_warehouse_product_product->getSubscriptions($product['product_id']);
 			}
 
 			// Related
 			if (isset($override['product_related'])) {
-				$product_data['product_related'] = $this->model_shopmanager_catalog_product->getRelated($product['product_id']);
+				$product_data['product_related'] = $this->model_warehouse_product_product->getRelated($product['product_id']);
 			}
 
 			// Rewards
 			if (isset($override['product_reward'])) {
-				$product_data['product_reward'] = $this->model_shopmanager_catalog_product->getRewards($product['product_id']);
+				$product_data['product_reward'] = $this->model_warehouse_product_product->getRewards($product['product_id']);
 			}
 
 			// SEO
-			$product_data['product_seo_url'] = $this->model_shopmanager_catalog_product->getSeoUrls($product['product_id']);
+			$product_data['product_seo_url'] = $this->model_warehouse_product_product->getSeoUrls($product['product_id']);
 
 			// Stores
 			if (isset($override['product_store'])) {
-				$product_data['product_store'] = $this->model_shopmanager_catalog_product->getStores($product['product_id']);
+				$product_data['product_store'] = $this->model_warehouse_product_product->getStores($product['product_id']);
 			}
 
 			// If override set the POST data values
@@ -1015,7 +1015,7 @@ class Product extends \Opencart\System\Engine\Model {
 				}
 			}
 
-			$this->model_shopmanager_catalog_product->editProduct($product['product_id'], $product_data);
+			$this->model_warehouse_product_product->editProduct($product['product_id'], $product_data);
 		}
 	}
 
@@ -1031,9 +1031,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->editRating($result['product_id'], $this->model_shopmanager_review->getRating($product_id));
+	 * $this->model_warehouse_product_product->editRating($result['product_id'], $this->model_warehouse_review->getRating($product_id));
 	 */
 	public function editRating(int $product_id, int $rating): void {
 		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET `rating` = '" . (int)$rating . "', `date_modified` = NOW() WHERE `product_id` = '" . (int)$product_id . "'");
@@ -1051,9 +1051,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->editMasterId($product_id, 0);
+	 * $this->model_warehouse_product_product->editMasterId($product_id, 0);
 	 */
 	public function editMasterId(int $product_id, int $master_id): void {
 		$this->db->query("UPDATE `" . DB_PREFIX . "product` SET `master_id` = '" . (int)$master_id . "', `date_modified` = NOW() WHERE `product_id` = '" . (int)$product_id . "'");
@@ -1070,9 +1070,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+	 * $product_info = $this->model_warehouse_product_product->getProduct($product_id);
 	 */
 	public function getProduct(int $product_id): array {
 
@@ -1141,9 +1141,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *     'limit'                  => 10
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->getProducts($filter_data);
+	 * $results = $this->model_warehouse_product_product->getProducts($filter_data);
 	 */
 	public function getProducts(array $data = []): array {
 
@@ -1378,13 +1378,13 @@ class Product extends \Opencart\System\Engine\Model {
 
 	$query = $this->db->query($sql);
 
-	$this->load->model('shopmanager/marketplace');
+	$this->load->model('warehouse/marketplace/listing');
 
 	if (isset($data['filter_image']) && !is_null($data['filter_image']) && $data['filter_image'] == 2){
-		$query->rows=$this->model_shopmanager_catalog_product->removeProductsNoMissingFile($query->rows);
+		$query->rows=$this->model_warehouse_product_product->removeProductsNoMissingFile($query->rows);
 	}
 
-	$this->load->model('shopmanager/catalog/product_search');
+	$this->load->model('warehouse/product/research');
 	
 	foreach ($query->rows as $key => $result) {
 			$product_data[$key] = $result;
@@ -1392,11 +1392,11 @@ class Product extends \Opencart\System\Engine\Model {
 			$product_data[$key]['variant'] = $result['variant'] ? json_decode($result['variant'], true) : [];
 			$product_data[$key]['override'] = $result['override'] ? json_decode($result['override'], true) : [];
 
-			$product_data[$key]['marketplace_accounts_id'] = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $result['product_id']]);
+			$product_data[$key]['marketplace_accounts_id'] = $this->model_warehouse_marketplace_listing->getMarketplace(['product_id' => $result['product_id']]);
 			$nb_marketplace_accounts_id = count($product_data[$key]['marketplace_accounts_id']);
 	}
 	
-	return $this->model_shopmanager_catalog_product->addSpecificsStatsToProducts($product_data);
+	return $this->model_warehouse_product_product->addSpecificsStatsToProducts($product_data);
 }
 
 
@@ -1425,9 +1425,9 @@ class Product extends \Opencart\System\Engine\Model {
 	 *     'limit'                  => 10
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalProducts();
+	 * $product_total = $this->model_warehouse_product_product->getTotalProducts();
 	 */
 public function getTotalProducts(array $data = []): int {
 	
@@ -1575,7 +1575,7 @@ public function getTotalProducts(array $data = []): int {
 	$query = $this->db->query($sql);
 
 	if (isset($data['filter_image']) && !is_null($data['filter_image']) && $data['filter_image'] == 2){
-		$total=$query->row['total']-$this->model_shopmanager_catalog_product->removeTotalProductsNoMissingFile($data);
+		$total=$query->row['total']-$this->model_warehouse_product_product->removeTotalProductsNoMissingFile($data);
 	}else{
 		$total=$query->row['total'];
 	}
@@ -1594,9 +1594,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalProductsByManufacturerId($manufacturer_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalProductsByManufacturerId($manufacturer_id);
 	 */
 	public function getTotalProductsByManufacturerId(int $manufacturer_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product` WHERE `manufacturer_id` = '" . (int)$manufacturer_id . "'");
@@ -1615,9 +1615,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalProductsByTaxClassId($tax_class_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalProductsByTaxClassId($tax_class_id);
 	 */
 	public function getTotalProductsByTaxClassId(int $tax_class_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product` WHERE `tax_class_id` = '" . (int)$tax_class_id . "'");
@@ -1636,9 +1636,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalProductsByStockStatusId($stock_status_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalProductsByStockStatusId($stock_status_id);
 	 */
 	public function getTotalProductsByStockStatusId(int $stock_status_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product` WHERE `stock_status_id` = '" . (int)$stock_status_id . "'");
@@ -1657,9 +1657,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalProductsByWeightClassId($weight_class_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalProductsByWeightClassId($weight_class_id);
 	 */
 	public function getTotalProductsByWeightClassId(int $weight_class_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product` WHERE `weight_class_id` = '" . (int)$weight_class_id . "'");
@@ -1678,9 +1678,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalProductsByLengthClassId($length_class_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalProductsByLengthClassId($length_class_id);
 	 */
 	public function getTotalProductsByLengthClassId(int $length_class_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product` WHERE `length_class_id` = '" . (int)$length_class_id . "'");
@@ -1710,9 +1710,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'meta_keyword'     => 'Meta Keyword'
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addDescription($product_id, $language_id, $product_data);
+	 * $this->model_warehouse_product_product->addDescription($product_id, $language_id, $product_data);
 	 */
 	public function addDescription(int $product_id, int $language_id, array $data): void {
 		// $data contient le tableau complet du produit (pas seulement la description de cette langue)
@@ -1780,9 +1780,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteDescriptions($product_id);
+	 * $this->model_warehouse_product_product->deleteDescriptions($product_id);
 	 */
 	public function deleteDescriptions(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_description` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -1799,9 +1799,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteDescriptionsByLanguageId($language_id);
+	 * $this->model_warehouse_product_product->deleteDescriptionsByLanguageId($language_id);
 	 */
 	public function deleteDescriptionsByLanguageId(int $language_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_description` WHERE `language_id` = '" . (int)$language_id . "'");
@@ -1818,13 +1818,13 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_description = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+	 * $product_description = $this->model_warehouse_product_product->getDescriptions($product_id);
 	 */
 	public function getDescriptions($product_id) {
 
-		$this->load->model('shopmanager/tools');
+		$this->load->model('warehouse/tools/utility');
 
 		$product_description_data = array();
 
@@ -1868,11 +1868,11 @@ public function getTotalProducts(array $data = []): int {
 			);
 		
 		}
-		$product_description_data=$this->model_shopmanager_tools->custom_merge_recursive($product_description_data, $condition_name);
+		$product_description_data=$this->model_warehouse_tools_utility->custom_merge_recursive($product_description_data, $condition_name);
 
 		$specifics=$this->getSpecifics($product_id);
 
-		$product_description_data=$this->model_shopmanager_tools->custom_merge_recursive($product_description_data, $specifics);
+		$product_description_data=$this->model_warehouse_tools_utility->custom_merge_recursive($product_description_data, $specifics);
 		
 		return $product_description_data;
 	}
@@ -1901,8 +1901,8 @@ public function getTotalProducts(array $data = []): int {
 	}
 
 	public function getDescriptionsNOT_USED2($product_id) {
-		$this->load->model('shopmanager/tools');
-		$this->load->model('shopmanager/catalog/category');
+		$this->load->model('warehouse/tools/utility');
+		$this->load->model('warehouse/product/category');
 		
 		$product_id = (int)$product_id;
 		$product_description_data = array();
@@ -1940,7 +1940,7 @@ public function getTotalProducts(array $data = []): int {
 		// Récupérer les category specifics UNE SEULE FOIS
 		$category_specifics = array();
 		if ($category_id > 0) {
-			$category_specifics = $this->model_shopmanager_catalog_category->getSpecifics($category_id);
+			$category_specifics = $this->model_warehouse_product_category->getSpecifics($category_id);
 		}
 		
 		// Construire le tableau indexé par language_id
@@ -2036,9 +2036,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->getDescriptionsByLanguageId($language_id);
+	 * $results = $this->model_warehouse_product_product->getDescriptionsByLanguageId($language_id);
 	 */
 	public function getDescriptionsByLanguageId(int $language_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_description` WHERE `language_id` = '" . (int)$language_id . "'");
@@ -2064,9 +2064,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'value'      => 'Product Value'
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->addCode($product_id, $data);
+	 * $results = $this->model_warehouse_product_product->addCode($product_id, $data);
 	 */
 	public function addCode(int $product_id, array $data): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_code` SET `product_id` = '" . (int)$product_id . "', `code` = '" . $this->db->escape($data['code']) . "', `value` = '" . $this->db->escape($data['value']) . "'");
@@ -2083,9 +2083,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->deleteCodes($product_id);
+	 * $results = $this->model_warehouse_product_product->deleteCodes($product_id);
 	 */
 	public function deleteCodes(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_code` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2102,9 +2102,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->getCodes($product_id);
+	 * $results = $this->model_warehouse_product_product->getCodes($product_id);
 	 */
 	public function getCodes(int $product_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_code` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2124,9 +2124,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addCategory($product_id, $category_id);
+	 * $this->model_warehouse_product_product->addCategory($product_id, $category_id);
 	 */
 	public function addCategory(int $product_id, int $category_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_to_category` SET `product_id` = '" . (int)$product_id . "', `category_id` = '" . (int)$category_id . "'");
@@ -2143,9 +2143,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteCategories($product_id);
+	 * $this->model_warehouse_product_product->deleteCategories($product_id);
 	 */
 	public function deleteCategories(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_category` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2162,9 +2162,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteCategoriesByCategoryId($category_id);
+	 * $this->model_warehouse_product_product->deleteCategoriesByCategoryId($category_id);
 	 */
 	public function deleteCategoriesByCategoryId(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_category` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -2181,9 +2181,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $categories = $this->model_shopmanager_catalog_product->getCategories($product_id);
+	 * $categories = $this->model_warehouse_product_product->getCategories($product_id);
 	 */
 	public function getCategories(int $product_id): array {
 		$product_category_data = [];
@@ -2254,9 +2254,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addFilter($product_id, $filter_id);
+	 * $this->model_warehouse_product_product->addFilter($product_id, $filter_id);
 	 */
 	public function addFilter(int $product_id, int $filter_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_filter` SET `product_id` = '" . (int)$product_id . "', `filter_id` = '" . (int)$filter_id . "'");
@@ -2273,9 +2273,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteFilters($product_id);
+	 * $this->model_warehouse_product_product->deleteFilters($product_id);
 	 */
 	public function deleteFilters(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_filter` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2292,9 +2292,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteFiltersByFilterId($filter_id);
+	 * $this->model_warehouse_product_product->deleteFiltersByFilterId($filter_id);
 	 */
 	public function deleteFiltersByFilterId(int $filter_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_filter` WHERE `filter_id` = '" . (int)$filter_id . "'");
@@ -2311,9 +2311,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $filters = $this->model_shopmanager_catalog_product->getFilters($product_id);
+	 * $filters = $this->model_warehouse_product_product->getFilters($product_id);
 	 */
 	public function getFilters(int $product_id): array {
 		$product_filter_data = [];
@@ -2345,9 +2345,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'text' => 'Product Attribute Text'
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addAttribute($product_id, $attribute_id, $language_id, $product_data);
+	 * $this->model_warehouse_product_product->addAttribute($product_id, $attribute_id, $language_id, $product_data);
 	 */
 	public function addAttribute(int $product_id, int $attribute_id, int $language_id, array $data): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_attribute` SET `product_id` = '" . (int)$product_id . "', `attribute_id` = '" . (int)$attribute_id . "', `language_id` = '" . (int)$language_id . "', `text` = '" . $this->db->escape($data['text']) . "'");
@@ -2365,9 +2365,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteAttributes($product_id, $attribute_id);
+	 * $this->model_warehouse_product_product->deleteAttributes($product_id, $attribute_id);
 	 */
  public function deleteAttributes(int $product_id, int $attribute_id = 0): void {
 		$sql = "DELETE FROM `" . DB_PREFIX . "product_attribute` WHERE `product_id` = '" . (int)$product_id . "'";
@@ -2390,9 +2390,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteAttributesByLanguageId($language_id);
+	 * $this->model_warehouse_product_product->deleteAttributesByLanguageId($language_id);
 	 */
 	public function deleteAttributesByLanguageId(int $language_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_attribute` WHERE `language_id` = '" . (int)$language_id . "'");
@@ -2409,9 +2409,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_attributes = $this->model_shopmanager_catalog_product->getAttributes($product_id);
+	 * $product_attributes = $this->model_warehouse_product_product->getAttributes($product_id);
 	 */
 	public function getAttributes(int $product_id): array {
 		$product_attribute_data = [];
@@ -2444,9 +2444,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->getAttributesByLanguageId($language_id);
+	 * $results = $this->model_warehouse_product_product->getAttributesByLanguageId($language_id);
 	 */
 	public function getAttributesByLanguageId(int $language_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_attribute` WHERE `language_id` = '" . (int)$language_id . "'");
@@ -2465,9 +2465,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalAttributesByAttributeId($attribute_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalAttributesByAttributeId($attribute_id);
 	 */
 	public function getTotalAttributesByAttributeId(int $attribute_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product_attribute` WHERE `attribute_id` = '" . (int)$attribute_id . "'");
@@ -2495,9 +2495,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'required'          => 0
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addOption($product_id, $product_data);
+	 * $this->model_warehouse_product_product->addOption($product_id, $product_data);
 	 */
 	public function addOption(int $product_id, array $data): int {
 		if ($data['product_option_id']) {
@@ -2520,7 +2520,7 @@ public function getTotalProducts(array $data = []): int {
 
 		if (isset($data['product_option_value'])) {
 			foreach ($data['product_option_value'] as $product_option_value) {
-				$this->model_shopmanager_catalog_product->addOptionValue($product_id, $product_option_id, $data['option_id'], $product_option_value);
+				$this->model_warehouse_product_product->addOptionValue($product_id, $product_option_id, $data['option_id'], $product_option_value);
 			}
 		}
 
@@ -2538,14 +2538,14 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteOptions($product_id);
+	 * $this->model_warehouse_product_product->deleteOptions($product_id);
 	 */
 	public function deleteOptions(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_option` WHERE `product_id` = '" . (int)$product_id . "'");
 
-		$this->model_shopmanager_catalog_product->deleteOptionValues($product_id);
+		$this->model_warehouse_product_product->deleteOptionValues($product_id);
 	}
 
 	/**
@@ -2560,9 +2560,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_option_info = $this->model_shopmanager_catalog_product->getOption($product_id, $product_option_id);
+	 * $product_option_info = $this->model_warehouse_product_product->getOption($product_id, $product_option_id);
 	 */
 	public function getOption(int $product_id, int $product_option_id): array {
 		$query = $this->db->query("SELECT *, (SELECT `name` FROM `" . DB_PREFIX . "option_description` `od` WHERE `o`.`option_id` = `od`.`option_id` AND `od`.`language_id` = '" . (int)$this->config->get('config_language_id') . "') AS `name` FROM `" . DB_PREFIX . "product_option` `po` LEFT JOIN `" . DB_PREFIX . "option` `o` ON (`po`.`option_id` = `o`.`option_id`) WHERE `po`.`product_id` = '" . (int)$product_id . "' AND `po`.`product_option_id` = '" . (int)$product_option_id . "'");
@@ -2581,9 +2581,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_options = $this->model_shopmanager_catalog_product->getOptions($product_id);
+	 * $product_options = $this->model_warehouse_product_product->getOptions($product_id);
 	 */
 	public function getOptions(int $product_id): array {
 		$product_option_data = [];
@@ -2627,9 +2627,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalOptionsByOptionId($option_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalOptionsByOptionId($option_id);
 	 */
 	public function getTotalOptionsByOptionId(int $option_id): int {
 		$query = $this->db->query("SELECT COUNT(DISTINCT `product_id`) AS `total` FROM `" . DB_PREFIX . "product_option` WHERE `option_id` = '" . (int)$option_id . "'");
@@ -2667,9 +2667,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'weight_prefix'           => ''
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addOptionValue($product_id, $product_option_id, $option_id, $product_option_value);
+	 * $this->model_warehouse_product_product->addOptionValue($product_id, $product_option_id, $option_id, $product_option_value);
 	 */
 	public function addOptionValue(int $product_id, int $product_option_id, int $option_id, array $data): int {
 		$sql = "INSERT INTO `" . DB_PREFIX . "product_option_value` SET ";
@@ -2696,9 +2696,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteOptionValues($product_id);
+	 * $this->model_warehouse_product_product->deleteOptionValues($product_id);
 	 */
 	public function deleteOptionValues(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_option_value` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2716,9 +2716,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_option_value_info = $this->model_shopmanager_catalog_product->getOptionValue($product_id, $product_option_value_id);
+	 * $product_option_value_info = $this->model_warehouse_product_product->getOptionValue($product_id, $product_option_value_id);
 	 */
 	public function getOptionValue(int $product_id, int $product_option_value_id): array {
 		$query = $this->db->query("SELECT `pov`.`option_value_id`, `ovd`.`name`, `pov`.`quantity`, `pov`.`subtract`, `pov`.`price`, `pov`.`price_prefix`, `pov`.`points`, `pov`.`points_prefix`, `pov`.`weight`, `pov`.`weight_prefix` FROM `" . DB_PREFIX . "product_option_value` `pov` LEFT JOIN `" . DB_PREFIX . "option_value` `ov` ON (`pov`.`option_value_id` = `ov`.`option_value_id`) LEFT JOIN `" . DB_PREFIX . "option_value_description` `ovd` ON (`ov`.`option_value_id` = `ovd`.`option_value_id`) WHERE `pov`.`product_id` = '" . (int)$product_id . "' AND `pov`.`product_option_value_id` = '" . (int)$product_option_value_id . "' AND `ovd`.`language_id` = '" . (int)$this->config->get('config_language_id') . "'");
@@ -2737,9 +2737,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_option_values = $this->model_shopmanager_catalog_product->getOptionValuesByOptionId($option_id);
+	 * $product_option_values = $this->model_warehouse_product_product->getOptionValuesByOptionId($option_id);
 	 */
 	public function getOptionValuesByOptionId(int $option_id): array {
 		$query = $this->db->query("SELECT DISTINCT `option_value_id` FROM `" . DB_PREFIX . "product_option_value` WHERE `option_id` = '" . (int)$option_id . "'");
@@ -2758,9 +2758,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $option_value = $this->model_shopmanager_catalog_product->getTotalOptionValuesByOptionValueId($option_value_id);
+	 * $option_value = $this->model_warehouse_product_product->getTotalOptionValuesByOptionValueId($option_value_id);
 	 */
 	public function getTotalOptionValuesByOptionValueId(int $option_value_id): int {
 		$query = $this->db->query("SELECT COUNT(DISTINCT `product_id`) AS `total` FROM `" . DB_PREFIX . "product_option_value` WHERE `option_value_id` = '" . (int)$option_value_id . "'");
@@ -2785,9 +2785,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'sort_order' => 0
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addImage($product_id, $product_data);
+	 * $this->model_warehouse_product_product->addImage($product_id, $product_data);
 	 */
 	public function addImage(int $product_id, array $data): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_image` SET `product_id` = '" . (int)$product_id . "', `image` = '" . $this->db->escape($data['image']) . "', `sort_order` = '" . (int)$data['sort_order'] . "'");
@@ -2804,9 +2804,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteImages($product_id);
+	 * $this->model_warehouse_product_product->deleteImages($product_id);
 	 */
 	public function deleteImages(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_image` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2827,9 +2827,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+	 * $product_images = $this->model_warehouse_product_product->getImages($product_id);
 	 */
 	public function getImages(int $product_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_image` WHERE `product_id` = '" . (int)$product_id . "' ORDER BY `sort_order` ASC");
@@ -2860,9 +2860,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'date_end'          => '2021-01-31'
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addDiscount($product_id, $product_data);
+	 * $this->model_warehouse_product_product->addDiscount($product_id, $product_data);
 	 */
 	public function addDiscount(int $product_id, array $data): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_discount` SET `product_id` = '" . (int)$product_id . "', `customer_group_id` = '" . (int)$data['customer_group_id'] . "', `quantity` = '" . (int)$data['quantity'] . "', `priority` = '" . (int)$data['priority'] . "', `price` = '" . (float)$data['price'] . "', `type` = '" . $this->db->escape($data['type']) . "', `special` = '" . (bool)$data['special'] . "', `date_start` = '" . $this->db->escape($data['date_start']) . "', `date_end` = '" . $this->db->escape($data['date_end']) . "'");
@@ -2879,9 +2879,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteDiscounts($product_id);
+	 * $this->model_warehouse_product_product->deleteDiscounts($product_id);
 	 */
 	public function deleteDiscounts(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_discount` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2898,9 +2898,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteDiscountsByCustomerGroupId($customer_group_id);
+	 * $this->model_warehouse_product_product->deleteDiscountsByCustomerGroupId($customer_group_id);
 	 */
 	public function deleteDiscountsByCustomerGroupId(int $customer_group_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_discount` WHERE `customer_group_id` = '" . (int)$customer_group_id . "'");
@@ -2917,9 +2917,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_discounts = $this->model_shopmanager_catalog_product->getDiscounts($product_id);
+	 * $product_discounts = $this->model_warehouse_product_product->getDiscounts($product_id);
 	 */
 	public function getDiscounts(int $product_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_discount` WHERE `product_id` = '" . (int)$product_id . "' ORDER BY `quantity`, `priority`, `price`");
@@ -2944,9 +2944,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'points' => 0
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addReward($product_id, $customer_group_id, $product_data);
+	 * $this->model_warehouse_product_product->addReward($product_id, $customer_group_id, $product_data);
 	 */
 	public function addReward(int $product_id, int $customer_group_id, array $data): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_reward` SET `product_id` = '" . (int)$product_id . "', `customer_group_id` = '" . (int)$customer_group_id . "', `points` = '" . (int)$data['points'] . "'");
@@ -2963,9 +2963,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteRewards($product_id);
+	 * $this->model_warehouse_product_product->deleteRewards($product_id);
 	 */
 	public function deleteRewards(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_reward` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -2982,9 +2982,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteRewardsByCustomerGroupId($customer_group_id);
+	 * $this->model_warehouse_product_product->deleteRewardsByCustomerGroupId($customer_group_id);
 	 */
 	public function deleteRewardsByCustomerGroupId(int $customer_group_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_reward` WHERE `customer_group_id` = '" . (int)$customer_group_id . "'");
@@ -3001,9 +3001,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_reward = $this->model_shopmanager_catalog_product->getRewards($product_id);
+	 * $product_reward = $this->model_warehouse_product_product->getRewards($product_id);
 	 */
 	public function getRewards(int $product_id): array {
 		$product_reward_data = [];
@@ -3029,9 +3029,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addDownload($product_id, $download_id);
+	 * $this->model_warehouse_product_product->addDownload($product_id, $download_id);
 	 */
 	public function addDownload(int $product_id, int $download_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_to_download` SET `product_id` = '" . (int)$product_id . "', `download_id` = '" . (int)$download_id . "'");
@@ -3048,9 +3048,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteDownloads($product_id);
+	 * $this->model_warehouse_product_product->deleteDownloads($product_id);
 	 */
 	public function deleteDownloads(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_download` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3067,9 +3067,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteDownloadsByDownloadId($download_id);
+	 * $this->model_warehouse_product_product->deleteDownloadsByDownloadId($download_id);
 	 */
 	public function deleteDownloadsByDownloadId(int $download_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_download` WHERE `download_id` = '" . (int)$download_id . "'");
@@ -3086,9 +3086,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_download = $this->model_shopmanager_catalog_product->getDownloads($product_id);
+	 * $product_download = $this->model_warehouse_product_product->getDownloads($product_id);
 	 */
 	public function getDownloads(int $product_id): array {
 		$product_download_data = [];
@@ -3113,9 +3113,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalDownloadsByDownloadId($download_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalDownloadsByDownloadId($download_id);
 	 */
 	public function getTotalDownloadsByDownloadId(int $download_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product_to_download` WHERE `download_id` = '" . (int)$download_id . "'");
@@ -3135,9 +3135,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addStore($product_id, $store_id);
+	 * $this->model_warehouse_product_product->addStore($product_id, $store_id);
 	 */
 	public function addStore(int $product_id, int $store_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_to_store` SET `product_id` = '" . (int)$product_id . "', `store_id` = '" . (int)$store_id . "'");
@@ -3154,9 +3154,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteStores($product_id);
+	 * $this->model_warehouse_product_product->deleteStores($product_id);
 	 */
 	public function deleteStores(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_store` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3173,9 +3173,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteStoresByStoreId($store_id);
+	 * $this->model_warehouse_product_product->deleteStoresByStoreId($store_id);
 	 */
 	public function deleteStoresByStoreId(int $store_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_store` WHERE `store_id` = '" . (int)$store_id . "'");
@@ -3192,9 +3192,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_store = $this->model_shopmanager_catalog_product->getStores($product_id);
+	 * $product_store = $this->model_warehouse_product_product->getStores($product_id);
 	 */
 	public function getStores(int $product_id): array {
 		$product_store_data = [];
@@ -3221,9 +3221,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addLayout($product_id, $store_id, $layout_id);
+	 * $this->model_warehouse_product_product->addLayout($product_id, $store_id, $layout_id);
 	 */
 	public function addLayout(int $product_id, int $store_id, int $layout_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "product_to_layout` SET `product_id` = '" . (int)$product_id . "', `store_id` = '" . (int)$store_id . "', `layout_id` = '" . (int)$layout_id . "'");
@@ -3240,9 +3240,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteLayouts($product_id);
+	 * $this->model_warehouse_product_product->deleteLayouts($product_id);
 	 */
 	public function deleteLayouts(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_layout` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3259,9 +3259,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteLayoutsByLayoutId($layout_id);
+	 * $this->model_warehouse_product_product->deleteLayoutsByLayoutId($layout_id);
 	 */
 	public function deleteLayoutsByLayoutId(int $layout_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_layout` WHERE `layout_id` = '" . (int)$layout_id . "'");
@@ -3278,9 +3278,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteLayoutsByStoreId($store_id);
+	 * $this->model_warehouse_product_product->deleteLayoutsByStoreId($store_id);
 	 */
 	public function deleteLayoutsByStoreId(int $store_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_to_layout` WHERE `store_id` = '" . (int)$store_id . "'");
@@ -3297,9 +3297,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_seo_url = $this->model_shopmanager_catalog_product->getSeoUrls($product_id);
+	 * $product_seo_url = $this->model_warehouse_product_product->getSeoUrls($product_id);
 	 */
 	public function getSeoUrls(int $product_id): array {
 		$product_seo_url_data = [];
@@ -3324,9 +3324,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_layout = $this->model_shopmanager_catalog_product->getLayouts($product_id);
+	 * $product_layout = $this->model_warehouse_product_product->getLayouts($product_id);
 	 */
 	public function getLayouts(int $product_id): array {
 		$product_layout_data = [];
@@ -3351,9 +3351,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalLayoutsByLayoutId($layout_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalLayoutsByLayoutId($layout_id);
 	 */
 	public function getTotalLayoutsByLayoutId(int $layout_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product_to_layout` WHERE `layout_id` = '" . (int)$layout_id . "'");
@@ -3373,9 +3373,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addRelated($product_id, $related_id);
+	 * $this->model_warehouse_product_product->addRelated($product_id, $related_id);
 	 */
 	public function addRelated(int $product_id, int $related_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_related` WHERE `product_id` = '" . (int)$product_id . "' AND `related_id` = '" . (int)$related_id . "'");
@@ -3396,9 +3396,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteRelated($product_id);
+	 * $this->model_warehouse_product_product->deleteRelated($product_id);
 	 */
 	public function deleteRelated(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_related` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3416,9 +3416,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_relateds = $this->model_shopmanager_catalog_product->getRelated($product_id);
+	 * $product_relateds = $this->model_warehouse_product_product->getRelated($product_id);
 	 */
 	public function getRelated(int $product_id): array {
 		$product_related_data = [];
@@ -3451,9 +3451,9 @@ public function getTotalProducts(array $data = []): int {
 	 *     'price'                => 10.0000
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->addSubscription($product_id, $product_data);
+	 * $this->model_warehouse_product_product->addSubscription($product_id, $product_data);
 	 */
 	public function addSubscription(int $product_id, array $data): void {
 		$query = $this->db->query("SELECT `product_id` FROM `" . DB_PREFIX . "product_subscription` WHERE `product_id` = '" . (int)$product_id . "' AND `customer_group_id` = '" . (int)$data['customer_group_id'] . "' AND `subscription_plan_id` = '" . (int)$data['subscription_plan_id'] . "'");
@@ -3474,9 +3474,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteSubscriptions($product_id);
+	 * $this->model_warehouse_product_product->deleteSubscriptions($product_id);
 	 */
 	public function deleteSubscriptions(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_subscription` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3495,9 +3495,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_subscription_info = $this->model_shopmanager_catalog_product->getSubscription($product_id, $subscription_plan_id);
+	 * $product_subscription_info = $this->model_warehouse_product_product->getSubscription($product_id, $subscription_plan_id);
 	 */
 	public function getSubscription(int $product_id, int $subscription_plan_id, int $customer_group_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_subscription` WHERE `product_id` = '" . (int)$product_id . "' AND `subscription_plan_id` = '" . (int)$subscription_plan_id . "' AND `customer_group_id` = '" . (int)$customer_group_id . "'");
@@ -3516,9 +3516,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_subscriptions = $this->model_shopmanager_catalog_product->getSubscriptions($product_id);
+	 * $product_subscriptions = $this->model_warehouse_product_product->getSubscriptions($product_id);
 	 */
 	public function getSubscriptions(int $product_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "product_subscription` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3537,9 +3537,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteSubscriptionsBySubscriptionPlanId($subscription_plan_id);
+	 * $this->model_warehouse_product_product->deleteSubscriptionsBySubscriptionPlanId($subscription_plan_id);
 	 */
 	public function deleteSubscriptionsBySubscriptionPlanId(int $subscription_plan_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_subscription` WHERE `subscription_plan_id` = '" . (int)$subscription_plan_id . "'");
@@ -3556,9 +3556,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $product_total = $this->model_shopmanager_catalog_product->getTotalSubscriptionsBySubscriptionPlanId($subscription_plan_id);
+	 * $product_total = $this->model_warehouse_product_product->getTotalSubscriptionsBySubscriptionPlanId($subscription_plan_id);
 	 */
 	public function getTotalSubscriptionsBySubscriptionPlanId(int $subscription_plan_id): int {
 		$query = $this->db->query("SELECT COUNT(DISTINCT `product_id`) AS `total` FROM `" . DB_PREFIX . "product_subscription` WHERE `subscription_plan_id` = '" . (int)$subscription_plan_id . "'");
@@ -3577,9 +3577,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $this->model_shopmanager_catalog_product->deleteReports($product_id);
+	 * $this->model_warehouse_product_product->deleteReports($product_id);
 	 */
 	public function deleteReports(int $product_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "product_report` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -3598,9 +3598,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $results = $this->model_shopmanager_catalog_product->getReports($product_id, $start, $limit);
+	 * $results = $this->model_warehouse_product_product->getReports($product_id, $start, $limit);
 	 */
 	public function getReports(int $product_id, int $start = 0, int $limit = 10): array {
 		if ($start < 0) {
@@ -3627,9 +3627,9 @@ public function getTotalProducts(array $data = []): int {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/product');
+	 * $this->load->model('warehouse/product/product');
 	 *
-	 * $report_total = $this->model_shopmanager_catalog_product->getTotalReports($product_id);
+	 * $report_total = $this->model_warehouse_product_product->getTotalReports($product_id);
 	 */
 	public function getTotalReports(int $product_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "product_report` WHERE `product_id` = '" . (int)$product_id . "'");
@@ -4053,8 +4053,8 @@ public function editProductError($product_id, $json_error) {
 	}
 
 	public function TranslateDescription($productDescription, $language = ['code' => 'Fr', 'language_id' => '2']) {
-		$this->load->model('shopmanager/tools');
-		//$this->model_shopmanager_tools->debug_function_trace();
+		$this->load->model('warehouse/tools/utility');
+		//$this->model_warehouse_tools_utility->debug_function_trace();
 		// 🔹 Vérification et préparation des données
 		if (empty($productDescription)) {
 			return ['error' => 'Empty product description'];
@@ -4084,8 +4084,8 @@ public function editProductError($product_id, $json_error) {
 		$jsonData = json_encode($formattedDescription, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
 		// 🔹 Traduction via OpenAI
-		$this->load->model('shopmanager/ai');
-		$translatedText = $this->model_shopmanager_catalog_product->model_shopmanager_ai->translate($jsonData, $language['code']);
+		$this->load->model('warehouse/tools/ai');
+		$translatedText = $this->model_warehouse_product_product->model_warehouse_tools_ai->translate($jsonData, $language['code']);
 
 		// 🔹 Vérification et décodage JSON si nécessaire
 		if (is_string($translatedText)) {
@@ -4139,7 +4139,7 @@ public function editProductError($product_id, $json_error) {
 		
 
 		// 🔹 Traduction des spécificités
-		//$translated_specifics = $this->model_shopmanager_catalog_product->model_shopmanager_ai->translate_specifics(null, $specifics, $language);
+		//$translated_specifics = $this->model_warehouse_product_product->model_warehouse_tools_ai->translate_specifics(null, $specifics, $language);
 		//$finalDescription['specifics'] = $translated_specifics;
 
 		return $finalDescription;
@@ -4169,14 +4169,14 @@ public function editProductError($product_id, $json_error) {
 	$data_return = [];
 	$data_product = [];
 	//print("<pre>".print_r ($rows,true )."</pre>");
-	$this->load->model('shopmanager/catalog/category');
+	$this->load->model('warehouse/product/category');
 
 	if (!empty($rows)) {
 		$category_id = $this->getCategoryLeaf($product_id);
 		//print("<pre>".print_r ($category_id,true )."</pre>");
 		if ($category_id > 0) {
 			// **Récupérer les category_specifics**
-			$category_specifics = $this->model_shopmanager_catalog_category->getSpecifics($category_id);
+			$category_specifics = $this->model_warehouse_product_category->getSpecifics($category_id);
 			//print("<pre>".print_r ($category_id,true )."</pre>");
 			//print("<pre>".print_r ($category_specifics,true )."</pre>");				// **Initialisation des valeurs par défaut à partir de category_specifics**
 				foreach ($category_specifics as $language_id => $specific_data) {
@@ -4187,7 +4187,7 @@ public function editProductError($product_id, $json_error) {
 									'Name' => $category_specific['localizedAspectName'],
 									'Value' => '',
 									'VerifiedSource' => '',
-									'to_translate' => $this->model_shopmanager_catalog_category->isSpecificValueToTranslated($category_specific['localizedAspectName']),
+									'to_translate' => $this->model_warehouse_product_category->isSpecificValueToTranslated($category_specific['localizedAspectName']),
 									'specific_info' =>$category_specific
 								];
 								

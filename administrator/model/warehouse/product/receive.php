@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/fast_add.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/receive.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
-class FastAdd extends \Opencart\System\Engine\Model {
+class Receive extends \Opencart\System\Engine\Model {
 
 
 	private $domain;

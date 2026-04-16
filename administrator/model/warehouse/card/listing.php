@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/card/card_listing.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/listing.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
-class CardListing extends \Opencart\System\Engine\Model {
+class Listing extends \Opencart\System\Engine\Model {
 
     const MERGE_PRICE_THRESHOLD  = 3.00;  // Variantes lettres : fusionner si prix max < ce seuil
     const MERGE_SPREAD_THRESHOLD = 0.50;  // Variantes lettres : fusionner si spread < ce ratio
@@ -105,7 +105,7 @@ class CardListing extends \Opencart\System\Engine\Model {
     
     
     /**
-     * NOTE: getCardTypes() has been moved to model/shopmanager/card/card_type.php
+     * NOTE: getCardTypes() has been moved to model/warehouse/card/type.php
      */
     
     /**
@@ -169,11 +169,11 @@ class CardListing extends \Opencart\System\Engine\Model {
         if (empty($cards)) {
             return [];
         }
-        $this->load->model('shopmanager/card/card_manufacturer');
+        $this->load->model('warehouse/card/manufacturer');
         
         // Get manufacturers from database
         $manufacturers = array_column(
-            $this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]),
+            $this->model_warehouse_card_manufacturer->getManufacturers(['filter_status' => 1]),
             'name'
         );
         
@@ -365,9 +365,9 @@ class CardListing extends \Opencart\System\Engine\Model {
         // Extract brand from set name if brand is empty
         if (empty($brand) && !empty($set)) {
             
-            $this->load->model('shopmanager/card/card_manufacturer');
+            $this->load->model('warehouse/card/manufacturer');
             $manufacturers = array_column(
-                $this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]),
+                $this->model_warehouse_card_manufacturer->getManufacturers(['filter_status' => 1]),
                 'name'
             );
             
@@ -1023,8 +1023,8 @@ class CardListing extends \Opencart\System\Engine\Model {
             // Load images from DB via card_id
             $imgs = [];
             if (!empty($card['card_id'])) {
-                $this->load->model('shopmanager/card/card');
-                $imgs = $this->model_shopmanager_card_card->getCardImageUrls((int)$card['card_id']);
+                $this->load->model('warehouse/card/card');
+                $imgs = $this->model_warehouse_card_card->getCardImageUrls((int)$card['card_id']);
             }
             // Fallback to inline fields if DB returns nothing
             if (empty($imgs)) {
@@ -1105,11 +1105,11 @@ class CardListing extends \Opencart\System\Engine\Model {
         usort($featured, fn($a, $b) => $b['_max_price'] <=> $a['_max_price']);
         $featured = array_slice($featured, 0, 3);
         // Only show block if at least one card has images
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/card');
         $featuredItems = [];
         foreach ($featured as $fc) {
             if (empty($fc['card_id'])) continue;
-            $fcImgs = $this->model_shopmanager_card_card->getCardImageUrls((int)$fc['card_id']);
+            $fcImgs = $this->model_warehouse_card_card->getCardImageUrls((int)$fc['card_id']);
             if (!empty($fcImgs)) {
                 $featuredItems[] = ['card' => $fc, 'img' => $fcImgs[0]];
             }
@@ -1303,7 +1303,7 @@ class CardListing extends \Opencart\System\Engine\Model {
      * Creates all necessary tables for managing eBay multi-variation listings
      */
     public function install(): bool {
-        $sql_file = DIR_APPLICATION . 'model/shopmanager/ebay/install_multivariation.sql';
+        $sql_file = DIR_APPLICATION . 'model/warehouse/marketplace/ebay/api/install_multivariation.sql';
         
         if (!file_exists($sql_file)) {
             return false;
@@ -2442,8 +2442,8 @@ class CardListing extends \Opencart\System\Engine\Model {
         $sport = !empty($group['cards'][0]['category']) ? trim($group['cards'][0]['category']) : 'Unknown';
         
         // Get card_type_id from sport/category name
-        $this->load->model('shopmanager/card/card_type');
-        $card_type_id = $this->model_shopmanager_card_card_type->getCardTypeIdByName($sport);
+        $this->load->model('warehouse/card/type');
+        $card_type_id = $this->model_warehouse_card_type->getCardTypeIdByName($sport);
         
         $listing_data = [
             'set_name'            => $group['set_name'] ?? $group['set'] ?? $group['key'] ?? 'Unknown Set',
@@ -3947,8 +3947,8 @@ class CardListing extends \Opencart\System\Engine\Model {
         if (empty($group_key)) {
             $result = ['status' => 2, 'error' => 'No group_key in batch', 'batch_name' => $batch_name];
         } else {
-            $this->load->model('shopmanager/ebay');
-            $apiResult = $this->model_shopmanager_ebay->verifyInventoryGroupStatus($group_key, $ebay_item_id, $marketplace_account_id);
+            $this->load->model('warehouse/marketplace/ebay/api');
+            $apiResult = $this->model_warehouse_marketplace_ebay_api->verifyInventoryGroupStatus($group_key, $ebay_item_id, $marketplace_account_id);
             $result = [
                 'status'     => $apiResult['status'],
                 'error'      => $apiResult['error'],
@@ -4397,7 +4397,7 @@ class CardListing extends \Opencart\System\Engine\Model {
         $cellSize = (int)floor($tileSize / $grid_n);
         $padding  = 0; // images collées bord à bord
 
-        $outDir = DIR_IMAGE . 'shopmanager/lot_' . (int)$listing_id . '/';
+        $outDir = DIR_IMAGE . 'warehouse/lot_' . (int)$listing_id . '/';
         if (!is_dir($outDir)) {
             mkdir($outDir, 0755, true);
         }
@@ -4537,7 +4537,7 @@ class CardListing extends \Opencart\System\Engine\Model {
         $outFile = $this->composeMosaicTile($frontPaths, $overviewGrid, 0, $listing_id);
         if ($outFile && file_exists($outFile)) {
             $results[] = $outFile;
-            $relPath   = 'shopmanager/lot_' . (int)$listing_id . '/mosaic_1.webp';
+            $relPath   = 'warehouse/lot_' . (int)$listing_id . '/mosaic_1.webp';
             $this->db->query(
                 "INSERT INTO `" . DB_PREFIX . "card_listing_image` (listing_id, image_path, sort_order)
                  VALUES (" . (int)$listing_id . ", '" . $this->db->escape($relPath) . "', " . $sortOrder . ")"
@@ -4556,7 +4556,7 @@ class CardListing extends \Opencart\System\Engine\Model {
             $outFile   = $this->composeMosaicTile($slice, $frontGrid, $mosaicNum - 1, $listing_id);
             if ($outFile && file_exists($outFile)) {
                 $results[] = $outFile;
-                $relPath   = 'shopmanager/lot_' . (int)$listing_id . '/mosaic_' . $mosaicNum . '.webp';
+                $relPath   = 'warehouse/lot_' . (int)$listing_id . '/mosaic_' . $mosaicNum . '.webp';
                 $this->db->query(
                     "INSERT INTO `" . DB_PREFIX . "card_listing_image` (listing_id, image_path, sort_order)
                      VALUES (" . (int)$listing_id . ", '" . $this->db->escape($relPath) . "', " . $sortOrder . ")"
@@ -4577,7 +4577,7 @@ class CardListing extends \Opencart\System\Engine\Model {
                 $outFile   = $this->composeMosaicTile($slice, $backGrid, $mosaicNum - 1, $listing_id);
                 if ($outFile && file_exists($outFile)) {
                     $results[] = $outFile;
-                    $relPath   = 'shopmanager/lot_' . (int)$listing_id . '/mosaic_' . $mosaicNum . '.webp';
+                    $relPath   = 'warehouse/lot_' . (int)$listing_id . '/mosaic_' . $mosaicNum . '.webp';
                     $this->db->query(
                         "INSERT INTO `" . DB_PREFIX . "card_listing_image` (listing_id, image_path, sort_order)
                          VALUES (" . (int)$listing_id . ", '" . $this->db->escape($relPath) . "', " . $sortOrder . ")"
@@ -4792,11 +4792,11 @@ class CardListing extends \Opencart\System\Engine\Model {
         ini_set('memory_limit', '512M');
 
     
-            $this->load->model('shopmanager/marketplace');
-            $this->load->model('shopmanager/ebay');
+            $this->load->model('warehouse/marketplace/listing');
+            $this->load->model('warehouse/marketplace/ebay/api');
 
             // Use customer_id=10, language_id=1 (English CA account)
-            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+            $marketplace_account = $this->model_warehouse_marketplace_listing->getMarketplaceAccount([
                 'customer_id' => 10,
                 'filter_language_id' => 1
             ]);
@@ -4807,7 +4807,7 @@ class CardListing extends \Opencart\System\Engine\Model {
 
             $marketplace_account_id = $marketplace_account['marketplace_account_id'];
 
-            $result = $this->model_shopmanager_ebay->migrateImagesToEbay($listing_id, $marketplace_account_id);
+            $result = $this->model_warehouse_marketplace_ebay_api->migrateImagesToEbay($listing_id, $marketplace_account_id);
 
             $json['success'] = true;
             $json['result']  = $result;

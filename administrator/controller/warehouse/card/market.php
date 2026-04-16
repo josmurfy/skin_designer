@@ -1,13 +1,13 @@
 <?php
-// Original: shopmanager/card/card_market.php
-namespace Opencart\Admin\Controller\Shopmanager\Card;
+// Original: warehouse/card/market.php
+namespace Opencart\Admin\Controller\Warehouse\Card;
 
 /**
  * CardMarket — Recherche eBay marché des cartes vendues
- * Route : shopmanager/card/card_market
+ * Route : warehouse/card/market
  * Pattern OC4 : index() / list() / getList()
  */
-class CardMarket extends \Opencart\System\Engine\Controller {
+class Market extends \Opencart\System\Engine\Controller {
 
     private function filters(): array {
         $g = $this->request->get;
@@ -41,7 +41,7 @@ class CardMarket extends \Opencart\System\Engine\Controller {
     }
 
     public function index(): void {
-        $this->load->language('shopmanager/card/card_market');
+        $this->load->language('warehouse/card/market');
         $data = [];
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
@@ -54,15 +54,15 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'] = [
             ['text' => ($lang['text_home'] ?? ''),     'href' => $this->url->link('common/dashboard',            'user_token='.$this->session->data['user_token'])],
-            ['text' => ($lang['heading_title'] ?? ''),'href' => $this->url->link('shopmanager/card/card_market','user_token='.$this->session->data['user_token'].$url)],
+            ['text' => ($lang['heading_title'] ?? ''),'href' => $this->url->link('warehouse/card/market','user_token='.$this->session->data['user_token'].$url)],
         ];
 
-        $this->load->model('shopmanager/card/card_manufacturer');
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card_type');
-        $data['manufacturers'] = array_column($this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]), 'name');
-        $data['card_types']    = $this->model_shopmanager_card_card_type->getCardTypes();
-        $data['list'] = $this->load->controller('shopmanager/card/card_market.getList');
+        $this->load->model('warehouse/card/manufacturer');
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/type');
+        $data['manufacturers'] = array_column($this->model_warehouse_card_manufacturer->getManufacturers(['filter_status' => 1]), 'name');
+        $data['card_types']    = $this->model_warehouse_card_type->getCardTypes();
+        $data['list'] = $this->load->controller('warehouse/card/market.getList');
         foreach ($f as $k => $v) $data[$k] = $v;
         $data['sort']             = $sort;
         $data['limit']            = $limit;
@@ -83,16 +83,16 @@ class CardMarket extends \Opencart\System\Engine\Controller {
         $data['header']      = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
-        $this->response->setOutput($this->load->view('shopmanager/card/card_market', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/market', $data));
     }
 
     public function list(): void {
         // $this->log->write('[CardMarket] list() called – user_token=' . ($this->session->data['user_token'] ?? 'NONE'));
-        $this->load->language('shopmanager/card/card_market');
+        $this->load->language('warehouse/card/market');
         $data = [];
         
         try {
-            $output = $this->load->controller('shopmanager/card/card_market.getList');
+            $output = $this->load->controller('warehouse/card/market.getList');
             // $this->log->write('[CardMarket] list() OK – output len=' . strlen($output));
             $this->response->setOutput($output);
         } catch (\Exception $e) {
@@ -103,10 +103,10 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
     public function getList(): string {
         // $this->log->write('[CardMarket] getList() called – GET=' . json_encode($this->request->get));
-        $this->load->language('shopmanager/card/card_market');
+        $this->load->language('warehouse/card/market');
         $data = [];
         
-        $this->load->model('shopmanager/card/card_market');
+        $this->load->model('warehouse/card/market');
         $f     = $this->filters();
         $sort  = $this->request->get['sort']  ?? 'price_desc';
         $page  = max(1, (int)($this->request->get['page']  ?? 1));
@@ -129,7 +129,7 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
         if ($has) {
             try {
-                $r = $this->model_shopmanager_card_card_market->searchCompletedItems(
+                $r = $this->model_warehouse_card_market->searchCompletedItems(
                     array_merge($f, ['sort' => $sort, 'page' => $page, 'limit' => $limit])
                 );
                 $data['items']       = $r['items']  ?? [];
@@ -155,7 +155,7 @@ class CardMarket extends \Opencart\System\Engine\Controller {
             'total' => $total,
             'page'  => $page,
             'limit' => $limit,
-            'url'   => $this->url->link('shopmanager/card/card_market.list',
+            'url'   => $this->url->link('warehouse/card/market.list',
                 'user_token='.$this->session->data['user_token'].$url.'&page={page}')
         ]);
         $data['results'] = sprintf(($lang['text_pagination'] ?? ''),
@@ -165,9 +165,9 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
         $data['sort'] = $sort;
         $base = 'user_token='.$this->session->data['user_token'].$url.'&page='.$page;
-        $data['sort_price_desc'] = $this->url->link('shopmanager/card/card_market.list', $base.'&sort=price_desc');
-        $data['sort_price_asc']  = $this->url->link('shopmanager/card/card_market.list', $base.'&sort=price_asc');
-        $data['sort_date_desc']  = $this->url->link('shopmanager/card/card_market.list', $base.'&sort=date_desc');
+        $data['sort_price_desc'] = $this->url->link('warehouse/card/market.list', $base.'&sort=price_desc');
+        $data['sort_price_asc']  = $this->url->link('warehouse/card/market.list', $base.'&sort=price_asc');
+        $data['sort_date_desc']  = $this->url->link('warehouse/card/market.list', $base.'&sort=date_desc');
         $kw = $data['keyword'] ?? '';
         $saleMode = (string)($f['filter_sale_mode'] ?? 'present');
         if ($kw === ($lang['text_image_search'] ?? '')) {
@@ -185,25 +185,25 @@ class CardMarket extends \Opencart\System\Engine\Controller {
             $data[$k] = ($lang[$k] ?? '');
 
         $data['user_token'] = $this->session->data['user_token'];
-        return $this->load->view('shopmanager/card/card_market_list', $data);
+        return $this->load->view('warehouse/card/market_list', $data);
     }
 
     public function uploadImage(): void {
-        $this->load->language('shopmanager/card/card_market');
+        $this->load->language('warehouse/card/market');
         $data = [];
         
 
         $json = [];
 
-        if (!$this->user->hasPermission('access', 'shopmanager/card/card_market')) {
+        if (!$this->user->hasPermission('access', 'warehouse/card/market')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } elseif (empty($this->request->files['image'])) {
             $json['error'] = ($lang['error_image_required'] ?? '');
         } else {
-            $this->load->model('shopmanager/card/card_market');
+            $this->load->model('warehouse/card/market');
 
             try {
-                $result = $this->model_shopmanager_card_card_market->saveUploadedSearchImage($this->request->files['image']);
+                $result = $this->model_warehouse_card_market->saveUploadedSearchImage($this->request->files['image']);
 
                 $json['success'] = true;
                 $json['token'] = $result['token'];
@@ -218,12 +218,12 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
     /** @deprecated kept for backward compat - not used */
     public function search(): void {
-        $this->load->language('shopmanager/card/card_market');
+        $this->load->language('warehouse/card/market');
         $data = [];
         
         $json = [];
 
-        if (!$this->user->hasPermission('access', 'shopmanager/card/card_market')) {
+        if (!$this->user->hasPermission('access', 'warehouse/card/market')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -272,10 +272,10 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
         $filters['keyword'] = trim($keyword);
 
-        $this->load->model('shopmanager/card/card_market');
+        $this->load->model('warehouse/card/market');
 
         try {
-            $result = $this->model_shopmanager_card_card_market->searchCompletedItems($filters);
+            $result = $this->model_warehouse_card_market->searchCompletedItems($filters);
             $json['success']    = true;
             $json['items']      = $result['items'];
             $json['total']      = $result['total'];

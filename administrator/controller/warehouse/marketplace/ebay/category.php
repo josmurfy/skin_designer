@@ -1,33 +1,33 @@
 <?php
-// Original: shopmanager/catalog/category_ebay.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/marketplace/ebay/category.php
+namespace Opencart\Admin\Controller\Warehouse\Marketplace\Ebay;
 
-class CategoryEbay extends \Opencart\System\Engine\Controller {
+class Category extends \Opencart\System\Engine\Controller {
     private $error = array();
 
     public function index(): void {
-        $this->load->language('shopmanager/catalog/category_ebay');
+        $this->load->language('warehouse/marketplace/ebay/category');
         $data = [];
         
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
         $this->getList();
     }
 
     public function add() {
-        $this->load->language('shopmanager/catalog/category_ebay');
+        $this->load->language('warehouse/marketplace/ebay/category');
         $data = [];
         
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
-            $this->model_shopmanager_catalog_category_ebay->addCategoryEbay($this->request->post);
+            $this->model_warehouse_marketplace_ebay_category->addCategoryEbay($this->request->post);
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
 
@@ -45,23 +45,23 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->getForm();
     }
 
     public function edit() {
-        $this->load->language('shopmanager/catalog/category_ebay');
+        $this->load->language('warehouse/marketplace/ebay/category');
         $data = [];
         
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
-            $this->model_shopmanager_catalog_category_ebay->editCategoryEbay($this->request->get['category_id'], $this->request->post);
+            $this->model_warehouse_marketplace_ebay_category->editCategoryEbay($this->request->get['category_id'], $this->request->post);
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
 
@@ -79,24 +79,24 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->getForm();
     }
 
     public function delete() {
-        $this->load->language('shopmanager/catalog/category_ebay');
+        $this->load->language('warehouse/marketplace/ebay/category');
         $data = [];
         
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
         if (isset($this->request->post['selected']) && $this->validateDelete()) {
             foreach ($this->request->post['selected'] as $category_id) {
-                $this->model_shopmanager_catalog_category_ebay->deleteCategoryEbay($category_id);
+                $this->model_warehouse_marketplace_ebay_category->deleteCategoryEbay($category_id);
             }
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -115,23 +115,23 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->getList();
     }
 
     public function repair() {
-        $this->load->language('shopmanager/catalog/category_ebay');
+        $this->load->language('warehouse/marketplace/ebay/category');
         $data = [];
         
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
         if ($this->validateRepair()) {
-            $this->model_shopmanager_catalog_category_ebay->repairCategories();
+            $this->model_warehouse_marketplace_ebay_category->repairCategories();
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
 
@@ -149,7 +149,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->getList();
@@ -157,9 +157,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
 
     protected function getList() {
 
-        $this->document->addScript('view/javascript/shopmanager/catalog/category_ebay_list.js');
-        $this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-        $this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+        $this->document->addScript('view/javascript/warehouse/marketplace/ebay/category_list.js');
+        $this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+        $this->document->addScript('view/javascript/warehouse/popup/alert.js');
 
 
         if (isset($this->request->get['sort'])) {
@@ -275,12 +275,12 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true)
+            'href' => $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true)
         );
 
-        $data['add'] = $this->url->link('shopmanager/catalog/category_ebay/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
-        $data['delete'] = $this->url->link('shopmanager/catalog/category_ebay/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
-        $data['repair'] = $this->url->link('shopmanager/catalog/category_ebay/repair', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        $data['add'] = $this->url->link('warehouse/marketplace/ebay/category/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        $data['delete'] = $this->url->link('warehouse/marketplace/ebay/category/delete', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        $data['repair'] = $this->url->link('warehouse/marketplace/ebay/category/repair', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
         $data['categories'] = array();
 
@@ -297,9 +297,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
             'limit'           => $limit //$this->config->get('config_limit_admin')
         );
 
-        $category_total = $this->model_shopmanager_catalog_category_ebay->getTotalCategories($filter_data);
+        $category_total = $this->model_warehouse_marketplace_ebay_category->getTotalCategories($filter_data);
 
-        $results = $this->model_shopmanager_catalog_category_ebay->getCategories($filter_data);
+        $results = $this->model_warehouse_marketplace_ebay_category->getCategories($filter_data);
         
         foreach ($results as $result) {
         //	//print("<pre>".print_r ($result,true )."</pre>");
@@ -321,8 +321,8 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
                 'sort_order'  => $result['sort_order'],
                 'status_id'   => $result['status'],
                 'status'     => $result['status'] ? ($lang['text_enabled'] ?? '') : ($lang['text_disabled'] ?? ''),
-                'edit'        => $this->url->link('shopmanager/catalog/category_ebay/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $result['category_id'] . $url, true),
-                'delete'      => $this->url->link('shopmanager/catalog/category_ebay/delete', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $result['category_id'] . $url, true)
+                'edit'        => $this->url->link('warehouse/marketplace/ebay/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $result['category_id'] . $url, true),
+                'delete'      => $this->url->link('warehouse/marketplace/ebay/category/delete', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $result['category_id'] . $url, true)
             );
         }
 
@@ -424,11 +424,11 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
             $url .= '&limit=' . $this->request->get['limit'];
         } 
 
-        $data['sort_name'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . '&sort=name' . $url, true);
-        $data['sort_order'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . '&sort=order' . $url, true);
-        $data['sort_status'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . '&sort=c1.status' . $url, true);
-        $data['sort_leaf'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . '&sort=c1.leaf' . $url, true);
-        $data['sort_category_id'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . '&sort=category_id' . $url, true);
+        $data['sort_name'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . '&sort=name' . $url, true);
+        $data['sort_order'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . '&sort=order' . $url, true);
+        $data['sort_status'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . '&sort=c1.status' . $url, true);
+        $data['sort_leaf'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . '&sort=c1.leaf' . $url, true);
+        $data['sort_category_id'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . '&sort=category_id' . $url, true);
 
         $url = '';
 
@@ -440,12 +440,12 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
             $url .= '&order=' . $this->request->get['order'];
         }
 
-        $data['limit_link'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=', true);
+        $data['limit_link'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=', true);
         $data['pagination'] = $this->load->controller('common/pagination', [
             'total' => $category_total,
             'page'  => $page,
             'limit' => $limit,
-            'url'   => $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=' . $limit, true)
+            'url'   => $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}&limit=' . $limit, true)
         ]);
 
     //	$data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($category_total) ? (($page - 1) * $this->config->get('config_limit_admin')) + 1 : 0, ((($page - 1) * $this->config->get('config_limit_admin')) > ($category_total - $this->config->get('config_limit_admin'))) ? $category_total : ((($page - 1) * $this->config->get('config_limit_admin')) + $this->config->get('config_limit_admin')), $category_total, ceil($category_total / $this->config->get('config_limit_admin')));
@@ -463,19 +463,19 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
-        $data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-        $data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-        $data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
+        $data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+        $data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+        $data['alert_popup'] = $this->load->controller('warehouse/marketplace/listing_popup');
 
-        $this->response->setOutput($this->load->view('shopmanager/catalog/category_ebay_list', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/category_list', $data));
     }
 
     protected function getForm() {
 
-        $this->document->addScript('view/javascript/shopmanager/catalog/category_ebay_form.js');
-        $this->document->addScript('view/javascript/shopmanager/ai.js');
-        $this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-        $this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+        $this->document->addScript('view/javascript/warehouse/marketplace/ebay/category_form.js');
+        $this->document->addScript('view/javascript/warehouse/tools/ai.js');
+        $this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+        $this->document->addScript('view/javascript/warehouse/popup/alert.js');
 
 
 
@@ -605,19 +605,19 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true)
+            'href' => $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true)
         );
 
         if (!isset($this->request->get['category_id'])) {
-            $data['action'] = $this->url->link('shopmanager/catalog/category_ebay/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+            $data['action'] = $this->url->link('warehouse/marketplace/ebay/category/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
         } else {
-            $data['action'] = $this->url->link('shopmanager/catalog/category_ebay/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $this->request->get['category_id'] . $url, true);
+            $data['action'] = $this->url->link('warehouse/marketplace/ebay/category/edit', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $this->request->get['category_id'] . $url, true);
         }
 
-        $data['cancel'] = $this->url->link('shopmanager/catalog/category_ebay', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        $data['cancel'] = $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
         if (isset($this->request->get['category_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
-            $category_info = $this->model_shopmanager_catalog_category_ebay->getCategoryEbay($this->request->get['category_id']);
+            $category_info = $this->model_warehouse_marketplace_ebay_category->getCategoryEbay($this->request->get['category_id']);
         }
     //	//print("<pre>".print_r ($category_info,true )."</pre>");
         $data['user_token'] = $this->session->data['user_token'];
@@ -629,7 +629,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         if (isset($this->request->post['category_description'])) {
             $data['category_description'] = $this->request->post['category_description'];
         } elseif (isset($this->request->get['category_id'])) {
-            $data['category_description'] = $this->model_shopmanager_catalog_category_ebay->getCategoryEbayDescriptions($this->request->get['category_id']);
+            $data['category_description'] = $this->model_warehouse_marketplace_ebay_category->getCategoryEbayDescriptions($this->request->get['category_id']);
         } else {
             $data['category_description'] = array();
         }
@@ -658,12 +658,12 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
             $data['parent_id'] = 0;
         }
 
-        $this->load->model('shopmanager/filter');
+        $this->load->model('warehouse/catalog/filter');
 
         if (isset($this->request->post['category_filter'])) {
             $filters = $this->request->post['category_filter'];
         } elseif (isset($this->request->get['category_id'])) {
-            $filters = $this->model_shopmanager_catalog_category_ebay->getCategoryEbayFilters($this->request->get['category_id']);
+            $filters = $this->model_warehouse_marketplace_ebay_category->getCategoryEbayFilters($this->request->get['category_id']);
         } else {
             $filters = array();
         }
@@ -671,7 +671,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         $data['category_filters'] = array();
 
         foreach ($filters as $filter_id) {
-            $filter_info = $this->model_shopmanager_filter->getFilter($filter_id);
+            $filter_info = $this->model_warehouse_catalog_filter->getFilter($filter_id);
 
             if ($filter_info) {
                 $data['category_filters'][] = array(
@@ -688,7 +688,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         if (isset($this->request->post['category_store'])) {
             $data['category_store'] = $this->request->post['category_store'];
         } elseif (isset($this->request->get['category_id'])) {
-            $data['category_store'] = $this->model_shopmanager_catalog_category_ebay->getCategoryEbayStores($this->request->get['category_id']);
+            $data['category_store'] = $this->model_warehouse_marketplace_ebay_category->getCategoryEbayStores($this->request->get['category_id']);
         } else {
             $data['category_store'] = array(0);
         }
@@ -756,7 +756,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         if (isset($this->request->post['category_layout'])) {
             $data['category_layout'] = $this->request->post['category_layout'];
         } elseif (isset($this->request->get['category_id'])) {
-            $data['category_layout'] = $this->model_shopmanager_catalog_category_ebay->getCategoryEbayLayouts($this->request->get['category_id']);
+            $data['category_layout'] = $this->model_warehouse_marketplace_ebay_category->getCategoryEbayLayouts($this->request->get['category_id']);
         } else {
             $data['category_layout'] = array();
         }
@@ -768,15 +768,15 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
-        $data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-        $data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-        $data['alert_popup'] = $this->load->controller('shopmanager/marketplace_popup');
+        $data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+        $data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+        $data['alert_popup'] = $this->load->controller('warehouse/marketplace/listing_popup');
 
-        $this->response->setOutput($this->load->view('shopmanager/catalog/category_ebay_form', $data));
+        $this->response->setOutput($this->load->view('warehouse/marketplace/ebay/category_form', $data));
     }
 
     protected function validateForm() {
-        if (!$this->user->hasPermission('modify', 'shopmanager/catalog/category_ebay')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/marketplace/ebay/category')) {
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
@@ -791,7 +791,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         }
 
         if (isset($this->request->get['category_id']) && $this->request->post['parent_id']) {
-            $results = $this->model_shopmanager_catalog_category_ebay->getCategoryEbayPath($this->request->post['parent_id']);
+            $results = $this->model_warehouse_marketplace_ebay_category->getCategoryEbayPath($this->request->post['parent_id']);
             
             foreach ($results as $result) {
                 if ($result['path_id'] == $this->request->get['category_id']) {
@@ -803,9 +803,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         }
 
     /*	if (utf8_strlen($this->request->post['keyword']) > 0) {
-            $this->load->model('shopmanager/url_alias');
+            $this->load->model('warehouse/url_alias');
 
-            $url_alias_info = $this->model_shopmanager_url_alias->getUrlAlias($this->request->post['keyword']);
+            $url_alias_info = $this->model_warehouse_url_alias->getUrlAlias($this->request->post['keyword']);
 
             if ($url_alias_info && isset($this->request->get['category_id']) && $url_alias_info['query'] != 'category_id=' . $this->request->get['category_id']) {
                 $this->error['keyword'] = sprintf(($lang['error_keyword'] ?? ''));
@@ -824,7 +824,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     protected function validateDelete() {
-        if (!$this->user->hasPermission('modify', 'shopmanager/catalog/category_ebay')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/marketplace/ebay/category')) {
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
@@ -832,7 +832,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     protected function validateRepair() {
-        if (!$this->user->hasPermission('modify', 'shopmanager/catalog/category_ebay')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/marketplace/ebay/category')) {
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
@@ -843,7 +843,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         $json = array();
 
         if (isset($this->request->get['filter_name'])) {
-            $this->load->model('shopmanager/catalog/category_ebay');
+            $this->load->model('warehouse/marketplace/ebay/category');
 
             $filter_data = array(
                 'filter_name' => $this->request->get['filter_name'],
@@ -853,7 +853,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
                 'limit'       => 5
             );
 
-            $results = $this->model_shopmanager_catalog_category_ebay->getCategories($filter_data);
+            $results = $this->model_warehouse_marketplace_ebay_category->getCategories($filter_data);
 
             foreach ($results as $result) {
                 $json[] = array(
@@ -876,19 +876,19 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     public function getCategoryEbayDetails() {
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
 
         $category_id = $this->request->get['category_id'];
     
-        $category_info = $this->model_shopmanager_catalog_category_ebay->getCategoryEbay($category_id);
+        $category_info = $this->model_warehouse_marketplace_ebay_category->getCategoryEbay($category_id);
     
         if ($category_info) {
-            $parents = $this->model_shopmanager_catalog_category_ebay->getCategoryEbayPath($category_id);
+            $parents = $this->model_warehouse_marketplace_ebay_category->getCategoryEbayPath($category_id);
             $category_info['parents'] = array();
     
             foreach ($parents as $parent) {
                 if ($parent['path_id'] != $category_id) {
-                    $parent_info = $this->model_shopmanager_catalog_category_ebay->getCategoryEbay($parent['path_id']);
+                    $parent_info = $this->model_warehouse_marketplace_ebay_category->getCategoryEbay($parent['path_id']);
                     if ($parent_info) {
                         $category_info['parents'][] = array(
                             'id' => $parent_info['category_id'],
@@ -906,10 +906,10 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         }
     }
     public function uploadFromLink() {
-        $this->load->language('shopmanager/catalog/category_ebay');
+        $this->load->language('warehouse/marketplace/ebay/category');
         $data = [];
         
-        $this->load->model('shopmanager/catalog/category_ebay');
+        $this->load->model('warehouse/marketplace/ebay/category');
         $json = array();
 
 		if ($this->request->server['REQUEST_METHOD'] == 'POST') {
@@ -918,7 +918,7 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
             $piclink = $data['piclink'];
 			//$category_id = 617;
 			//$piclink="https://oaidalleapiprodscus.blob.core.windows.net/private/org-nSt4WnFqJ0wdsi2ZCS3WkgOQ/user-3H4ZAk7jse8UZPaMlnQEAig8/img-oHnOdAtZbETsPgd1p5dhrhNc.png?st=2024-08-15T03%3A14%3A06Z&se=2024-08-15T05%3A14%3A06Z&sp=r&sv=2024-08-04&sr=b&rscd=inline&rsct=image/png&skoid=d505667d-d6c1-4a0a-bac7-5c84a87759f8&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2024-08-14T18%3A04%3A30Z&ske=2024-08-15T18%3A04%3A30Z&sks=b&skv=2024-08-04&sig=MbtTTQ0xDB/uPVUCJTHcZDwgCNGKZRqIvI82ynsqlt8%3D";
-            $result = $this->model_shopmanager_catalog_category_ebay->uploadImageFromLink($category_id, $piclink);
+            $result = $this->model_warehouse_marketplace_ebay_category->uploadImageFromLink($category_id, $piclink);
 
             if ($result['success']) {
                 $json['success'] = ($lang['text_success'] ?? '');

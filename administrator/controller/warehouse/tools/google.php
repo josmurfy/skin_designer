@@ -1,16 +1,16 @@
 <?php
-// Original: shopmanager/google.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/tools/google.php
+namespace Opencart\Admin\Controller\Warehouse\Tools;
 
 class Google extends \Opencart\System\Engine\Controller {
     public function index(): void {
         ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
-        $this->load->language('shopmanager/google');
+        $this->load->language('warehouse/tools/google');
         $data = [];
         
-        $this->load->model('shopmanager/google');
+        $this->load->model('warehouse/tools/google');
 
         $data['heading_title'] = ($lang['heading_title'] ?? '');
         $data['entry_query'] = ($lang['entry_query'] ?? '');
@@ -24,7 +24,7 @@ class Google extends \Opencart\System\Engine\Controller {
             ($this->request->server['REQUEST_METHOD'] === 'GET' && !empty($this->request->get['query']))
         ) {
             $query = !empty($this->request->post['query']) ? $this->request->post['query'] : $this->request->get['query'];
-            $data['images'] = $this->model_shopmanager_google->get($query);
+            $data['images'] = $this->model_warehouse_tools_google->get($query);
             $data['query'] = $query;
         }else{
             $data['query'] = '';
@@ -62,17 +62,17 @@ class Google extends \Opencart\System\Engine\Controller {
 
 
         }
-        $data['action'] = $this->url->link('shopmanager/google', 'user_token=' . $this->session->data['user_token'], true);
+        $data['action'] = $this->url->link('warehouse/tools/google', 'user_token=' . $this->session->data['user_token'], true);
 
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/google_image_search', $data));
+        $this->response->setOutput($this->load->view('warehouse/tools/google_image_search', $data));
     }
 
      public function translate(): void {
-        $this->load->language('shopmanager/google');
+        $this->load->language('warehouse/tools/google');
         $data = [];
         
 
@@ -83,7 +83,7 @@ class Google extends \Opencart\System\Engine\Controller {
             $json['error'] = ($lang['error_method'] ?? '');
         } elseif (!$this->user->isLogged()) {
             $json['error'] = ($lang['error_login'] ?? '');
-        } elseif (!$this->user->hasPermission('modify', 'shopmanager/google')) {
+        } elseif (!$this->user->hasPermission('modify', 'warehouse/tools/google')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         } else {
             $text_field = $this->request->post['text_field'] ?? '';

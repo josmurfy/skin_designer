@@ -1,4 +1,4 @@
-// Original: shopmanager/inventory/allocation.js
+// Original: warehouse/inventory/allocation.js
 // ============================================
 // GLOBAL VARIABLES
 // ============================================
@@ -60,7 +60,7 @@ function checkedSku() {
 function filterInventory() {
     var user_token = document.querySelector('input[name="user_token"]').value;
 
-    let url = 'index.php?route=shopmanager/inventory/allocation&user_token=' + user_token;
+    let url = 'index.php?route=warehouse/inventory/allocation&user_token=' + user_token;
     let sku = document.getElementById('input-sku').value;
     
     if (sku) {
@@ -761,7 +761,7 @@ function showCountryPopupForScan(productId, row, callback) {
         
         // Call AI to get country suggestion and auto-apply
         
-        fetch('index.php?route=shopmanager/ai.getMadeInCountry&user_token=' + USER_TOKEN, {
+        fetch('index.php?route=warehouse/tools/ai.getMadeInCountry&user_token=' + USER_TOKEN, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -780,7 +780,7 @@ function showCountryPopupForScan(productId, row, callback) {
                 countrySelect.value = data.success.country_id;
                 
                 // Save to database via AJAX
-                fetch('index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + USER_TOKEN, {
+                fetch('index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + USER_TOKEN, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -862,7 +862,7 @@ function showModalWithAI(productId, row, callback, productName, productSku, coun
     
     // Call AI to get country suggestion
     
-    fetch('index.php?route=shopmanager/ai.getMadeInCountry&user_token=' + USER_TOKEN, {
+    fetch('index.php?route=warehouse/tools/ai.getMadeInCountry&user_token=' + USER_TOKEN, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -953,7 +953,7 @@ function editMadeInCountry(product_id) {
     }
     
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + USER_TOKEN,
+        url: 'index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + USER_TOKEN,
         method: 'POST',
         data: {
             product_id: product_id,
@@ -1007,7 +1007,7 @@ $(document).ready(function() {
             
             // Save to database via AJAX
             $.ajax({
-                url: 'index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + USER_TOKEN,
+                url: 'index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + USER_TOKEN,
                 method: 'POST',
                 data: {
                     product_id: productId,

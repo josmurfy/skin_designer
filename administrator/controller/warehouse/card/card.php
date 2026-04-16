@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/card/card.php
-namespace Opencart\Admin\Controller\Shopmanager\Card;
+// Original: warehouse/card/card.php
+namespace Opencart\Admin\Controller\Warehouse\Card;
 
 /**
  * Class Card
@@ -18,7 +18,7 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function index(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $data = [];
         
 
@@ -118,24 +118,24 @@ class Card extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/card', 'user_token=' . $this->session->data['user_token'] . $url, true)
+            'href' => $this->url->link('warehouse/card', 'user_token=' . $this->session->data['user_token'] . $url, true)
         );
 
-        $data['add']    = $this->url->link('shopmanager/card/card.form', 'user_token=' . $this->session->data['user_token'] . $url);
-        $data['copy']   = $this->url->link('shopmanager/card/card.copy', 'user_token=' . $this->session->data['user_token']);
-        $data['delete'] = $this->url->link('shopmanager/card/card.delete', 'user_token=' . $this->session->data['user_token']);
+        $data['add']    = $this->url->link('warehouse/card/card.form', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['copy']   = $this->url->link('warehouse/card/card.copy', 'user_token=' . $this->session->data['user_token']);
+        $data['delete'] = $this->url->link('warehouse/card/card.delete', 'user_token=' . $this->session->data['user_token']);
         $data['user_token'] = $this->session->data['user_token'];
         $data['button_merge']     = $lang['button_merge']     ?? 'Fusionner';
         $data['error_merge_min']  = $lang['error_merge_min']  ?? 'Sélectionnez au moins 2 cartes.';
         $data['text_confirm_merge'] = $lang['text_confirm_merge'] ?? 'Fusionner les cartes sélectionnées? (player = plus long, quantités additionnées)';
         $data['text_merge_success'] = $lang['text_merge_success'] ?? '%d carte(s) fusionnée(s) → carte gardée #%d.';
 
-        $data['list'] = $this->load->controller('shopmanager/card/card.getList');
+        $data['list'] = $this->load->controller('warehouse/card/card.getList');
 
         // Load card types for filter dropdown
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card_type');
-        $data['card_types'] = $this->model_shopmanager_card_card_type->getCardTypes();
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/type');
+        $data['card_types'] = $this->model_warehouse_card_type->getCardTypes();
 
         $data['filter_name'] = $filter_name;
         $data['filter_set_name'] = $filter_set_name;
@@ -152,11 +152,11 @@ class Card extends \Opencart\System\Engine\Controller {
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
-        $data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-        $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
-        $data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
+        $data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+        $data['alert_popup'] = $this->load->controller('warehouse/popup/alert');
+        $data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/card', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/card', $data));
     }
 
     /**
@@ -165,23 +165,23 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function list(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $data = [];
         
 
-        $this->response->setOutput($this->load->controller('shopmanager/card/card.getList'));
+        $this->response->setOutput($this->load->controller('warehouse/card/card.getList'));
     }
 
     /**
      * @return string
      */
     public function getList(): string {
-        $this->document->addScript('view/javascript/shopmanager/bootstrap_helper.js');
-        $this->document->addScript('view/javascript/shopmanager/ai.js');
-        $this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-        $this->document->addScript('view/javascript/shopmanager/alert_popup.js');
-        $this->document->addScript('view/javascript/shopmanager/ebay.js');
-        $this->document->addScript('view/javascript/shopmanager/card/card_list.js');
+        $this->document->addScript('view/javascript/warehouse/bootstrap_helper.js');
+        $this->document->addScript('view/javascript/warehouse/tools/ai.js');
+        $this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+        $this->document->addScript('view/javascript/warehouse/popup/alert.js');
+        $this->document->addScript('view/javascript/warehouse/marketplace/ebay/api.js');
+        $this->document->addScript('view/javascript/warehouse/card/card_list.js');
 
         if (isset($this->request->get['filter_name'])) {
             $filter_name = $this->request->get['filter_name'];
@@ -307,9 +307,9 @@ class Card extends \Opencart\System\Engine\Controller {
             'limit' => $limit
         );
 
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/card');
 
-        $results = $this->model_shopmanager_card_card->getCards($filter_data);
+        $results = $this->model_warehouse_card_card->getCards($filter_data);
 
         foreach ($results as $result) {
             $data['cards'][] = array(
@@ -323,11 +323,11 @@ class Card extends \Opencart\System\Engine\Controller {
                 'location' => $result['location'],
                 'status' => $result['status'],
                 'date_added' => $result['date_added'],
-                'edit' => $this->url->link('shopmanager/card/card.form', 'user_token=' . $this->session->data['user_token'] . '&card_id=' . $result['card_id'] . $url, true)
+                'edit' => $this->url->link('warehouse/card/card.form', 'user_token=' . $this->session->data['user_token'] . '&card_id=' . $result['card_id'] . $url, true)
             );
         }
 
-        $card_total = $this->model_shopmanager_card_card->getTotalCards($filter_data);
+        $card_total = $this->model_warehouse_card_card->getTotalCards($filter_data);
 
         $data['user_token'] = $this->session->data['user_token'];
 
@@ -375,16 +375,16 @@ class Card extends \Opencart\System\Engine\Controller {
             $url .= '&limit=' . $this->request->get['limit'];
         }
 
-        $data['sort_card_id'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.card_id' . $url, true);
-        $data['sort_name'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.player_name' . $url, true);
-        $data['sort_player_name'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.player_name' . $url, true);
-        $data['sort_title'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.title' . $url, true);
-        $data['sort_set_name'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=cl.set_name' . $url, true);
-        $data['sort_card_type'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=ct.name' . $url, true);
-        $data['sort_year'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.year' . $url, true);
-        $data['sort_location'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.location' . $url, true);
-        $data['sort_status'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.status' . $url, true);
-        $data['sort_date_added'] = $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.date_added' . $url, true);
+        $data['sort_card_id'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.card_id' . $url, true);
+        $data['sort_name'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.player_name' . $url, true);
+        $data['sort_player_name'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.player_name' . $url, true);
+        $data['sort_title'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.title' . $url, true);
+        $data['sort_set_name'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=cl.set_name' . $url, true);
+        $data['sort_card_type'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=ct.name' . $url, true);
+        $data['sort_year'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.year' . $url, true);
+        $data['sort_location'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.location' . $url, true);
+        $data['sort_status'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.status' . $url, true);
+        $data['sort_date_added'] = $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . '&sort=c.date_added' . $url, true);
 
         $url = '';
 
@@ -424,16 +424,16 @@ class Card extends \Opencart\System\Engine\Controller {
             'total' => $card_total,
             'page' => $page,
             'limit' => $limit,
-            'url' => $this->url->link('shopmanager/card/card.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true),
+            'url' => $this->url->link('warehouse/card/card.list', 'user_token=' . $this->session->data['user_token'] . $url . '&page={page}', true),
             'text' => ($lang['text_pagination'] ?? '')
         ]);
 
         $data['results'] = sprintf(($lang['text_pagination'] ?? ''), ($card_total) ? (($page - 1) * $limit) + 1 : 0, ((($page - 1) * $limit) > ($card_total - $limit)) ? $card_total : ((($page - 1) * $limit) + $limit), $card_total, ceil($card_total / $limit));
 
         // Load card types for filter dropdown
-        $this->load->model('shopmanager/card/card_listing');
-        $this->load->model('shopmanager/card/card_type');
-        $data['card_types'] = $this->model_shopmanager_card_card_type->getCardTypes();
+        $this->load->model('warehouse/card/listing');
+        $this->load->model('warehouse/card/type');
+        $data['card_types'] = $this->model_warehouse_card_type->getCardTypes();
 
         $data['filter_name'] = $filter_name;
         $data['filter_set_name'] = $filter_set_name;
@@ -446,7 +446,7 @@ class Card extends \Opencart\System\Engine\Controller {
         $data['sort'] = $sort;
         $data['order'] = $order;
 
-        return $this->load->view('shopmanager/card/card_list', $data);
+        return $this->load->view('warehouse/card/card_list', $data);
     }
 
     /**
@@ -455,7 +455,7 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function form(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $data = [];
         
 
@@ -463,11 +463,11 @@ class Card extends \Opencart\System\Engine\Controller {
 
         if (($this->request->server['REQUEST_METHOD'] == 'POST') && $this->validateForm()) {
             if (isset($this->request->get['card_id'])) {
-                $this->load->model('shopmanager/card/card');
-                $this->model_shopmanager_card->editCard($this->request->get['card_id'], $this->request->post);
+                $this->load->model('warehouse/card/card');
+                $this->model_warehouse_card_card->editCard($this->request->get['card_id'], $this->request->post);
             } else {
-                $this->load->model('shopmanager/card/card');
-                $this->model_shopmanager_card->addCard($this->request->post);
+                $this->load->model('warehouse/card/card');
+                $this->model_warehouse_card_card->addCard($this->request->post);
             }
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -510,7 +510,7 @@ class Card extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/card', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/card', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->getForm();
@@ -571,15 +571,15 @@ class Card extends \Opencart\System\Engine\Controller {
 
         $data['breadcrumbs'][] = array(
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/card/card', 'user_token=' . $this->session->data['user_token'] . $url, true)
+            'href' => $this->url->link('warehouse/card/card', 'user_token=' . $this->session->data['user_token'] . $url, true)
         );
 
-        $data['save'] = $this->url->link('shopmanager/card/card.form', 'user_token=' . $this->session->data['user_token'] . $url, true);
-        $data['back'] = $this->url->link('shopmanager/card/card', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        $data['save'] = $this->url->link('warehouse/card/card.form', 'user_token=' . $this->session->data['user_token'] . $url, true);
+        $data['back'] = $this->url->link('warehouse/card/card', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
         if (isset($this->request->get['card_id'])) {
-            $this->load->model('shopmanager/card/card');
-            $card_info = $this->model_shopmanager_card_card->getCard($this->request->get['card_id']);
+            $this->load->model('warehouse/card/card');
+            $card_info = $this->model_warehouse_card_card->getCard($this->request->get['card_id']);
         }
 
         if (isset($this->request->get['card_id'])) {
@@ -634,7 +634,7 @@ class Card extends \Opencart\System\Engine\Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/card_form', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/card_form', $data));
     }
 
     /**
@@ -643,7 +643,7 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return bool
      */
     protected function validateForm(): bool {
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/card')) {
             $this->error['warning'] = ($lang['error_permission'] ?? '');
         }
 
@@ -660,19 +660,19 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function delete(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $data = [];
         
 
         if (isset($this->request->post['selected'])) {
-            if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+            if (!$this->user->hasPermission('modify', 'warehouse/card/card')) {
                 $this->error['warning'] = ($lang['error_permission'] ?? '');
             }
 
-            $this->load->model('shopmanager/card/card');
+            $this->load->model('warehouse/card/card');
 
             foreach ($this->request->post['selected'] as $card_id) {
-                $this->model_shopmanager_card_card->deleteCard($card_id);
+                $this->model_warehouse_card_card->deleteCard($card_id);
             }
 
             $this->session->data['success'] = ($lang['text_success'] ?? '');
@@ -715,7 +715,7 @@ class Card extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/card', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/card', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->index();
@@ -727,21 +727,21 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function copy(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $data = [];
         
 
         if (isset($this->request->post['selected'])) {
-            if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+            if (!$this->user->hasPermission('modify', 'warehouse/card/card')) {
                 $this->error['warning'] = ($lang['error_permission'] ?? '');
             }
 
-            $this->load->model('shopmanager/card/card');
+            $this->load->model('warehouse/card/card');
 
             foreach ($this->request->post['selected'] as $card_id) {
-                $card_info = $this->model_shopmanager_card_card->getCard($card_id);
+                $card_info = $this->model_warehouse_card_card->getCard($card_id);
                 if ($card_info) {
-                    $this->model_shopmanager_card_card->addCard($card_info);
+                    $this->model_warehouse_card_card->addCard($card_info);
                 }
             }
 
@@ -785,7 +785,7 @@ class Card extends \Opencart\System\Engine\Controller {
                 $url .= '&page=' . $this->request->get['page'];
             }
 
-            $this->response->redirect($this->url->link('shopmanager/card', 'user_token=' . $this->session->data['user_token'] . $url, true));
+            $this->response->redirect($this->url->link('warehouse/card', 'user_token=' . $this->session->data['user_token'] . $url, true));
         }
 
         $this->index();
@@ -803,14 +803,14 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function getCards(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $data = [];
         
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/card');
 
         $json = [];
 
-        if (!$this->user->hasPermission('access', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('access', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -841,13 +841,13 @@ class Card extends \Opencart\System\Engine\Controller {
         $filter_data['limit'] = $limit;
 
         // ── Fetch cards + total ─────────────────────────────────────────────
-        $cards_raw = $this->model_shopmanager_card_card->getCards($filter_data);
-        $total     = $this->model_shopmanager_card_card->getTotalCards($filter_data);
+        $cards_raw = $this->model_warehouse_card_card->getCards($filter_data);
+        $total     = $this->model_warehouse_card_card->getTotalCards($filter_data);
 
         // ── Build response rows (with max 2 images each) ────────────────────
         $cards = [];
         foreach ($cards_raw as $row) {
-            $images = $this->model_shopmanager_card_card->getCardImageUrls((int)$row['card_id']);
+            $images = $this->model_warehouse_card_card->getCardImageUrls((int)$row['card_id']);
             $cards[] = [
                 'card_id'     => (int)$row['card_id'],
                 'sku'         => $row['sku']         ?? '',
@@ -887,14 +887,14 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function updatePrice(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $data = [];
         
 
         $json = [];
 
         // Check permission
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['success'] = false;
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
@@ -949,7 +949,7 @@ class Card extends \Opencart\System\Engine\Controller {
     public function updateQuantity(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/card')) {
             $json['success'] = false;
             $json['error']   = 'Permission refusée';
             $this->response->addHeader('Content-Type: application/json');
@@ -976,10 +976,10 @@ class Card extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/card');
 
         // Met à jour la quantité dans oc_card
-        $this->model_shopmanager_card_card->updateCardQuantity($card_id, $quantity);
+        $this->model_warehouse_card_card->updateCardQuantity($card_id, $quantity);
 
         // Recalcule total_quantity dans oc_card_listing
         $card_query = $this->db->query("SELECT `listing_id` FROM `" . DB_PREFIX . "card` WHERE `card_id` = " . $card_id);
@@ -1004,7 +1004,7 @@ class Card extends \Opencart\System\Engine\Controller {
     public function updateRawPrice(): void {
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/card')) {
             $json['success'] = false;
             $json['error']   = 'Permission refusée';
             $this->response->addHeader('Content-Type: application/json');
@@ -1083,24 +1083,24 @@ class Card extends \Opencart\System\Engine\Controller {
         }
 
         // Get distinct values for autocomplete
-        $this->load->model('shopmanager/card/card');
+        $this->load->model('warehouse/card/card');
 
         if (!empty($filter_name)) {
-            $results = $this->model_shopmanager_card_card->getDistinctValues('player_name', $filter_name, $limit);
+            $results = $this->model_warehouse_card_card->getDistinctValues('player_name', $filter_name, $limit);
             foreach ($results as $result) {
                 $json[] = [
                     'name' => $result['value']
                 ];
             }
         } elseif (!empty($filter_set_name)) {
-            $results = $this->model_shopmanager_card_card->getDistinctValues('set_name', $filter_set_name, $limit);
+            $results = $this->model_warehouse_card_card->getDistinctValues('set_name', $filter_set_name, $limit);
             foreach ($results as $result) {
                 $json[] = [
                     'name' => $result['value']
                 ];
             }
         } elseif (!empty($filter_location)) {
-            $results = $this->model_shopmanager_card_card->getDistinctValues('location', $filter_location, $limit);
+            $results = $this->model_warehouse_card_card->getDistinctValues('location', $filter_location, $limit);
             foreach ($results as $result) {
                 $json[] = [
                     'name' => $result['value']
@@ -1119,12 +1119,12 @@ class Card extends \Opencart\System\Engine\Controller {
      * Returns: {success, card_id, price_sold, price_list, date}
      */
     public function fetchCardMarketPrice(): void {
-        $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('warehouse/card/listing');
         $data = [];
         
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1139,15 +1139,15 @@ class Card extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card');
-        $this->load->model('shopmanager/card/card_market');
+        $this->load->model('warehouse/card/card');
+        $this->load->model('warehouse/card/market');
 
         // Buffer any PHP warnings so they don't corrupt the JSON output
         ob_start();
 
         try {
             // Load full card + listing data
-            $card = $this->model_shopmanager_card_card->getCardById($card_id);
+            $card = $this->model_warehouse_card_card->getCardById($card_id);
             if (!$card) {
                 ob_end_clean();
                 $json['error'] = 'Card not found: ' . $card_id;
@@ -1157,7 +1157,7 @@ class Card extends \Opencart\System\Engine\Controller {
             }
 
             // Fetch market prices via Finding API (completed + active)
-            $prices = $this->model_shopmanager_card_card_market->fetchLowestMarketPrices([
+            $prices = $this->model_warehouse_card_market->fetchLowestMarketPrices([
                 'player'                 => $card['player_name'] ?? '',
                 'set'                    => $card['set_name']    ?? '',
                 'year'                   => $card['year']        ?? ($card['listing_year'] ?? ''),
@@ -1167,7 +1167,7 @@ class Card extends \Opencart\System\Engine\Controller {
             ]);
 
             // Save to DB (even if null — clears stale values)
-            $this->model_shopmanager_card_card->updateCardMarketPrices(
+            $this->model_warehouse_card_card->updateCardMarketPrices(
                 $card_id,
                 $prices['price_sold'],
                 $prices['price_list']
@@ -1201,10 +1201,10 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function mergeCards(): void {
-        $this->load->language('shopmanager/card/card');
+        $this->load->language('warehouse/card/card');
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/card/card')) {
             $json['error'] = $lang['error_permission'] ?? 'Permission refusée.';
             $this->response->addHeader('Content-Type: application/json');
             $this->response->setOutput(json_encode($json));
@@ -1220,8 +1220,8 @@ class Card extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $this->load->model('shopmanager/card/card');
-        $result = $this->model_shopmanager_card_card->mergeCards($selected);
+        $this->load->model('warehouse/card/card');
+        $result = $this->model_warehouse_card_card->mergeCards($selected);
 
         if (isset($result['error'])) {
             $json['error'] = $result['error'];

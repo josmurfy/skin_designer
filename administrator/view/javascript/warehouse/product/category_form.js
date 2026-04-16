@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/category_form.js
+// Original: warehouse/product/category_form.js
 // category_form.js
 
 // ============================================
@@ -190,7 +190,7 @@ function getCategorySpecifics(categoryId, site_id, specifics_row) {
     var user_token = document.querySelector('input[name="user_token"]').value;
     var Button = $('#button-get-specifics');
     $.ajax({
-        url: 'index.php?route=shopmanager/ebay.getCategorySpecifics&user_token=' + user_token, // Le chemin du contrôleur
+        url: 'index.php?route=warehouse/marketplace/ebay/api.getCategorySpecifics&user_token=' + user_token, // Le chemin du contrôleur
         type: 'post',
         dataType: 'json',
         data: { category_id: categoryId,site_id: site_id },
@@ -340,7 +340,7 @@ async function uploadFromLink(imageUrl) {
         category_id: categoryId,
         piclink: imageUrl
     };
-    fetch('index.php?route=shopmanager/catalog/category.uploadFromLink&user_token=' + user_token, {
+    fetch('index.php?route=warehouse/product/category.uploadFromLink&user_token=' + user_token, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

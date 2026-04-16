@@ -1,4 +1,4 @@
-{# Original: shopmanager/inventory/sync_not_imported.twig #}
+{# Original: warehouse/marketplace/ebay/sync_not_imported.twig #}
 {# Not Imported Tab — Listed on eBay but last_import is NULL #}
 
 {% if not_imported|length > 0 %}
@@ -45,7 +45,7 @@
             </td>
             <td><span class="badge bg-secondary">{{ product.location }}</span></td>
             <td class="text-center">
-              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-xs btn-primary btn-sm" title="{{ text_edit_product }}">
+              <a href="index.php?route=warehouse/product/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-xs btn-primary btn-sm" title="{{ text_edit_product }}">
                 <i class="fa-solid fa-edit"></i>
               </a>
             </td>

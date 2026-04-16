@@ -1,12 +1,12 @@
 <?php
-// Original: shopmanager/catalog/product_search.php
-namespace Opencart\Admin\Controller\Shopmanager\Catalog;
+// Original: warehouse/product/research.php
+namespace Opencart\Admin\Controller\Warehouse\Product;
 
 //use Google\Service\TrafficDirectorService\NullMatch;
 //use setasign\Fpdi\Fpdi;
 
 
-class ProductSearch extends \Opencart\System\Engine\Controller {
+class Research extends \Opencart\System\Engine\Controller {
 
     
 public function index() {
@@ -16,14 +16,14 @@ public function index() {
 	$start_time = microtime(true); 
 	$execution_times = [];
 	$n=0;
-	$this->load->language('shopmanager/catalog/product_search');
+	$this->load->language('warehouse/product/research');
 	$data = [];
 	
-	$this->document->addScript('view/javascript/shopmanager/catalog/product_search.js');
-		$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-		//$this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+	$this->document->addScript('view/javascript/warehouse/product/research.js');
+		$this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+		//$this->document->addScript('view/javascript/warehouse/popup/alert.js');
 
-//	$this->document->addScript('view/javascript/shopmanager/chrome_debug.js');
+//	$this->document->addScript('view/javascript/warehouse/chrome_debug.js');
 
 	
 	$this->document->setTitle(($lang['heading_title'] ?? ''));
@@ -32,14 +32,14 @@ public function index() {
 	// Charger le modèle
 	 
 
-	$this->load->model('shopmanager/catalog/product_search');
-	$this->load->model('shopmanager/manufacturer');
-	$this->load->model('shopmanager/tools');
-	$this->load->model('shopmanager/ai');
-	$this->load->model('shopmanager/catalog/product');
-	$this->load->model('shopmanager/condition');
-	$this->load->model('shopmanager/catalog/category');
-	$this->load->model('shopmanager/catalog/product_specific');
+	$this->load->model('warehouse/product/research');
+	$this->load->model('warehouse/product/manufacturer');
+	$this->load->model('warehouse/tools/utility');
+	$this->load->model('warehouse/tools/ai');
+	$this->load->model('warehouse/product/product');
+	$this->load->model('warehouse/product/condition');
+	$this->load->model('warehouse/product/category');
+	$this->load->model('warehouse/product/product_specific');
 
 	// Définir les variables de texte
 
@@ -221,9 +221,9 @@ public function index() {
 
 	$data['user_token'] = $this->session->data['user_token'];
 
-	$this->load->model('shopmanager/localisation/country');
+	$this->load->model('warehouse/localisation/country');
 
-	$data['countries'] = $this->model_shopmanager_localisation_country->getCountries();
+	$data['countries'] = $this->model_warehouse_localisation_country->getCountries();
 
 
 	$url='';
@@ -237,9 +237,9 @@ public function index() {
 
 	$data['breadcrumbs'][] = array(
 		'text' => ($lang['heading_title'] ?? ''),
-		'href' => $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . $url, true)
+		'href' => $this->url->link('warehouse/product/research', 'user_token=' . $this->session->data['user_token'] . $url, true)
 	);
-	$data['cancel'] = $this->url->link('shopmanager/catalog/product', 'user_token=' . $this->session->data['user_token'] . $url, true);
+	$data['cancel'] = $this->url->link('warehouse/product/product', 'user_token=' . $this->session->data['user_token'] . $url, true);
 	 
 	if (isset($this->error['warning'])) {
 		$data['error_warning'] = $this->error['warning'];
@@ -266,19 +266,19 @@ public function index() {
 
 
 	// Définir l'action du formulaire de recherche
-	$data['action'] = $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'], true);
+	$data['action'] = $this->url->link('warehouse/product/research', 'user_token=' . $this->session->data['user_token'], true);
 
 	// Définir l'action du formulaire de sauvegarde
-	$data['save_action'] = $this->url->link('shopmanager/catalog/product_search/product_feed', 'user_token=' . $this->session->data['user_token'], true);
+	$data['save_action'] = $this->url->link('warehouse/product/research/product_feed', 'user_token=' . $this->session->data['user_token'], true);
 
 	$data['header'] = $this->load->controller('common/header');
 	$data['column_left'] = $this->load->controller('common/column_left');
 	$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = '';//$this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = '';//$this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = '';//$this->load->controller('shopmanager/marketplace_popup');
+		$data['wait_popup'] = '';//$this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = '';//$this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = '';//$this->load->controller('warehouse/marketplace/listing_popup');
 	
-	$data['ocr'] = $this->load->controller('shopmanager/ocr');
+	$data['ocr'] = $this->load->controller('warehouse/tools/ocr');
 //print("<pre>".print_r ($this->request->get ,true )."</pre>"); 
 // Vérifier si le formulaire a été soumis via POST
 if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request->post['upc'])) || isset($this->request->get['upc'])|| isset($this->request->get['product_id']))  {
@@ -288,8 +288,8 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		// Si l'UPC n'est pas présent, essayer de l'extraire d'un SKU, si disponible
 	/*	if (empty($upc) && isset($this->request->get['filter_sku'])) {
-			$product_id = $this->model_shopmanager_catalog_product->getIDbySku($this->request->get['filter_sku']);
-			$upc = $this->model_shopmanager_catalog_product->getUPCBySku($this->request->get['filter_sku']);
+			$product_id = $this->model_warehouse_product_product->getIDbySku($this->request->get['filter_sku']);
+			$upc = $this->model_warehouse_product_product->getUPCBySku($this->request->get['filter_sku']);
 		}*/
 
 		if (isset($this->request->get['product_id'])) {
@@ -317,7 +317,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		
 			
 		
-			$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+			$product_info = $this->model_warehouse_product_product->getProduct($product_id);
 		
 			
 			$data = array_merge_recursive($data,$product_info);
@@ -347,7 +347,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		
 			// Images
 			
-			$product_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+			$product_images = $this->model_warehouse_product_product->getImages($product_id);
 			
 		
 		
@@ -371,22 +371,22 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			
 		
 				
-				$categories = $this->model_shopmanager_catalog_product->getCategories($product_id);
+				$categories = $this->model_warehouse_product_product->getCategories($product_id);
 
-					$this->load->model('shopmanager/condition');
+					$this->load->model('warehouse/product/condition');
 		
 				if(isset($product_info['category_id'])){
 							// Conditions
 					//print("<pre>" . print_r(value: '360:PRODUCT_SEARCH.php') . "</pre>");
-					$data['conditions']=$this->model_shopmanager_condition->getConditionDetails($product_info['category_id']);
-					$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($product_info['category_id']);
-					$category_leaf = $this->model_shopmanager_catalog_category->getCategoryLeaf($product_info['category_id']);
+					$data['conditions']=$this->model_warehouse_product_condition->getConditionDetails($product_info['category_id']);
+					$category_specific_info = $this->model_warehouse_product_category->getSpecific($product_info['category_id']);
+					$category_leaf = $this->model_warehouse_product_category->getCategoryLeaf($product_info['category_id']);
 		
 					if (!is_array($category_specific_info[1]['specifics'])) {
 						
 						if($category_leaf ==1){
 						//print("<pre>".print_r ('getform:2631',true )."</pre>");
-							$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
+							$this->response->redirect($this->url->link('warehouse/product/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $product_info['category_id'] . '&product_id='.$product_info['product_id'] . '&upc='.$product_info['upc'], true));
 						}else{
 							$this->error['category']= ($lang['error_category_not_leaf'] ?? '');
 						}
@@ -409,7 +409,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 				$data['product_categories'] = array();
 			
 				foreach ($categories as $category_id) {
-					$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+					$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 					//print("<pre>".print_r ($category_info,true )."</pre>");
 					if ($category_info) {
 						$data['product_categories'][] = array(
@@ -438,7 +438,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 	//print("<pre>" . print_r($data, true) . "</pre>");
 		// 4. Récupérer ou rafraîchir les informations sur le produit en fonction de l'UPC 
 		if(isset($upc) && is_numeric($upc)){
-		$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($upc);
+		$product_info_source = $this->model_warehouse_product_research->manageProductInfoSources($upc);
 		// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 		
 		
@@ -483,12 +483,12 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}
 
 	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
-	//print("<pre>" . print_r($this->model_shopmanager_ebay->get($upc),true) . "</pre>");
+	//print("<pre>" . print_r($this->model_warehouse_marketplace_ebay_api->get($upc),true) . "</pre>");
 														
-	//print("<pre>" . print_r($this->model_shopmanager_ebay->findProductIDByGTIN($upc), true) . "</pre>");
+	//print("<pre>" . print_r($this->model_warehouse_marketplace_ebay_api->findProductIDByGTIN($upc), true) . "</pre>");
 		// 4. Récupérer ou rafraîchir les informations sur le produit en fonction de l'UPC
 		
-		//$this->model_shopmanager_ebay->getDetailsByepid('25046076135');
+		//$this->model_warehouse_marketplace_ebay_api->getDetailsByepid('25046076135');
 		// 7. Si l'API eBay n'a pas retourné de résultats et que nous avons un titre d'Algopix, tenter de récupérer via eBay à nouveau
 	
 
@@ -521,7 +521,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 //echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
 
-//$data['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+//$data['images'] = !empty($google_search) ? $this->model_warehouse_product_research->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 // Ajout des informations Algopix et eBay
 
@@ -529,7 +529,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 
 		if (isset($upc_tmp_search['error']) && isset($algopix_search['commonAttributes'] ['title'])) { 
-			$upc_tmp_search = $this->model_shopmanager_upctmp->search($algopix_search['commonAttributes'] ['title']);
+			$upc_tmp_search = $this->model_warehouse_tools_upctmp->search($algopix_search['commonAttributes'] ['title']);
 		}
 		//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 		//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
@@ -537,7 +537,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 		if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-			$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
 		}
 
 		if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -561,7 +561,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		
 		if (!isset($category_id) && !isset($data['category_name']) && isset($algopix_search['channelSpecificAttributes'] ['productType'])){
 			$category_name = str_replace('_', ' ',$algopix_search['channelSpecificAttributes'] ['productType']);
-			$category_info = $this->model_shopmanager_ai->getCategoryID($category_name);
+			$category_info = $this->model_warehouse_tools_ai->getCategoryID($category_name);
 			if(isset($category_info)){
 				$category_id=trim($category_info['category_id'])??null;
 				$data['category_id']  = $category_id;
@@ -574,7 +574,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		// 
 		if(empty($data['product_categories']) && isset($category_id) ){
 			
-				$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+				$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 				//print("<pre>".print_r ($category_info,true )."</pre>");
 				if ($category_info) {
 					$data['product_categories'][] = array(
@@ -591,7 +591,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}
 			//print("<pre>" . print_r(value: '574:PRODUCTSEARCH.php') . "</pre>");
 			$conditions = $category_id 
-				? $this->model_shopmanager_condition->getConditionDetails($category_id) 
+				? $this->model_warehouse_product_condition->getConditionDetails($category_id) 
 				: [];
 
 			$data['conditions'] = $conditions[1] ?? [];
@@ -600,20 +600,20 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['images']  = $this->model_warehouse_product_research->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 		//print("<pre>" . print_r('3638:product.php', true) . "</pre>");
 		//print("<pre>" . print_r($data['images'], true) . "</pre>");
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['titles']  = $this->model_warehouse_product_research->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($data);
+			$data['manufacturers'] = $this->model_warehouse_product_research->getAllManufacturers($data);
 				//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
 
 
@@ -626,10 +626,10 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					$data['manufacturers'] = [$data['manufacturers']];
 				}
 				if(count($data['manufacturers'])==1 && is_array($data['manufacturers'][0])){
-					$findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturerByName(reset($data['manufacturers']));
+					$findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturerByName(reset($data['manufacturers']));
 				//print("<pre>" . print_r('3669:product.php', true) . "</pre>");
 				//print("<pre>" . print_r($findmanufacturer, true) . "</pre>");
-					//$findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturers($manufacturer_data);
+					//$findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturers($manufacturer_data);
 					if(!isset($findmanufacturer)){
 						$data_value = [
 							'name' => reset($data['manufacturers']),  // Nom du fabricant
@@ -640,7 +640,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 						];
 	
 						// Résultat final
-						$manufacturer_result ['manufacturer_id'] = $this->model_shopmanager_manufacturer->addManufacturer($data_value);
+						$manufacturer_result ['manufacturer_id'] = $this->model_warehouse_product_manufacturer->addManufacturer($data_value);
 						$manufacturer_result ['name'] = reset($data['manufacturers']);
 			 //print("<pre>" . print_r('916:ai.php', true) . "</pre>");
 		   //print("<pre>" . print_r($data_value, true) . "</pre>");
@@ -658,7 +658,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 				//	$manufacturer_result = $manufacturer_result[0];
 				}else{
 					
-					$manufacturer_result=$this->model_shopmanager_ai->getManufacturer($data['manufacturers']);
+					$manufacturer_result=$this->model_warehouse_tools_ai->getManufacturer($data['manufacturers']);
 		//			//print("<pre>" . print_r('3715:product.php', true) . "</pre>");
 			//		//print("<pre>" . print_r($manufacturer_result, true) . "</pre>");
 		//			//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -681,16 +681,16 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-		//$product_description = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+		//$product_description = $this->model_warehouse_product_product->getDescriptions($product_id);
 
 		// Vérifie si le nom en français (language_id = 1) est vide ou trop court
-		$product_description = isset($product_id)?$this->model_shopmanager_catalog_product->getDescriptions($product_id):null;
+		$product_description = isset($product_id)?$this->model_warehouse_product_product->getDescriptions($product_id):null;
 
 		// Vérifie si le nom en français (language_id = 1) est vide ou trop court
 		$title_source = $product_description[1]['name'] ?? '';
 		$category_id = $data['category_id'] ?? null;
 		if (empty($title_source) || mb_strlen(trim($title_source)) < 5) {
-			$title_result = $this->model_shopmanager_ai->getTitle($data['titles'], $category_id, $data);
+			$title_result = $this->model_warehouse_tools_ai->getTitle($data['titles'], $category_id, $data);
 
 			// Débogage si nécessaire
 			// print("<pre>" . print_r('3670:product_search.php', true) . "</pre>");
@@ -717,7 +717,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		//print("<pre>".print_r ('3719:product.php' ,true )."</pre>");
 	//		//print("<pre>".print_r ($data ,true )."</pre>");
 			if (isset($data['marketplace_item_id']) && ($data['marketplace_item_id'] > 0) && $category_leaf == 1) {
-				$ebay_specific_info = $this->model_shopmanager_ebay->getSpecificsOLD($data['marketplace_item_id']);
+				$ebay_specific_info = $this->model_warehouse_marketplace_ebay_api->getSpecificsOLD($data['marketplace_item_id']);
 				//print("<pre>" . print_r(('3687:product.php'), true) . "</pre>");
 				//print("<pre>" . print_r(($ebay_specific_info), true) . "</pre>"); 
 				//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
@@ -736,7 +736,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					//echo '<br>Nombre de item pour ebay: ' . count($ebay_search);
 					
 					if (!is_null($ebay_search[0])) {
-						$ebay_specific_info = $this->model_shopmanager_ebay->getSpecificsSellers($ebay_search, $data['category_id']);
+						$ebay_specific_info = $this->model_warehouse_marketplace_ebay_api->getSpecificsSellers($ebay_search, $data['category_id']);
 					} else {
 						$ebay_specific_info = null; // Ou toute autre logique si nécessaire
 					}
@@ -750,7 +750,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 			
 			// Si les deux sont null, $mergeArrayForSpecifics reste un tableau vide
-			$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($category_id,1);
+			$category_specific_info = $this->model_warehouse_product_category->getSpecific($category_id,1);
 
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			 
@@ -763,10 +763,10 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 				//print("<pre>" . print_r(('3808:product.php'), true) . "</pre>");
 			//print("<pre>" . print_r(($epid_details), true) . "</pre>");
 			
-					$ebay_sources = isset($epid_details['aspects'])?$this->model_shopmanager_ebay->formatEpidDetails($epid_details['aspects'],$category_specific_info):[];;
+					$ebay_sources = isset($epid_details['aspects'])?$this->model_warehouse_marketplace_ebay_api->formatEpidDetails($epid_details['aspects'],$category_specific_info):[];;
 					$data['epid_sources_json'] = json_encode($ebay_sources)??'';
 					$mergeArrayForSpecifics = $ebay_sources;
-					//$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources($ebay_sources,$mergeArrayForSpecifics);
+					//$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources($ebay_sources,$mergeArrayForSpecifics);
 				//	//print("<pre>" . print_r(value: 663) . "</pre>");
 				//	//print("<pre>" . print_r($ebay_sources, true) . "</pre>");
 				}else{
@@ -776,23 +776,23 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			//	//print("<pre>" . print_r($ebay_specific_info, true) . "</pre>");
 			// Si les deux variables ne sont pas null, faire array_merge_recursive
 			if (!is_null($ebay_specific_info)) {
-				$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources($this->model_shopmanager_ebay->formatActualDetails($ebay_specific_info),$mergeArrayForSpecifics);
+				$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources($this->model_warehouse_marketplace_ebay_api->formatActualDetails($ebay_specific_info),$mergeArrayForSpecifics);
 			//	//print("<pre>" . print_r(value: 634, return: true) . "</pre>");
 			//	//print("<pre>" . print_r($mergeArrayForSpecifics, true) . "</pre>");
 			}elseif (!is_null($upc_tmp_search) && !is_null($algopix_search)) {
-				$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources(array_merge_recursive($upc_tmp_search, $algopix_search),$mergeArrayForSpecifics);
+				$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources(array_merge_recursive($upc_tmp_search, $algopix_search),$mergeArrayForSpecifics);
 			//	//print("<pre>" . print_r(value: 638) . "</pre>");
 			//	//print("<pre>" . print_r($mergeArrayForSpecifics, true) . "</pre>");
 			}
 			// Si seulement $upc_tmp_search n'est pas null, l'utiliser comme le tableau fusionné 
 			elseif (!is_null($upc_tmp_search)) {
-				$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources($upc_tmp_search,$mergeArrayForSpecifics);
+				$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources($upc_tmp_search,$mergeArrayForSpecifics);
 			//	//print("<pre>" . print_r(value: 640) . "</pre>");
 			//	//print("<pre>" . print_r($upc_tmp_search, true) . "</pre>");
 			}
 			// Si seulement $algopix_search n'est pas null, l'utiliser comme le tableau fusionné
 			elseif (!is_null($algopix_search)) {
-				$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources($algopix_search,$mergeArrayForSpecifics);
+				$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources($algopix_search,$mergeArrayForSpecifics);
 			//	//print("<pre>" . print_r(value: 646) . "</pre>");
 			//	//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 				
@@ -813,7 +813,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 			$mergeArrayForSpecifics['category_name'] = $data['category_name'];
 			$mergeArrayForSpecifics['category_id']= $data['category_id'];
-			$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+			$mergeArrayForSpecificsResult = $this->model_warehouse_product_research->filterArrayForSpecifics($mergeArrayForSpecifics);
 		
 			unset($mergeArrayForSpecificsResult['error']);
 			unset($mergeArrayForSpecificsResult['category_name']);
@@ -856,7 +856,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 				//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 				// Vérifier si la clé existe dans la base de données
-				$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $category_id);
+				$replacement_term = $this->model_warehouse_product_specific->getSpecificKey($specific_key_name, $category_id);
 
 			//	//print("<pre>" . print_r($replacement_term, true) . "</pre>");
 			//	//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); //echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
@@ -877,14 +877,14 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					
 					if ($replacement_term == 'not_set') {
 					// Si la clé n'existe pas dans la base, obtenir un terme suggéré via la fonction getSpecificsKey()
-						$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
+						$suggest_replacement_term = $this->model_warehouse_tools_ai->getSpecificKey($specific_key_name, $category_specifics);
 					//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 						if(isset($suggest_replacement_term)){
-							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
+							$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
 							unset($category_specifics[$suggest_replacement_term]);
 							$key_set=2;
 						}else{
-							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, '');
+							$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $category_id, '');
 							$key_set=0;
 						}
 					}else{
@@ -914,7 +914,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			$data['ebay_pricevariant_table'] = $this->getEbayPricevariantTable($data);
 			
 		if(isset($this->request->get['type'])){
-			$json['html']= $this->load->view('shopmanager/catalog/product_search_'.$this->request->get['type'], $data);;
+			$json['html']= $this->load->view('warehouse/product/research_'.$this->request->get['type'], $data);;
 			$json['success'] = true;
 			$json['message'] = "";
 			$this->response->addHeader('Content-Type: application/json');
@@ -922,7 +922,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		}else{
 			//echo "<br><br>Temps total d'exécution : " . $total_execution_time . " secondes\n";
-			$this->response->setOutput($this->load->view('shopmanager/catalog/product_search_info', $data));
+			$this->response->setOutput($this->load->view('warehouse/product/research_info', $data));
 		}	
 		//print("<pre>" . print_r('894:product.php', true) . "</pre>");
 		//print("<pre>" . print_r($data, true) . "</pre>");
@@ -931,21 +931,21 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 	//	$data['data_result']=$data;
 	//print("<pre>" . print_r('894:product.php', true) . "</pre>");
 	//print("<pre>" . print_r($data, true) . "</pre>");
-		$this->response->setOutput($this->load->view('shopmanager/catalog/product_search', $data));
+		$this->response->setOutput($this->load->view('warehouse/product/research', $data));
 	}  
 }
 
     protected function getForm() {
 
-		$this->load->model('shopmanager/tools');
-		$this->load->model('shopmanager/catalog/product_search'); 
-		$this->document->addScript('view/javascript/shopmanager/bootstrap_helper.js');
-		$this->document->addScript('view/javascript/shopmanager/ebay.js');
-        $this->document->addScript('view/javascript/shopmanager/catalog/product_form.js');
-        $this->document->addScript('view/javascript/shopmanager/ai.js');
-		$this->document->addScript('view/javascript/shopmanager/ocr.js');
-		$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-		$this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+		$this->load->model('warehouse/tools/utility');
+		$this->load->model('warehouse/product/research'); 
+		$this->document->addScript('view/javascript/warehouse/bootstrap_helper.js');
+		$this->document->addScript('view/javascript/warehouse/marketplace/ebay/api.js');
+        $this->document->addScript('view/javascript/warehouse/product/product_form.js');
+        $this->document->addScript('view/javascript/warehouse/tools/ai.js');
+		$this->document->addScript('view/javascript/warehouse/tools/ocr.js');
+		$this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+		$this->document->addScript('view/javascript/warehouse/popup/alert.js');
 		$this->document->addScript('view/javascript/summernote/summernote.js');
 		$this->document->addStyle('view/javascript/summernote/summernote.css');
 		$this->document->addScript('view/javascript/summernote/opencart.js');
@@ -1240,23 +1240,23 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		$data['breadcrumbs'][] = array(
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/catalog/product', 'user_token=' . $this->session->data['user_token'] . $url, true)
+			'href' => $this->url->link('warehouse/product/product', 'user_token=' . $this->session->data['user_token'] . $url, true)
 		);
 
 		if (!isset($this->request->get['product_id'])) {
-			$data['action'] = $this->url->link('shopmanager/catalog/product/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
+			$data['action'] = $this->url->link('warehouse/product/product/add', 'user_token=' . $this->session->data['user_token'] . $url, true);
 		
 		} else {
-			$data['action'] = $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
-			$data['upload_images_action'] = $this->url->link('shopmanager/tools/uploadImagesFiles', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
+			$data['action'] = $this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
+			$data['upload_images_action'] = $this->url->link('warehouse/tools/utility/uploadImagesFiles', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $this->request->get['product_id'] . $url, true);
 
 		}
 
 
-		$data['cancel'] = $this->url->link('shopmanager/catalog/product', 'user_token=' . $this->session->data['user_token'] . $url, true);
+		$data['cancel'] = $this->url->link('warehouse/product/product', 'user_token=' . $this->session->data['user_token'] . $url, true);
 
 		if (isset($this->request->get['product_id']) && ($this->request->server['REQUEST_METHOD'] != 'POST')) {
-			$product_info = $this->model_shopmanager_catalog_product->getProduct($this->request->get['product_id']);
+			$product_info = $this->model_warehouse_product_product->getProduct($this->request->get['product_id']);
 	//print("<pre>".print_r ('1531 product' ,true )."</pre>");
 	//print("<pre>".print_r ($product_info,true )."</pre>");
 		}
@@ -1272,7 +1272,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_description'])) {
 			$data['product_description'] = $this->request->post['product_description'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$data['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($this->request->get['product_id']);
+			$data['product_description'] = $this->model_warehouse_product_product->getDescriptions($this->request->get['product_id']);
 		} else {
 			$data['product_description'] = array();
 		}
@@ -1385,7 +1385,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_store'])) {
 			$data['product_store'] = $this->request->post['product_store'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$data['product_store'] = $this->model_shopmanager_catalog_product->getStores($this->request->get['product_id']);
+			$data['product_store'] = $this->model_warehouse_product_product->getStores($this->request->get['product_id']);
 		} else {
 			$data['product_store'] = array(0);
 		}
@@ -1427,8 +1427,8 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			//print("<pre>" . print_r(1387, true) . "</pre>");
 			//print("<pre>" . print_r($product_info['shipping_cost'], true) . "</pre>");
 			if($product_info['shipping_cost']==0 || !isset($product_info['shipping_cost'])){
-				$this->load->model('shopmanager/shipping');
-				$result=$this->model_shopmanager_shipping->calculateShippingRates($product_info);
+				$this->load->model('warehouse/order/shipping');
+				$result=$this->model_warehouse_order_shipping->calculateShippingRates($product_info);
 				$data['shipping_cost']=$result['shipping_cost'];
 				$data['shipping_carrier']=$result['shipping_carrier'];
 				$data['price_with_shipping']=$data['price']+$result['shipping_cost'];
@@ -1447,14 +1447,14 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		} else {
 			$data['shipping_carrier'] = '';
 		}
-		$this->load->model('shopmanager/recurring');
+		$this->load->model('warehouse/product/recurring');
 
-		$data['recurrings'] = $this->model_shopmanager_recurring->getRecurrings();
+		$data['recurrings'] = $this->model_warehouse_product_recurring->getRecurrings();
 
 		if (isset($this->request->post['product_recurrings'])) {
 			$data['product_recurrings'] = $this->request->post['product_recurrings'];
 		} elseif (!empty($product_info)) {
-			$data['product_recurrings'] = $this->model_shopmanager_catalog_product->getRecurrings($product_info['product_id']);
+			$data['product_recurrings'] = $this->model_warehouse_product_product->getRecurrings($product_info['product_id']);
 		} else {
 			$data['product_recurrings'] = array();
 		}
@@ -1519,7 +1519,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			}
 		}
 		if($data['upc']!=''){
-			$existing_products = $this->model_shopmanager_catalog_product->getByUPC($data['upc'],$data['condition_id']);
+			$existing_products = $this->model_warehouse_product_product->getByUPC($data['upc'],$data['condition_id']);
 			foreach ($existing_products  as $existing_product) {
 					
 				
@@ -1527,7 +1527,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					'product_id' => $existing_product['product_id'],
 					'condition_id' => $existing_product['condition_id'],
 					'upc' => $existing_product['upc'],
-					'url' => $existing_product['has_specifics'] ? $this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $existing_product['product_id'] . $url, true) : $this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . '&upc='.$existing_product['upc'].'&product_id=' . $existing_product['product_id']. '&condition_id=' . $existing_product['condition_id'] . $url, true)
+					'url' => $existing_product['has_specifics'] ? $this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $existing_product['product_id'] . $url, true) : $this->url->link('warehouse/product/research', 'user_token=' . $this->session->data['user_token'] . '&upc='.$existing_product['upc'].'&product_id=' . $existing_product['product_id']. '&condition_id=' . $existing_product['condition_id'] . $url, true)
 				);
 			}
 		//	//print("<pre>".print_r ($data['existing_products'],true )."</pre>");
@@ -1587,8 +1587,8 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		
 		if (isset($product_info['weight_class_id'])){
-			$this->load->model('shopmanager/localisation/weight_class');
-			$weight_class_info = $this->model_shopmanager_localisation_weight_class->getWeightClasses(array('weight_class_id' => $product_info['weight_class_id']));
+			$this->load->model('warehouse/localisation/weight_class');
+			$weight_class_info = $this->model_warehouse_localisation_weight_class->getWeightClasses(array('weight_class_id' => $product_info['weight_class_id']));
 			//	//print("<pre>".print_r ($weight_class_info,true )."</pre>");
 			$product_info['weight_class_title']=$weight_class_info[0]['unit'];
 		}
@@ -1634,9 +1634,9 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}
 
 		if (isset($product_info['length_class_id'])){
-			$this->load->model('shopmanager/localisation/length_class');
+			$this->load->model('warehouse/localisation/length_class');
 
-			$length_class_info = $this->model_shopmanager_localisation_length_class->getLengthClasses(array('length_class_id' => $product_info['length_class_id']));
+			$length_class_info = $this->model_warehouse_localisation_length_class->getLengthClasses(array('length_class_id' => $product_info['length_class_id']));
 			//print("<pre>".print_r ($length_class_info,true )."</pre>");
 			$product_info['length_class_title']=$length_class_info[0]['unit'];
 		}
@@ -1657,7 +1657,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			$data['length_class_title'] = '';
 		}
 
-		$this->load->model('shopmanager/manufacturer');
+		$this->load->model('warehouse/product/manufacturer');
 
 		if (isset($this->request->post['manufacturer_id'])) {
 			$data['manufacturer_id'] = $this->request->post['manufacturer_id'];
@@ -1670,7 +1670,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['manufacturer'])) {
 			$data['manufacturer'] = $this->request->post['manufacturer'];
 		} elseif (!empty($product_info)) {
-			$manufacturer_info = $this->model_shopmanager_manufacturer->getManufacturer($product_info['manufacturer_id']);
+			$manufacturer_info = $this->model_warehouse_product_manufacturer->getManufacturer($product_info['manufacturer_id']);
 
 			if ($manufacturer_info) {
 				$data['manufacturer'] = $manufacturer_info['name'];
@@ -1681,24 +1681,24 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			$data['manufacturer'] = '';
 		}
 
-		$this->load->model('shopmanager/ebay');
+		$this->load->model('warehouse/marketplace/ebay/api');
 		if (isset($data['upc']) && is_numeric($data['upc'])) { 
-			$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageProductInfoSources($data['upc']);
-			//$data['ebay_info']=$this->model_shopmanager_ebay->get($data['upc'],null,'sold',null,100,$data['marketplace_item_id']);
+			$ProductInfoSources=$this->model_warehouse_product_research->manageProductInfoSources($data['upc']);
+			//$data['ebay_info']=$this->model_warehouse_marketplace_ebay_api->get($data['upc'],null,'sold',null,100,$data['marketplace_item_id']);
 			$data['ebay_info']=json_decode($ProductInfoSources['ebay_search'],true);
 		}elseif(isset($data['product_id'])){
-			$ProductInfoSources=$this->model_shopmanager_catalog_product_search->manageProductInfoSources(null,null,$data['product_id']);
+			$ProductInfoSources=$this->model_warehouse_product_research->manageProductInfoSources(null,null,$data['product_id']);
 			$data['ebay_info']=json_decode($ProductInfoSources['ebay_search'],true);
 		//print("<pre>".print_r ($data['ebay_info'],true )."</pre>"); 
 		}   
 
 		// Categories
-		$this->load->model('shopmanager/catalog/category');
+		$this->load->model('warehouse/product/category');
 
 		if (isset($this->request->post['product_category'])) {
 			$categories = $this->request->post['product_category'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$categories = $this->model_shopmanager_catalog_product->getCategories($this->request->get['product_id']);
+			$categories = $this->model_warehouse_product_product->getCategories($this->request->get['product_id']);
 		} else {
 		
 			$categories = array();
@@ -1710,7 +1710,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$data['product_categories'] = array();
 	
 		foreach ($categories as $category_id) {
-			$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+			$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 			//print("<pre>".print_r ($category_info,true )."</pre>");
 			if ($category_info) {
 				$data['product_categories'][] = array(
@@ -1724,21 +1724,21 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 			}
 		}
 		usort($data['product_categories'], fn($a, $b) => strcmp(html_entity_decode($a['name']), html_entity_decode($b['name'])));
-		$this->load->model('shopmanager/condition');
+		$this->load->model('warehouse/product/condition');
 
 		if(isset($data['category_id'])){
 					// Conditions
 			//print("<pre>" . print_r(value: '1692:PRODUCTSEARCH.php') . "</pre>");
-			$data['conditions']=$this->model_shopmanager_condition->getConditionDetails($data['category_id']);
-			$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($data['category_id']);
+			$data['conditions']=$this->model_warehouse_product_condition->getConditionDetails($data['category_id']);
+			$category_specific_info = $this->model_warehouse_product_category->getSpecific($data['category_id']);
 
-			$category_leaf = $this->model_shopmanager_catalog_category->getCategoryLeaf($data['category_id']);
+			$category_leaf = $this->model_warehouse_product_category->getCategoryLeaf($data['category_id']);
 
 			if (!is_array($category_specific_info)) {
 				
 				if($category_leaf ==1){
 				//	//print("<pre>".print_r ('getform:2631',true )."</pre>");
-					$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
+					$this->response->redirect($this->url->link('warehouse/product/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
 				}else{
 					$this->error['category']= ($lang['error_category_not_leaf'] ?? '');
 				}
@@ -1750,25 +1750,25 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 		if (empty($data['product_description'][1]['specifics']) && isset( $category_specific_info[1]) && $category_leaf ==1 && is_array($category_specific_info[1]['specifics'])) {
 		
-			$this->load->model('shopmanager/ai');
-			$this->model_shopmanager_ai->getSpecifics($this->request->get['product_id'],$data,$category_specific_info[1]);
+			$this->load->model('warehouse/tools/ai');
+			$this->model_warehouse_tools_ai->getSpecifics($this->request->get['product_id'],$data,$category_specific_info[1]);
 			//print("<pre>".print_r ($specifics,true )."</pre>");
 			
-			$data['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($this->request->get['product_id']);
+			$data['product_description'] = $this->model_warehouse_product_product->getDescriptions($this->request->get['product_id']);
 			$data['specifics']='class="active"';
 
 		}elseif(!is_array($category_specific_info[1]['specifics'])){
 			//print("<pre>".print_r ('getform:2652',true )."</pre>");
-			$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
+			$this->response->redirect($this->url->link('warehouse/product/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
 		}
 
 		
 
 			if (isset($data['marketplace_item_id']) || $data['marketplace_item_id']>0 && $category_leaf ==1 ) {
 				
-				$this->load->model('shopmanager/ebay');
-				$ebay_specific_info=$this->model_shopmanager_ebay->getSpecificsOLD($data['marketplace_item_id']);
-				//$ebay_specific_info_tmp=$this->model_shopmanager_ebay->getSpecifics($data['marketplace_item_id']);
+				$this->load->model('warehouse/marketplace/ebay/api');
+				$ebay_specific_info=$this->model_warehouse_marketplace_ebay_api->getSpecificsOLD($data['marketplace_item_id']);
+				//$ebay_specific_info_tmp=$this->model_warehouse_marketplace_ebay_api->getSpecifics($data['marketplace_item_id']);
 				//print("<pre>" . print_r(($ebay_specific_info_tmp), true) . "</pre>");
 
 			}
@@ -1776,7 +1776,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}else{
 			//print("<pre>" . print_r(value: '1735:PRODUCTSEARCH.php') . "</pre>");
 
-			$data['conditions'] =  $this->model_shopmanager_condition->getConditionDetails();
+			$data['conditions'] =  $this->model_warehouse_product_condition->getConditionDetails();
 		}
 	//	//print("<pre>".print_r ($data['conditions'],true )."</pre>");
 	//	//print("<pre>".print_r ($data['product_description'],true )."</pre>");
@@ -1792,7 +1792,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					}
 				}else{
 				//	//print("<pre>".print_r ('getform:2683',true )."</pre>");
-					//$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
+					//$this->response->redirect($this->url->link('warehouse/product/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $data['category_id'] . '&product_id='.$data['product_id'], true));
 				}
 		
 				
@@ -1806,7 +1806,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 					
 					//	//print("<pre>".print_r ($product_description['specifics'],true )."</pre>");
 							$data['product_description'][1]['specifics'] = //$ebay_specific_info;
-							$this->model_shopmanager_tools->custom_merge_recursive( $product_description['specifics'],$ebay_specific_info);
+							$this->model_warehouse_tools_utility->custom_merge_recursive( $product_description['specifics'],$ebay_specific_info);
 						}
 					//	$data['product_description'][$key]['specifics'] = $category_specific_info[$key];
 					
@@ -1815,17 +1815,17 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 				//	//print("<pre>" . print_r(($data['product_description'][$key]['specifics'] ), true) . "</pre>");	
 					//print("<pre>" . print_r($category_specifics_to_merge, true) . "</pre>");
 			} else {
-				/*$this->load->model('shopmanager/ai');
+				/*$this->load->model('warehouse/tools/ai');
 				$specifics_to_translate=$data['product_description'][1]['specifics'];
 				
-				$specifics_to_translated=$this->model_shopmanager_ai->translate_specifics($data['product_id'],$specifics_to_translate,['code'=>'Fr','language_id' => $key]);
+				$specifics_to_translated=$this->model_warehouse_tools_ai->translate_specifics($data['product_id'],$specifics_to_translate,['code'=>'Fr','language_id' => $key]);
 				$data['product_description'][$key]['specifics'] =$specifics_to_translated;*/
 
-				$this->response->redirect($this->url->link('shopmanager/catalog/product_search', 'user_token=' . $this->session->data['user_token'] . '&upc='.$data['upc'].'&product_id=' . $data['product_id']. '&condition_id=' . $data['condition_id'] . $url, true));
+				$this->response->redirect($this->url->link('warehouse/product/research', 'user_token=' . $this->session->data['user_token'] . '&upc='.$data['upc'].'&product_id=' . $data['product_id']. '&condition_id=' . $data['condition_id'] . $url, true));
 
 			}
 			$data['product_description'][$key]['specifics'] =
-			$this->model_shopmanager_tools->custom_merge_recursive($data['product_description'][$key]['specifics'] , $category_specifics_to_merge);
+			$this->model_warehouse_tools_utility->custom_merge_recursive($data['product_description'][$key]['specifics'] , $category_specifics_to_merge);
 			// Affichage des détails spécifiques du produit après la fusion
 		//	//print("<pre>".print_r ($data['product_description'][$key]['specifics'] ,true )."</pre>");
 			
@@ -1838,12 +1838,12 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 
 }	
 		// Filters
-		$this->load->model('shopmanager/filter');
+		$this->load->model('warehouse/catalog/filter');
 
 		if (isset($this->request->post['product_filter'])) {
 			$filters = $this->request->post['product_filter'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$filters = $this->model_shopmanager_catalog_product->getFilters($this->request->get['product_id']);
+			$filters = $this->model_warehouse_product_product->getFilters($this->request->get['product_id']);
 		} else {
 			$filters = array();
 		}
@@ -1851,7 +1851,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$data['product_filters'] = array();
 
 		foreach ($filters as $filter_id) {
-			$filter_info = $this->model_shopmanager_filter->getFilter($filter_id);
+			$filter_info = $this->model_warehouse_catalog_filter->getFilter($filter_id);
 
 			if ($filter_info) {
 				$data['product_filters'][] = array(
@@ -1862,12 +1862,12 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}
 	
 		// Attributes
-		$this->load->model('shopmanager/attribute');
+		$this->load->model('warehouse/product/attribute');
 
 		if (isset($this->request->post['product_attribute'])) {
 			$product_attributes = $this->request->post['product_attribute'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$product_attributes = $this->model_shopmanager_catalog_product->getAttributes($this->request->get['product_id']);
+			$product_attributes = $this->model_warehouse_product_product->getAttributes($this->request->get['product_id']);
 		} else {
 			$product_attributes = array();
 		}
@@ -1875,7 +1875,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$data['product_attributes'] = array();
 
 		foreach ($product_attributes as $product_attribute) {
-			$attribute_info = $this->model_shopmanager_attribute->getAttribute($product_attribute['attribute_id']);
+			$attribute_info = $this->model_warehouse_product_attribute->getAttribute($product_attribute['attribute_id']);
 
 			if ($attribute_info) {
 				$data['product_attributes'][] = array(
@@ -1887,12 +1887,12 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}
 
 		// Options
-		$this->load->model('shopmanager/option');
+		$this->load->model('warehouse/product/option');
 
 		if (isset($this->request->post['product_option'])) {
 			$product_options = $this->request->post['product_option'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$product_options = $this->model_shopmanager_catalog_product->getOptions($this->request->get['product_id']);
+			$product_options = $this->model_warehouse_product_product->getOptions($this->request->get['product_id']);
 		} else {
 			$product_options = array();
 		}
@@ -1938,7 +1938,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		foreach ($data['product_options'] as $product_option) {
 			if ($product_option['type'] == 'select' || $product_option['type'] == 'radio' || $product_option['type'] == 'checkbox' || $product_option['type'] == 'image') {
 				if (!isset($data['option_values'][$product_option['option_id']])) {
-					$data['option_values'][$product_option['option_id']] = $this->model_shopmanager_option->getOptionValues($product_option['option_id']);
+					$data['option_values'][$product_option['option_id']] = $this->model_warehouse_product_option->getOptionValues($product_option['option_id']);
 				}
 			}
 		}
@@ -1950,7 +1950,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_discount'])) {
 			$product_discounts = $this->request->post['product_discount'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$product_discounts = $this->model_shopmanager_catalog_product->getDiscounts($this->request->get['product_id']);
+			$product_discounts = $this->model_warehouse_product_product->getDiscounts($this->request->get['product_id']);
 		} else {
 			$product_discounts = array();
 		}
@@ -1998,7 +1998,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_image'])) {
 			$product_images = $this->request->post['product_image'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$product_images = $this->model_shopmanager_catalog_product->getImages($this->request->get['product_id']);
+			$product_images = $this->model_warehouse_product_product->getImages($this->request->get['product_id']);
 		} else {
 			$product_images = array();
 		}
@@ -2022,12 +2022,12 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		}
 
 		// Downloads
-		$this->load->model('shopmanager/download');
+		$this->load->model('warehouse/product/download');
 
 		if (isset($this->request->post['product_download'])) {
 			$product_downloads = $this->request->post['product_download'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$product_downloads = $this->model_shopmanager_catalog_product->getDownloads($this->request->get['product_id']);
+			$product_downloads = $this->model_warehouse_product_product->getDownloads($this->request->get['product_id']);
 		} else {
 			$product_downloads = array();
 		}
@@ -2035,7 +2035,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$data['product_downloads'] = array();
 
 		foreach ($product_downloads as $download_id) {
-			$download_info = $this->model_shopmanager_download->getDownload($download_id);
+			$download_info = $this->model_warehouse_product_download->getDownload($download_id);
 
 			if ($download_info) {
 				$data['product_downloads'][] = array(
@@ -2048,7 +2048,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_related'])) {
 			$products = $this->request->post['product_related'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$products = $this->model_shopmanager_catalog_product->getRelated($this->request->get['product_id']);
+			$products = $this->model_warehouse_product_product->getRelated($this->request->get['product_id']);
 		} else {
 			$products = array();
 		}
@@ -2056,7 +2056,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$data['product_relateds'] = array();
 
 		foreach ($products as $product_id) {
-			$related_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+			$related_info = $this->model_warehouse_product_product->getProduct($product_id);
 
 			if ($related_info) {
 				$data['product_relateds'][] = array(
@@ -2077,7 +2077,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_reward'])) {
 			$data['product_reward'] = $this->request->post['product_reward'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$data['product_reward'] = $this->model_shopmanager_catalog_product->getRewards($this->request->get['product_id']);
+			$data['product_reward'] = $this->model_warehouse_product_product->getRewards($this->request->get['product_id']);
 		} else {
 			$data['product_reward'] = array();
 		}
@@ -2085,7 +2085,7 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		if (isset($this->request->post['product_layout'])) {
 			$data['product_layout'] = $this->request->post['product_layout'];
 		} elseif (isset($this->request->get['product_id'])) {
-			$data['product_layout'] = $this->model_shopmanager_catalog_product->getLayouts($this->request->get['product_id']);
+			$data['product_layout'] = $this->model_warehouse_product_product->getLayouts($this->request->get['product_id']);
 		} else {
 			$data['product_layout'] = array();
 		}
@@ -2099,12 +2099,12 @@ if (($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request-
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
-		$data['wait_popup'] = $this->load->controller('shopmanager/wait_popup');
-		$data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-		$data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
-		$data['ocr'] = $this->load->controller('shopmanager/ocr');
+		$data['wait_popup'] = $this->load->controller('warehouse/popup/wait');
+		$data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+		$data['alert_popup'] = $this->load->controller('warehouse/popup/alert');
+		$data['ocr'] = $this->load->controller('warehouse/tools/ocr');
 	
-		$this->response->setOutput($this->load->view('shopmanager/catalog/product_form', $data));
+		$this->response->setOutput($this->load->view('warehouse/product/product_form', $data));
 	}
 
 
@@ -2113,15 +2113,15 @@ public function product_feed() {
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-	$this->load->language('shopmanager/catalog/product_search');
+	$this->load->language('warehouse/product/research');
 	$data = [];
 	
-	$this->load->model('shopmanager/catalog/product_search');
-	$this->load->model('shopmanager/catalog/product');
-	$this->load->model('shopmanager/ai');
-	$this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/catalog/product_specific');
-	$this->load->model('shopmanager/tools');
+	$this->load->model('warehouse/product/research');
+	$this->load->model('warehouse/product/product');
+	$this->load->model('warehouse/tools/ai');
+	$this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/product/product_specific');
+	$this->load->model('warehouse/tools/utility');
 //print("<pre>" . print_r('1937:product', true) . "</pre>");
 //print("<pre>" . print_r($this->request->post, true) . "</pre>");
 
@@ -2133,7 +2133,7 @@ error_reporting(E_ALL);
 	//print("<pre>" . print_r($save_data, true) . "</pre>");
 	   // $selected_data = $this->request->post['save_data'];
 	   if(isset($this->request->post['product_id'])){
-			$product_info=$this->model_shopmanager_catalog_product->getProduct($this->request->post['product_id']);
+			$product_info=$this->model_warehouse_product_product->getProduct($this->request->post['product_id']);
 			unset($product_info['description']);
 		//print("<pre>" . print_r('3864:product', true) . "</pre>");
 		//print("<pre>" . print_r($product_info, true) . "</pre>");
@@ -2142,7 +2142,7 @@ error_reporting(E_ALL);
 					$this->request->post[$key] =  $value;
 				}
 			}
-			$this->request->post['product_description']=$this->model_shopmanager_catalog_product->getDescriptions($this->request->post['product_id']);
+			$this->request->post['product_description']=$this->model_warehouse_product_product->getDescriptions($this->request->post['product_id']);
 
 
 			
@@ -2161,7 +2161,7 @@ error_reporting(E_ALL);
 
 		}
 //		//print("<pre>" . print_r($this->request->post, true) . "</pre>");
-	   $this->request->post=$this->model_shopmanager_catalog_product_search->processProductSearchData($this->request->post);
+	   $this->request->post=$this->model_warehouse_product_research->processProductSearchData($this->request->post);
 	//print("<pre>" . print_r('1981:product', true) . "</pre>");
 	//print("<pre>" . print_r($this->request->post, true) . "</pre>");
 					   
@@ -2172,12 +2172,12 @@ error_reporting(E_ALL);
 
 		if(!isset($this->request->post['product_id'])){
 			
-			$product_id=$this->model_shopmanager_catalog_product->addProduct($this->request->post); 
+			$product_id=$this->model_warehouse_product_product->addProduct($this->request->post); 
 			//print("<pre>" . print_r('4038:product', true) . "</pre>");
 			//print("<pre>" . print_r($manageProductInfoSources, true) . "</pre>");
 			if(!isset($manageProductInfoSources)){
 				
-				$manageProductInfoSources=$this->model_shopmanager_catalog_product_search->manageProductInfoSources(null, $manageProductInfoSources,$product_id );
+				$manageProductInfoSources=$this->model_warehouse_product_research->manageProductInfoSources(null, $manageProductInfoSources,$product_id );
 				//print("<pre>" . print_r('4039:product', true) . "</pre>");
 				//print("<pre>" . print_r($manageProductInfoSources, true) . "</pre>");
 
@@ -2190,8 +2190,8 @@ error_reporting(E_ALL);
 		}else{
 			$product_id=$this->request->post['product_id'];
 			
-			$product_info['product_image']=$this->model_shopmanager_catalog_product->getImages($product_id);
-			$product_info['product_description']=$this->model_shopmanager_catalog_product->getDescriptions($product_id);
+			$product_info['product_image']=$this->model_warehouse_product_product->getImages($product_id);
+			$product_info['product_description']=$this->model_warehouse_product_product->getDescriptions($product_id);
 
 			if (isset($this->request->post['images'])){
 				unset($product_info['image']);
@@ -2206,20 +2206,20 @@ error_reporting(E_ALL);
 		//print("<pre>" . print_r('3923:product_id', true) . "</pre>");   
 		//print("<pre>" . print_r($product_info, true) . "</pre>");
 		//	//print("<pre>" . print_r($product_info, true) . "</pre>");
-			$this->model_shopmanager_catalog_product->editProduct($product_id,$product_info);
-			$this->load->model('shopmanager/marketplace');
-			$this->model_shopmanager_marketplace->setToUpdate($product_id);
+			$this->model_warehouse_product_product->editProduct($product_id,$product_info);
+			$this->load->model('warehouse/marketplace/listing');
+			$this->model_warehouse_marketplace_listing->setToUpdate($product_id);
 			
 		}
 	/*	if (!isset($product_info['marketplace_item_id']) || $product_info['marketplace_item_id']==0) {
 
-	$result=$this->model_shopmanager_ebay->add($product_id, 0);
+	$result=$this->model_warehouse_marketplace_ebay_api->add($product_id, 0);
 		//print("<pre>" . print_r('3895:product_id', true) . "</pre>");   
 //print("<pre>" . print_r($result, true) . "</pre>");
 
 		   if ($result['Ack']!='Failure') {
 			 
-				$this->model_shopmanager_catalog_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
+				$this->model_warehouse_product_product->editProductMarketplaceItemId($product_id,$result['ItemID']);
 				$json['success'] = true;
 				$json['message'] = $result['ItemID'];
 			} else {
@@ -2305,7 +2305,7 @@ error_reporting(E_ALL);
 		$url .= '&updated=yes';
 		unset($this->request->post);
 		$this->session->data['success'] = ($lang['text_success'] ?? '');
-		$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . $url, true));
+		$this->response->redirect($this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . $url, true));
 	}
 
 	$this->getForm();
@@ -2321,12 +2321,12 @@ public function product_source_info_feed() {
 	// Charger le modèle
 	$start_time = microtime(true);
 
-	$this->load->model('shopmanager/catalog/product');
-	$this->load->model('shopmanager/catalog/product_search');
-	$this->load->model('shopmanager/catalog/product');
-	$this->load->model('shopmanager/condition');
-	$this->load->model('shopmanager/catalog/category');
-	$this->load->model('shopmanager/catalog/product_specific');
+	$this->load->model('warehouse/product/product');
+	$this->load->model('warehouse/product/research');
+	$this->load->model('warehouse/product/product');
+	$this->load->model('warehouse/product/condition');
+	$this->load->model('warehouse/product/category');
+	$this->load->model('warehouse/product/product_specific');
 
 	// Définir les variables de texte
 
@@ -2358,11 +2358,11 @@ if (!empty($product_ids))  {
 
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true);
 		
-			$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+			$product_info = $this->model_warehouse_product_product->getProduct($product_id);
 			
 			
 if(isset($product_info['upc']) && is_numeric($product_info['upc'])){
-	$this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
+	$this->model_warehouse_product_research->manageProductInfoSources($product_info['upc']);
 	//$product_info_source = 
 }
 
@@ -2384,15 +2384,15 @@ public function product_source_info_feed_from_search() {
 	// Charger le modèle
 	 
 
-//	$this->load->model('shopmanager/fast_add');
-	$this->load->model('shopmanager/catalog/product_search');
-	$this->load->model('shopmanager/catalog/product');
-	$this->load->model('shopmanager/condition');
-	$this->load->model('shopmanager/catalog/category');
-	$this->load->model('shopmanager/catalog/product_specific');
-	$this->load->model('shopmanager/ai');
-	$this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/tools');
+//	$this->load->model('warehouse/product/receive');
+	$this->load->model('warehouse/product/research');
+	$this->load->model('warehouse/product/product');
+	$this->load->model('warehouse/product/condition');
+	$this->load->model('warehouse/product/category');
+	$this->load->model('warehouse/product/product_specific');
+	$this->load->model('warehouse/tools/ai');
+	$this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/tools/utility');
 
 	// Définir les variables de texte
 
@@ -2424,11 +2424,11 @@ public function product_source_info_feed_from_search() {
 
 			
 		if($product_id){
-			$product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
-			$search_data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($product_info['upc']);
+			$product_info = $this->model_warehouse_product_product->getProduct($product_id);
+			$search_data['product_info_source'] = $this->model_warehouse_product_research->manageProductInfoSources($product_info['upc']);
 		}elseif(isset($data['search']) && is_numeric($data['search']) ){
 			
-			$search_data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($data['search']);
+			$search_data['product_info_source'] = $this->model_warehouse_product_research->manageProductInfoSources($data['search']);
 			
 			$search_data['product_info_source']['upc'] =$data['search']??''; 
 
@@ -2492,7 +2492,7 @@ public function product_source_info_feed_from_search() {
 			$search_data['responseItem'] =$responseItem;   
 	//		//print("<pre>" . print_r($search_data['responseItem'],true) . "</pre>");
 			// Appeler la gestion des informations du produit
-			$search_data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources(null, $responseItem)??'';  
+			$search_data['product_info_source'] = $this->model_warehouse_product_research->manageProductInfoSources(null, $responseItem)??'';  
 			if (isset($responseItem) && is_array($responseItem)) {
 			//print("<pre>" . print_r($responseItem,true) . "</pre>");
 				$search_data['product_info_source']['manageProductInfoSources'] = $responseItem;
@@ -2564,15 +2564,15 @@ public function product_source_info_fast_feed() {
 	// Charger le modèle
 	 
 
-//	$this->load->model('shopmanager/fast_add');
-	$this->load->model('shopmanager/catalog/product_search');
-	$this->load->model('shopmanager/catalog/product');
-	$this->load->model('shopmanager/condition');
-	$this->load->model('shopmanager/catalog/category');
-	$this->load->model('shopmanager/catalog/product_specific');
-	$this->load->model('shopmanager/ai');
-	$this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/tools');
+//	$this->load->model('warehouse/product/receive');
+	$this->load->model('warehouse/product/research');
+	$this->load->model('warehouse/product/product');
+	$this->load->model('warehouse/product/condition');
+	$this->load->model('warehouse/product/category');
+	$this->load->model('warehouse/product/product_specific');
+	$this->load->model('warehouse/tools/ai');
+	$this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/tools/utility');
 
 	// Définir les variables de texte
 
@@ -2606,8 +2606,8 @@ public function product_source_info_fast_feed() {
 
 			
 		if($product_id){
-			$data = $this->model_shopmanager_catalog_product->getProduct($product_id);
-			$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($data['category_id']);
+			$data = $this->model_warehouse_product_product->getProduct($product_id);
+			$category_specific_info = $this->model_warehouse_product_category->getSpecific($data['category_id']);
 		//	//print("<pre>" . print_r($category_specific_info,true) . "</pre>");
 			if(!isset($category_specific_info[1])){
 						$json['html']='category';
@@ -2626,7 +2626,7 @@ public function product_source_info_fast_feed() {
 						return null;
 			}
 
-			$data['product_info_source'] = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($data['upc']);
+			$data['product_info_source'] = $this->model_warehouse_product_research->manageProductInfoSources($data['upc']);
 		
 		
 			//print("<pre>" . print_r(json_decode($json['data_source']['ebay_search'],true),true) . "</pre>");
@@ -2666,27 +2666,27 @@ public function generateProductSpecifics() {
     }
 
     if (isset($category_id) || isset($product_id)) {
-            $this->load->model('shopmanager/catalog/product');
-            $this->load->model('shopmanager/catalog/category');
-            $this->load->model('shopmanager/ebay');
-            $this->load->model('shopmanager/ai');
+            $this->load->model('warehouse/product/product');
+            $this->load->model('warehouse/product/category');
+            $this->load->model('warehouse/marketplace/ebay/api');
+            $this->load->model('warehouse/tools/ai');
             $this->load->model('localisation/language');
-			$this->load->model('shopmanager/tools');
-			$this->load->model('shopmanager/manufacturer');
+			$this->load->model('warehouse/tools/utility');
+			$this->load->model('warehouse/product/manufacturer');
 
 
             
             
 
-            $this->model_shopmanager_catalog_product->removeProductSpecifics($product_id);
+            $this->model_warehouse_product_product->removeProductSpecifics($product_id);
 
-            $category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($category_id);
+            $category_specific_info = $this->model_warehouse_product_category->getSpecific($category_id);
             
-            $category_leaf = $this->model_shopmanager_catalog_category->getCategoryLeaf($category_id);
+            $category_leaf = $this->model_warehouse_product_category->getCategoryLeaf($category_id);
 
             if (is_array($category_specific_info)) {
             //	//print("<pre>".print_r ($category_specific_info,true )."</pre>");
-            $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);	
+            $product_info = $this->model_warehouse_product_product->getProduct($product_id);	
         
             
              $product_info['color']=$product_info['color_description'];
@@ -2696,10 +2696,10 @@ public function generateProductSpecifics() {
                 if (isset( $category_specific_info[1]) && $category_leaf ==1 && is_array($category_specific_info[1]['specifics'])) {
             
                 //jomod
-        //        $specifics=$this->model_shopmanager_ai->getSpecifics($product_id,$product_info,$category_specific_info[1]);
+        //        $specifics=$this->model_warehouse_tools_ai->getSpecifics($product_id,$product_info,$category_specific_info[1]);
             //	//print("<pre>".print_r ($specifics,true )."</pre>");
             //	
-                $ProductSpecifics = $this->model_shopmanager_catalog_product->getSpecifics($product_id);
+                $ProductSpecifics = $this->model_warehouse_product_product->getSpecifics($product_id);
             //	$data['specifics']='class="active"';
         //	//print("<pre>".print_r ($ProductSpecifics,true )."</pre>");
             
@@ -2707,7 +2707,7 @@ public function generateProductSpecifics() {
             
 
                    /* if (isset($marketplace_item_id) || $marketplace_item_id > 0 && $category_leaf ==1 ) {				
-                        $ebay_specific_info=$this->model_shopmanager_ebay->getSpecifics($marketplace_item_id);
+                        $ebay_specific_info=$this->model_warehouse_marketplace_ebay_api->getSpecifics($marketplace_item_id);
                     }*/
 
                     //print("<pre>".print_r ($production_descriptions,true )."</pre>");
@@ -2723,7 +2723,7 @@ public function generateProductSpecifics() {
                                 }
                             }else{
                                 //print("<pre>".print_r ('generate specific:3251',true )."</pre>");
-                            //	$this->response->redirect($this->url->link('shopmanager/catalog/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $category_id. '&product_id='.$product_id, true));
+                            //	$this->response->redirect($this->url->link('warehouse/product/category.form', 'user_token=' . $this->session->data['user_token'] . '&category_id=' . $category_id. '&product_id='.$product_id, true));
                             }
                     
                             
@@ -2736,18 +2736,18 @@ public function generateProductSpecifics() {
                             if(isset($ebay_specific_info) && is_array($ebay_specific_info) && $key==1){
 
                                         $json[1] = //$ebay_specific_info;
-                                        $this->model_shopmanager_tools->custom_merge_recursive( $ProductSpecific['specifics'],$ebay_specific_info);
+                                        $this->model_warehouse_tools_utility->custom_merge_recursive( $ProductSpecific['specifics'],$ebay_specific_info);
                             }
 
                         } else {
-                            $this->load->model('shopmanager/ai');
+                            $this->load->model('warehouse/tools/ai');
                             $specifics_to_translate=$ProductSpecifics[1]['specifics'];
-                            $specifics_to_translated=$this->model_shopmanager_ai->translate_specifics($product_id,$specifics_to_translate,['code'=>'Fr','language_id' => $key]);
+                            $specifics_to_translated=$this->model_warehouse_tools_ai->translate_specifics($product_id,$specifics_to_translate,['code'=>'Fr','language_id' => $key]);
                             $json[$key] =$specifics_to_translated;
-                        //	$this->model_shopmanager_tools->custom_merge_recursive( , $category_specifics_to_merge);
+                        //	$this->model_warehouse_tools_utility->custom_merge_recursive( , $category_specifics_to_merge);
                         }
                         $json[$key]=
-                        $this->model_shopmanager_tools->custom_merge_recursive($ProductSpecifics[$key]['specifics'] , $category_specifics_to_merge);
+                        $this->model_warehouse_tools_utility->custom_merge_recursive($ProductSpecifics[$key]['specifics'] , $category_specifics_to_merge);
                         // Affichage des détails spécifiques du produit après la fusion
                     //	//print("<pre>".print_r ($ProductSpecifics[$key]['specifics'] ,true )."</pre>");
                     }
@@ -2772,16 +2772,16 @@ public function process_search_field_fast_list($data) {
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
 	$start_time = microtime(true); 
-	$this->load->model('shopmanager/tools');
+	$this->load->model('warehouse/tools/utility');
 
 //	//print("<pre>" . print_r('2439:product.php', true) . "</pre>");
 	//print("<pre>" . print_r(($data), true) . "</pre>");
 	//print("<pre>" . print_r('2440:product.php', true) . "</pre>");
 	$product_info_source=$data['product_info_source'];
-    $this->load->language('shopmanager/catalog/product_search');
+    $this->load->language('warehouse/product/research');
     $data = [];
     
-	$this->load->model('shopmanager/manufacturer');
+	$this->load->model('warehouse/product/manufacturer');
 	
 	$data['entry_condition'] = ($lang['entry_condition'] ?? '');
 	$data['entry_upc'] = ($lang['entry_upc'] ?? '');
@@ -2871,7 +2871,7 @@ public function process_search_field_fast_list($data) {
 	$data['entry_manufacturer'] = ($lang['entry_manufacturer'] ?? '');
 	$data['help_category'] = ($lang['help_category'] ?? '');
 
-	$data['cancel'] = $this->url->link('shopmanager/catalog/product', 'user_token=' . $this->session->data['user_token'] , true);
+	$data['cancel'] = $this->url->link('warehouse/product/product', 'user_token=' . $this->session->data['user_token'] , true);
 	if (isset($this->error['warning'])) {
 		$data['error_warning'] = $this->error['warning'];
 	} else {
@@ -2951,8 +2951,8 @@ public function process_search_field_fast_list($data) {
 
 	
 	if (isset($product_info['weight_class_id'])){
-		$this->load->model('shopmanager/localisation/weight_class');
-		$weight_class_info = $this->model_shopmanager_localisation_weight_class->getWeightClasses(array('weight_class_id' => $product_info['weight_class_id']));
+		$this->load->model('warehouse/localisation/weight_class');
+		$weight_class_info = $this->model_warehouse_localisation_weight_class->getWeightClasses(array('weight_class_id' => $product_info['weight_class_id']));
 	//	//print("<pre>".print_r ('1921',true )."</pre>");
 	//	//print("<pre>".print_r ($product_info['weight_class_id'],true )."</pre>");
 		$product_info['weight_class_title']=$weight_class_info[0]['unit'];
@@ -2999,9 +2999,9 @@ public function process_search_field_fast_list($data) {
 	}
 
 	if (isset($product_info['length_class_id'])){
-		$this->load->model('shopmanager/localisation/length_class');
+		$this->load->model('warehouse/localisation/length_class');
 
-		$length_class_info = $this->model_shopmanager_localisation_length_class->getLengthClasses(array('length_class_id' => $product_info['length_class_id']));
+		$length_class_info = $this->model_warehouse_localisation_length_class->getLengthClasses(array('length_class_id' => $product_info['length_class_id']));
 		//print("<pre>".print_r ($length_class_info,true )."</pre>");
 		$product_info['length_class_title']=$length_class_info[0]['unit'];
 	}
@@ -3028,7 +3028,7 @@ public function process_search_field_fast_list($data) {
     
     $url = '';
     $category_leaf=1;
-		//$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($upc);
+		//$product_info_source = $this->model_warehouse_product_research->manageProductInfoSources($upc);
 		// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 		
 		
@@ -3065,12 +3065,12 @@ public function process_search_field_fast_list($data) {
 		}
 
 	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
-	//	//print("<pre>" . print_r($this->model_shopmanager_ebay->get($upc),true) . "</pre>");
+	//	//print("<pre>" . print_r($this->model_warehouse_marketplace_ebay_api->get($upc),true) . "</pre>");
 														
-	//	//print("<pre>" . print_r($this->model_shopmanager_ebay->findProductIDByGTIN($upc), true) . "</pre>");
+	//	//print("<pre>" . print_r($this->model_warehouse_marketplace_ebay_api->findProductIDByGTIN($upc), true) . "</pre>");
 		// 4. Récupérer ou rafraîchir les informations sur le produit en fonction de l'UPC
 		
-		//$this->model_shopmanager_ebay->getDetailsByepid('25046076135');
+		//$this->model_warehouse_marketplace_ebay_api->getDetailsByepid('25046076135');
 		// 7. Si l'API eBay n'a pas retourné de résultats et que nous avons un titre d'Algopix, tenter de récupérer via eBay à nouveau
 	
 
@@ -3096,7 +3096,7 @@ public function process_search_field_fast_list($data) {
 
 
 
-//$data['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+//$data['images'] = !empty($google_search) ? $this->model_warehouse_product_research->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 // Ajout des informations Algopix et eBay
 
@@ -3104,7 +3104,7 @@ public function process_search_field_fast_list($data) {
 
 
 		if (isset($upc_tmp_search['error']) && isset($algopix_search['commonAttributes'] ['title'])) { 
-			$upc_tmp_search = $this->model_shopmanager_upctmp->search($algopix_search['commonAttributes'] ['title']);
+			$upc_tmp_search = $this->model_warehouse_tools_upctmp->search($algopix_search['commonAttributes'] ['title']);
 		}
 		//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 		//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
@@ -3112,7 +3112,7 @@ public function process_search_field_fast_list($data) {
 		//	//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 		if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-			$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
 		}
 
 		if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -3136,7 +3136,7 @@ public function process_search_field_fast_list($data) {
 		
 		if (!isset($category_id) && !isset($data['category_name']) && isset($algopix_search['channelSpecificAttributes'] ['productType'])){
 			$category_name = str_replace('_', ' ',$algopix_search['channelSpecificAttributes'] ['productType']);
-			$category_info = $this->model_shopmanager_ai->getCategoryID($category_name);
+			$category_info = $this->model_warehouse_tools_ai->getCategoryID($category_name);
 			if(isset($category_info)){
 				$category_id=trim($category_info['category_id'])??null;
 				$data['category_id']  = $category_id;
@@ -3149,7 +3149,7 @@ public function process_search_field_fast_list($data) {
 		// 
 		if(empty($data['product_categories']) && isset($category_id) ){
 			
-				$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+				$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 				//print("<pre>".print_r ($category_info,true )."</pre>");
 				if ($category_info) {
 					$data['site_id']=$category_info['site_id'];
@@ -3173,7 +3173,7 @@ public function process_search_field_fast_list($data) {
 	//print("<pre>" . print_r(value: '3160:PRODUCTSEARCH.php') . "</pre>");
 
 			$conditions = $category_id 
-				? $this->model_shopmanager_condition->getConditionDetails($category_id,null,null,$site_id) 
+				? $this->model_warehouse_product_condition->getConditionDetails($category_id,null,null,$site_id) 
 				: [];
 
 			$data['conditions'] = $conditions[1] ?? [];
@@ -3182,13 +3182,13 @@ public function process_search_field_fast_list($data) {
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['images']  = $this->model_warehouse_product_research->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 //print("<pre>" . print_r('3638:product.php', true) . "</pre>");
 //	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['titles']  = $this->model_warehouse_product_research->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 			if(isset($data['title_search'])){
 				$data['titles'] []=$data['title_search'];
 			}
@@ -3201,7 +3201,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		$data['product_info']['manufacturer']=$data['manufacturer']??'';
 
 }else{
-	$data['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($data)??null;
+	$data['manufacturers'] = $this->model_warehouse_product_research->getAllManufacturers($data)??null;
 	if(isset($data['manufacturers'])){
 		if(count($data['manufacturers'])==1){
 		//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -3210,10 +3210,10 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		//	);
 		//print("<pre>" . print_r('3669:product.php', true) . "</pre>");
 		//	//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
-			$findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturerByName(reset($data['manufacturers']));
+			$findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturerByName(reset($data['manufacturers']));
 		//print("<pre>" . print_r('3669:product.php', true) . "</pre>");
 		//print("<pre>" . print_r($findmanufacturer, true) . "</pre>");
-			//$findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturers($manufacturer_data);
+			//$findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturers($manufacturer_data);
 			if(!isset($findmanufacturer)){
 				$data_value = [
 					'name' => reset($data['manufacturers']),  // Nom du fabricant
@@ -3224,7 +3224,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 				];
 
 				// Résultat final
-				$manufacturer_result ['manufacturer_id'] = $this->model_shopmanager_manufacturer->addManufacturer($data_value);
+				$manufacturer_result ['manufacturer_id'] = $this->model_warehouse_product_manufacturer->addManufacturer($data_value);
 				$manufacturer_result ['name'] = reset($data['manufacturers']);
 	 //print("<pre>" . print_r('916:ai.php', true) . "</pre>");
    //print("<pre>" . print_r($data_value, true) . "</pre>");
@@ -3242,7 +3242,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		//	$manufacturer_result = $manufacturer_result[0];
 		}else{
 			
-			$manufacturer_result=$this->model_shopmanager_ai->getManufacturer($data['manufacturers']);
+			$manufacturer_result=$this->model_warehouse_tools_ai->getManufacturer($data['manufacturers']);
 //			//print("<pre>" . print_r('3715:product.php', true) . "</pre>");
 	//		//print("<pre>" . print_r($manufacturer_result, true) . "</pre>");
 //			//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -3278,13 +3278,13 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$product_description = isset($product_id)?$this->model_shopmanager_catalog_product->getDescriptions($product_id):null;
+			$product_description = isset($product_id)?$this->model_warehouse_product_product->getDescriptions($product_id):null;
 
 			// Vérifie si le nom en français (language_id = 1) est vide ou trop court
 			$title_source = $product_description[1]['name'] ?? '';
 			
 			if (empty($title_source) || mb_strlen(trim($title_source)) < 5) {
-				$title_result = $this->model_shopmanager_ai->getTitle($data['titles'], $category_id, $data);
+				$title_result = $this->model_warehouse_tools_ai->getTitle($data['titles'], $category_id, $data);
 	
 				// Débogage si nécessaire
 				// print("<pre>" . print_r('3670:product_search.php', true) . "</pre>");
@@ -3313,7 +3313,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		//print("<pre>".print_r ('3719:product.php' ,true )."</pre>");
 	//		//print("<pre>".print_r ($data ,true )."</pre>");
 			if (isset($data['marketplace_item_id']) && ($data['marketplace_item_id'] > 0) && $category_leaf == 1) {
-				$ebay_specific_info = $this->model_shopmanager_ebay->getSpecificsOLD($data['marketplace_item_id']);
+				$ebay_specific_info = $this->model_warehouse_marketplace_ebay_api->getSpecificsOLD($data['marketplace_item_id']);
 				//print("<pre>" . print_r(('3687:product.php'), true) . "</pre>");
 				//print("<pre>" . print_r(($ebay_specific_info), true) . "</pre>"); 
 			}/*else{
@@ -3335,18 +3335,18 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			//echo '<br>Nombre de item pour ebay: ' . count($ebay_search);
 			
 			if (isset($ebay_search[0]) && !is_null($ebay_search[0])) {
-				$ebay_specific_info = $this->model_shopmanager_ebay->getSpecificsSellers($ebay_search, $data['category_id']);
+				$ebay_specific_info = $this->model_warehouse_marketplace_ebay_api->getSpecificsSellers($ebay_search, $data['category_id']);
 			} else {
 				$ebay_specific_info = null; // Ou toute autre logique si nécessaire
 			}
-			//	$ebay_specific_info = isset($ebay_search)?$this->model_shopmanager_ebay->getSpecificsSellers($ebay_search,$data['category_id']):[]; 
+			//	$ebay_specific_info = isset($ebay_search)?$this->model_warehouse_marketplace_ebay_api->getSpecificsSellers($ebay_search,$data['category_id']):[]; 
 		//		//print("<pre>" . print_r(('1627:product.php'), true) . "</pre>");
 			//print("<pre>" . print_r(($ebay_specific_info), true) . "</pre>"); 
 			}*/
 			
 			
 			// Si les deux sont null, $mergeArrayForSpecifics reste un tableau vide
-			$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($category_id,1);
+			$category_specific_info = $this->model_warehouse_product_category->getSpecific($category_id,1);
 			
 	//		//print("<pre>" . print_r(('3699:product.php'), true) . "</pre>");
 	//		//print("<pre>" . print_r(($category_specific_info), true) . "</pre>");
@@ -3366,15 +3366,15 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 
             if (is_null($epid_details) && !is_null($ebay_specific_info)) {
 				$data['ebay_specific_info'] =$ebay_specific_info;
-				$mergeArrayForSpecifics = array_merge_recursive($mergeArrayForSpecifics, $this->model_shopmanager_ebay->formatActualDetails($ebay_specific_info));
+				$mergeArrayForSpecifics = array_merge_recursive($mergeArrayForSpecifics, $this->model_warehouse_marketplace_ebay_api->formatActualDetails($ebay_specific_info));
 				$data['epid_sources_json'] = '';
              //   $data['epid_sources_json'] =  json_encode($mergeArrayForSpecifics);
 			}elseif(isset($epid_details)){ 
 			//print("<pre>" . print_r(('3808:product.php'), true) . "</pre>");
 		//print("<pre>" . print_r(($epid_details), true) . "</pre>");
-				$ebay_sources = $this->model_shopmanager_ebay->formatEpidDetails($epid_details['aspects'],$category_specific_info);
+				$ebay_sources = $this->model_warehouse_marketplace_ebay_api->formatEpidDetails($epid_details['aspects'],$category_specific_info);
 				$data['epid_sources_json'] = json_encode($ebay_sources)??'';
-				$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources($ebay_sources,$mergeArrayForSpecifics);
+				$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources($ebay_sources,$mergeArrayForSpecifics);
 
 			}else{
 			//	$data['epid_sources_json'] =  'else';
@@ -3391,7 +3391,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 
 			$mergeArrayForSpecifics['category_name'] = $data['category_name'];
 			$mergeArrayForSpecifics['category_id']= $data['category_id'];
-			$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+			$mergeArrayForSpecificsResult = $this->model_warehouse_product_research->filterArrayForSpecifics($mergeArrayForSpecifics);
 		
 			unset($mergeArrayForSpecificsResult['error']);
 			unset($mergeArrayForSpecificsResult['category_name']);
@@ -3431,7 +3431,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 				//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 				// Vérifier si la clé existe dans la base de données
-				$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $category_id);
+				$replacement_term = $this->model_warehouse_product_specific->getSpecificKey($specific_key_name, $category_id);
 
 						// Si la clé existe déjà dans la base de données
 				if ($replacement_term != 'not_set') {
@@ -3450,14 +3450,14 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 					
 					if ($replacement_term == 'not_set') {
 					// Si la clé n'existe pas dans la base, obtenir un terme suggéré via la fonction getSpecificsKey()
-						$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
+						$suggest_replacement_term = $this->model_warehouse_tools_ai->getSpecificKey($specific_key_name, $category_specifics);
 					//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 						if(isset($suggest_replacement_term)){
-							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
+							$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $category_id, $suggest_replacement_term);
 							unset($category_specifics[$suggest_replacement_term]);
 							$key_set=2;
 						}else{
-							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $category_id, '');
+							$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $category_id, '');
 							$key_set=0;
 						}
 					}else{
@@ -3492,18 +3492,18 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 				if(!isset($data['condition_marketplace_item_id'] )){
 					//print("<pre>" . print_r(value: '3462:PRODUCTSEARCH.php') . "</pre>");
 
-					$data['conditions_marketplace_item_id'] =  $this->model_shopmanager_condition->getConditionDetails($category_id,$data['condition_id'],null,$data['site_id']??0);
+					$data['conditions_marketplace_item_id'] =  $this->model_warehouse_product_condition->getConditionDetails($category_id,$data['condition_id'],null,$data['site_id']??0);
 					$data['condition_marketplace_item_id'] =  $data['conditions_marketplace_item_id'][1][$data['condition_id']]['condition_marketplace_item_id'];
 				}
-				$data['save_action'] = $this->url->link('shopmanager/catalog/product_search/product_feed', 'user_token=' . $this->session->data['user_token'], true);
+				$data['save_action'] = $this->url->link('warehouse/product/research/product_feed', 'user_token=' . $this->session->data['user_token'], true);
 
-				return $this->load->view('shopmanager/catalog/product_search_'.$data['view'], $data);
+				return $this->load->view('warehouse/product/research_'.$data['view'], $data);
 			}else{
-				return $this->load->view('shopmanager/catalog/product_search_form', $data);
+				return $this->load->view('warehouse/product/research_form', $data);
 			}
 			
 		} else {
-			return $this->load->view('shopmanager/catalog/product_search_form', $data);
+			return $this->load->view('warehouse/product/research_form', $data);
 		}
         
 }
@@ -3514,19 +3514,19 @@ public function process_search_field($data) {
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
 	$start_time = microtime(true); 
-	$this->load->model('shopmanager/tools');
+	$this->load->model('warehouse/tools/utility');
 
 //	//print("<pre>" . print_r('2439:product.php', true) . "</pre>");
 	//print("<pre>" . print_r(($data), true) . "</pre>");
 	//print("<pre>" . print_r('2440:product.php', true) . "</pre>");
 	$product_info_source=$data['product_info_source'];
-    $this->load->language('shopmanager/catalog/product_search');
+    $this->load->language('warehouse/product/research');
     $data = [];
     
-	$this->load->model('shopmanager/manufacturer');
-	$this->load->model('shopmanager/localisation/country');
+	$this->load->model('warehouse/product/manufacturer');
+	$this->load->model('warehouse/localisation/country');
 
-	$countries_all = $this->model_shopmanager_localisation_country->getCountries(array('sort'=>'name'));
+	$countries_all = $this->model_warehouse_localisation_country->getCountries(array('sort'=>'name'));
 	$countries_used = [];
 	$priority_country_names = ['Canada', 'United States', 'China', 'Mexico'];
 	foreach ($priority_country_names as $priority_country_name) {
@@ -3647,7 +3647,7 @@ $data['entry_made_in_country'] = ($lang['entry_made_in_country'] ?? '');
 $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 
 
-	$data['cancel'] = $this->url->link('shopmanager/catalog/product', 'user_token=' . $this->session->data['user_token'] , true);
+	$data['cancel'] = $this->url->link('warehouse/product/product', 'user_token=' . $this->session->data['user_token'] , true);
 	if (isset($this->error['warning'])) {
 		$data['error_warning'] = $this->error['warning'];
 	} else {
@@ -3751,7 +3751,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 		
 		if($product_info['shipping_cost']==0 || !isset($product_info['shipping_cost'])){
 		
-			$result=$this->model_shopmanager_shipping->calculateShippingRates($product_info);
+			$result=$this->model_warehouse_order_shipping->calculateShippingRates($product_info);
 			$data['shipping_cost']=$result['shipping_cost'];
 			$data['shipping_carrier']=$result['shipping_carrier'];
 			$data['price_with_shipping']=$data['price']+$result['shipping_cost'];
@@ -3780,8 +3780,8 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 
 	
 	if (isset($product_info['weight_class_id'])){
-		$this->load->model('shopmanager/localisation/weight_class');
-		$weight_class_info = $this->model_shopmanager_localisation_weight_class->getWeightClasses(array('weight_class_id' => $product_info['weight_class_id']));
+		$this->load->model('warehouse/localisation/weight_class');
+		$weight_class_info = $this->model_warehouse_localisation_weight_class->getWeightClasses(array('weight_class_id' => $product_info['weight_class_id']));
 	//	//print("<pre>".print_r ('1921',true )."</pre>");
 	//	//print("<pre>".print_r ($product_info['weight_class_id'],true )."</pre>");
 		$product_info['weight_class_title']=$weight_class_info[0]['unit'];
@@ -3828,9 +3828,9 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 	}
 
 	if (isset($product_info['length_class_id'])){
-		$this->load->model('shopmanager/localisation/length_class');
+		$this->load->model('warehouse/localisation/length_class');
 
-		$length_class_info = $this->model_shopmanager_localisation_length_class->getLengthClasses(array('length_class_id' => $product_info['length_class_id']));
+		$length_class_info = $this->model_warehouse_localisation_length_class->getLengthClasses(array('length_class_id' => $product_info['length_class_id']));
 		//print("<pre>".print_r ($length_class_info,true )."</pre>");
 		$product_info['length_class_title']=$length_class_info[0]['unit'];
 	}
@@ -3856,7 +3856,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
     
     $url = '';
     $category_leaf=1;
-		//$product_info_source = $this->model_shopmanager_catalog_product_search->manageProductInfoSources($upc);
+		//$product_info_source = $this->model_warehouse_product_research->manageProductInfoSources($upc);
 		// 5. Récupérer les informations mises à jour de la table `product_info_sources`
 		
 		
@@ -3873,7 +3873,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 
 		$ebay_search = isset($product_info_source['ebay_search']) ? json_decode($product_info_source['ebay_search'], true) : null;
 		$ebay_category = isset($product_info_source['ebay_category']) ? json_decode($product_info_source['ebay_category'], true) : null;
-		$product_info_source['ebay_pricevariant'] = json_encode($this->model_shopmanager_ebay->calculateMissingPrices(json_decode($product_info_source['ebay_pricevariant'],true)));
+		$product_info_source['ebay_pricevariant'] = json_encode($this->model_warehouse_marketplace_ebay_api->calculateMissingPrices(json_decode($product_info_source['ebay_pricevariant'],true)));
 		$ebay_pricevariant = isset($product_info_source['ebay_pricevariant']) ? json_decode($product_info_source['ebay_pricevariant'], true) : null;
 		$ebay_specific_info = isset($product_info_source['ebay_specific_info']) ? json_decode($product_info_source['ebay_specific_info'], true) : null;
 	
@@ -3908,7 +3908,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 
 
 
-//$data['images'] = !empty($google_search) ? $this->model_shopmanager_catalog_product_search->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
+//$data['images'] = !empty($google_search) ? $this->model_warehouse_product_research->processUniqueImages($google_search) : ['error' => 'No images found from the specified sites'];
 
 // Ajout des informations Algopix et eBay
 
@@ -3916,7 +3916,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 
 
 		if (isset($upc_tmp_search['error']) && isset($algopix_search['commonAttributes'] ['title'])) { 
-			$upc_tmp_search = $this->model_shopmanager_upctmp->search($algopix_search['commonAttributes'] ['title']);
+			$upc_tmp_search = $this->model_warehouse_tools_upctmp->search($algopix_search['commonAttributes'] ['title']);
 		}
 		//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 		//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
@@ -3924,7 +3924,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 		//	//print("<pre>" . print_r($algopix_search, true) . "</pre>");
 
 		if(isset($upc_tmp_search['error']) && isset($algopix_search['error']) && isset($product_id)){
-			$this->response->redirect($this->url->link('shopmanager/catalog/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
+			$this->response->redirect($this->url->link('warehouse/product/product.form', 'user_token=' . $this->session->data['user_token'] . '&product_id=' . $product_id . $url, true));
 		}
 
 		if (!empty($algopix_search['dimensions']['packageDimensions'])) { 
@@ -3948,7 +3948,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 		
 		if (!isset($data['category_id']) && !isset($data['category_name']) && isset($algopix_search['channelSpecificAttributes'] ['productType'])){
 			$category_name = str_replace('_', ' ',$algopix_search['channelSpecificAttributes'] ['productType']);
-			$category_info = $this->model_shopmanager_ai->getCategoryID($category_name);
+			$category_info = $this->model_warehouse_tools_ai->getCategoryID($category_name);
 			if(isset($category_info)){
 				$data['category_id']=trim($category_info['category_id'])??null;
 				//$data['category_id']  = $data['category_id'];
@@ -3961,7 +3961,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 	
 		if(empty($data['product_categories']) && isset($data['category_id']) ){
 			
-				$category_info = $this->model_shopmanager_catalog_category->getCategory($data['category_id']);
+				$category_info = $this->model_warehouse_product_category->getCategory($data['category_id']);
 				//print("<pre>".print_r ($category_info,true )."</pre>");
 				if ($category_info) {
 					$data['site_id']=$category_info['site_id'];
@@ -3983,7 +3983,7 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 	//print("<pre>" . print_r($data, true) . "</pre>");
 	//$site_id=100;
 			$conditions = $data['category_id'] 
-				? $this->model_shopmanager_condition->getConditionDetails($data['category_id'],null,null,$site_id) 
+				? $this->model_warehouse_product_condition->getConditionDetails($data['category_id'],null,null,$site_id) 
 				: [];
 
 			$data['conditions'] = $conditions[1] ?? [];
@@ -3992,13 +3992,13 @@ $data['entry_shipping_cost'] = ($lang['entry_shipping_cost'] ?? '');
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['images']  = $this->model_shopmanager_catalog_product_search->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['images']  = $this->model_warehouse_product_research->getAllImageUrls($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 //print("<pre>" . print_r('3638:product.php', true) . "</pre>");
 //	//print("<pre>" . print_r($product_info_source, true) . "</pre>");
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-			$data['titles']  = $this->model_shopmanager_catalog_product_search->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
+			$data['titles']  = $this->model_warehouse_product_research->getAllTitles($upc_tmp_search??null, $google_search??null, $ebay_search??null, $algopix_search??null,$algopix_search_fr??null,$epid_details??null);
 			if(isset($data['title_search'])){
 				$data['titles'] []=$data['title_search'];
 			}
@@ -4012,7 +4012,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		$data['product_info']['manufacturer']=$data['manufacturer']??'';
 
 }else{
-	$data['manufacturers'] = $this->model_shopmanager_catalog_product_search->getAllManufacturers($data)??null;
+	$data['manufacturers'] = $this->model_warehouse_product_research->getAllManufacturers($data)??null;
 	if(isset($data['manufacturers'])){
 		if(count($data['manufacturers'])==1){
 		//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -4021,10 +4021,10 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		//	);
 		//print("<pre>" . print_r('3669:product.php', true) . "</pre>");
 		//	//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
-			$findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturerByName(reset($data['manufacturers']));
+			$findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturerByName(reset($data['manufacturers']));
 		//print("<pre>" . print_r('3669:product.php', true) . "</pre>");
 		//print("<pre>" . print_r($findmanufacturer, true) . "</pre>");
-			//$findmanufacturer = $this->model_shopmanager_manufacturer->getManufacturers($manufacturer_data);
+			//$findmanufacturer = $this->model_warehouse_product_manufacturer->getManufacturers($manufacturer_data);
 			if(!isset($findmanufacturer)){
 				$data_value = [
 					'name' => reset($data['manufacturers']),  // Nom du fabricant
@@ -4035,7 +4035,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 				];
 
 				// Résultat final
-				$manufacturer_result ['manufacturer_id'] = $this->model_shopmanager_manufacturer->addManufacturer($data_value);
+				$manufacturer_result ['manufacturer_id'] = $this->model_warehouse_product_manufacturer->addManufacturer($data_value);
 				$manufacturer_result ['name'] = reset($data['manufacturers']);
 	 //print("<pre>" . print_r('916:ai.php', true) . "</pre>");
    //print("<pre>" . print_r($data_value, true) . "</pre>");
@@ -4053,7 +4053,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		//	$manufacturer_result = $manufacturer_result[0];
 		}else{
 			
-			$manufacturer_result=$this->model_shopmanager_ai->getManufacturer($data['manufacturers']);
+			$manufacturer_result=$this->model_warehouse_tools_ai->getManufacturer($data['manufacturers']);
 //			//print("<pre>" . print_r('3715:product.php', true) . "</pre>");
 	//		//print("<pre>" . print_r($manufacturer_result, true) . "</pre>");
 //			//print("<pre>" . print_r($data['manufacturers'], true) . "</pre>");
@@ -4091,13 +4091,13 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			//$execution_times[($n++).'_Chargement line:'. __LINE__ ] = round(microtime(true) - $start_time,2);$start_time = microtime(true); 
 			//echo '<br>_Chargement line:'. __LINE__.': *********'.round(microtime(true) - $start_time,2); 
 
-		$product_description = isset($product_id)?$this->model_shopmanager_catalog_product->getDescriptions($product_id):null;
+		$product_description = isset($product_id)?$this->model_warehouse_product_product->getDescriptions($product_id):null;
 
 		// Vérifie si le nom en français (language_id = 1) est vide ou trop court
 		$title_source = $product_description[1]['name'] ?? '';
 		$category_id = $data['category_id'] ?? null;
 		if (empty($title_source) || mb_strlen(trim($title_source)) < 5) {
-			$title_result = $this->model_shopmanager_ai->getTitle($data['titles'], $category_id, $data);
+			$title_result = $this->model_warehouse_tools_ai->getTitle($data['titles'], $category_id, $data);
 
 			// Débogage si nécessaire
 			// print("<pre>" . print_r('3670:product_search.php', true) . "</pre>");
@@ -4124,7 +4124,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 		//print("<pre>".print_r ('3719:product.php' ,true )."</pre>");
 	//		//print("<pre>".print_r ($data ,true )."</pre>");
 			if (isset($data['marketplace_item_id']) && ($data['marketplace_item_id'] > 0) && $category_leaf == 1) {
-				$ebay_specific_info = $this->model_shopmanager_ebay->getSpecificsOLD($data['marketplace_item_id']);
+				$ebay_specific_info = $this->model_warehouse_marketplace_ebay_api->getSpecificsOLD($data['marketplace_item_id']);
 				//print("<pre>" . print_r(('3687:product.php'), true) . "</pre>");
 				//print("<pre>" . print_r(($ebay_specific_info), true) . "</pre>"); 
 			}
@@ -4149,18 +4149,18 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			//echo '<br>Nombre de item pour ebay: ' . count($ebay_search);
 			
 			if (isset($ebay_search[0]) && !is_null($ebay_search[0])) {
-				$ebay_specific_info = $this->model_shopmanager_ebay->getSpecificsSellers($ebay_search, $data['category_id']);
+				$ebay_specific_info = $this->model_warehouse_marketplace_ebay_api->getSpecificsSellers($ebay_search, $data['category_id']);
 			} else {
 				$ebay_specific_info = null; // Ou toute autre logique si nécessaire
 			}
-			//	$ebay_specific_info = isset($ebay_search)?$this->model_shopmanager_ebay->getSpecificsSellers($ebay_search,$data['category_id']):[]; 
+			//	$ebay_specific_info = isset($ebay_search)?$this->model_warehouse_marketplace_ebay_api->getSpecificsSellers($ebay_search,$data['category_id']):[]; 
 		//		//print("<pre>" . print_r(('1627:product.php'), true) . "</pre>");
 			//print("<pre>" . print_r(($ebay_specific_info), true) . "</pre>"); 
 			}*/
 			
 			
 			// Si les deux sont null, $mergeArrayForSpecifics reste un tableau vide
-			$category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($data['category_id'],1);
+			$category_specific_info = $this->model_warehouse_product_category->getSpecific($data['category_id'],1);
 			
 	//		//print("<pre>" . print_r(('3699:product.php'), true) . "</pre>");
 	//		//print("<pre>" . print_r(($category_specific_info), true) . "</pre>");
@@ -4180,15 +4180,15 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 
             if (is_null($epid_details) && !is_null($ebay_specific_info)) {
 				$data['ebay_specific_info'] =$ebay_specific_info;
-				$mergeArrayForSpecifics = array_merge_recursive($mergeArrayForSpecifics, $this->model_shopmanager_ebay->formatActualDetails($ebay_specific_info));
+				$mergeArrayForSpecifics = array_merge_recursive($mergeArrayForSpecifics, $this->model_warehouse_marketplace_ebay_api->formatActualDetails($ebay_specific_info));
 				$data['epid_sources_json'] = '';
              //   $data['epid_sources_json'] =  json_encode($mergeArrayForSpecifics);
 			}elseif(isset($epid_details)){ 
 			//print("<pre>" . print_r(('3808:product.php'), true) . "</pre>");
 		//print("<pre>" . print_r(($epid_details), true) . "</pre>");
-				$ebay_sources = $this->model_shopmanager_ebay->formatEpidDetails($epid_details['aspects'],$category_specific_info);
+				$ebay_sources = $this->model_warehouse_marketplace_ebay_api->formatEpidDetails($epid_details['aspects'],$category_specific_info);
 				$data['epid_sources_json'] = json_encode($ebay_sources)??'';
-				$mergeArrayForSpecifics = $this->model_shopmanager_tools->compareSources($ebay_sources,$mergeArrayForSpecifics);
+				$mergeArrayForSpecifics = $this->model_warehouse_tools_utility->compareSources($ebay_sources,$mergeArrayForSpecifics);
 
 			}else{
 			//	$data['epid_sources_json'] =  'else';
@@ -4205,7 +4205,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 
 			$mergeArrayForSpecifics['category_name'] = $data['category_name'];
 			$mergeArrayForSpecifics['category_id']= $data['category_id'];
-			$mergeArrayForSpecificsResult = $this->model_shopmanager_catalog_product_search->filterArrayForSpecifics($mergeArrayForSpecifics);
+			$mergeArrayForSpecificsResult = $this->model_warehouse_product_research->filterArrayForSpecifics($mergeArrayForSpecifics);
 		
 			unset($mergeArrayForSpecificsResult['error']);
 			unset($mergeArrayForSpecificsResult['category_name']);
@@ -4245,7 +4245,7 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 			foreach ($mergeArrayForSpecificsResult as $specific_key_name => $value) {
 				//print("<pre>" . print_r($specific_key_name, true) . "</pre>");
 				// Vérifier si la clé existe dans la base de données
-				$replacement_term = $this->model_shopmanager_catalog_product_specific->getSpecificKey($specific_key_name, $data['category_id']);
+				$replacement_term = $this->model_warehouse_product_specific->getSpecificKey($specific_key_name, $data['category_id']);
 
 				// Si la clé existe déjà dans la base de données
 				if ($replacement_term != 'not_set') {
@@ -4264,14 +4264,14 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 					
 					if ($replacement_term == 'not_set') {
 					// Si la clé n'existe pas dans la base, obtenir un terme suggéré via la fonction getSpecificsKey()
-						$suggest_replacement_term = $this->model_shopmanager_ai->getSpecificKey($specific_key_name, $category_specifics);
+						$suggest_replacement_term = $this->model_warehouse_tools_ai->getSpecificKey($specific_key_name, $category_specifics);
 					//	//print("<pre>" . print_r($suggest_replacement_term, true) . "</pre>");
 						if(isset($suggest_replacement_term)){
-							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $data['category_id'], $suggest_replacement_term);
+							$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $data['category_id'], $suggest_replacement_term);
 							unset($category_specifics[$suggest_replacement_term]);
 							$key_set=2;
 						}else{
-							$this->model_shopmanager_catalog_product_specific->addSpecificKey($specific_key_name, $data['category_id'], '');
+							$this->model_warehouse_product_specific->addSpecificKey($specific_key_name, $data['category_id'], '');
 							$key_set=0;
 						}
 					}else{
@@ -4309,24 +4309,24 @@ if(isset($data['manufacturer_id']) && $data['manufacturer_id']>0){
 				//}else{
 					//print("<pre>" . print_r(value: '4189:PRODUCTSEARCH.php') . "</pre>");
 
-					$data['conditions_marketplace_item_id'] =  $this->model_shopmanager_condition->getConditionDetails($data['category_id'],$data['condition_id'],null,$data['site_id']??0);
+					$data['conditions_marketplace_item_id'] =  $this->model_warehouse_product_condition->getConditionDetails($data['category_id'],$data['condition_id'],null,$data['site_id']??0);
 					$data['condition_marketplace_item_id'] =  $data['conditions_marketplace_item_id'][1][$data['condition_id']]['condition_marketplace_item_id'];
 				}
-				$data['save_action'] = $this->url->link('shopmanager/catalog/product_search/product_feed', 'user_token=' . $this->session->data['user_token'], true);
+				$data['save_action'] = $this->url->link('warehouse/product/research/product_feed', 'user_token=' . $this->session->data['user_token'], true);
 
-				return $this->load->view('shopmanager/catalog/product_search_'.$data['view'], $data);
+				return $this->load->view('warehouse/product/research_'.$data['view'], $data);
 			}else{
-				return $this->load->view('shopmanager/catalog/product_search_form', $data);
+				return $this->load->view('warehouse/product/research_form', $data);
 			}
 			
 		} else {
-			return $this->load->view('shopmanager/catalog/product_search_form', $data);
+			return $this->load->view('warehouse/product/research_form', $data);
 		}
         
 }
 $data['total_execution_time'] = array_sum($execution_times);
 $data['ebay_pricevariant_table'] = $this->getEbayPricevariantTable($data);
-return $this->load->view('shopmanager/catalog/product_search_form', $data);
+return $this->load->view('warehouse/product/research_form', $data);
 }
 
 public function getSearchData() {
@@ -4335,12 +4335,12 @@ public function getSearchData() {
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 
-	$this->load->language('shopmanager/catalog/product_search');
+	$this->load->language('warehouse/product/research');
 	$data = [];
 	
    $json = [];
 
-	if (!$this->user->hasPermission('modify', 'shopmanager/catalog/product_search')) {
+	if (!$this->user->hasPermission('modify', 'warehouse/product/research')) {
 		$json['error'] = 'Permission refusée!';
 		$this->response->addHeader('Content-Type: application/json');
 		$this->response->setOutput(json_encode($json));
@@ -4355,24 +4355,24 @@ public function getSearchData() {
 	$product_id = $this->request->post['product_id']??27833;//27319 ;
 	
     // Charger les modèles nécessaires
-		$this->load->model('shopmanager/tools');
-		$this->load->model('shopmanager/catalog/product_search'); 
+		$this->load->model('warehouse/tools/utility');
+		$this->load->model('warehouse/product/research'); 
 		$this->load->model('localisation/language');
-		$this->load->model('shopmanager/manufacturer');
-		$this->load->model('shopmanager/ebay');
-		$this->load->model('shopmanager/marketplace');
-		$this->load->model('shopmanager/catalog/category');
-		$this->load->model('shopmanager/condition');
-		$this->load->model('shopmanager/catalog/product');
-		$this->load->model('shopmanager/ai');
+		$this->load->model('warehouse/product/manufacturer');
+		$this->load->model('warehouse/marketplace/ebay/api');
+		$this->load->model('warehouse/marketplace/listing');
+		$this->load->model('warehouse/product/category');
+		$this->load->model('warehouse/product/condition');
+		$this->load->model('warehouse/product/product');
+		$this->load->model('warehouse/tools/ai');
 		$this->load->model('tool/image');
 
 
         // Pattern OC4: Une requête principale puis détails supplémentaires
-        $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+        $product_info = $this->model_warehouse_product_product->getProduct($product_id);
         
 		// Descriptions et langues
-		$data['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+		$data['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
 		$data['languages'] = $this->model_localisation_language->getLanguages();
 
 		// Copier product_info dans data avec valeurs par défaut
@@ -4403,18 +4403,18 @@ public function getSearchData() {
 
 		// Manufacturer
 		if ($data['manufacturer_id']) {
-			$manufacturer_info = $this->model_shopmanager_manufacturer->getManufacturer($data['manufacturer_id']);
+			$manufacturer_info = $this->model_warehouse_product_manufacturer->getManufacturer($data['manufacturer_id']);
 			$data['manufacturer'] = $manufacturer_info['name'] ?? '';
 		} else {
 			$data['manufacturer'] = '';
 		}
 
 		// Categories
-		$categories = $this->model_shopmanager_catalog_product->getCategories($product_id);
+		$categories = $this->model_warehouse_product_product->getCategories($product_id);
 		$data['product_categories'] = [];
 		
 		foreach ($categories as $category_id) {
-			$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+			$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 			if ($category_info) {
 				$data['product_categories'][] = [
 					'category_id' => $category_info['category_id'],
@@ -4439,7 +4439,7 @@ public function getSearchData() {
 		$data['placeholder'] = $this->model_tool_image->resize('no_image.png', 100, 100);
 
 		// Images additionnelles
-		$product_images = $this->model_shopmanager_catalog_product->getImages($product_id);
+		$product_images = $this->model_warehouse_product_product->getImages($product_id);
 		$data['product_images'] = [];
 
 		foreach ($product_images as $product_image) {
@@ -4462,17 +4462,17 @@ public function getSearchData() {
         // Supprimer la ligne en DB pour forcer un re-fetch eBay avec les vrais prix USD
         $upc_to_feed = $product_info['upc'] ?? '';
         if ($upc_to_feed) {
-            $this->model_shopmanager_catalog_product_search->deleteInfoSources($upc_to_feed);
+            $this->model_warehouse_product_research->deleteInfoSources($upc_to_feed);
         }
 
         // Obtenir les données de recherche du produit (re-fetch depuis eBay)
-        $data['product_search_data'] = $this->model_shopmanager_catalog_product_search->getSearchData(
+        $data['product_search_data'] = $this->model_warehouse_product_research->getSearchData(
             $product_info['upc'] ?? '',
             $product_info['product_id']
         );
 
         // Fusionner les nouvelles données avec celles du produit
-        $data_json = $this->model_shopmanager_catalog_product_search->feedInfoWithSearchData(json_encode($data));
+        $data_json = $this->model_warehouse_product_research->feedInfoWithSearchData(json_encode($data));
         $data_received = json_decode($data_json, true);
 
 		// Protéger le price existant: ne l'écraser que si le produit n'a pas encore de prix
@@ -4489,16 +4489,16 @@ public function getSearchData() {
 		}
 
 		// Pattern OC4: Appeler directement product model
-		$this->model_shopmanager_catalog_product->editProduct($product_id, $data_received);
-		$this->model_shopmanager_marketplace->setToUpdate($product_id);
+		$this->model_warehouse_product_product->editProduct($product_id, $data_received);
+		$this->model_warehouse_marketplace_listing->setToUpdate($product_id);
 		//print("<pre>".print_r ($data,true )."</pre>");
 	
-	$result = $this->model_shopmanager_catalog_product->getProducts(['filter_product_id' => $product_id]);
+	$result = $this->model_warehouse_product_product->getProducts(['filter_product_id' => $product_id]);
 	$result = $result[0];
 
 	$result['made_in_country_id'] = isset($data_received["made_in_country_id"]) ? (int)$data_received["made_in_country_id"] : $data["made_in_country_id"];
 
-	$this->model_shopmanager_catalog_product->editMadeInCountry($product_id, $result['made_in_country_id']);
+	$this->model_warehouse_product_product->editMadeInCountry($product_id, $result['made_in_country_id']);
 
 	if (is_file(DIR_IMAGE . $result['image'])) {
 		$image = $this->model_tool_image->resize($result['image'], 50, 50);
@@ -4506,7 +4506,7 @@ public function getSearchData() {
 		$image = $this->model_tool_image->resize('no_image.png', 50, 50);
 	}
 
-	$product_discounts = $this->model_shopmanager_catalog_product->getDiscounts($result['product_id']);
+	$product_discounts = $this->model_warehouse_product_product->getDiscounts($result['product_id']);
 
 	foreach ($product_discounts as $product_discount) {
 		if (($product_discount['date_start'] == '0000-00-00' || strtotime($product_discount['date_start']) < time()) && ($product_discount['date_end'] == '0000-00-00' || strtotime($product_discount['date_end']) > time())) {
@@ -4540,7 +4540,7 @@ public function getSearchData() {
 				'total_specifics_count' => $result['total_specifics_count'],
 				'status' => $result['status'] ? ($lang['text_enabled'] ?? '') : ($lang['text_disabled'] ?? ''),
 				'edit' => $this->url->link(
-					'shopmanager/catalog/product.form', 
+					'warehouse/product/product.form', 
 					'user_token=' . $this->session->data['user_token'] . '&product_id=' . $result['product_id'] . 
 					($result['upc'] == '' || $result['has_specifics'] ? '' : '&product_search=true'), 
 					true
@@ -4561,7 +4561,7 @@ public function getSearchData() {
 		if (!empty($data['ebay_pricevariant']) && is_array($data['ebay_pricevariant'])) {
 			$data['ebay_pricevariant'] = $this->convertEbayPricesUsdToCad($data['ebay_pricevariant']);
 		}
-		return $this->load->view('shopmanager/catalog/product_search_price_variant', $data);
+		return $this->load->view('warehouse/product/research_price_variant', $data);
 	}
 
 	/**
@@ -4599,9 +4599,9 @@ public function getSearchData() {
 	 * Logique partagée — retourne le HTML du tableau pricevariant.
 	 */
 	protected function buildEbayPricevariantTable(): string {
-		$this->load->model('shopmanager/catalog/product_search');
-		$this->load->model('shopmanager/catalog/product');
-		$this->load->language('shopmanager/catalog/product_search');
+		$this->load->model('warehouse/product/research');
+		$this->load->model('warehouse/product/product');
+		$this->load->language('warehouse/product/research');
 
 		$product_id = (int)($this->request->get['product_id'] ?? ($this->request->post['product_id'] ?? 0));
 		$upc        = $this->request->get['upc'] ?? ($this->request->post['upc'] ?? null);
@@ -4611,7 +4611,7 @@ public function getSearchData() {
 		}
 
 		// Charger product_info en une seule fois
-		$product_info = $product_id ? $this->model_shopmanager_catalog_product->getProduct($product_id) : [];
+		$product_info = $product_id ? $this->model_warehouse_product_product->getProduct($product_id) : [];
 		if (!$upc) {
 			$upc = $product_info['upc'] ?? null;
 		}
@@ -4632,13 +4632,13 @@ public function getSearchData() {
 
 		// Récupérer le vrai itemId eBay de notre listing (pas le code condition eBay)
 		$own_marketplace_item_id = $product_id
-			? $this->model_shopmanager_catalog_product_search->getProductMarketplaceItemId($product_id)
+			? $this->model_warehouse_product_research->getProductMarketplaceItemId($product_id)
 			: null;
 
 		if ($upc && is_numeric($upc)) {
 			// Si le pricevariant en cache contient notre propre listing, on invalide pour forcer un re-fetch propre
 			if ($own_marketplace_item_id) {
-				$cached_raw = $this->model_shopmanager_catalog_product_search->getInfoSources($upc);
+				$cached_raw = $this->model_warehouse_product_research->getInfoSources($upc);
 				$cached_pv  = isset($cached_raw['ebay_pricevariant']) ? json_decode($cached_raw['ebay_pricevariant'], true) : [];
 				$contaminated = false;
 				foreach ((array)$cached_pv as $variant) {
@@ -4648,12 +4648,12 @@ public function getSearchData() {
 					}
 				}
 				if ($contaminated) {
-					$this->model_shopmanager_catalog_product_search->deleteInfoSources($upc);
+					$this->model_warehouse_product_research->deleteInfoSources($upc);
 				}
 			}
-			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources($upc, null, null, $own_marketplace_item_id);
+			$product_info_source = $this->model_warehouse_product_research->manageInfoSources($upc, null, null, $own_marketplace_item_id);
 		} else {
-			$product_info_source = $this->model_shopmanager_catalog_product_search->manageInfoSources(null, null, $product_id);
+			$product_info_source = $this->model_warehouse_product_research->manageInfoSources(null, null, $product_id);
 		}
 
 		$data = array_merge($data, [
@@ -4681,6 +4681,6 @@ public function getSearchData() {
 			$data['ebay_pricevariant'] = $this->convertEbayPricesUsdToCad($data['ebay_pricevariant']);
 		}
 
-		return $this->load->view('shopmanager/catalog/product_search_price_variant', $data);
+		return $this->load->view('warehouse/product/research_price_variant', $data);
 	}
 }

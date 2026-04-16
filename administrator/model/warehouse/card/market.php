@@ -1,11 +1,11 @@
 <?php
-// Original: shopmanager/card/card_market.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/market.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
 /**
  * CardMarket — Modèle de recherche eBay Finding API (Completed/Sold items)
  */
-class CardMarket extends \Opencart\System\Engine\Model {
+class Market extends \Opencart\System\Engine\Model {
 
     // eBay Trading card category IDs (US site)
     private const CATEGORY_SPORTS_CARDS = '261328';
@@ -83,7 +83,7 @@ class CardMarket extends \Opencart\System\Engine\Model {
      * Search eBay items by selected mode (present via Browse API, sold via scraper API)
      */
     public function searchCompletedItems(array $filters): array {
-        $this->load->model('shopmanager/ebay');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         $parts = [];
         if (!empty($filters['filter_player'])) $parts[] = trim($filters['filter_player']);
@@ -138,7 +138,7 @@ class CardMarket extends \Opencart\System\Engine\Model {
             }
 
             // $this->log->write('[CardMarketModel] branch=present_by_image path=' . $imagePath);
-            $r = $this->model_shopmanager_ebay->searchByImageItems($imagePath, [
+            $r = $this->model_warehouse_marketplace_ebay_api->searchByImageItems($imagePath, [
                 'sort' => $sort,
                 'limit' => $limit,
                 'page' => $page,
@@ -164,7 +164,7 @@ class CardMarket extends \Opencart\System\Engine\Model {
                 }
 
                 // $this->log->write('[CardMarketModel] branch=sold_scraper keyword=' . $keyword);
-                $r = $this->model_shopmanager_ebay->searchSoldItemsScraper($keyword, [
+                $r = $this->model_warehouse_marketplace_ebay_api->searchSoldItemsScraper($keyword, [
                     'sort' => $sort,
                     'limit' => $limit,
                     'page' => $page,
@@ -177,7 +177,7 @@ class CardMarket extends \Opencart\System\Engine\Model {
                 ]);
             } else {
                 // $this->log->write('[CardMarketModel] branch=present_browse keyword=' . $keyword);
-                $r = $this->model_shopmanager_ebay->searchActiveItems($keyword, [
+                $r = $this->model_warehouse_marketplace_ebay_api->searchActiveItems($keyword, [
                     'sort' => $sort,
                     'limit' => $limit,
                     'page' => $page,
@@ -406,8 +406,8 @@ class CardMarket extends \Opencart\System\Engine\Model {
      * Get eBay API credentials — delegates to ebay model (handles bearer token + cookie refresh)
      */
     private function getEbayCredentials(): array {
-        $this->load->model('shopmanager/ebay');
-        return $this->model_shopmanager_ebay->getApiCredentials(1);
+        $this->load->model('warehouse/marketplace/ebay/api');
+        return $this->model_warehouse_marketplace_ebay_api->getApiCredentials(1);
     }
 
     /**

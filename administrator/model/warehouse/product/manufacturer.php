@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/manufacturer.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/product/manufacturer.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 
 class Manufacturer extends \Opencart\System\Engine\Model {
 

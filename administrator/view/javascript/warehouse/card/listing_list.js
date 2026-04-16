@@ -1,4 +1,4 @@
-// Original: shopmanager/card_listing_list.js (was misplaced at root)
+// Original: warehouse/card/listing_list.js (was misplaced at root)
 /**
  * Card Listing List JavaScript
  * Handles autocomplete and list functionality
@@ -81,7 +81,7 @@ function hideLoadingPopup() {
 $('input[name=\'filter_set_name\']').autocomplete({
     'source': function(request, response) {
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token=' + getURLVar('user_token'),
+            url: 'index.php?route=warehouse/card/listing.autocomplete&user_token=' + getURLVar('user_token'),
             data: {    
                 filter_set_name: request
             },
@@ -106,7 +106,7 @@ $('input[name=\'filter_set_name\']').autocomplete({
 $('input[name=\'filter_sport\']').autocomplete({
     'source': function(request, response) {
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token=' + getURLVar('user_token'),
+            url: 'index.php?route=warehouse/card/listing.autocomplete&user_token=' + getURLVar('user_token'),
             type: 'post',
             data: {    
                 filter_sport: request
@@ -131,7 +131,7 @@ $('input[name=\'filter_sport\']').autocomplete({
 $('input[name=\'filter_manufacturer\']').autocomplete({
     'source': function(request, response) {
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token=' + getURLVar('user_token'),
+            url: 'index.php?route=warehouse/card/listing.autocomplete&user_token=' + getURLVar('user_token'),
             type: 'post',
             data: {    
                 filter_manufacturer: request
@@ -226,7 +226,7 @@ $(document).on('click', '.ebay-publish-icon', function() {
     $icon.css('opacity', '0.3').css('cursor', 'wait');
     
     $.ajax({
-        url: 'index.php?route=shopmanager/card/card_listing.publishToEbay&user_token=' + getURLVar('user_token'),
+        url: 'index.php?route=warehouse/card/listing.publishToEbay&user_token=' + getURLVar('user_token'),
         type: 'post',
         data: {
             listing_id: listingId
@@ -483,7 +483,7 @@ $(document).on('click', '#batch-publish-btn', function() {
     appendLoadingMessage(TEXT_LISTINGS_TO_PUBLISH.replace('%s', listingIds.join(', ')), 'info');
 
     processSequentially(listingIds, {
-        url: 'index.php?route=shopmanager/card/card_listing.publishToEbay&user_token=' + getURLVar('user_token'),
+        url: 'index.php?route=warehouse/card/listing.publishToEbay&user_token=' + getURLVar('user_token'),
         onResult: function(lid, json) {
             if (json.error) {
                 appendLoadingMessage('❌ ' + json.error, 'error');
@@ -534,7 +534,7 @@ $(document).on('click', '#batch-end-btn', function() {
     appendLoadingMessage(TEXT_LISTINGS_TO_END.replace('%s', listingIds.join(', ')), 'info');
 
     processSequentially(listingIds, {
-        url: 'index.php?route=shopmanager/card/card_listing.endMultiple&user_token=' + getURLVar('user_token'),
+        url: 'index.php?route=warehouse/card/listing.endMultiple&user_token=' + getURLVar('user_token'),
         dataFn: function(lid) { return { listing_ids: [lid] }; },
         onResult: function(lid, json) {
             if (json.error) {
@@ -583,7 +583,7 @@ $(document).on('click', '#batch-ebay-sync-btn', function() {
     appendLoadingMessage('Listings: ' + listingIds.join(', '), 'info');
 
     processSequentially(listingIds, {
-        url: 'index.php?route=shopmanager/card/card_listing.batchEbaySync&user_token=' + getURLVar('user_token'),
+        url: 'index.php?route=warehouse/card/listing.batchEbaySync&user_token=' + getURLVar('user_token'),
         dataFn: function(lid) { return { listing_ids: [lid], sync_mode: 'missing' }; },
         onResult: function(lid, json) {
             if (json.error) {
@@ -650,7 +650,7 @@ $(document).on('click', '#batch-assign-btn', function() {
         appendLoadingMessage('⚙️ Listing #' + lid + '…', 'info');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/card/card_listing.assignBatches&user_token=' + getURLVar('user_token'),
+            url: 'index.php?route=warehouse/card/listing.assignBatches&user_token=' + getURLVar('user_token'),
             type: 'POST',
             data: { listing_id: lid },
             dataType: 'json',
@@ -960,7 +960,7 @@ function openPrintLabel(sku = '', upc = '', quantity = 1, location = '', force =
         //upc = '';
     }
 
-    const url = 'index.php?route=shopmanager/tools.create_label' +
+    const url = 'index.php?route=warehouse/tools/utility.create_label' +
         '&sku='      + encodeURIComponent(sku      || '') +
         '&upc='      + encodeURIComponent(upc      || '') +
         '&quantity=' + encodeURIComponent(quantity) +

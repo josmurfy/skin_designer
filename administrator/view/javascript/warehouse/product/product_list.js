@@ -1,4 +1,4 @@
-// Original: shopmanager/catalog/product_list.js
+// Original: warehouse/product/product_list.js
 
 
 // ============================================
@@ -161,7 +161,7 @@ function handleEndList() {
             appendLoadingMessage('🛑 End listing #' + t.marketplace_item_id + ' (produit #' + productId + ')', 'info');
 
             $.ajax({
-                url: 'index.php?route=shopmanager/ebay.endListing&user_token=' + user_token,
+                url: 'index.php?route=warehouse/marketplace/ebay/api.endListing&user_token=' + user_token,
                 type: 'POST',
                 data: {
                     product_id: productId,
@@ -300,7 +300,7 @@ function transferUnallocatedQuantity(productId) {
                 } else {
                     // Envoyer les nouvelles données via AJAX
                     $.ajax({
-                        url: 'index.php?route=shopmanager/catalog/product.trfUnallocatedQuantity&user_token=' + user_token,
+                        url: 'index.php?route=warehouse/product/product.trfUnallocatedQuantity&user_token=' + user_token,
                         type: 'post',
                         data: {
                             product_id: productId,
@@ -350,7 +350,7 @@ function transferUnallocatedQuantity(productId) {
         if (location !== '') {
             if (confirm(TEXT_CONFIRM_TRANSFER)) {
                 $.ajax({
-                    url: 'index.php?route=shopmanager/catalog/product.trfUnallocatedQuantity&user_token=' + user_token,
+                    url: 'index.php?route=warehouse/product/product.trfUnallocatedQuantity&user_token=' + user_token,
                     type: 'post',
                     data: {
                         product_id: productId,
@@ -656,7 +656,7 @@ window.reinitImagePreview = function() {
     initImagePreview();
     
     // Réinitialiser drag-and-drop
-    const uploadUrl = 'index.php?route=shopmanager/tools.uploadImagesFiles&type=pri';
+    const uploadUrl = 'index.php?route=warehouse/tools/utility.uploadImagesFiles&type=pri';
     initImageDragAndDrop(uploadUrl, function(response, container, productId) {
         // Success callback
         if (response.success && response.product_images && response.product_images.primary) {
@@ -939,7 +939,7 @@ function confirmUnallocatedQuantity(productId, newUnallocatedQuantity, currentQu
 
     // Appel AJAX pour sauvegarder les données sur le serveur
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateUnallocatedQuantity&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.updateUnallocatedQuantity&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,
@@ -1001,7 +1001,7 @@ function confirmLocation(productId, newLocation) {
 
     // Appel AJAX pour sauvegarder les données sur le serveur
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateLocation&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.updateLocation&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,
@@ -1040,7 +1040,7 @@ function confirmQuantity(productId, finalQuantity, unallocatedQuantity) {
     
     // Appel AJAX pour sauvegarder les données sur le serveur
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.updateQuantity&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.updateQuantity&user_token=' + user_token,
         type: 'post',
         data: {
             product_id: productId,
@@ -1095,7 +1095,7 @@ function handleDelete(productId) {
     postData['selected[' + productId + ']'] = productId;
 
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.delete&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.delete&user_token=' + user_token,
         type: 'POST',
         data: postData,
         dataType: 'json',
@@ -1124,7 +1124,7 @@ function handleDeleteSelected() {
     if (Object.keys(postData).length === 0) return;
 
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.delete&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.delete&user_token=' + user_token,
         type: 'POST',
         data: postData,
         dataType: 'json',
@@ -1254,7 +1254,7 @@ function editMadeInCountry(product_id) {
     var made_in_country_id = countrySelect.value;
     
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/product.editMadeInCountry&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/product.editMadeInCountry&user_token=' + user_token,
         method: "POST",
         data: {
             product_id: product_id,
@@ -1300,7 +1300,7 @@ function addToMarketplace(product_id, marketplace_account_id, marketplace_id, is
         return;
     }
     $.ajax({
-        url: `index.php?route=shopmanager/marketplace.addToMarketplace&user_token=${user_token}`,
+        url: `index.php?route=warehouse/marketplace/listing.addToMarketplace&user_token=${user_token}`,
         type: 'POST',
         data: { product_id: product_id, marketplace_account_id: marketplace_account_id, marketplace_id: marketplace_id },
         dataType: 'json',
@@ -1529,7 +1529,7 @@ function handleUpdateList() {
         appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_PROCESSING, productId), 'info');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/marketplace.updateListedProduct&user_token=' + user_token,
+            url: 'index.php?route=warehouse/marketplace/listing.updateListedProduct&user_token=' + user_token,
             type: 'POST',
             data: {
                 product_id: productId
@@ -1709,7 +1709,7 @@ function handleFeedList(productId) {
         }
 
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/product_search.getSearchData&user_token=' + user_token,
+            url: 'index.php?route=warehouse/product/research.getSearchData&user_token=' + user_token,
             type: "POST",
             data: {
                 product_id: productId
@@ -1839,7 +1839,7 @@ function handleSyncQtyAll() {
         appendLoadingMessage(formatMarketplaceText(TEXT_UPDATE_MARKETPLACE_PROCESSING, productId), 'info');
 
         $.ajax({
-            url: 'index.php?route=shopmanager/marketplace.editQuantity&user_token=' + user_token,
+            url: 'index.php?route=warehouse/marketplace/listing.editQuantity&user_token=' + user_token,
             type: 'POST',
             data: {
                 product_id: productId,
@@ -1904,7 +1904,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             appendLoadingMessage(`📦 Traitement des produits : ${productChunk.join(', ')}`);
 
-            return fetch('index.php?route=shopmanager/catalog/product_search.product_source_info_feed&user_token=' + user_token, {
+            return fetch('index.php?route=warehouse/product/research.product_source_info_feed&user_token=' + user_token, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -1966,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Initialiser drag & drop
     if (typeof initImageDragAndDrop === 'function') {
-        const uploadUrl = 'index.php?route=shopmanager/tools.uploadImagesFiles&type=pri';
+        const uploadUrl = 'index.php?route=warehouse/tools/utility.uploadImagesFiles&type=pri';
         initImageDragAndDrop(uploadUrl, function(response, container, productId) {
             // Success callback
             if (response.success && response.product_images && response.product_images.primary) {
@@ -2018,7 +2018,7 @@ function handleSourcesError(product_id) {
      const user_token = document.querySelector('input[name="user_token"]').value;
     alert(lang.error_sources.replace('%s', product_id));
     // Optionally open edit page
-    window.open('index.php?route=shopmanager/catalog/product.edit&user_token=' + user_token + '&product_id=' + product_id, '_blank');
+    window.open('index.php?route=warehouse/product/product.edit&user_token=' + user_token + '&product_id=' + product_id, '_blank');
 }
 
 // ============================================

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/import/card_price_active.php
+// Original: warehouse/card/import/active.php
 // Heading
 $_['heading_title']           = 'Importar Tarjetas Activas';
 

@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/order.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/order/order.php
+namespace Opencart\Admin\Controller\Warehouse\Order;
 
 /**
  * Class Order
@@ -15,7 +15,7 @@ class Order extends \Opencart\System\Engine\Controller {
 	 */
 	public function index(): void {
 		
-		$this->load->language('shopmanager/order');
+		$this->load->language('warehouse/order/order');
 		$data = [];
 		
 
@@ -65,11 +65,11 @@ class Order extends \Opencart\System\Engine\Controller {
 
 		$data['breadcrumbs'][] = [
 			'text' => ($lang['heading_title'] ?? ''),
-			'href' => $this->url->link('shopmanager/order', 'user_token=' . $this->session->data['user_token'] . $url)
+			'href' => $this->url->link('warehouse/order/order', 'user_token=' . $this->session->data['user_token'] . $url)
 		];
 
-		$data['print_report'] = $this->url->link('shopmanager/order', 'type_report=order&user_token=' . $this->session->data['user_token'] . $url);
-		$data['process'] = $this->url->link('shopmanager/order.updateQuantity', 'user_token=' . $this->session->data['user_token'] . $url);   
+		$data['print_report'] = $this->url->link('warehouse/order/order', 'type_report=order&user_token=' . $this->session->data['user_token'] . $url);
+		$data['process'] = $this->url->link('warehouse/order/order.updateQuantity', 'user_token=' . $this->session->data['user_token'] . $url);   
         
         $data['user_token'] = $this->session->data['user_token'];
 
@@ -79,13 +79,13 @@ class Order extends \Opencart\System\Engine\Controller {
 		    $data['filter_date_end'] = $filter_date_end;
 		    $data['filter_order_id_start'] = $filter_order_id_start;
 		    $data['filter_order_id_end'] = $filter_order_id_end;
-		    $data['list'] = $this->load->controller('shopmanager/order.getList');
+		    $data['list'] = $this->load->controller('warehouse/order/order.getList');
             $data['header'] = $this->load->controller('common/header');
             $data['column_left'] = $this->load->controller('common/column_left');
             $data['footer'] = $this->load->controller('common/footer');
-            $data['wait_popup'] =  $this->load->controller('shopmanager/wait_popup');
-            $data['marketplace_error_popup'] = $this->load->controller('shopmanager/marketplace_error_popup');
-            $this->response->setOutput($this->load->view('shopmanager/order', $data));	 
+            $data['wait_popup'] =  $this->load->controller('warehouse/popup/wait');
+            $data['marketplace_error_popup'] = $this->load->controller('warehouse/popup/marketplace_error');
+            $this->response->setOutput($this->load->view('warehouse/order/order', $data));	 
   
         }else{
             // Print report mode - load list with filters
@@ -94,8 +94,8 @@ class Order extends \Opencart\System\Engine\Controller {
 		    $data['filter_date_end'] = $filter_date_end;
 		    $data['filter_order_id_start'] = $filter_order_id_start;
 		    $data['filter_order_id_end'] = $filter_order_id_end;
-		    $data['list'] = $this->load->controller('shopmanager/order.getList');
-            $this->response->setOutput($this->load->view('shopmanager/order_print_report', $data));
+		    $data['list'] = $this->load->controller('warehouse/order/order.getList');
+            $this->response->setOutput($this->load->view('warehouse/order/order_print_report', $data));
         }
 
 		
@@ -108,11 +108,11 @@ class Order extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
  	public function list(): void {
-		$this->load->language('shopmanager/order');
+		$this->load->language('warehouse/order/order');
 		$data = [];
 		
 
-		$this->response->setOutput($this->load->controller('shopmanager/order.getList'));
+		$this->response->setOutput($this->load->controller('warehouse/order/order.getList'));
 	}
 
 
@@ -163,10 +163,10 @@ class Order extends \Opencart\System\Engine\Controller {
 			$url .= '&filter_order_id_end=' . $this->request->get['filter_order_id_end'];
 		}
 
-	    $data['action'] = $this->url->link('shopmanager/order.list', 'user_token=' . $this->session->data['user_token'] . $url);
+	    $data['action'] = $this->url->link('warehouse/order/order.list', 'user_token=' . $this->session->data['user_token'] . $url);
 
-        $this->load->model('shopmanager/order');
-        $this->load->model('shopmanager/tools');
+        $this->load->model('warehouse/order/order');
+        $this->load->model('warehouse/tools/utility');
 
 		$data['orders'] = [];
 
@@ -177,7 +177,7 @@ class Order extends \Opencart\System\Engine\Controller {
 			'filter_order_id_end'   => $filter_order_id_end
 		];
 
-		$orders = $this->model_shopmanager_order->getOrders($filter_data);
+		$orders = $this->model_warehouse_order_order->getOrders($filter_data);
 
 		foreach ($orders as $order) {
 			// print("<pre>".print_r ($order,true )."</pre>"); 
@@ -211,14 +211,14 @@ class Order extends \Opencart\System\Engine\Controller {
 			'sales_record_number' => [SORT_ASC, SORT_NUMERIC]
 		];
 
-		$data['orders'] = $this->model_shopmanager_tools->MultiSort($data['orders'], $sortCriteria, true);
+		$data['orders'] = $this->model_warehouse_tools_utility->MultiSort($data['orders'], $sortCriteria, true);
 
 		$sortCriteria = [
 			'sku' => [SORT_ASC, SORT_NUMERIC]
 		];
 
-		$orders_sorted = $this->model_shopmanager_tools->MultiSort($data['orders'], $sortCriteria, true);
-		$orders_sorted = $this->model_shopmanager_tools->MultiSort($data['orders'], $sortCriteria, true);
+		$orders_sorted = $this->model_warehouse_tools_utility->MultiSort($data['orders'], $sortCriteria, true);
+		$orders_sorted = $this->model_warehouse_tools_utility->MultiSort($data['orders'], $sortCriteria, true);
 
 		$temp_array = [];
 		$order_count = []; // Track how many orders per SKU
@@ -253,7 +253,7 @@ class Order extends \Opencart\System\Engine\Controller {
 			'location' => [SORT_ASC, SORT_STRING]
 		];
 		
-		$data['orders_sorted'] = $this->model_shopmanager_tools->MultiSort($orders_sorted, $sortCriteria, true);
+		$data['orders_sorted'] = $this->model_warehouse_tools_utility->MultiSort($orders_sorted, $sortCriteria, true);
 
         $data['user_token'] = $this->session->data['user_token'];
 		
@@ -267,7 +267,7 @@ class Order extends \Opencart\System\Engine\Controller {
         }
 
 
-        return $this->load->view('shopmanager/order_list', $data);
+        return $this->load->view('warehouse/order/order_list', $data);
 		
 	}
 
@@ -281,25 +281,25 @@ class Order extends \Opencart\System\Engine\Controller {
 	public function updateQuantity(): void {
 		$json = [];
 
-		$this->load->language('shopmanager/order');
+		$this->load->language('warehouse/order/order');
 		$data = [];
 		
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/order')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/order/order')) {
 			$json['error']['warning'] = ($lang['error_permission'] ?? '');
 		}
 
-		$this->load->model('shopmanager/catalog/product');
-		$this->load->model('shopmanager/order');
+		$this->load->model('warehouse/product/product');
+		$this->load->model('warehouse/order/order');
 
 		// Vérifier si les données nécessaires sont envoyées via POST
 		if (isset($this->request->post['vendu']) && is_array($this->request->post['vendu'])) {
 			// print("<pre>".print_r ($this->request->post,true )."</pre>");
 			// Mettre à jour la quantité du produit dans la base de données
-			$this->model_shopmanager_order->updateQuantity($this->request->post);
+			$this->model_warehouse_order_order->updateQuantity($this->request->post);
             $json['success'] = ($lang['text_success'] ?? '');
 			// Si marketplace_item_id n'est pas nul ou 0, mettre à jour la quantité sur eBay
-			//$this->response->redirect($this->url->link('shopmanager/order', 'user_token=' . $this->session->data['user_token']));
+			//$this->response->redirect($this->url->link('warehouse/order/order', 'user_token=' . $this->session->data['user_token']));
 		} else {
 			// En cas de données manquantes, renvoyer une erreur
 			 $json['error']['warning'] = ($lang['error_missing_data'] ?? '');
@@ -318,21 +318,21 @@ class Order extends \Opencart\System\Engine\Controller {
 	public function undoProductQuantity(): void {
 		$json = [];
 
-		$this->load->language('shopmanager/order');
+		$this->load->language('warehouse/order/order');
 		$data = [];
 		
 
-		if (!$this->user->hasPermission('modify', 'shopmanager/order')) {
+		if (!$this->user->hasPermission('modify', 'warehouse/order/order')) {
 			$json['error']['warning'] = ($lang['error_permission'] ?? '');
 		}
 
-		$this->load->model('shopmanager/catalog/product');
-		$this->load->model('shopmanager/order');
+		$this->load->model('warehouse/product/product');
+		$this->load->model('warehouse/order/order');
 
 		// Vérifier si les données nécessaires sont envoyées via POST
 		if (isset($this->request->post['vendu']) && is_array($this->request->post['vendu'])) {
 			// Mettre à jour la quantité du produit dans la base de données (mode undo)
-			$this->model_shopmanager_order->undoProductQuantity($this->request->post);
+			$this->model_warehouse_order_order->undoProductQuantity($this->request->post);
             $json['success'] = ($lang['text_success_undo'] ?? '');
 		} else {
 			// En cas de données manquantes, renvoyer une erreur

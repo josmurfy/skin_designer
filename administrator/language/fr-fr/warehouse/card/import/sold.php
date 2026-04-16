@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/import/card_sold_importer.php
+// Original: warehouse/card/import/sold.php
 // Heading
 $_['heading_title']          = 'Importer Cartes Vendues';
 

@@ -1,4 +1,4 @@
-// Original: shopmanager/alert_popup.js
+// Original: warehouse/popup/alert.js
 function showAlertPopup(message) {
     var popupSelector = null;
 

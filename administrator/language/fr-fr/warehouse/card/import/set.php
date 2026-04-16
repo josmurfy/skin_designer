@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/import/card_set_importer.php
+// Original: warehouse/card/import/set.php
 // Heading
 $_['heading_title']          = 'Importation Brute de Cartes';
 

@@ -1,4 +1,4 @@
-// Original: shopmanager/fast_add_form.js
+// Original: warehouse/product/receive_form.js
 function checkFormStatus() {
     var categoryChecked = document.querySelector('input[name="category_id"]').value;
     var conditionChecked = document.querySelector('input[name="condition_id"]:checked');
@@ -59,7 +59,7 @@ $('input[name="category"]').autocomplete({
     'source': function(request, response) {
         var user_token = document.querySelector('input[name="user_token"]').value;
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
+            url: 'index.php?route=warehouse/product/category.autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
             dataType: 'json',
             success: function(json) {
                 response($.map(json, function(item) {
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (!upc) return;
 
-            var fetchUrl = 'index.php?route=shopmanager/ebay.getCategoryId&upc=' + encodeURIComponent(upc) + '&user_token=' + user_token;
+            var fetchUrl = 'index.php?route=warehouse/marketplace/ebay/api.getCategoryId&upc=' + encodeURIComponent(upc) + '&user_token=' + user_token;
 
             fetch(fetchUrl)
                 .then(response => response.json())
@@ -149,7 +149,7 @@ function ChangeCategory(category_id) {
 
     if ($.isNumeric(category_id)) {
         $.ajax({
-            url: 'index.php?route=shopmanager/catalog/category.getDetails&category_id=' + encodeURIComponent(category_id) + '&user_token=' + user_token,
+            url: 'index.php?route=warehouse/product/category.getDetails&category_id=' + encodeURIComponent(category_id) + '&user_token=' + user_token,
             dataType: 'json',
             success: function(json) {
                 if (!json.erreur) {
@@ -188,7 +188,7 @@ function ChangeCategory(category_id) {
 
 function loadCategoryDetails(category_id, user_token) {
     $.ajax({
-        url: 'index.php?route=shopmanager/catalog/category.getDetails&category_id=' + encodeURIComponent(category_id) + '&user_token=' + user_token,
+        url: 'index.php?route=warehouse/product/category.getDetails&category_id=' + encodeURIComponent(category_id) + '&user_token=' + user_token,
         dataType: 'json',
         success: function(json) {
             if (!json.erreur) {

@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/ebay.php
+// Original: warehouse/marketplace/ebay/api.php
 // Heading
 $_['heading_title'] = 'Gestion des Templates eBay';
 

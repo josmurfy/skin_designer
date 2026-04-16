@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/inventory/location.php
+// Original: warehouse/inventory/location.php
 // Heading
 $_['heading_title']          = 'Gestion des emplacements';
 

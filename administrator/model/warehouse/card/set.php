@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/card/card_set.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/set.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
 /**
  * Class CardSet
@@ -10,7 +10,7 @@ namespace Opencart\Admin\Model\Shopmanager\Card;
  *
  * @package Opencart\Admin\Model\Shopmanager\Card
  */
-class CardSet extends \Opencart\System\Engine\Model {
+class Set extends \Opencart\System\Engine\Model {
 
     // ─── CREATE ──────────────────────────────────────────────────────────
 

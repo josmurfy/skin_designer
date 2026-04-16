@@ -1,10 +1,10 @@
 <?php
-// Original: shopmanager/condition.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/product/condition.php
+namespace Opencart\Admin\Controller\Warehouse\Product;
 
 class Condition extends \Opencart\System\Engine\Controller {
     public function getConditionDetails(): void {
-        $this->load->language('shopmanager/condition');
+        $this->load->language('warehouse/product/condition');
         $data = [];
         
         $json = array();
@@ -12,14 +12,14 @@ class Condition extends \Opencart\System\Engine\Controller {
         if (isset($this->request->get['category_id'])) {
             $category_id = (int)$this->request->get['category_id'];
 
-            $this->load->model('shopmanager/condition');
+            $this->load->model('warehouse/product/condition');
             $this->load->model('localisation/language');
 
                $languages = $this->model_localisation_language->getLanguageByCode('en-gb');
                $language_id = $languages['language_id'] ?? 1;
             // Récupérer les conditions pour la catégorie donnée
             //print("<pre>" . print_r(value: '21:CONDITION.php') . "</pre>");
-            $conditions = $this->model_shopmanager_condition->getConditionDetails($category_id);
+            $conditions = $this->model_warehouse_product_condition->getConditionDetails($category_id);
 
             if (isset($conditions[$language_id])) {
                 $json['conditions'] = array();

@@ -1,5 +1,5 @@
 <?php 
-// Original: shopmanager/catalog/product.php
+// Original: warehouse/product/product.php
 // ====================
 // HEADING
 // ====================

@@ -1,16 +1,16 @@
 <?php
-// Original: shopmanager/card/import/card_price_active.php
-namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
+// Original: warehouse/card/import/active.php
+namespace Opencart\Admin\Controller\Warehouse\Card\Import;
 
-class CardPriceActive extends \Opencart\System\Engine\Controller {
+class Active extends \Opencart\System\Engine\Controller {
 
     // ------------------------------------------------------------------ //
     //  Main page
     // ------------------------------------------------------------------ //
 
     public function index(): void {
-        $this->load->language('shopmanager/card/import/card_price_active');
-        $this->load->model('shopmanager/card/import/card_price_active');
+        $this->load->language('warehouse/card/import/active');
+        $this->load->model('warehouse/card/import/active');
 
         $data = $lang;
         $data['heading_title'] = $lang['heading_title'];
@@ -22,7 +22,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
             ],
             [
                 'text' => $lang['heading_title'],
-                'href' => $this->url->link('shopmanager/card/import/card_price_active', 'user_token=' . $this->session->data['user_token'], true),
+                'href' => $this->url->link('warehouse/card/import/active', 'user_token=' . $this->session->data['user_token'], true),
             ],
         ];
 
@@ -48,11 +48,11 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
             'order'     => $order,
         ];
 
-        $total   = $this->model_shopmanager_card_import_card_price_active->getActiveTotalRows($filter);
-        $records = $this->model_shopmanager_card_import_card_price_active->getActiveList($filter, $start, $limit);
-        $stats   = $this->model_shopmanager_card_import_card_price_active->getRawStats();
-        $cards_without_prices = $this->model_shopmanager_card_import_card_price_active->getCardSetWithoutActivePrices();
-        $categories           = $this->model_shopmanager_card_import_card_price_active->getDistinctCategories();
+        $total   = $this->model_warehouse_card_import_active->getActiveTotalRows($filter);
+        $records = $this->model_warehouse_card_import_active->getActiveList($filter, $start, $limit);
+        $stats   = $this->model_warehouse_card_import_active->getRawStats();
+        $cards_without_prices = $this->model_warehouse_card_import_active->getCardSetWithoutActivePrices();
+        $categories           = $this->model_warehouse_card_import_active->getDistinctCategories();
 
         $data['records']              = $records;
         $data['cards_without_prices'] = $cards_without_prices;
@@ -81,7 +81,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
             'page'  => $page,
             'limit' => $limit,
             'url'   => $this->url->link(
-                'shopmanager/card/import/card_price_active',
+                'warehouse/card/import/active',
                 'user_token=' . $this->session->data['user_token'] . $filterUrl . '&sort=' . $sort . '&order=' . $order . '&page={page}',
                 true
             ),
@@ -95,15 +95,15 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
 
         // JS + Token
         $data['user_token']  = $this->session->data['user_token'];
-        $data['route_fetch'] = $this->url->link('shopmanager/card/import/card_price_active.fetchFromEbay', 'user_token=' . $this->session->data['user_token'], true);
-        $data['route_process'] = $this->url->link('shopmanager/card/import/card_price_active.processRaw', 'user_token=' . $this->session->data['user_token'], true);
-        $data['route_delete'] = $this->url->link('shopmanager/card/import/card_price_active.deleteActive', 'user_token=' . $this->session->data['user_token'], true);
+        $data['route_fetch'] = $this->url->link('warehouse/card/import/active.fetchFromEbay', 'user_token=' . $this->session->data['user_token'], true);
+        $data['route_process'] = $this->url->link('warehouse/card/import/active.processRaw', 'user_token=' . $this->session->data['user_token'], true);
+        $data['route_delete'] = $this->url->link('warehouse/card/import/active.deleteActive', 'user_token=' . $this->session->data['user_token'], true);
 
         $data['header']      = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer']      = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/card/import/card_price_active', $data));
+        $this->response->setOutput($this->load->view('warehouse/card/import/active', $data));
     }
 
     // ------------------------------------------------------------------ //
@@ -113,9 +113,9 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
     public function fetchFromEbay(): void {
         @set_time_limit(60); // 1 page max per call
 
-        $this->load->language('shopmanager/card/import/card_price_active');
-        $this->load->model('shopmanager/card/import/card_price_active');
-        $this->load->model('shopmanager/ebay');
+        $this->load->language('warehouse/card/import/active');
+        $this->load->model('warehouse/card/import/active');
+        $this->load->model('warehouse/marketplace/ebay/api');
 
         $json = [];
 
@@ -163,10 +163,10 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
 
         // Vide le buffer uniquement au tout premier appel (page 1, bucket graded ou all)
         if ($page === 1 && in_array($bucket, ['graded', 'all'], true)) {
-            $this->model_shopmanager_card_import_card_price_active->clearRawByKeyword($keyword);
+            $this->model_warehouse_card_import_active->clearRawByKeyword($keyword);
         }
 
-        $result = $this->model_shopmanager_ebay->searchActiveItems($keyword, $options, $account_id);
+        $result = $this->model_warehouse_marketplace_ebay_api->searchActiveItems($keyword, $options, $account_id);
 
         if (!empty($result['error']) && empty($result['items'])) {
             $json['success']   = false;
@@ -194,7 +194,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
 
         $inserted = 0;
         foreach ($result['items'] as $item) {
-            $raw_id = $this->model_shopmanager_card_import_card_price_active->insertRaw($item, $keyword);
+            $raw_id = $this->model_warehouse_card_import_active->insertRaw($item, $keyword);
             if ($raw_id > 0) $inserted++;
         }
 
@@ -221,14 +221,14 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
     public function processRaw(): void {
         @set_time_limit(300);
 
-        $this->load->language('shopmanager/card/import/card_price_active');
-        $this->load->model('shopmanager/card/import/card_price_active');
-        $this->load->model('shopmanager/card/card');
+        $this->load->language('warehouse/card/import/active');
+        $this->load->model('warehouse/card/import/active');
+        $this->load->model('warehouse/card/card');
 
         $json = [];
 
         // Load all card_set rows once for matching
-        $scpCards = $this->model_shopmanager_card_import_card_price_active->getCardSetAll();
+        $scpCards = $this->model_warehouse_card_import_active->getCardSetAll();
 
         if (empty($scpCards)) {
             $json['success'] = false;
@@ -238,7 +238,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
             return;
         }
 
-        $pending = $this->model_shopmanager_card_import_card_price_active->getRawPending();
+        $pending = $this->model_warehouse_card_import_active->getRawPending();
 
         $matched_count  = 0;
         $deleted_count  = 0;
@@ -253,10 +253,10 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
                 'titleYear' => $parsed['titleYear'],
             ];
 
-            $match = $this->model_shopmanager_card_card->matchSale($sale, $scpCards);
+            $match = $this->model_warehouse_card_card->matchSale($sale, $scpCards);
 
             if ($match) {
-                $this->model_shopmanager_card_import_card_price_active->setRawMatched((int)$raw['raw_id'], (int)$match['card_raw_id']);
+                $this->model_warehouse_card_import_active->setRawMatched((int)$raw['raw_id'], (int)$match['card_raw_id']);
 
                 $item_for_active = [
                     'item_id'        => $raw['ebay_item_id'],
@@ -273,7 +273,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
                     'grade_score'    => $raw['grade_score'],
                     'is_graded'      => $raw['is_graded'],
                 ];
-                $this->model_shopmanager_card_import_card_price_active->insertActive(
+                $this->model_warehouse_card_import_active->insertActive(
                     (int)$match['card_raw_id'],
                     $item_for_active,
                     $raw['keyword']
@@ -288,13 +288,13 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
 
         // Hard DELETE les non-matchés en une seule requête
         if (!empty($raw_ids_delete)) {
-            $this->model_shopmanager_card_import_card_price_active->deleteRawByIds($raw_ids_delete);
+            $this->model_warehouse_card_import_active->deleteRawByIds($raw_ids_delete);
         }
 
         // Vide tout le raw buffer (matched + tout ce qui reste)
-        $this->model_shopmanager_card_import_card_price_active->clearRaw();
+        $this->model_warehouse_card_import_active->clearRaw();
 
-        $stats = $this->model_shopmanager_card_import_card_price_active->getRawStats();
+        $stats = $this->model_warehouse_card_import_active->getRawStats();
 
         $json['success']   = true;
         $json['processed'] = count($pending);
@@ -311,14 +311,14 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
     // ------------------------------------------------------------------ //
 
     public function deleteActive(): void {
-        $this->load->language('shopmanager/card/import/card_price_active');
-        $this->load->model('shopmanager/card/import/card_price_active');
+        $this->load->language('warehouse/card/import/active');
+        $this->load->model('warehouse/card/import/active');
 
         $json = [];
 
         $selected = $this->request->post['selected'] ?? [];
         if (!empty($selected) && is_array($selected)) {
-            $this->model_shopmanager_card_import_card_price_active->deleteActiveByIds($selected);
+            $this->model_warehouse_card_import_active->deleteActiveByIds($selected);
             $json['success'] = true;
             $json['deleted'] = count($selected);
         } else {
@@ -326,7 +326,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
             if (!$active_id) {
                 $json['error'] = 'Invalid ID.';
             } else {
-                $this->model_shopmanager_card_import_card_price_active->deleteActive($active_id);
+                $this->model_warehouse_card_import_active->deleteActive($active_id);
                 $json['success'] = true;
             }
         }

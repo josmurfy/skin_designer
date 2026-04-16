@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/google.php
+// Original: warehouse/tools/google.php
 $_['heading_title'] = 'Búsqueda de imágenes de Google';
 $_['entry_query'] = 'Consulta de búsqueda';
 $_['button_search'] = 'Buscar imágenes';

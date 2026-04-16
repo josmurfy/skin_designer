@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/marketplace/marketplace.php
+// Original: warehouse/marketplace/connection.php
 
 $_['heading_title']				          = 'Connect my Marketplace Stores';
 $_['heading_title_account']         = 'Connect my Marketplace Stores';

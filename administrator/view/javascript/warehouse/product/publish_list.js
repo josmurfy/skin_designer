@@ -1,4 +1,4 @@
-// Original: shopmanager/list_fast_list.js
+// Original: warehouse/product/publish_list.js
 // ============================================
 // FUNCTIONS DUPLICATED FROM TOOLS.JS (PRODUCTION SAFETY)
 // ============================================
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
  
          if (isRed) {
              // Construire l'URL et ouvrir une nouvelle fenêtre
-             const url = `index.php?route=shopmanager/catalog/category.edit&user_token=${user_token}&category_id=${selectedCategoryId}`;
+             const url = `index.php?route=warehouse/product/category.edit&user_token=${user_token}&category_id=${selectedCategoryId}`;
              window.open(url, 'category'); // Ouvrir dans une nouvelle fenêtre ou onglet
          }
      }
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function () {
  
  
      // Envoyer la requête avec fetch
-     fetch(`index.php?route=shopmanager/ebay.searchByName&user_token=${user_token}`, {
+     fetch(`index.php?route=warehouse/marketplace/ebay/api.searchByName&user_token=${user_token}`, {
          method: 'POST',
         
          headers: { 'Content-Type': 'application/json' },
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
      }
  
      // Envoyer les données avec fetch
-     return fetch(`index.php?route=shopmanager/catalog/product_search.product_source_info_feed&user_token=${user_token}`, {
+     return fetch(`index.php?route=warehouse/product/research.product_source_info_feed&user_token=${user_token}`, {
          method: 'POST',
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify(formObject), // Envoyer toutes les données du formulaire
@@ -579,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function () {
      // Fonction pour appeler `editSpecificKey` via AJAX avec GET
      function editSpecificKey(specificKey, category_id, replacementTerm) {
          var user_token = document.querySelector('input[name="user_token"]').value;
-         var url = 'index.php?route=shopmanager/catalog/product_specific.editSpecificKey&user_token=' + user_token +
+         var url = 'index.php?route=warehouse/product/product_specific.editSpecificKey&user_token=' + user_token +
              '&specific_key=' + encodeURIComponent(specificKey) +
              '&category_id=' + encodeURIComponent(category_id) +
              '&replacement_term=' + encodeURIComponent(replacementTerm);
@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function () {
      // Fonction pour appeler `deleteSpecificKey` via AJAX avec GET
      function deleteSpecificKey(specificKey, category_id) {
          var user_token = document.querySelector('input[name="user_token"]').value;
-         var url = 'index.php?route=shopmanager/catalog/product_specific.deleteSpecificKey&user_token=' + user_token +
+         var url = 'index.php?route=warehouse/product/product_specific.deleteSpecificKey&user_token=' + user_token +
              '&specific_key=' + encodeURIComponent(specificKey) +
              '&category_id=' + encodeURIComponent(category_id);
  
@@ -614,7 +614,7 @@ document.addEventListener('DOMContentLoaded', function () {
      // Fonction pour appeler `addSpecificKey` via AJAX avec GET
      function addSpecificKey(specificKey, category_id, replacementTerm) {
          var user_token = document.querySelector('input[name="user_token"]').value;
-         var url = 'index.php?route=shopmanager/catalog/product_specific.addSpecificKey&user_token=' + user_token +
+         var url = 'index.php?route=warehouse/product/product_specific.addSpecificKey&user_token=' + user_token +
              '&specific_key=' + encodeURIComponent(specificKey) +
              '&category_id=' + encodeURIComponent(category_id) +
              '&replacement_term=' + encodeURIComponent(replacementTerm);
@@ -632,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function () {
      // Fonction pour vérifier si une clé spécifique existe déjà via AJAX avec GET
      function checkIfSpecificKeyExists(specificKey, category_id) {
          var user_token = document.querySelector('input[name="user_token"]').value;
-         var url = 'index.php?route=shopmanager/catalog/product_specific.getSpecificKey&user_token=' + user_token +
+         var url = 'index.php?route=warehouse/product/product_specific.getSpecificKey&user_token=' + user_token +
              '&specific_key=' + encodeURIComponent(specificKey) +
              '&category_id=' + encodeURIComponent(category_id);
  
@@ -1463,7 +1463,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
          if (manufacturerName) {
              $.ajax({
-                 url: 'index.php?route=shopmanager/manufacturer.add&ajax=true&user_token=' + user_token,
+                 url: 'index.php?route=warehouse/product/manufacturer.add&ajax=true&user_token=' + user_token,
                  type: 'post',
                  data: { name: manufacturerName },
                  dataType: 'json',
@@ -1492,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', function() {
  
          if (manufacturerId && manufacturerName) {
              $.ajax({
-                 url: 'index.php?route=shopmanager/manufacturer.edit&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
+                 url: 'index.php?route=warehouse/product/manufacturer.edit&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
                  type: 'post',
                  data: { name: manufacturerName },
                  dataType: 'json',
@@ -1520,7 +1520,7 @@ document.addEventListener('DOMContentLoaded', function() {
          if (manufacturerId) {
             if (confirm(TEXT_CONFIRM_DELETE_MANUFACTURER)) {
                  $.ajax({
-                     url: 'index.php?route=shopmanager/manufacturer.delete&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
+                     url: 'index.php?route=warehouse/product/manufacturer.delete&ajax=true&user_token=' + user_token + '&manufacturer_id=' + manufacturerId,
                      type: 'post',
                      dataType: 'json',
                      success: function (response) {
@@ -1632,7 +1632,7 @@ document.addEventListener('DOMContentLoaded', function() {
 async function fastProductSearch(product_id, upc) {
     var user_token = document.querySelector('input[name="user_token"]').value;
 
-    const url = 'index.php?route=shopmanager/catalog/product_search.product_source_info_fast_feed&view=fast_list&user_token=' + user_token;
+    const url = 'index.php?route=warehouse/product/research.product_source_info_fast_feed&view=fast_list&user_token=' + user_token;
     const productRow = document.getElementById(`product-row-${product_id}`);
 
     // Vérifie si la ligne de détails est déjà affichée
@@ -1665,7 +1665,7 @@ async function fastProductSearch(product_id, upc) {
         if (jsonResponse.html == 'category') {
             // Construire l'URL et ouvrir une nouvelle fenêtre
             const categoryId = document.querySelector('input[name="category_id"]').value;
-            const url = `index.php?route=shopmanager/catalog/category.edit&user_token=${user_token}&category_id=${categoryId}`;
+            const url = `index.php?route=warehouse/product/category.edit&user_token=${user_token}&category_id=${categoryId}`;
             window.open(url, 'category'); // Ouvrir dans une nouvelle fenêtre ou onglet
         }
         const htmlContent = jsonResponse.html || '<td colspan="99" class="text-center text-danger">No data received.</td>'; // Extraire la clé HTML
@@ -1821,7 +1821,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
             'source': function(request, response) {
                 $.ajax({
-                    url: 'index.php?route=shopmanager/catalog/product.autocomplete&user_token=' + user_token + '&' + filterType + '=' + encodeURIComponent(request),
+                    url: 'index.php?route=warehouse/product/product.autocomplete&user_token=' + user_token + '&' + filterType + '=' + encodeURIComponent(request),
                     dataType: 'json',
                     success: function(json) {
 

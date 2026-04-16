@@ -1,12 +1,12 @@
 <?php
-// Original: shopmanager/card/card_type.php
-namespace Opencart\Admin\Model\Shopmanager\Card;
+// Original: warehouse/card/type.php
+namespace Opencart\Admin\Model\Warehouse\Card;
 
 /**
  * CardType — Central model for oc_card_type table
  * All functions related to card types must live here.
  */
-class CardType extends \Opencart\System\Engine\Model {
+class Type extends \Opencart\System\Engine\Model {
 
     /**
      * Get all card types (active only by default)

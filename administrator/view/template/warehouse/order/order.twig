@@ -1,4 +1,4 @@
-{# Original: shopmanager/order.twig #}
+{# Original: warehouse/order/order.twig #}
 {{ header }}{{ column_left }}
 <div id="content">
   <div class="page-header">
@@ -93,7 +93,7 @@ $(document).ready(function() {
           $('#alert').prepend('<div class="alert alert-info alert-dismissible" id="alert-processing"><i class="fa-solid fa-circle-info"></i> Processing ' + checkedItems.length + ' order(s)... <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
           
           $.ajax({
-              url: 'index.php?route=shopmanager/order.updateQuantity&user_token={{ user_token }}',
+              url: 'index.php?route=warehouse/order/order.updateQuantity&user_token={{ user_token }}',
               type: 'post',
               data: $('#form-order').serialize(),
               dataType: 'json',
@@ -120,7 +120,7 @@ $(document).ready(function() {
                       $('input[name="vendu[]"]').prop('checked', false);
                       
                       // Reload the order list to refresh data
-                      var url = 'index.php?route=shopmanager/order.list&user_token={{ user_token }}';
+                      var url = 'index.php?route=warehouse/order/order.list&user_token={{ user_token }}';
                       var filter_date_start = $('input[name=\'filter_date_start\']').val();
                       if (filter_date_start) {
                           url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
@@ -163,7 +163,7 @@ $(document).ready(function() {
           $('#alert').prepend('<div class="alert alert-info alert-dismissible" id="alert-processing"><i class="fa-solid fa-circle-info"></i> Undoing ' + checkedItems.length + ' order(s)... <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
           
           $.ajax({
-              url: 'index.php?route=shopmanager/order.undoProductQuantity&user_token={{ user_token }}',
+              url: 'index.php?route=warehouse/order/order.undoProductQuantity&user_token={{ user_token }}',
               type: 'post',
               data: $('#form-order').serialize(),
               dataType: 'json',
@@ -190,7 +190,7 @@ $(document).ready(function() {
                       $('input[name="vendu[]"]').prop('checked', false);
                       
                       // Reload the order list to refresh data
-                      var url = 'index.php?route=shopmanager/order.list&user_token={{ user_token }}';
+                      var url = 'index.php?route=warehouse/order/order.list&user_token={{ user_token }}';
                       var filter_date_start = $('input[name=\'filter_date_start\']').val();
                       if (filter_date_start) {
                           url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
@@ -219,7 +219,7 @@ $(document).ready(function() {
 
       // Print report button - build URL with current filter values
       $('#button-print-report').on('click', function() {
-          var url = 'index.php?route=shopmanager/order&type_report=order&user_token={{ user_token }}';
+          var url = 'index.php?route=warehouse/order/order&type_report=order&user_token={{ user_token }}';
           
           var filter_date_start = $('input[name=\'filter_date_start\']').val();
           if (filter_date_start) {
@@ -246,7 +246,7 @@ $(document).ready(function() {
 
       // Filter button handler
       $('#button-filter').on('click', function() {
-          var url = 'index.php?route=shopmanager/order.list&user_token={{ user_token }}';
+          var url = 'index.php?route=warehouse/order/order.list&user_token={{ user_token }}';
           
           var filter_date_start = $('input[name=\'filter_date_start\']').val();
           if (filter_date_start) {
@@ -274,7 +274,7 @@ $(document).ready(function() {
       // Form reset button
       $('#form-filter button[type="reset"]').on('click', function() {
           setTimeout(function() {
-              $('#order').load('index.php?route=shopmanager/order.list&user_token={{ user_token }}');
+              $('#order').load('index.php?route=warehouse/order/order.list&user_token={{ user_token }}');
           }, 100);
       });
       

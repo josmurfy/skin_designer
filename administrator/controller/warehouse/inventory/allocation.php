@@ -1,19 +1,19 @@
 <?php
-// Original: shopmanager/inventory/allocation.php
-namespace Opencart\Admin\Controller\Shopmanager\Inventory;
+// Original: warehouse/inventory/allocation.php
+namespace Opencart\Admin\Controller\Warehouse\Inventory;
 
 class Allocation extends \Opencart\System\Engine\Controller {
     private array $error = [];
 
     public function index(): void {
-        $this->load->language('shopmanager/inventory/allocation');
+        $this->load->language('warehouse/inventory/allocation');
         $data = [];
         
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
-        $this->document->addScript('view/javascript/shopmanager/inventory/allocation.js');
-        $this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-        $this->document->addScript('view/javascript/shopmanager/alert_popup.js');
+        $this->document->addScript('view/javascript/warehouse/inventory/allocation.js');
+        $this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+        $this->document->addScript('view/javascript/warehouse/popup/alert.js');
 
         $data['breadcrumbs'] = [];
         $data['breadcrumbs'][] = [
@@ -22,7 +22,7 @@ class Allocation extends \Opencart\System\Engine\Controller {
         ];
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/inventory/allocation', 'user_token=' . $this->session->data['user_token'])
+            'href' => $this->url->link('warehouse/inventory/allocation', 'user_token=' . $this->session->data['user_token'])
         ];
 
         // Language
@@ -54,7 +54,7 @@ class Allocation extends \Opencart\System\Engine\Controller {
         $data['filter_status'] = $this->request->get['filter_status'] ?? '';
 
         // Action URLs
-        $data['action'] = $this->url->link('shopmanager/inventory/allocation.transfert', 'user_token=' . $this->session->data['user_token']);
+        $data['action'] = $this->url->link('warehouse/inventory/allocation.transfert', 'user_token=' . $this->session->data['user_token']);
         $data['list'] = $this->getList();
 
         $data['user_token'] = $this->session->data['user_token'];
@@ -63,11 +63,11 @@ class Allocation extends \Opencart\System\Engine\Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/allocation', $data));
+        $this->response->setOutput($this->load->view('warehouse/inventory/allocation', $data));
     }
 
     public function list(): void {
-        $this->load->language('shopmanager/inventory/allocation');
+        $this->load->language('warehouse/inventory/allocation');
         $data = [];
         
 
@@ -75,9 +75,9 @@ class Allocation extends \Opencart\System\Engine\Controller {
     }
 
     protected function getList(): string {
-        $this->load->model('shopmanager/inventory');
+        $this->load->model('warehouse/inventory/inventory');
         $this->load->model('tool/image');
-        $this->load->model('shopmanager/localisation/country');
+        $this->load->model('warehouse/localisation/country');
 
         // Filters using null coalescing operator
         $filter_sku = $this->request->get['filter_sku'] ?? null;
@@ -148,8 +148,8 @@ class Allocation extends \Opencart\System\Engine\Controller {
 			'limit' => $limit
 		];
 
-        $product_total = $this->model_shopmanager_inventory->getTotalProducts($filter_data);
-		$results = $this->model_shopmanager_inventory->getProducts($filter_data);
+        $product_total = $this->model_warehouse_inventory_inventory->getTotalProducts($filter_data);
+		$results = $this->model_warehouse_inventory_inventory->getProducts($filter_data);
 
         $data['product_total'] = $product_total;
 
@@ -220,7 +220,7 @@ class Allocation extends \Opencart\System\Engine\Controller {
         $data['text_unsaved_changes'] = ($lang['text_unsaved_changes'] ?? '');
 
         // Load countries
-        $countries = $this->model_shopmanager_localisation_country->getCountries(['sort'=>'name']);
+        $countries = $this->model_warehouse_localisation_country->getCountries(['sort'=>'name']);
         // Prioritize specific countries at the top: Canada, United States, China, Mexico
         $countries_used = [];
         
@@ -252,18 +252,18 @@ class Allocation extends \Opencart\System\Engine\Controller {
         $data['countries'] = $countries_used;
 
         // Action
-        $data['action'] = $this->url->link('shopmanager/inventory/allocation.transfert', 'user_token=' . $this->session->data['user_token'] . $url);
+        $data['action'] = $this->url->link('warehouse/inventory/allocation.transfert', 'user_token=' . $this->session->data['user_token'] . $url);
         $data['user_token'] = $this->session->data['user_token'];
 
 		// Sort URLs
 		$url_sort = str_replace('&order=' . $order, '', $url);
 		$url_order = ($order == 'ASC') ? 'DESC' : 'ASC';
 
-		$data['sort_sku'] = $this->url->link('shopmanager/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.sku&order=' . $url_order . $url_sort);
-		$data['sort_name'] = $this->url->link('shopmanager/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name&order=' . $url_order . $url_sort);
-		$data['sort_quantity'] = $this->url->link('shopmanager/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity&order=' . $url_order . $url_sort);
-        $data['sort_unallocated_quantity'] = $this->url->link('shopmanager/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.unallocated_quantity&order=' . $url_order . $url_sort);
-		$data['sort_location'] = $this->url->link('shopmanager/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.location&order=' . $url_order . $url_sort);
+		$data['sort_sku'] = $this->url->link('warehouse/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.sku&order=' . $url_order . $url_sort);
+		$data['sort_name'] = $this->url->link('warehouse/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name&order=' . $url_order . $url_sort);
+		$data['sort_quantity'] = $this->url->link('warehouse/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity&order=' . $url_order . $url_sort);
+        $data['sort_unallocated_quantity'] = $this->url->link('warehouse/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.unallocated_quantity&order=' . $url_order . $url_sort);
+		$data['sort_location'] = $this->url->link('warehouse/inventory/allocation.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.location&order=' . $url_order . $url_sort);
 
 		// Pas de pagination - afficher tout
         $data['pagination'] = '';
@@ -272,17 +272,17 @@ class Allocation extends \Opencart\System\Engine\Controller {
 		$data['sort'] = $sort;
 		$data['order'] = $order;
 
-        return $this->load->view('shopmanager/inventory/allocation_list', $data);
+        return $this->load->view('warehouse/inventory/allocation_list', $data);
     }
 
     public function transfert() {
-        $this->load->language('shopmanager/inventory/allocation');
+        $this->load->language('warehouse/inventory/allocation');
         $data = [];
         
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
-        $this->load->model('shopmanager/inventory');
+        $this->load->model('warehouse/inventory/inventory');
 
         if ($this->request->server['REQUEST_METHOD'] == 'POST' && isset($this->request->post['product_id'])) {
             foreach ($this->request->post['product_id'] as $product_id) {
@@ -291,20 +291,20 @@ class Allocation extends \Opencart\System\Engine\Controller {
                 $quantity = $this->request->post['quantity'][$product_id];
                 $unallocated_quantity = $this->request->post['unallocated_quantity'][$product_id];
 
-                $this->model_shopmanager_inventory->updateProductLocation($product_id, $new_location, $old_location, $quantity, $unallocated_quantity);
+                $this->model_warehouse_inventory_inventory->updateProductLocation($product_id, $new_location, $old_location, $quantity, $unallocated_quantity);
             }
         }
-        $this->response->redirect($this->url->link('shopmanager/inventory/allocation', 'user_token=' . $this->session->data['user_token'], true));
+        $this->response->redirect($this->url->link('warehouse/inventory/allocation', 'user_token=' . $this->session->data['user_token'], true));
     }
 
     public function getTrimmedList() {
-        $this->load->model('shopmanager/inventory');
+        $this->load->model('warehouse/inventory/inventory');
         
-        $products = $this->model_shopmanager_inventory->getTrimmedProducts();
+        $products = $this->model_warehouse_inventory_inventory->getTrimmedProducts();
 
         foreach ($products as $product) {
             $new_loc = $product['quantity'] > 0 ? $product['location'] : '';
         }
-        $this->response->redirect($this->url->link('shopmanager/inventory/allocation', 'user_token=' . $this->session->data['user_token'], true));
+        $this->response->redirect($this->url->link('warehouse/inventory/allocation', 'user_token=' . $this->session->data['user_token'], true));
     }
 }

@@ -1,11 +1,11 @@
 <?php
-// Original: shopmanager/wait_popup.php
+// Original: warehouse/popup/wait.php
 
-namespace Opencart\Admin\Controller\Shopmanager;
+namespace Opencart\Admin\Controller\Warehouse\Popup;
 
-class WaitPopup extends \Opencart\System\Engine\Controller {
+class Wait extends \Opencart\System\Engine\Controller {
     public function index(): string {
-        $this->load->language('shopmanager/wait_popup');
+        $this->load->language('warehouse/popup/wait');
         $data = [];
         
 
@@ -14,6 +14,6 @@ class WaitPopup extends \Opencart\System\Engine\Controller {
         $data['text_loading_message'] = ($lang['text_loading_message'] ?? '');
         $data['text_loading'] = ($lang['text_loading'] ?? '');
 
-        return $this->load->view('shopmanager/wait_popup', $data);
+        return $this->load->view('warehouse/popup/wait', $data);
     }
 }

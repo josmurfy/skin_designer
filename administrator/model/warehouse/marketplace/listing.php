@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/marketplace.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/marketplace/listing.php
+namespace Opencart\Admin\Model\Warehouse\Marketplace;
 
 use Guzzle\Plugin\Backoff\TruncatedBackoffStrategy;
 
@@ -8,7 +8,7 @@ use Guzzle\Plugin\Backoff\TruncatedBackoffStrategy;
  * Model class for managing marketplace accounts and product listings on marketplaces.
  */	
 
-class Marketplace extends \Opencart\System\Engine\Model {
+class Listing extends \Opencart\System\Engine\Model {
 
 
 	/**
@@ -571,21 +571,21 @@ public function deleteProductMarketplaceItemId($marketplace_item_id) {
 public function addToMarketplace($product_id, $marketplace_account_id=null, $marketplace_name= 'ebay') {
 	
 	// Charger les modèles nécessaires
-	//$this->load->model('shopmanager/ebay');
-	//$this->load->model('shopmanager/walmart');
-	//$this->load->model('shopmanager/amazon');
-	$this->load->model('shopmanager/catalog/product');
+	//$this->load->model('warehouse/marketplace/ebay/api');
+	//$this->load->model('warehouse/tools/walmart');
+	//$this->load->model('warehouse/amazon');
+	$this->load->model('warehouse/product/product');
 
 	$this->load->model(
-		"shopmanager/" . strtolower($marketplace_name) . ""
+		"warehouse/marketplace/" . strtolower($marketplace_name) . "/api"
 	);
 
 	//print("<pre>" . print_r(value: '1620:product') . "</pre>");
 	//print("<pre>" . print_r($marketplace_data, true) . "</pre>");
 	// Récupérer les informations du produit
-	$product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+	$product = $this->model_warehouse_product_product->getProduct($product_id);
 	$product['marketplace_accounts_id'] = $this->getMarketplace(['product_id' => $product_id]);
-	$product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+	$product['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
 	
 	//print("<pre>" . print_r(value: '1625:product') . "</pre>");
     //print("<pre>" . print_r($product['marketplace_accounts_id'][$marketplace_account_id], true) . "</pre>");
@@ -597,8 +597,8 @@ public function addToMarketplace($product_id, $marketplace_account_id=null, $mar
 		$quantity = $product['quantity']+$product['unallocated_quantity'];
 		unset($product['marketplace_accounts_id']);
 		//print("<pre>" . print_r($marketplace_name, true) . "</pre>");
-		$result = $this->{"model_shopmanager_" .
-			strtolower($marketplace_name)}->addListing($product,$quantity,$site_setting,$marketplace_account_id);
+		$result = $this->{"model_warehouse_marketplace_" .
+			strtolower($marketplace_name) . "_api"}->addListing($product,$quantity,$site_setting,$marketplace_account_id);
 		
 		$result['quantity_listed'] = $quantity;
 		$result['quantity_sold'] = 0;
@@ -611,16 +611,16 @@ public function addToMarketplace($product_id, $marketplace_account_id=null, $mar
 public function editQuantity($product_id, $marketplace_account_id = 1){
 	
 	// Charger les modèles nécessaires
-	$this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/catalog/product');
+	$this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/product/product');
 
 	//print("<pre>" . print_r(value: '1620:product') . "</pre>");
 	//print("<pre>" . print_r($marketplace_data, true) . "</pre>");
 	// Récupérer les informations du produit
-	$product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+	$product = $this->model_warehouse_product_product->getProduct($product_id);
 	$product['marketplace_accounts_id'] = $this->getMarketplace(['product_id' => $product_id]);
 
-	//$product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+	//$product['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
 
 	
 	//print("<pre>" . print_r(value: '1625:product') . "</pre>");
@@ -637,7 +637,7 @@ public function editQuantity($product_id, $marketplace_account_id = 1){
 	
 	$marketplace_accounts[$marketplace_account_id] =$product['marketplace_accounts_id'][$marketplace_account_id];
 	
-	$result = $this->model_shopmanager_ebay->editQuantity($marketplace_item_id,$total_quantity,$made_in_country_id,$product_id,$marketplace_account_id,$site_setting);
+	$result = $this->model_warehouse_marketplace_ebay_api->editQuantity($marketplace_item_id,$total_quantity,$made_in_country_id,$product_id,$marketplace_account_id,$site_setting);
 
 	$success = isset($result['Ack']) && ($result['Ack'] === 'Success' || $result['Ack'] === 'Warning');
 	$error   = $success ? '' : json_encode($result);
@@ -658,14 +658,14 @@ public function editQuantity($product_id, $marketplace_account_id = 1){
 public function editToMarketplace($product_id, $marketplace_account_id=null) {
 	
 	// Charger les modèles nécessaires
-	$this->load->model('shopmanager/ebay');
-	$this->load->model('shopmanager/catalog/product');
+	$this->load->model('warehouse/marketplace/ebay/api');
+	$this->load->model('warehouse/product/product');
 	//print("<pre>" . print_r(value: '1620:product') . "</pre>");
 	//print("<pre>" . print_r($marketplace_data, true) . "</pre>");
 	// Récupérer les informations du produit
-	$product = $this->model_shopmanager_catalog_product->getProduct($product_id);
+	$product = $this->model_warehouse_product_product->getProduct($product_id);
 	$product['marketplace_accounts_id'] = $this->getMarketplace(['product_id' => $product_id]);
-	$product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+	$product['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
 	
 	//print("<pre>" . print_r(value: '1625:product') . "</pre>");
 
@@ -677,7 +677,7 @@ public function editToMarketplace($product_id, $marketplace_account_id=null) {
 //print("<pre>" . print_r($site_setting, true) . "</pre>");
 	$quantity = $product['quantity']+$product['unallocated_quantity'];
 	unset($product['marketplace_accounts_id']);
-$result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_setting,$marketplace_accounts);
+$result = $this->model_warehouse_marketplace_ebay_api->editListing($product,$quantity,$site_setting,$marketplace_accounts);
 
 	
 	$result['quantity_listed'] = $quantity;
@@ -695,14 +695,14 @@ $result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_se
 		}
 		$items=$this->getProducts($filter_data);
 	//	//print("<pre>".print_r ($items ,true )."</pre>");
-		$this->load->model('shopmanager/ebay');
+		$this->load->model('warehouse/marketplace/ebay/api');
 	//	die();
 		foreach($items as $item){
 
 		//	//print("<pre>".print_r ($item ,true )."</pre>");
-			$result=$this->model_shopmanager_ebay->getProduct($item['marketplace_item_id'],$item['marketplace_account_id']);
-			//$result['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
-		//	$result=$this->model_shopmanager_ebay->getProduct(304154046908,$item['marketplace_account_id']);
+			$result=$this->model_warehouse_marketplace_ebay_api->getProduct($item['marketplace_item_id'],$item['marketplace_account_id']);
+			//$result['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
+		//	$result=$this->model_warehouse_marketplace_ebay_api->getProduct(304154046908,$item['marketplace_account_id']);
 			//297016130518
 		//	//print("<pre>".print_r ($result ,true )."</pre>"); 
 		if(isset($result[0]['Item'])){
@@ -806,7 +806,7 @@ $result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_se
 		$filter_data = [];
 		$marketplace_item = [];
 		$items = $this->getProducts($filter_data);
-		$this->load->model('shopmanager/ebay');
+		$this->load->model('warehouse/marketplace/ebay/api');
 		//print("<pre>".print_r ($items,true )."</pre>");
 		
 		foreach ($items as $item) {
@@ -1223,12 +1223,12 @@ $result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_se
 			
 			if (!empty($marketplace_items)) {
 				// Load required models
-				$this->load->model('shopmanager/ebay');
-				$this->load->model('shopmanager/catalog/product');
+				$this->load->model('warehouse/marketplace/ebay/api');
+				$this->load->model('warehouse/product/product');
 				
 				// Get full product data with descriptions
-				$product = $this->model_shopmanager_catalog_product->getProduct($product_id);
-				$product['product_description'] = $this->model_shopmanager_catalog_product->getDescriptions($product_id);
+				$product = $this->model_warehouse_product_product->getProduct($product_id);
+				$product['product_description'] = $this->model_warehouse_product_product->getDescriptions($product_id);
 				
 				foreach ($marketplace_items as $item) {
 					// Only update eBay listings (marketplace_id = 1 for eBay)
@@ -1252,7 +1252,7 @@ $result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_se
 							$quantity = ($product['quantity'] ?? 0) + ($product['unallocated_quantity'] ?? 0);
 							
 							// Call eBay edit function with proper parameters
-							$this->model_shopmanager_ebay->editListing(
+							$this->model_warehouse_marketplace_ebay_api->editListing(
 								$product,
 								$quantity,
 								$site_setting,

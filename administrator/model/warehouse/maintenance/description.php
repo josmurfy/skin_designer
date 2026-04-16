@@ -1,8 +1,8 @@
 <?php
-// Original: shopmanager/maintenance/product_description.php
-namespace Opencart\Admin\Model\Shopmanager\Maintenance;
+// Original: warehouse/maintenance/description.php
+namespace Opencart\Admin\Model\Warehouse\Maintenance;
 
-class ProductDescription extends \Opencart\System\Engine\Model {
+class Description extends \Opencart\System\Engine\Model {
 	
 	/**
 	 * Get products with outdated descriptions or missing supplemental fields

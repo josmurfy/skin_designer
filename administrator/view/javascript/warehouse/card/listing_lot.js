@@ -1,4 +1,4 @@
-// Original: shopmanager/card/card_listing_lot.js
+// Original: warehouse/card/listing_lot.js
 /**
  * card_listing_lot.js
  * Autonomous JS module for Lot eBay listing actions.

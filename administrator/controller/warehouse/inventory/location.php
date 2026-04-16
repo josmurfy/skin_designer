@@ -1,17 +1,17 @@
 <?php
-// Original: shopmanager/inventory/location.php
-namespace Opencart\Admin\Controller\Shopmanager\Inventory;
+// Original: warehouse/inventory/location.php
+namespace Opencart\Admin\Controller\Warehouse\Inventory;
 
 class Location extends \Opencart\System\Engine\Controller {
     private array $error = [];
 
     public function index(): void {
-        $this->load->language('shopmanager/inventory/location');
+        $this->load->language('warehouse/inventory/location');
         $data = [];
         
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
-        $this->document->addScript('view/javascript/shopmanager/inventory/location.js?v=' . time());
+        $this->document->addScript('view/javascript/warehouse/inventory/location.js?v=' . time());
 
         $data['breadcrumbs'] = [];
         $data['breadcrumbs'][] = [
@@ -20,7 +20,7 @@ class Location extends \Opencart\System\Engine\Controller {
         ];
         $data['breadcrumbs'][] = [
             'text' => ($lang['heading_title'] ?? ''),
-            'href' => $this->url->link('shopmanager/inventory/location', 'user_token=' . $this->session->data['user_token'])
+            'href' => $this->url->link('warehouse/inventory/location', 'user_token=' . $this->session->data['user_token'])
         ];
 
         // Language
@@ -37,7 +37,7 @@ class Location extends \Opencart\System\Engine\Controller {
         $data['filter_location'] = $this->request->get['filter_location'] ?? '';
 
         // Action URLs
-        $data['action_update'] = $this->url->link('shopmanager/inventory/location.updateLocation', 'user_token=' . $this->session->data['user_token']);
+        $data['action_update'] = $this->url->link('warehouse/inventory/location.updateLocation', 'user_token=' . $this->session->data['user_token']);
         $data['list'] = $this->getList();
 
         $data['user_token'] = $this->session->data['user_token'];
@@ -46,11 +46,11 @@ class Location extends \Opencart\System\Engine\Controller {
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
 
-        $this->response->setOutput($this->load->view('shopmanager/inventory/location', $data));
+        $this->response->setOutput($this->load->view('warehouse/inventory/location', $data));
     }
 
     public function list(): void {
-        $this->load->language('shopmanager/inventory/location');
+        $this->load->language('warehouse/inventory/location');
         $data = [];
         
 
@@ -58,10 +58,10 @@ class Location extends \Opencart\System\Engine\Controller {
     }
 
     public function searchProduct(): void {
-        $this->load->language('shopmanager/inventory/location');
+        $this->load->language('warehouse/inventory/location');
         $data = [];
         
-        $this->load->model('shopmanager/inventory');
+        $this->load->model('warehouse/inventory/inventory');
         $this->load->model('tool/image');
 
         $json = [];
@@ -75,7 +75,7 @@ class Location extends \Opencart\System\Engine\Controller {
                 'limit' => 1
             ];
 
-            $results = $this->model_shopmanager_inventory->getProducts($filter_data);
+            $results = $this->model_warehouse_inventory_inventory->getProducts($filter_data);
 
             if ($results) {
                 $result = $results[0];
@@ -110,7 +110,7 @@ class Location extends \Opencart\System\Engine\Controller {
     }
 
     protected function getList(): string {
-        $this->load->model('shopmanager/inventory');
+        $this->load->model('warehouse/inventory/inventory');
         $this->load->model('tool/image');
 
         // Filters
@@ -143,7 +143,7 @@ class Location extends \Opencart\System\Engine\Controller {
                 'limit' => 999999
             ];
 
-            $results = $this->model_shopmanager_inventory->getProducts($filter_data);
+            $results = $this->model_warehouse_inventory_inventory->getProducts($filter_data);
 
             foreach ($results as $result) {
                 if (!empty($result['image']) && is_file(DIR_IMAGE . $result['image'])) {
@@ -170,8 +170,8 @@ class Location extends \Opencart\System\Engine\Controller {
         }
 
         // Load countries
-        $this->load->model('shopmanager/localisation/country');
-        $countries = $this->model_shopmanager_localisation_country->getCountries(['sort'=>'name']);
+        $this->load->model('warehouse/localisation/country');
+        $countries = $this->model_warehouse_localisation_country->getCountries(['sort'=>'name']);
         
         $countries_used = [];
 
@@ -226,29 +226,29 @@ class Location extends \Opencart\System\Engine\Controller {
         // Sort URLs
         $url_order = ($order == 'ASC') ? 'DESC' : 'ASC';
         
-        $data['sort_sku'] = $this->url->link('shopmanager/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.sku&order=' . $url_order . $url);
-        $data['sort_name'] = $this->url->link('shopmanager/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name&order=' . $url_order . $url);
-        $data['sort_quantity'] = $this->url->link('shopmanager/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity&order=' . $url_order . $url);
-        $data['sort_location'] = $this->url->link('shopmanager/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.location&order=' . $url_order . $url);
+        $data['sort_sku'] = $this->url->link('warehouse/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.sku&order=' . $url_order . $url);
+        $data['sort_name'] = $this->url->link('warehouse/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=pd.name&order=' . $url_order . $url);
+        $data['sort_quantity'] = $this->url->link('warehouse/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.quantity&order=' . $url_order . $url);
+        $data['sort_location'] = $this->url->link('warehouse/inventory/location.list', 'user_token=' . $this->session->data['user_token'] . '&sort=p.location&order=' . $url_order . $url);
 
         $data['sort'] = $sort;
         $data['order'] = $order;
         $data['results'] = sprintf('Showing %s results', count($data['products']));
         $data['filter_location'] = $filter_location;
-        $data['action_update'] = $this->url->link('shopmanager/inventory/location.updateLocation', 'user_token=' . $this->session->data['user_token']);
+        $data['action_update'] = $this->url->link('warehouse/inventory/location.updateLocation', 'user_token=' . $this->session->data['user_token']);
 
-        return $this->load->view('shopmanager/inventory_list', $data);
+        return $this->load->view('warehouse/inventory/inventory_list', $data);
     }
 
     public function updateQuantity(): void {
-        $this->load->language('shopmanager/inventory/location');
+        $this->load->language('warehouse/inventory/location');
         $data = [];
         
-        $this->load->model('shopmanager/inventory');
+        $this->load->model('warehouse/inventory/inventory');
 
         $json = [];
 
-        if (!$this->user->hasPermission('modify', 'shopmanager/inventory/location')) {
+        if (!$this->user->hasPermission('modify', 'warehouse/inventory/location')) {
             $json['error'] = ($lang['error_permission'] ?? '');
         }
 
@@ -257,7 +257,7 @@ class Location extends \Opencart\System\Engine\Controller {
             $new_quantity = (int)($this->request->post['quantity'] ?? 0);
 
             if ($product_id && $new_quantity >= 0) {
-                $this->model_shopmanager_inventory->updateQuantity($product_id, $new_quantity);
+                $this->model_warehouse_inventory_inventory->updateQuantity($product_id, $new_quantity);
                 $json['success'] = 'Quantity updated successfully';
             } else {
                 $json['error'] = 'Invalid data';
@@ -269,11 +269,11 @@ class Location extends \Opencart\System\Engine\Controller {
     }
 
     public function updateLocation(): void {
-        $this->load->language('shopmanager/inventory/location');
+        $this->load->language('warehouse/inventory/location');
         $data = [];
         
-        $this->load->model('shopmanager/inventory');
-        $this->load->model('shopmanager/catalog/product');
+        $this->load->model('warehouse/inventory/inventory');
+        $this->load->model('warehouse/product/product');
 
         $json = [];
 
@@ -285,7 +285,7 @@ class Location extends \Opencart\System\Engine\Controller {
             if (!empty($product_ids) && !empty($new_location)) {
                 foreach ($product_ids as $product_id) {
                     // Get current product info
-                    $product_info = $this->model_shopmanager_catalog_product->getProduct($product_id);
+                    $product_info = $this->model_warehouse_product_product->getProduct($product_id);
                     
                     if ($product_info) {
                         $old_location = $product_info['location'] ?? '';
@@ -298,7 +298,7 @@ class Location extends \Opencart\System\Engine\Controller {
                             : $current_quantity;
                         
                         // Keep unallocated_quantity the same
-                        $this->model_shopmanager_inventory->updateProductLocation(
+                        $this->model_warehouse_inventory_inventory->updateProductLocation(
                             $product_id, 
                             $new_location, 
                             $old_location, 

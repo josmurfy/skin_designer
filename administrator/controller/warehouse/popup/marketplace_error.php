@@ -1,17 +1,17 @@
 <?php
-// Original: shopmanager/marketplace_error_popup.php
-namespace Opencart\Admin\Controller\Shopmanager;
+// Original: warehouse/popup/marketplace_error.php
+namespace Opencart\Admin\Controller\Warehouse\Popup;
 
-class MarketplaceErrorPopup extends \Opencart\System\Engine\Controller {
+class MarketplaceError extends \Opencart\System\Engine\Controller {
     public function index(): string {
         //error_log('🔥 marketplace_error_popup controller CALLED');
         //error_log('🔥 GET params: ' . print_r($this->request->get, true));
         
-        $this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-        $this->load->language('shopmanager/marketplace_error_popup');
+        $this->document->addScript('view/javascript/warehouse/popup/marketplace_error.js');
+        $this->load->language('warehouse/popup/marketplace_error');
         $data = [];
         
-        $this->load->model('shopmanager/marketplace');
+        $this->load->model('warehouse/marketplace/listing');
 
         $product_id = $this->request->get['product_id'] ?? null;
         //error_log('🔥 product_id: ' . $product_id);
@@ -19,7 +19,7 @@ class MarketplaceErrorPopup extends \Opencart\System\Engine\Controller {
         $marketplace_account_id = $this->request->get['marketplace_account_id'] ?? null;
         $marketplace_item_id = $this->request->get['marketplace_item_id'] ?? null;
         
-        $data['error'] = $this->model_shopmanager_marketplace->getMarketplaceERROR($product_id);
+        $data['error'] = $this->model_warehouse_marketplace_listing->getMarketplaceERROR($product_id);
         //error_log('🔥 error data: ' . print_r($data['error'], true));
         
         $data['product_id'] = $product_id;
@@ -33,7 +33,7 @@ class MarketplaceErrorPopup extends \Opencart\System\Engine\Controller {
 
         $data['rows_error'] = $this->generateTableRows($data['error']);
 
-        $view = $this->load->view('shopmanager/marketplace_error_popup', $data);
+        $view = $this->load->view('warehouse/popup/marketplace_error', $data);
         
         // Si appelé directement via AJAX (route dans l'URL), setOutput est nécessaire
         // Si appelé comme enfant via load->controller(), return suffit

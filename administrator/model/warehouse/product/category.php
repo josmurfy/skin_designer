@@ -1,10 +1,10 @@
 <?php
-// Original: shopmanager/catalog/category.php
-namespace Opencart\Admin\Model\Shopmanager\Catalog;
+// Original: warehouse/product/category.php
+namespace Opencart\Admin\Model\Warehouse\Product;
 /**
  * Class Category
  *
- * Can be loaded using $this->load->model('shopmanager/catalog/category');
+ * Can be loaded using $this->load->model('warehouse/product/category');
  *
  * @package Opencart\Admin\Model\Shopmanager\Catalog
  */
@@ -30,7 +30,7 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $category_id = $this->model_shopmanager_catalog_category->addCategory($category_data);
+	 * $category_id = $this->model_warehouse_product_category->addCategory($category_data);
 	 */
 	public function addCategory(array $data): int {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "category` SET `image` = '" . $this->db->escape((string)$data['image']) . "', `parent_id` = '" . (int)$data['parent_id'] . "', `sort_order` = '" . (int)$data['sort_order'] . "', `status` = '" . (bool)($data['status'] ?? 0) . "'");
@@ -38,36 +38,36 @@ class Category extends \Opencart\System\Engine\Model {
 		$category_id = $this->db->getLastId();
 
 		foreach ($data['category_description'] as $language_id => $category_description) {
-			$this->model_shopmanager_catalog_category->addDescription($category_id, $language_id, $category_description);
+			$this->model_warehouse_product_category->addDescription($category_id, $language_id, $category_description);
 		}
 
 		$level = 0;
 
 		// MySQL Hierarchical Data Closure Table Pattern
-		$results = $this->model_shopmanager_catalog_category->getPaths($data['parent_id']);
+		$results = $this->model_warehouse_product_category->getPaths($data['parent_id']);
 
 		foreach ($results as $result) {
-			$this->model_shopmanager_catalog_category->addPath($category_id, $result['path_id'], $level);
+			$this->model_warehouse_product_category->addPath($category_id, $result['path_id'], $level);
 
 			$level++;
 		}
 
-		$this->model_shopmanager_catalog_category->addPath($category_id, $category_id, $level);
+		$this->model_warehouse_product_category->addPath($category_id, $category_id, $level);
 
 		if (isset($data['category_filter'])) {
 			foreach ($data['category_filter'] as $filter_id) {
-				$this->model_shopmanager_catalog_category->addFilter($category_id, $filter_id);
+				$this->model_warehouse_product_category->addFilter($category_id, $filter_id);
 			}
 		}
 
 		if (isset($data['category_store'])) {
 			foreach ($data['category_store'] as $store_id) {
-				$this->model_shopmanager_catalog_category->addStore($category_id, $store_id);
+				$this->model_warehouse_product_category->addStore($category_id, $store_id);
 			}
 		}
 
 		// Seo urls on categories need to be done differently to they include the full keyword path
-		$parent_path = $this->model_shopmanager_catalog_category->getPath($data['parent_id']);
+		$parent_path = $this->model_warehouse_product_category->getPath($data['parent_id']);
 
 		if (!$parent_path) {
 			$path = $category_id;
@@ -94,7 +94,7 @@ class Category extends \Opencart\System\Engine\Model {
 		if (isset($data['category_layout'])) {
 			foreach ($data['category_layout'] as $store_id => $layout_id) {
 				if ($layout_id) {
-					$this->model_shopmanager_catalog_category->addLayout($category_id, $store_id, $layout_id);
+					$this->model_warehouse_product_category->addLayout($category_id, $store_id, $layout_id);
 				}
 			}
 		}
@@ -124,49 +124,49 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->editCategory($category_id, $category_data);
+	 * $this->model_warehouse_product_category->editCategory($category_id, $category_data);
 	 */
 
 	public function editCategory(int $category_id, array $data): void {
 		$this->db->query("UPDATE `" . DB_PREFIX . "category` SET `image` = '" . $this->db->escape((string)$data['image']) . "', `parent_id` = '" . (int)$data['parent_id'] . "', `sort_order` = '" . (int)$data['sort_order'] . "', `status` = '" . (bool)($data['status'] ?? 0) . "' WHERE `category_id` = '" . (int)$category_id . "'");
 		$old_specifics = $this->getSpecific($category_id);
 
-		$this->model_shopmanager_catalog_category->deleteDescriptions($category_id);
+		$this->model_warehouse_product_category->deleteDescriptions($category_id);
 
 		foreach ($data['category_description'] as $language_id => $category_description) {
 			$old_specific_data = (!empty($old_specifics[$language_id]['specifics']) && is_array($old_specifics[$language_id]['specifics'])) ? $old_specifics[$language_id]['specifics'] : [];
-			$category_description['specifics'] = $this->model_shopmanager_catalog_category->cleanSpecifics($old_specific_data, $category_description['specifics']);	
-			$this->model_shopmanager_catalog_category->addDescription($category_id, $language_id, $category_description);
+			$category_description['specifics'] = $this->model_warehouse_product_category->cleanSpecifics($old_specific_data, $category_description['specifics']);	
+			$this->model_warehouse_product_category->addDescription($category_id, $language_id, $category_description);
 		}
 
 		// Path
-		$path_old = $this->model_shopmanager_catalog_category->getPath($category_id);
+		$path_old = $this->model_warehouse_product_category->getPath($category_id);
 
 		$path_parent = '';
 
 		if (!empty($data['parent_id'])) {
-			$path_parent = $this->model_shopmanager_catalog_category->getPath($data['parent_id']);
+			$path_parent = $this->model_warehouse_product_category->getPath($data['parent_id']);
 		}
 
 		$path_new = $path_parent ? implode('_', [$path_parent, $category_id]) : $category_id;
 
 		// Delete the category paths
-		$this->model_shopmanager_catalog_category->deletePaths($category_id);
+		$this->model_warehouse_product_category->deletePaths($category_id);
 
 		// Delete paths
-		$results = $this->model_shopmanager_catalog_category->getPathsByPathId($category_id);
+		$results = $this->model_warehouse_product_category->getPathsByPathId($category_id);
 
 		$paths = [];
 
 		// Build new path
-		$results = $this->model_shopmanager_catalog_category->getPaths($data['parent_id']);
+		$results = $this->model_warehouse_product_category->getPaths($data['parent_id']);
 
 		foreach ($results as $result) {
 			$paths[] = $result['path_id'];
 		}
 
 		// Get what's left of the nodes current path
-		$results = $this->model_shopmanager_catalog_category->getPaths($category_id);
+		$results = $this->model_warehouse_product_category->getPaths($category_id);
 
 		foreach ($results as $result) {
 			$paths[] = $result['path_id'];
@@ -176,15 +176,15 @@ class Category extends \Opencart\System\Engine\Model {
 		$level = 0;
 
 		foreach ($paths as $path_id) {
-			$this->model_shopmanager_catalog_category->addPath($category_id, $path_id, $level);
+			$this->model_warehouse_product_category->addPath($category_id, $path_id, $level);
 
 			$level++;
 		}
 
-		$this->model_shopmanager_catalog_category->addPath($category_id, $category_id, $level);
+		$this->model_warehouse_product_category->addPath($category_id, $category_id, $level);
 
 		// Clean an build new path for childs
-		$this->model_shopmanager_catalog_category->repairCategories($category_id);
+		$this->model_warehouse_product_category->repairCategories($category_id);
 
 		// Seo urls on categories need to be done differently to they include the full keyword path
 		$seo_urls = [];
@@ -200,7 +200,7 @@ class Category extends \Opencart\System\Engine\Model {
 		// Si le parent n'a pas de SEO URLs, les créer automatiquement
 		if (empty($keywords_parent)) {
 			$this->load->model('setting/store');
-			$parent_descriptions = $this->model_shopmanager_catalog_category->getDescriptions($data['parent_id']);
+			$parent_descriptions = $this->model_warehouse_product_category->getDescriptions($data['parent_id']);
 
 			foreach ($parent_descriptions as $language_id => $description) {
 				$parent_keyword = strtolower(str_replace([' ', '&', '/'], ['-', 'and', '-'], $description['name']));
@@ -273,30 +273,30 @@ class Category extends \Opencart\System\Engine\Model {
 		}
 
 		// Filters
-		$this->model_shopmanager_catalog_category->deleteFilters($category_id);
+		$this->model_warehouse_product_category->deleteFilters($category_id);
 
 		if (isset($data['category_filter'])) {
 			foreach ($data['category_filter'] as $filter_id) {
-				$this->model_shopmanager_catalog_category->addFilter($category_id, $filter_id);
+				$this->model_warehouse_product_category->addFilter($category_id, $filter_id);
 			}
 		}
 
 		// Stores
-		$this->model_shopmanager_catalog_category->deleteStores($category_id);
+		$this->model_warehouse_product_category->deleteStores($category_id);
 
 		if (isset($data['category_store'])) {
 			foreach ($data['category_store'] as $store_id) {
-				$this->model_shopmanager_catalog_category->addStore($category_id, $store_id);
+				$this->model_warehouse_product_category->addStore($category_id, $store_id);
 			}
 		}
 
 		// Layouts
-		$this->model_shopmanager_catalog_category->deleteLayouts($category_id);
+		$this->model_warehouse_product_category->deleteLayouts($category_id);
 
 		if (isset($data['category_layout'])) {
 			foreach ($data['category_layout'] as $store_id => $layout_id) {
 				if ($layout_id) {
-					$this->model_shopmanager_catalog_category->addLayout($category_id, $store_id, $layout_id);
+					$this->model_warehouse_product_category->addLayout($category_id, $store_id, $layout_id);
 				}
 			}
 		}
@@ -315,20 +315,20 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteCategory($category_id);
+	 * $this->model_warehouse_product_category->deleteCategory($category_id);
 	 */
 	public function deleteCategory(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category` WHERE `category_id` = '" . (int)$category_id . "'");
 
-		$this->model_shopmanager_catalog_category->deleteDescriptions($category_id);
-		$this->model_shopmanager_catalog_category->deleteFilters($category_id);
-		$this->model_shopmanager_catalog_category->deleteStores($category_id);
-		$this->model_shopmanager_catalog_category->deleteLayouts($category_id);
+		$this->model_warehouse_product_category->deleteDescriptions($category_id);
+		$this->model_warehouse_product_category->deleteFilters($category_id);
+		$this->model_warehouse_product_category->deleteStores($category_id);
+		$this->model_warehouse_product_category->deleteLayouts($category_id);
 
 		// Product
-		$this->load->model('shopmanager/catalog/product');
+		$this->load->model('warehouse/product/product');
 
-		$this->model_shopmanager_catalog_product->deleteCategoriesByCategoryId($category_id);
+		$this->model_warehouse_product_product->deleteCategoriesByCategoryId($category_id);
 
 		// Coupon
 		$this->load->model('marketing/coupon');
@@ -338,21 +338,21 @@ class Category extends \Opencart\System\Engine\Model {
 		// SEO
 		$this->load->model('design/seo_url');
 
-		$path = $this->model_shopmanager_catalog_category->getPath($category_id);
+		$path = $this->model_warehouse_product_category->getPath($category_id);
 
 		$this->model_design_seo_url->deleteSeoUrlsByKeyValue('path', str_replace('_', '\_', $path));
 		$this->model_design_seo_url->deleteSeoUrlsByKeyValue('path', str_replace('_', '\_', $path . '_%'));
 
 		// Delete connected paths
-		$results = $this->model_shopmanager_catalog_category->getPathsByPathId($category_id);
+		$results = $this->model_warehouse_product_category->getPathsByPathId($category_id);
 
 		foreach ($results as $result) {
 			if ($result['category_id'] != $category_id) {
-				$this->model_shopmanager_catalog_category->deleteCategory($result['category_id']);
+				$this->model_warehouse_product_category->deleteCategory($result['category_id']);
 			}
 		}
 
-		$this->model_shopmanager_catalog_category->deletePaths($category_id);
+		$this->model_warehouse_product_category->deletePaths($category_id);
 		$this->cache->delete('category');
 	}
 
@@ -369,7 +369,7 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->repairCategories();
+	 * $this->model_warehouse_product_category->repairCategories();
 	 */
 	public function repairCategories(int $parent_id = 0): void {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category` WHERE `parent_id` = '" . (int)$parent_id . "'");
@@ -377,21 +377,21 @@ class Category extends \Opencart\System\Engine\Model {
 		// Delete the path below the current one
 		foreach ($query->rows as $category) {
 			// Delete the path below the current one
-			$this->model_shopmanager_catalog_category->deletePaths($category['category_id']);
+			$this->model_warehouse_product_category->deletePaths($category['category_id']);
 
 			// Fix for records with no paths
 			$level = 0;
 
-			$paths = $this->model_shopmanager_catalog_category->getPaths($parent_id);
+			$paths = $this->model_warehouse_product_category->getPaths($parent_id);
 
 			foreach ($paths as $path) {
-				$this->model_shopmanager_catalog_category->addPath($category['category_id'], $path['path_id'], $level);
+				$this->model_warehouse_product_category->addPath($category['category_id'], $path['path_id'], $level);
 
 				$level++;
 			}
 
-			$this->model_shopmanager_catalog_category->addPath($category['category_id'], $category['category_id'], $level);
-			$this->model_shopmanager_catalog_category->repairCategories($category['category_id']);
+			$this->model_warehouse_product_category->addPath($category['category_id'], $category['category_id'], $level);
+			$this->model_warehouse_product_category->repairCategories($category['category_id']);
 		}
 	}
 
@@ -408,7 +408,7 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+	 * $category_info = $this->model_warehouse_product_category->getCategory($category_id);
 	 */
 	public function getCategory(int $category_id):	array {
 		$query = $this->db->query("SELECT DISTINCT *, 
@@ -446,7 +446,7 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $results = $this->model_shopmanager_catalog_category->getCategories();
+	 * $results = $this->model_warehouse_product_category->getCategories();
 	 */
 
 	public function getCategories(array $data = []): array {
@@ -564,9 +564,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *     'limit'         => 10
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $category_total = $this->model_shopmanager_catalog_category->getTotalCategories($filter_data);
+	 * $category_total = $this->model_warehouse_product_category->getTotalCategories($filter_data);
 	 */
 
 	
@@ -634,9 +634,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *     'meta_keyword'     => 'Meta Keyword'
 	 * ];
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->addDescription($category_id, $language_id, $category_data);
+	 * $this->model_warehouse_product_category->addDescription($category_id, $language_id, $category_data);
 	 */
 	public function addDescription(int $category_id, int $language_id, array $data): void {
 		$specifics_sql = '';
@@ -662,7 +662,7 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteDescriptions($category_id);
+	 * $this->model_warehouse_product_category->deleteDescriptions($category_id);
 	 */
 	public function deleteDescriptions(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_description` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -681,7 +681,7 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * $this->load->model('catalog/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteDescriptionsByLanguageId($language_id);
+	 * $this->model_warehouse_product_category->deleteDescriptionsByLanguageId($language_id);
 	 */
 	public function deleteDescriptionsByLanguageId(int $language_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_description` WHERE `language_id` = '" . (int)$language_id . "'");
@@ -698,9 +698,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $category_description = $this->model_shopmanager_catalog_category->getDescriptions($category_id);
+	 * $category_description = $this->model_warehouse_product_category->getDescriptions($category_id);
 	 */
 
 	public function getDescriptions(int $category_id): array {
@@ -729,9 +729,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $results = $this->model_shopmanager_catalog_category->getDescriptionsByLanguageId($language_id);
+	 * $results = $this->model_warehouse_product_category->getDescriptionsByLanguageId($language_id);
 	 */
 	public function getDescriptionsByLanguageId(int $language_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category_description` WHERE `language_id` = '" . (int)$language_id . "'");
@@ -752,9 +752,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->addPath($category_id, $path_id, $level);
+	 * $this->model_warehouse_product_category->addPath($category_id, $path_id, $level);
 	 */
 	public function addPath(int $category_id, int $path_id, int $level): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "category_path` SET `category_id` = '" . (int)$category_id . "', `path_id` = '" . (int)$path_id . "', `level` = '" . (int)$level . "'");
@@ -771,9 +771,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deletePaths($category_id);
+	 * $this->model_warehouse_product_category->deletePaths($category_id);
 	 */
 	public function deletePaths(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_path` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -791,9 +791,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deletePathsByLevel($category_id, $level);
+	 * $this->model_warehouse_product_category->deletePathsByLevel($category_id, $level);
 	 */
 	public function deletePathsByLevel(int $category_id, int $level = 0): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_path` WHERE `category_id` = '" . (int)$category_id . "' AND `level` < '" . (int)$level . "'");
@@ -808,12 +808,12 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $path = $this->model_shopmanager_catalog_category->getPath($category_id);
+	 * $path = $this->model_warehouse_product_category->getPath($category_id);
 	 */
 	public function getPath(int $category_id): string {
-		return implode('_', array_column($this->model_shopmanager_catalog_category->getPaths($category_id), 'path_id'));
+		return implode('_', array_column($this->model_warehouse_product_category->getPaths($category_id), 'path_id'));
 	}
 
 	/**
@@ -827,9 +827,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $results = $this->model_shopmanager_catalog_category->getPaths($parent_id);
+	 * $results = $this->model_warehouse_product_category->getPaths($parent_id);
 	 */
 	public function getPaths(int $category_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category_path` WHERE `category_id` = '" . (int)$category_id . "' ORDER BY `level` ASC");
@@ -848,9 +848,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $results = $this->model_shopmanager_catalog_category->getPathsByPathId($category_id);
+	 * $results = $this->model_warehouse_product_category->getPathsByPathId($category_id);
 	 */
 	public function getPathsByPathId(int $path_id): array {
 		$query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "category_path` WHERE `path_id` = '" . (int)$path_id . "' ORDER BY `level` ASC");
@@ -870,9 +870,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->addFilter($category_id, $filter_id);
+	 * $this->model_warehouse_product_category->addFilter($category_id, $filter_id);
 	 */
 	public function addFilter(int $category_id, int $filter_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "category_filter` SET `category_id` = '" . (int)$category_id . "', `filter_id` = '" . (int)$filter_id . "'");
@@ -889,9 +889,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteFilters($category_id);
+	 * $this->model_warehouse_product_category->deleteFilters($category_id);
 	 */
 	public function deleteFilters(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_filter` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -908,9 +908,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteFiltersByFilterId($filter_id);
+	 * $this->model_warehouse_product_category->deleteFiltersByFilterId($filter_id);
 	 */
 	public function deleteFiltersByFilterId(int $filter_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_filter` WHERE `filter_id` = '" . (int)$filter_id . "'");
@@ -927,9 +927,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $filters = $this->model_shopmanager_catalog_category->getFilters($category_id);
+	 * $filters = $this->model_warehouse_product_category->getFilters($category_id);
 	 */
 	public function getFilters(int $category_id): array {
 		$category_filter_data = [];
@@ -955,9 +955,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->addStore($category_id, $store_id);
+	 * $this->model_warehouse_product_category->addStore($category_id, $store_id);
 	 */
 	public function addStore(int $category_id, int $store_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "category_to_store` SET `category_id` = '" . (int)$category_id . "', `store_id` = '" . (int)$store_id . "'");
@@ -974,9 +974,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteStores($category_id);
+	 * $this->model_warehouse_product_category->deleteStores($category_id);
 	 */
 	public function deleteStores(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_to_store` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -993,9 +993,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteStoresByStoreId($store_id);
+	 * $this->model_warehouse_product_category->deleteStoresByStoreId($store_id);
 	 */
 	public function deleteStoresByStoreId(int $store_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_to_store` WHERE `store_id` = '" . (int)$store_id . "'");
@@ -1012,9 +1012,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $category_store = $this->model_shopmanager_catalog_category->getStores($category_id);
+	 * $category_store = $this->model_warehouse_product_category->getStores($category_id);
 	 */
 	public function getStores(int $category_id): array {
 		$category_store_data = [];
@@ -1041,9 +1041,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->addLayout($category_id, $store_id, $layout_id);
+	 * $this->model_warehouse_product_category->addLayout($category_id, $store_id, $layout_id);
 	 */
 	public function addLayout(int $category_id, int $store_id, int $layout_id): void {
 		$this->db->query("INSERT INTO `" . DB_PREFIX . "category_to_layout` SET `category_id` = '" . (int)$category_id . "', `store_id` = '" . (int)$store_id . "', `layout_id` = '" . (int)$layout_id . "'");
@@ -1060,9 +1060,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteLayouts($category_id);
+	 * $this->model_warehouse_product_category->deleteLayouts($category_id);
 	 */
 	public function deleteLayouts(int $category_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_to_layout` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -1079,9 +1079,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteLayoutsByLayoutId($layout_id);
+	 * $this->model_warehouse_product_category->deleteLayoutsByLayoutId($layout_id);
 	 */
 	public function deleteLayoutsByLayoutId(int $layout_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_to_layout` WHERE `layout_id` = '" . (int)$layout_id . "'");
@@ -1098,9 +1098,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $this->model_shopmanager_catalog_category->deleteLayoutsByStoreId($store_id);
+	 * $this->model_warehouse_product_category->deleteLayoutsByStoreId($store_id);
 	 */
 	public function deleteLayoutsByStoreId(int $store_id): void {
 		$this->db->query("DELETE FROM `" . DB_PREFIX . "category_to_layout` WHERE `store_id` = '" . (int)$store_id . "'");
@@ -1117,9 +1117,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $category_layout = $this->model_shopmanager_catalog_category->getLayouts($category_id);
+	 * $category_layout = $this->model_warehouse_product_category->getLayouts($category_id);
 	 */
 	public function getLayouts(int $category_id): array {
 		$category_layout_data = [];
@@ -1144,9 +1144,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $category_total = $this->model_shopmanager_catalog_category->getTotalLayoutsByLayoutId($layout_id);
+	 * $category_total = $this->model_warehouse_product_category->getTotalLayoutsByLayoutId($layout_id);
 	 */
 	public function getTotalLayoutsByLayoutId(int $layout_id): int {
 		$query = $this->db->query("SELECT COUNT(*) AS `total` FROM `" . DB_PREFIX . "category_to_layout` WHERE `layout_id` = '" . (int)$layout_id . "'");
@@ -1166,9 +1166,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * $leaf_status = $this->model_shopmanager_catalog_category->getLeaf($category_id);
+	 * $leaf_status = $this->model_warehouse_product_category->getLeaf($category_id);
 	 */
 	public function getLeaf($category_id) {
 		$query = $this->db->query("SELECT `leaf` FROM `" . DB_PREFIX . "category` WHERE `category_id` = '" . (int)$category_id . "'");
@@ -1188,9 +1188,9 @@ class Category extends \Opencart\System\Engine\Model {
 	 *
 	 * @example
 	 *
-	 * $this->load->model('shopmanager/catalog/category');
+	 * $this->load->model('warehouse/product/category');
 	 *
-	 * if ($this->model_shopmanager_catalog_category->isCategoryLeaf($category_id)) {
+	 * if ($this->model_warehouse_product_category->isCategoryLeaf($category_id)) {
 	 *     // Category is a leaf - cannot have subcategories
 	 * }
 	 */
@@ -1485,7 +1485,7 @@ public function cleanSpecifics($old_specifics,$specifics){
 		}
 		public function getDetails($category_id) {
             // Construire l'URL pour l'appel du contrôleur
-			$category_info = $this->model_shopmanager_catalog_category->getCategory($category_id);
+			$category_info = $this->model_warehouse_product_category->getCategory($category_id);
 	
 			if ($category_info) {
 				 // Décoder les entités HTML dans le nom de la catégorie
@@ -1502,8 +1502,8 @@ public function cleanSpecifics($old_specifics,$specifics){
 				 $category_info['parents'] = array();
 		 
 				 // Récupérer tous les parents de la catégorie
-				 $parents = $this->model_shopmanager_catalog_category->getPaths($category_id);
-				 $category_specific_info = $this->model_shopmanager_catalog_category->getSpecific($category_id,1);
+				 $parents = $this->model_warehouse_product_category->getPaths($category_id);
+				 $category_specific_info = $this->model_warehouse_product_category->getSpecific($category_id,1);
 				 $raw_specifics = $category_specific_info[1]['specifics'] ?? '{}';
 				 $category_specifics = is_array($raw_specifics) ? $raw_specifics : (json_decode($raw_specifics, true) ?? []);
 				 $category_specific_key = [];
@@ -1521,7 +1521,7 @@ public function cleanSpecifics($old_specifics,$specifics){
 		
 				foreach ($parents as $parent) {
 					if ($parent['path_id'] != $category_id) {
-						$parent_info = $this->model_shopmanager_catalog_category->getCategory($parent['path_id']);
+						$parent_info = $this->model_warehouse_product_category->getCategory($parent['path_id']);
 						if ($parent_info) {
 							$category_info['parents'][] = array(
 								'id' => $parent_info['category_id'],
@@ -1546,11 +1546,11 @@ public function cleanSpecifics($old_specifics,$specifics){
 			$rows = $query->rows;
 			$data_return = [];
 		
-		//	$this->load->model('shopmanager/catalog/category');
+		//	$this->load->model('warehouse/product/category');
 		//	//print("<pre>".print_r ($rows,true )."</pre>");
 			if(isset($rows)){
 		//	$english_specifics=json_decode($rows[1]['specifics'],true);
-		//$category_specifics=$this->model_shopmanager_catalog_category->getSpecifics($category_id);
+		//$category_specifics=$this->model_warehouse_product_category->getSpecifics($category_id);
 	//	//print("<pre>".print_r ($rows,true )."</pre>");
 			foreach($rows as $data){
 

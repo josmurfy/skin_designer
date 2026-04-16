@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/inventory/sync.php
-namespace Opencart\Admin\Model\Shopmanager\Inventory;
+// Original: warehouse/marketplace/ebay/sync.php
+namespace Opencart\Admin\Model\Warehouse\Marketplace\Ebay;
 
 /**
  * Class Sync

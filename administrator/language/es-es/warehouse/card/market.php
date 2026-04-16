@@ -1,5 +1,5 @@
 <?php
-// Original: shopmanager/card/card_market.php
+// Original: warehouse/card/market.php
 // Heading
 $_['heading_title']           = 'Investigación de mercado';
 $_['text_list']               = 'Investigación de mercado';

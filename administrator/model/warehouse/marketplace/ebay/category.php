@@ -1,9 +1,9 @@
 <?php
-// Original: shopmanager/catalog/category_ebay.php
-namespace Opencart\Admin\Model\Shopmanager\Catalog;
+// Original: warehouse/marketplace/ebay/category.php
+namespace Opencart\Admin\Model\Warehouse\Marketplace\Ebay;
 
 
-class CategoryEbay extends \Opencart\System\Engine\Model {
+class Category extends \Opencart\System\Engine\Model {
     public function addCategoryEbay(array $data): int {
         // $this->db->query("INSERT ...");
         // return (int)$this->db->getLastId();

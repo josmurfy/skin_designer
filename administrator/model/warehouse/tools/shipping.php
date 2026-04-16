@@ -1,6 +1,6 @@
 <?php
-// Original: shopmanager/shipping.php
-namespace Opencart\Admin\Model\Shopmanager;
+// Original: warehouse/order/shipping.php
+namespace Opencart\Admin\Model\Warehouse\Tools;
 
 class Shipping extends \Opencart\System\Engine\Model {
 
@@ -194,7 +194,7 @@ class Shipping extends \Opencart\System\Engine\Model {
             $access = 'DD9F9AE20FFC7DD5';
             $userid = 'jonathangervais';
             $passwd = 'jnthngrvs01$$';
-            $wsdl = DIR_APPLICATION . "model/shopmanager/RateWS.wsdl";
+            $wsdl = DIR_APPLICATION . "model/warehouse/tools/RateWS.wsdl";
             $operation = "ProcessRate";
             $endpointurl = 'https://onlinetools.ups.com/webservices/Rate';
             // $outputFileName = "XOLTResult.xml";
