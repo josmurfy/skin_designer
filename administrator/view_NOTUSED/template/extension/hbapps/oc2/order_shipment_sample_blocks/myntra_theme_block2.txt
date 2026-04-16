@@ -1,7 +1,0 @@
-<tr>
-                        <td style="padding:20px 40px 0px 0px;text-align:left"><b style="font-size:19px">Your Order Details</b><br>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="padding:0px 0px 20px 0px;text-align:left"><span style="color:#7e818b">Order no.:</span> {order_id} </td>
-                      </tr>

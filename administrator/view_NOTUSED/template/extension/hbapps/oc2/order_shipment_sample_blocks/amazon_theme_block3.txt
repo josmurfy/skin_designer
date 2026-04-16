@@ -1,8 +1,0 @@
-<tr>
-                <td colspan="2" style="padding:0 20px; line-height:22px; width:640px"><p style="border-top:1px solid #ccc; padding:20px 0 0 0">Track your order <a href="{link}" target="_blank" rel="noopener noreferrer" data-auth="NotApplicable" style="color:#006699; text-decoration:none"> {link}</a>. <br>
-                    If you need further assistance with your order, please visit <a href="{store_url}" target="_blank" rel="noopener noreferrer" data-auth="NotApplicable" style="color:#006699; text-decoration:none"> Customer Service</a>. </p></td>
-              </tr>
-              <tr>
-                <td colspan="2" style="padding:0 20px 0 20px; line-height:22px; width:640px"><p style="margin:10px 0; padding:0 0 20px 0; border-bottom:1px solid #eaeaea">We hope to see you again soon!<br>
-                    <span style="font:14px Arial,san-serif"><strong>{store_name}</strong> </span></p></td>
-              </tr>
