@@ -4,9 +4,9 @@ namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
 class CardSetImporter extends \Opencart\System\Engine\Controller {
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
         $user_token = $this->session->data['user_token'] ?? '';
@@ -76,9 +76,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Called by index() for initial render and by list() for AJAX reloads.
      */
     public function getList(): string {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $this->load->model('shopmanager/card/import/card_set_importer');
 
         $user_token = $this->session->data['user_token'] ?? '';
@@ -226,9 +226,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Also returns already_imported flag so JS can warn the user.
      */
     public function upload(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $json = [];
 
         try {
@@ -348,9 +348,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Save — receives cards array from JS POST body, inserts into DB.
      */
     public function save(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $json = [];
 
         try {
@@ -398,9 +398,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Delete selected records by IDs
      */
     public function delete(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_set_importer')) {
@@ -430,9 +430,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * Truncate the entire card_raw table
      */
     public function truncate(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_set_importer')) {
@@ -454,9 +454,9 @@ class CardSetImporter extends \Opencart\System\Engine\Controller {
      * AJAX: scan DB for duplicate records and return results HTML
      */
     public function findDuplicates(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_set_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_set_importer');
+        $data = [];
+        
         $this->load->model('shopmanager/card/import/card_set_importer');
         $json = [];
 

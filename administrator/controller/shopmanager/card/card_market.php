@@ -40,9 +40,9 @@ class CardMarket extends \Opencart\System\Engine\Controller {
     }
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/card_market');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_market');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $f     = $this->filters();
         $sort  = $this->request->get['sort']  ?? 'price_desc';
@@ -87,9 +87,9 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
     public function list(): void {
         // $this->log->write('[CardMarket] list() called – user_token=' . ($this->session->data['user_token'] ?? 'NONE'));
-        $lang = $this->load->language('shopmanager/card/card_market');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_market');
+        $data = [];
+        
         try {
             $output = $this->load->controller('shopmanager/card/card_market.getList');
             // $this->log->write('[CardMarket] list() OK – output len=' . strlen($output));
@@ -102,9 +102,9 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
     public function getList(): string {
         // $this->log->write('[CardMarket] getList() called – GET=' . json_encode($this->request->get));
-        $lang = $this->load->language('shopmanager/card/card_market');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_market');
+        $data = [];
+        
         $this->load->model('shopmanager/card/card_market');
         $f     = $this->filters();
         $sort  = $this->request->get['sort']  ?? 'price_desc';
@@ -188,9 +188,9 @@ class CardMarket extends \Opencart\System\Engine\Controller {
     }
 
     public function uploadImage(): void {
-        $lang = $this->load->language('shopmanager/card/card_market');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_market');
+        $data = [];
+        
 
         $json = [];
 
@@ -217,9 +217,9 @@ class CardMarket extends \Opencart\System\Engine\Controller {
 
     /** @deprecated kept for backward compat - not used */
     public function search(): void {
-        $lang = $this->load->language('shopmanager/card/card_market');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_market');
+        $data = [];
+        
         $json = [];
 
         if (!$this->user->hasPermission('access', 'shopmanager/card/card_market')) {

@@ -1,0 +1,310 @@
+{# Original: shopmanager/maintenance/image_list.twig #}
+<!-- Statistiques -->
+<div class="alert alert-info">
+  <strong>{{ text_statistics }}</strong><br>
+  {{ text_total_checked }} <strong>{{ total_checked }}</strong> {{ text_products }}<br>
+  {{ text_missing_images }} <strong class="text-danger">{{ missing_images }}</strong>
+</div>
+
+<!-- Bouton de correction -->
+<div class="mb-3">
+  <button type="button" id="btn-check-ebay-images-selected" class="btn btn-primary" style="display:none;">
+    <i class="fa-brands fa-ebay"></i> {{ button_check_ebay_images }}
+  </button>
+  <button type="button" id="btn-import-ebay-selected" class="btn btn-success" style="display:none;">
+    <i class="fa-brands fa-ebay"></i> {{ button_import_ebay_images }}
+  </button>
+  <button type="button" id="btn-fix-selected" class="btn btn-warning" style="display:none;">
+    <i class="fa-solid fa-wrench"></i> Fix Selected Images
+  </button>
+</div>
+
+<!-- Tableau des résultats -->
+<div class="table-responsive">
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th class="text-center" style="width: 1px;"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', $(this).prop('checked'));" class="form-check-input" id="select-all"/></th>
+        <th><a href="{{ sort_product_id }}"{% if sort == 'p.product_id' %} class="{{ order|lower }}"{% endif %}>{{ column_id }}</a></th>
+        <th><a href="{{ sort_name }}"{% if sort == 'pd.name' %} class="{{ order|lower }}"{% endif %}>{{ column_name }}</a></th>
+        <th>{{ column_main_image }}</th>
+        <th>{{ column_secondary_images }}</th>
+        <th>{{ column_orphan_images }}</th>
+        <th>{{ column_status }}</th>
+        <th>{{ column_action }}</th>
+      </tr>
+    </thead>
+            <tbody>
+              {% for product in products %}
+                <tr class="{% if product.has_missing %}table-danger{% else %}table-success{% endif %}" data-product-id="{{ product.product_id }}">
+                  <td class="text-center">
+                    <input type="checkbox" name="selected[{{ product.product_id }}]" value="{{ product.product_id }}" class="form-check-input" />
+                  </td>
+                  <td>{{ product.product_id }}</td>
+                  <td>{{ product.name }}</td>
+                  <td>
+                    {% if product.main_image %}
+                      {% if product.main_image_exists %}
+                        <div class="actual-image-container" style="display: inline-block; position: relative; cursor: pointer; border: 3px solid {% if product.is_low_resolution or product.is_old_nomenclature %}#dc3545{% else %}#28a745{% endif %}; border-radius: 4px; padding: 2px;">
+                          <img src="{{ product.main_image_thumb }}" alt="{{ product.name }}" class="img-thumbnail"/>
+                          <div class="fullsize-actual-image-wrapper">
+                            <img src="{{ constant('HTTP_CATALOG') }}image/{{ product.main_image_fullsize }}" alt="{{ product.name }}" class="fullsize-actual-image" data-resolution="{{ product.main_image_resolution }}">
+                            <div class="fullsize-resolution-overlay"></div>
+                          </div>
+                        </div>
+                      {% else %}
+                        <div class="d-flex align-items-start gap-2">
+                          <div>
+                            <i class="fa-solid fa-times text-danger"></i> 
+                            <small class="text-danger">{{ product.main_image }}</small><br>
+                            <small class="text-muted">{{ text_file_not_found }}</small>
+                          </div>
+                          <div class="form-check">
+                            <input type="checkbox" class="form-check-input remove-missing-image" 
+                                   data-product-id="{{ product.product_id }}" 
+                                   data-image-path="{{ product.main_image }}"
+                                   data-type="main"
+                                   id="remove-main-{{ product.product_id }}">
+                            <label class="form-check-label" for="remove-main-{{ product.product_id }}" style="font-size: 11px;">
+                              Remove from DB
+                            </label>
+                          </div>
+                        </div>
+                      {% endif %}
+                    {% else %}
+                      <i class="fa-solid fa-exclamation-triangle text-warning"></i> {{ text_no_image }}
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if product.secondary_images %}
+                      <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                        {% for sec_img in product.secondary_images %}
+                          {% if sec_img.exists %}
+                            <div class="actual-image-container" style="display: inline-block; position: relative; cursor: pointer; border: 3px solid {% if sec_img.is_low_resolution or sec_img.wrong_extension %}#dc3545{% else %}#28a745{% endif %}; border-radius: 4px; padding: 2px;">
+                              <img src="{{ sec_img.thumb }}" alt="Secondary" class="img-thumbnail" style="width: 40px; height: 40px;"/>
+                              <div class="fullsize-actual-image-wrapper">
+                                <img src="{{ constant('HTTP_CATALOG') }}image/{{ sec_img.fullsize }}" alt="Secondary" class="fullsize-actual-image" data-resolution="{{ sec_img.resolution }}">
+                                <div class="fullsize-resolution-overlay"></div>
+                              </div>
+                            </div>
+                          {% else %}
+                            <div style="text-align: center; width: 60px;">
+                              <i class="fa-solid fa-times text-danger" title="{{ sec_img.image }}"></i><br>
+                              <input type="checkbox" class="form-check-input remove-missing-image mt-1" 
+                                     data-product-id="{{ product.product_id }}" 
+                                     data-image-path="{{ sec_img.image }}"
+                                     data-type="secondary"
+                                     style="font-size: 10px;">
+                            </div>
+                          {% endif %}
+                        {% endfor %}
+                      </div>
+                      <small class="text-muted d-block mt-1">
+                        {{ text_total }} {{ product.secondary_images|length }}
+                        {% if product.missing_secondary > 0 %}
+                          | <span class="text-danger">{{ text_missing }} {{ product.missing_secondary }}</span>
+                        {% endif %}
+                      </small>
+                    {% else %}
+                      <span class="text-muted">{{ text_none }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if product.orphan_images|length > 0 %}
+                      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-start;">
+                        {% for orphan_img in product.orphan_images %}
+                          <div class="actual-image-container" style="text-align: center; width: 60px;">
+                            <img src="{{ constant('HTTP_CATALOG') }}image/{{ orphan_img.image }}"
+                                 alt="Orphan Image"
+                                 class="img-thumbnail"
+                                 data-image-path="{{ orphan_img.image }}"
+                                 data-resolution="{{ orphan_img.resolution }}"
+                                 style="width: 60px; height: 60px; object-fit: cover; cursor: pointer;"
+                                 title="{{ orphan_img.image }}">
+                            <div style="display: flex; gap: 2px; justify-content: center; margin-top: 2px;">
+                              <input type="checkbox" class="form-check-input add-orphan-secondary" 
+                                     data-product-id="{{ product.product_id }}" 
+                                     data-image-path="{{ orphan_img.image }}"
+                                  checked
+                                     title="Add as secondary"
+                                     style="font-size: 12px; width: 16px; height: 16px;">
+                            </div>
+                          </div>
+                        {% endfor %}
+                      </div>
+                      <small class="text-muted d-block mt-1">
+                        {{ product.orphan_images|length }} orphan image(s) found
+                      </small>
+                    {% else %}
+                      <span class="text-muted">{{ text_none }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-start" style="max-width: 300px;">
+                    {% if product.has_missing or product.is_low_resolution or product.is_wrong_path or product.is_old_nomenclature %}
+                      <span class="badge bg-danger mb-1">Problems</span><br>
+                      <small>{{ product.status_message|raw }}</small>
+                    {% else %}
+                      <span class="badge bg-success">{{ status_ok }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <a href="{{ product.edit }}" class="btn btn-primary btn-sm" target="_blank">
+                      <i class="fa-solid fa-pencil"></i> {{ button_edit }}
+                    </a>
+                  </td>
+                </tr>
+              {% else %}
+                <tr>
+                  <td colspan="8" class="text-center">No products found!</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Button to remove selected missing images -->
+        <div class="row mb-3">
+          <div class="col-12">
+            <button type="button" id="remove-selected-images" class="btn btn-danger" style="display:none;">
+              <i class="fa-solid fa-trash"></i> Remove Selected Missing Images
+            </button>
+            <button type="button" id="add-orphan-images-btn" class="btn btn-success" style="display:none;">
+              <i class="fa-solid fa-plus"></i> Add Selected Orphan Images
+            </button>
+          </div>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="row">
+          <div class="col-sm-6 text-start">{{ results }}</div>
+          <div class="col-sm-6 text-end">{{ pagination }}</div>
+        </div>
+
+<!-- Progress Modal for Fix Images -->
+<div class="modal fade" id="fixProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-wrench"></i> Fixing Images</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="fix-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="fix-status-message" class="alert alert-info mb-2">
+          <strong>Status:</strong> <span id="fix-current-status">Starting...</span>
+        </div>
+        <div id="fix-products-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;">
+          <!-- Product processing details will be appended here with scroll -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="fix-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal for Check eBay Images -->
+<div class="modal fade" id="checkEbayImagesModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-brands fa-ebay"></i> {{ text_check_ebay_modal_title }}</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="check-ebay-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="check-ebay-status-message" class="alert alert-info mb-2">
+          <strong>Status:</strong> <span id="check-ebay-current-status">{{ text_check_ebay_preparing }}</span>
+        </div>
+        <div id="check-ebay-details" style="max-height: 420px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="check-ebay-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal for Import eBay Images -->
+<div class="modal fade" id="importEbayProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-brands fa-ebay"></i> {{ text_import_ebay_modal_title }}</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="import-ebay-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="import-ebay-status-message" class="alert alert-info mb-2">
+          <strong>Status:</strong> <span id="import-ebay-current-status">{{ text_import_ebay_preparing }}</span>
+        </div>
+        <div id="import-ebay-products-list" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; background: #f8f9fa;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="import-ebay-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal for Remove Images -->
+<div class="modal fade" id="removeProgressModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fa-solid fa-trash"></i> Removing Images</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <div class="progress" style="height: 25px;">
+            <div id="remove-progress-bar" class="progress-bar progress-bar-striped progress-bar-animated bg-danger" role="progressbar" style="width: 0%">0%</div>
+          </div>
+        </div>
+        <div id="remove-status-message" class="alert alert-warning">
+          <strong>Status:</strong> <span id="remove-current-status">Starting...</span>
+        </div>
+        <div id="remove-details" style="max-height: 200px; overflow-y: auto; font-size: 0.9em;">
+          <!-- Details will be appended here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="remove-close-btn" class="btn btn-secondary" style="display:none;" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="view/javascript/shopmanager/bootstrap_helper.js" type="text/javascript"></script>
+<script type="text/javascript">
+window.MAINT_IMAGE_TOKEN           = '{{ user_token }}';
+window.TEXT_IMPORT_EBAY_CONFIRM    = '{{ text_import_ebay_confirm|escape('js') }}';
+window.TEXT_IMPORT_EBAY_PREPARING  = '{{ text_import_ebay_preparing|escape('js') }}';
+window.TEXT_IMPORT_EBAY_PROCESSING = '{{ text_import_ebay_processing|escape('js') }}';
+window.TEXT_IMPORT_EBAY_COMPLETE   = '{{ text_import_ebay_complete|escape('js') }}';
+window.TEXT_IMPORT_EBAY_REFRESHING = '{{ text_import_ebay_refreshing|escape('js') }}';
+window.TEXT_IMPORT_EBAY_NO_SELECTION = '{{ text_import_ebay_no_selection|escape('js') }}';
+window.TEXT_CHECK_EBAY_CONFIRM     = '{{ text_check_ebay_confirm|escape('js') }}';
+window.TEXT_CHECK_EBAY_PREPARING   = '{{ text_check_ebay_preparing|escape('js') }}';
+window.TEXT_CHECK_EBAY_PROCESSING  = '{{ text_check_ebay_processing|escape('js') }}';
+window.TEXT_CHECK_EBAY_COMPLETE    = '{{ text_check_ebay_complete|escape('js') }}';
+window.TEXT_CHECK_EBAY_NO_SELECTION = '{{ text_check_ebay_no_selection|escape('js') }}';
+window.TEXT_CHECK_EBAY_NOTIFY_MORE = '{{ text_check_ebay_notify_more|escape('js') }}';
+window.TEXT_CHECK_EBAY_OK          = '{{ text_check_ebay_ok|escape('js') }}';
+window.MAINT_BTN_CHECK_EBAY        = '{{ button_check_ebay_images|escape('js') }}';
+window.MAINT_BTN_IMPORT_EBAY       = '{{ button_import_ebay_images|escape('js') }}';
+window.MAINT_TEXT_CHECK_EBAY_TITLE  = '{{ text_check_ebay_modal_title|escape('js') }}';
+window.MAINT_TEXT_IMPORT_EBAY_TITLE = '{{ text_import_ebay_modal_title|escape('js') }}';
+</script>
+<script src="view/javascript/shopmanager/maintenance/image_list.js" type="text/javascript"></script>
+

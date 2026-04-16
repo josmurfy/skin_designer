@@ -369,6 +369,14 @@ public function getOrders(array $data = []): array {
                     $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
                 }
 
+                // Only update eBay listing if product is LOCAL to this site
+                // COM_ on phoenixliquidation = sister product → skip (product_id collides with local)
+                // RET_ on phoenixsupplies  = sister product → skip
+                $is_local_product = ($com == "COM_" && $site['is_phoenixsupplies'])
+                                 || ($com == "RET_" && $site['is_phoenixliquidation'])
+                                 || ($com != "COM_" && $com != "RET_");
+
+                if ($is_local_product) {
                     $this->load->model('shopmanager/marketplace');
                     $marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
 
@@ -399,6 +407,7 @@ public function getOrders(array $data = []): array {
                             }*/
                         }
                     }
+                } // End of is_local_product
                         
                     
         }  // End of foreach products_to_update
@@ -484,12 +493,19 @@ public function getOrders(array $data = []): array {
                 $this->updateSisterQuantity((int)$product_id, $quantity_final, $unallocated_quantity_final);
             }
 
-            $this->load->model('shopmanager/marketplace');
-            $marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
+            // Only update eBay listing if product is LOCAL to this site
+            $is_local_product = ($com == "COM_" && $site['is_phoenixsupplies'])
+                             || ($com == "RET_" && $site['is_phoenixliquidation'])
+                             || ($com != "COM_" && $com != "RET_");
 
-            foreach($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account){
-                if(isset($marketplace_account['marketplace_item_id'])){
-                    $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
+            if ($is_local_product) {
+                $this->load->model('shopmanager/marketplace');
+                $marketplace_accounts_id = $this->model_shopmanager_marketplace->getMarketplace(['product_id' => $product_id]);
+
+                foreach($marketplace_accounts_id as $marketplace_account_id=> $marketplace_account){
+                    if(isset($marketplace_account['marketplace_item_id'])){
+                        $result = $this->model_shopmanager_marketplace->editQuantity($product_id, $marketplace_account_id);
+                    }
                 }
             }
         }

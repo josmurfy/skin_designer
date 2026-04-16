@@ -1,0 +1,132 @@
+{# Original: shopmanager/card/card_manufacturer_form.twig #}
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-card-manufacturer" class="btn btn-primary" data-toggle="tooltip" title="{{ button_save }}">
+          <i class="fa fa-save"></i> {{ button_save }}
+        </button>
+        <a href="{{ cancel }}" class="btn btn-default" data-toggle="tooltip" title="{{ button_cancel }}">
+          <i class="fa fa-reply"></i> {{ button_cancel }}
+        </a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+
+    {% if error_warning %}
+      <div class="alert alert-danger alert-dismissible">
+        <i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+
+    {% if success %}
+      <div class="alert alert-success alert-dismissible">
+        <i class="fa fa-check-circle"></i> {{ success }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          <i class="fa fa-industry"></i>
+          {% if manufacturer_id %}{{ text_edit }}{% else %}{{ text_add }}{% endif %}
+        </h3>
+      </div>
+      <div class="panel-body">
+
+        <form id="form-card-manufacturer" method="post" action="{{ action }}" class="form-horizontal">
+
+          {# Name #}
+          <div class="form-group{% if error_name %} has-error{% endif %}">
+            <label class="col-sm-2 control-label" for="input-name">
+              {{ entry_name }} <span class="text-danger">*</span>
+            </label>
+            <div class="col-sm-6">
+              <input type="text"
+                     id="input-name"
+                     name="name"
+                     value="{{ name|escape }}"
+                     class="form-control"
+                     placeholder="{{ entry_name }}"
+                     maxlength="100"
+                     required />
+              {% if error_name %}
+                <div class="text-danger"><i class="fa fa-exclamation-circle"></i> {{ error_name }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          {# Card Types - multiselect from oc_card_type #}
+          <div class="form-group">
+            <label class="col-sm-2 control-label">
+              {{ entry_card_type }}
+            </label>
+            <div class="col-sm-6">
+              <select id="input-card-type" name="card_type_ids[]" class="form-control" multiple size="8">
+                {% for ct in card_types %}
+                  <option value="{{ ct.card_type_id }}"
+                    {% if ct.card_type_id in selected_card_type_ids %}selected="selected"{% endif %}>
+                    {{ ct.name }}
+                  </option>
+                {% endfor %}
+              </select>
+              <p class="help-block"><small>{{ text_card_type_help }}</small></p>
+            </div>
+          </div>
+
+          {# Status #}
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-status">
+              {{ entry_status }}
+            </label>
+            <div class="col-sm-3">
+              <select id="input-status" name="status" class="form-control">
+                <option value="1" {% if status == 1 %}selected="selected"{% endif %}>{{ text_enabled }}</option>
+                <option value="0" {% if status == 0 %}selected="selected"{% endif %}>{{ text_disabled }}</option>
+              </select>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Language strings
+var TEXT_ERROR_NAME = '{{ error_name|escape('js') }}';
+
+// --- Utility functions (autonomous - no external dependency) ---
+function htmlspecialchars(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+// Client-side validation before submit
+document.getElementById('form-card-manufacturer').addEventListener('submit', function(e) {
+    var name = document.getElementById('input-name').value.trim();
+    if (!name || name.length > 100) {
+        e.preventDefault();
+        document.getElementById('input-name').focus();
+        document.getElementById('input-name').closest('.form-group').classList.add('has-error');
+        alert(TEXT_ERROR_NAME || 'Name must be between 1 and 100 characters.');
+        return false;
+    }
+});
+</script>
+
+{{ footer }}

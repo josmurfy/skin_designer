@@ -4,9 +4,9 @@ namespace Opencart\Admin\Controller\Shopmanager\Maintenance;
 class ProductDescription extends \Opencart\System\Engine\Controller {
 	
 	public function index(): void {
-		$lang = $this->load->language('shopmanager/maintenance/product_description');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/maintenance/product_description');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 		
@@ -47,9 +47,9 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 	}
 
 	public function list(): void {
-		$lang = $this->load->language('shopmanager/maintenance/product_description');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/maintenance/product_description');
+		$data = [];
+		
 
 		$this->response->setOutput($this->getList());
 	}
@@ -253,9 +253,9 @@ class ProductDescription extends \Opencart\System\Engine\Controller {
 	}
 
 	public function aiSuggest(): void {
-		$lang = $this->load->language('shopmanager/maintenance/product_description');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/maintenance/product_description');
+		$data = [];
+		
 
 		$json = [];
 

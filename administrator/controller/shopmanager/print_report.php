@@ -10,9 +10,9 @@ class PrintReport extends \Opencart\System\Engine\Controller {
         if (isset($this->request->get['type_report'])) {
             $type_report=$this->request->get['type_report'];
         }
-        $lang = $this->load->language('shopmanager/print_report');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/print_report');
+        $data = [];
+        
         $this->load->model('shopmanager/'.$type_report);
         $this->load->model('tool/image'); // Pour redimensionner les images
 

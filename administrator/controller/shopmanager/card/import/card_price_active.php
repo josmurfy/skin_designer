@@ -8,7 +8,7 @@ class CardPriceActive extends \Opencart\System\Engine\Controller {
     // ------------------------------------------------------------------ //
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_price_active');
+        $this->load->language('shopmanager/card/import/card_price_active');
         $this->load->model('shopmanager/card/import/card_price_active');
 
         $data = $lang;

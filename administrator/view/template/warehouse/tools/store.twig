@@ -1,0 +1,138 @@
+{# Original: shopmanager/opencart.twig #}
+<div class="container-fluid" id="content">
+  <div class="row">
+    <img src="{{ opencart }}" class="mfp-img" alt="OpenCart">
+    {{ text_title }}
+    <fieldset>
+      <div class="form-group">
+        <div class="form-group required">
+          <label class="col-sm-3 control-label" for="input-version">{{ entry_version }}</label>
+          <div class="col-sm-9">
+            <select name="version" id="input-version" class="form-control">
+              <option value="">{{ text_select }}</option>
+              <option value="Version 3.0 Or Greater" {% if version == 'Version 3.0 Or Greater' %}selected="selected"{% endif %}>{{ text_ver3 }}</option>
+              <option value="Version 2.3" {% if version == 'Version 2.3' %}selected="selected"{% endif %}>{{ text_ver23 }}</option>
+              <option value="Version 2.0 - 2.2" {% if version == 'Version 2.0 - 2.2' %}selected="selected"{% endif %}>{{ text_ver2 }}</option>
+              <option value="Version Less Than 2.0" {% if version == 'Version Less Than 2.0' %}selected="selected"{% endif %}>{{ text_ver1 }}</option>
+            </select>
+            {% if error_version %}
+              <div class="text-danger">{{ error_version }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group required">
+          <label class="col-sm-3 control-label" for="input-userkey">{{ entry_userkey }}</label>
+          <div class="col-sm-9">
+            <input name="userkey" type="text" value="{{ userkey }}" placeholder="{{ entry_userkey }}" id="input-userkey" class="form-control" />
+            {% if error_userkey %}
+              <div class="text-danger">{{ error_userkey }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group required">
+          <label class="col-sm-3 control-label" for="input-regkey">{{ entry_regkey }}</label>
+          <div class="col-sm-9">
+            <input name="regkey" type="text" value="{{ regkey }}" placeholder="{{ entry_regkey }}" id="input-regkey" class="form-control" />
+            {% if error_regkey %}
+              <div class="text-danger">{{ error_regkey }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group required">
+          <label class="col-sm-3 control-label" for="input-url">{{ entry_url }}</label>
+          <div class="col-sm-9">
+            <input name="url" maxlength="200" type="text" value="{{ url }}" placeholder="{{ entry_url }}" id="input-url" class="form-control" />
+            {% if error_url %}
+              <div class="text-danger">{{ error_url }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="alert alert-success" id="alert-message" style="display:none;">
+      <div id="success-message"></div>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+
+    <div class="alert alert-danger" id="alert-error-message" style="display:none;">
+      <div id="error-message"></div>
+      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+
+    <div class="buttons clearfix">
+      <div class="pull-left">
+        <button class="btn btn-success" id="button-testconnection" onClick="testConnection()">{{ button_testconnection }}</button>
+      </div>
+      <div class="pull-right">
+        <button data-close-button class="btn btn-danger" id="button-cancel">{{ button_cancel }}</button>
+        <button class="btn btn-info" id="button-connect" onClick="connect()">{{ button_connect }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+function testConnection() {
+  const version = document.getElementById("input-version").value;
+  const userkey = document.getElementById("input-userkey").value;
+  const regkey = document.getElementById("input-regkey").value;
+  const url = document.getElementById("input-url").value;
+  $.ajax({
+    method: "POST",
+    url: 'index.php?route=shopmanager/opencart/testConnection',
+    data: {version,userkey,regkey,url},
+    dataType: 'json',
+    crossDomain: true,
+    success: function(json) {
+      if (typeof json.result.error !== 'undefined') {
+        $("#alert-error-message").show();
+        $("#alert-message").hide();
+        const html = json.result.status_image + ' {{ error_connection }}';
+        $("#error_message").html(html);
+      } else {
+        $("#alert-message").show();
+        $("#alert-error-message").hide();
+        const html = json.result.status_image + ' {{ success_connection }}';
+        $("#success_message").html(html);
+      }
+    },
+    error: function(xhr, ajaxOptions, thrownError) {
+      showAlertPopup(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+    }
+  });
+}
+
+function connect() {
+  const version = document.getElementById("input-version").value;
+  const userkey = document.getElementById("input-userkey").value;
+  const regkey = document.getElementById("input-regkey").value;
+  const url = document.getElementById("input-url").value;
+  const successHtml = $("#success_message").html();
+  if (successHtml !== "") {
+    $.ajax({
+      method: "POST",
+      url: 'index.php?route=shopmanager/opencart/add',
+      data: {version,userkey,regkey,url},
+      dataType: 'json',
+      crossDomain: true,
+      success: function(json) {},
+      error: function(xhr, ajaxOptions, thrownError) {
+        showAlertPopup(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+      }
+    });
+  }
+}
+
+document.getElementById('button-cancel').addEventListener('click', () => {
+  const modal = document.getElementById('modalmarket');
+  if (modal) {
+    modal.classList.remove('active');
+    const overlay = document.getElementById('overlay');
+    if (overlay) overlay.classList.remove('active');
+  }
+});
+</script>

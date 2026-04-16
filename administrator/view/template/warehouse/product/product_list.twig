@@ -1,0 +1,241 @@
+{# Original: shopmanager/catalog/product_list.twig #}
+<form id="form-product" method="post" enctype="multipart/form-data"  data-oc-toggle="ajax" data-oc-load="{{ action }}" data-oc-target="#product">
+  <input type="hidden" name="user_token" value="{{ user_token }}">
+ 
+  <div class="table-responsive" style="overflow-x: auto;">
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th class="text-center" style="width: 1px;"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', $(this).prop('checked')); if(typeof window.updateListFeedButton==='function') window.updateListFeedButton();" class="form-check-input"/></th>
+          <th class="text-center"><a href="{{ sort_product_id }}"{% if sort == 'p.product_id' %} class="{{ order|lower }}"{% endif %}>{{ column_product_id }}</a></th>
+          <th class="text-center"><a href="{{ sort_name }}" {% if sort == 'pd.name' %} class="{{ order|lower }}"{% endif %}>{{ column_name }}</a></th> 
+          <th class="text-center"><a href="{{ sort_condition_id }}"{% if sort == 'p.condition_id' %} class="{{ order|lower }}"{% endif %}>{{ column_condition_id }}</a></th>
+          <th class="text-center"><a href="{{ sort_price }}"{% if sort == 'p.price' %} class="{{ order|lower }}"{% endif %}>{{ column_price }}</a></th>
+          <th class="text-center"><a href="{{ sort_unallocated_quantity }}"{% if sort == 'p.unallocated_quantity' %} class="{{ order|lower }}"{% endif %}>{{ column_unallocated_quantity }}</a></th>
+          <th class="text-center"><a href="{{ sort_quantity }}"{% if sort == 'p.quantity' %} class="{{ order|lower }}"{% endif %}>{{ column_quantity }}</a></th>
+          <th class="text-center"><a href="{{ sort_location }}"{% if sort == 'p.location' %} class="{{ order|lower }}"{% endif %}>{{ column_location }}</a></th>
+          <th class="text-center"><a href="{{ sort_status }}"{% if sort == 'p.status' %} class="{{ order|lower }}"{% endif %}>{{ column_status }}</a></th>
+          <th class="text-center">{{ column_action }}</th>
+          <th class="text-center"><a href="{{ sort_made_in_country_id }}"{% if sort == 'p.made_in_country_id' %} class="{{ order|lower }}"{% endif %}>{{ column_made_in_country_id }}</a></th>
+          <th class="text-center"><a href="{{ sort_specifics }}"{% if sort == 'has_specifics' %} class="{{ order|lower }}"{% endif %}>{{ column_specifics }}</a></th>
+         </tr>
+      </thead>
+      <tbody>
+        {% if products %}
+          {% for product in products %}
+            {% if products|length == 1 %}
+              <script>
+                window.open("{{ constant('HTTP_CATALOG') }}image/{{ product.fullsize_image }}", "fullsize_image", "width=1200,height=800,resizable=yes,scrollbars=yes");
+              </script>
+            {% endif %}
+            <tr data-product-id="{{ product.product_id }}" class="{% if not product.variant %}table-warning{% endif %}{% if product.status == 0 %}opacity-50{% endif %}">
+              <td class="text-center">
+                {% if product.product_id in selected %}
+                  <input type="checkbox" name="selected[{{ product.product_id }}]" value="{{ product.product_id }}" checked="checked" />
+                {% else %}
+                  <input type="checkbox" name="selected[{{ product.product_id }}]" value="{{ product.product_id }}" />
+                {% endif %}
+              </td>
+                 <td class="text-center">{{ product.product_id }}
+                  <div class="actual-image-container" style="border: 2px dashed #ccc; padding: 0px; text-align: center; position: relative; cursor: pointer;" id="drop-{{ product.product_id }}">
+                    {% if product.image %}
+                      <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail preview-{{ product.product_id }}" />
+                      <div class="fullsize-actual-image-wrapper">
+                        <img src="{{ constant('HTTP_CATALOG') }}image/{{ product.fullsize_image }}" alt="{{ product.name }}" class="fullsize-actual-image" data-resolution="">
+                        <div class="fullsize-resolution-overlay"></div>
+                      </div>
+                    {% else %}
+                      <span class="img-thumbnail list"><i class="fa-solid fa-camera fa-2x"></i></span>
+                    {% endif %}
+                    <input type="file" id="file-input-{{ product.product_id }}" accept="image/*" style="display:none;">
+                  </div>
+                  <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                </td>
+             
+
+              
+              
+              {% set name = product.name|trim|default('') %}
+              {% set name_plain = name|replace({'&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#039;': "'"}) %}
+              {% set style = (name_plain|length > 80) ? 'style="background-color:red;color:white;"' : '' %}
+              {% set count = (name_plain|length > 80) ? ' (' ~ name_plain|length ~ ')' : '' %}
+              
+              <td class="text-center" {{ style|raw }}
+                  onclick="window.open('index.php?route=shopmanager/google&user_token={{ user_token }}&query={{ product.name|url_encode }}', 'search_name', 'width=1200,height=800,resizable=yes,scrollbars=yes');
+                            window.open('index.php?route=shopmanager/google&user_token={{ user_token }}&query={{ product.upc|url_encode }}', 'search_upc', 'width=1200,height=800,resizable=yes,scrollbars=yes');"
+                  style="cursor:pointer;">
+                {{ name ~ count }}
+              </td>
+               <td class="text-center" title="{{ product.condition_name }}">{{ product.condition_id }}</td>
+              <td class="text-center">
+                {% if product.special %}
+                  <span style="text-decoration: line-through;">${{ product.price }}</span><br/>
+                  <div class="text-danger">{{ product.special }}</div>
+                {% else %}
+                  {{ product.price }}
+                {% endif %}
+              </td>
+             
+              <td class="text-center unallocated_quantity">
+                <div style="display:flex; align-items:center; gap:4px; justify-content:center;">
+                  <span id="unallocated-quantity-{{ product.product_id }}" rel="{{ product.product_id }}" rel1="{{ product.unallocated_quantity }}" class="pedit-unallocated-quantity
+                    {% if product.unallocated_quantity <= 0 %}
+                      badge bg-warning
+                    {% elseif product.unallocated_quantity <= 5 %}
+                      badge bg-danger
+                    {% else %}
+                      badge bg-success
+                    {% endif %}">{{ product.unallocated_quantity }}</span>
+                  <button type="button" id="btn-transfer-{{ product.product_id }}" class="btn btn-info btn-sm" style="padding:2px 4px; font-size:10px;"
+                    onclick="transferUnallocatedQuantity({{ product.product_id }});" title="{{ button_transfer }}"
+                    {% if product.unallocated_quantity <= 0 %}disabled{% endif %}>
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                </div>
+              </td>
+              
+              <td class="text-center quantity">
+                <span id="quantity-{{ product.product_id }}" rel="{{ product.product_id }}" rel1="{{ product.quantity }}" class="pedit-quantity
+                  {% if product.quantity <= 0 %}
+                    badge bg-warning
+                  {% elseif product.quantity <= 5 %}
+                    badge bg-danger
+                  {% else %}
+                    badge bg-success
+                  {% endif %}">{{ product.quantity }}</span>
+              </td>
+              
+              <td class="text-center location">
+                <span id="location-{{ product.product_id }}" class="pedit-location" rel="{{ product.product_id }}" rel1="{{ product.location }}">
+                  {{ product.location }}
+                </span>
+              </td>
+               <td class="text-center">
+               <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+               <button type="submit" form="form-product" formaction="{% if product.status == 0 %}{{ product.enabled }}{% else %}{{ product.disabled }}{% endif %}" data-bs-toggle="tooltip" title="{{ product.text_status }}" data-product-id="{{ product.product_id }}" class="btn {% if product.status == 0 %}btn-danger{% else %}btn-success{% endif %} btn-sm" style="padding:2px 4px; font-size:10px;">{% if product.status == 0 %}<i class="fa-solid fa-ban"></i>{% else %}<i class="fa-solid fa-check"></i>{% endif %}</button>
+
+                 <label class="text-center" id="label-marketplace-item-id">
+                  {% if product.marketplace_accounts_id is not empty %}
+                    {% for marketplace_account_id, marketplace in product.marketplace_accounts_id %}
+                      {% set marketplace_item_id = marketplace.marketplace_item_id|default(0) %}
+                      {% set marketplace_name = marketplace.marketplace_name %}
+                      {% set url_product = marketplace.url_product %}
+                      {% set marketplace_thumb = marketplace.thumb %}
+                      {% set marketplace_id = marketplace.marketplace_id %}
+                      {% set category_id = product.category_id %}
+                      
+                      <span id="marketplace-account-id-{{ product.product_id }}-{{ marketplace_account_id }}" style="padding:2px 4px; font-size:10px;">
+                        <input type="hidden" name="url_product_{{ product.product_id }}_{{ marketplace_account_id }}" value="{{ url_product }}" />
+                        <input type="hidden" name="marketplace_name_{{ product.product_id }}_{{ marketplace_account_id }}" value="{{ marketplace_name }}" />
+                        <input type="hidden" name="marketplace_id_{{ product.product_id }}_{{ marketplace_account_id }}" value="{{ marketplace_id }}" />
+                        
+                        {# Logique basée sur marketplace_thumb pour déterminer l'action #}
+                        {% if marketplace_item_id and marketplace_thumb is defined and 'green' in marketplace_thumb %}
+                          {# Produit listé avec succès (icône verte) - lien vers marketplace #}
+                          {% set product_link = url_product|replace({'{item_id}': marketplace_item_id}) %}
+                          <a href="{{ product_link }}" target="marketplace_item_id">
+                            <img src="{{ marketplace_thumb }}" alt="{{ marketplace_name }}" style="width:20px; height:auto;">
+                          </a>
+                        {% elseif marketplace_thumb is defined and 'red' in marketplace_thumb %}
+                          {# Erreur (icône rouge) - afficher popup d'erreur #}
+                          <a href="javascript:void(0);" onclick="showErrorPopup('{{ product.product_id }}');">
+                            <img src="{{ marketplace_thumb }}" alt="{{ marketplace_name }}" style="width:20px; height:auto;">
+                          </a>
+                        {% else %}
+                          {# Pas listé (icône grise) - permettre de lister #}
+                          <a href="javascript:void(0);" onclick="addToMarketplace('{{ product.product_id }}','{{ marketplace_account_id }}','{{ marketplace_id }}',true);">
+                            <img src="{{ marketplace_thumb }}" alt="{{ marketplace_name }}" style="width:20px; height:auto;">
+                          </a>
+                        {% endif %}
+                      </span>
+                    {% endfor %}
+                  {% endif %}
+                </label>
+                </div>
+               </td>
+              
+              <td class="text-center">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+                  <a href="{{ product.edit }}" data-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary btn-sm" style="padding:2px 4px; font-size:10px;"><i class="fa fa-pencil"></i></a>
+                  <button type="button" data-toggle="tooltip" title="{{ button_copy }}" class="btn btn-info btn-sm" style="padding:2px 4px; font-size:10px;" onclick="handleCopy({{ product.product_id }});"><i class="fa-solid fa-copy"></i></button>
+                  <button type="button" data-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger btn-sm" style="padding:2px 4px; font-size:10px;" onclick="handleDelete({{ product.product_id }});"><i class="fa-solid fa-trash"></i></button>
+                </div>
+              </td>
+           
+            
+ 
+             
+              <td colspan="1" class="text-center" id="check-made-in-country-id-{{ product.product_id }}" {% if product.made_in_country_id == "0" or product.made_in_country_id is null %}style="background-color:RED"{% endif %}>
+               
+                
+                <select name="made_in_country_id_{{ product.product_id }}" id="input-made-in-country-id-{{ product.product_id }}" class="form-control"
+                        onchange="editMadeInCountry({{ product.product_id }})">
+                    {% for country in countries %}
+                              <option value="{{ country.country_id }}"
+                                {% if country.country_id == product.made_in_country_id %}selected="selected"{% endif %}>
+                                {{ country.name }}
+                              </option>
+                    {% endfor %}
+                </select>
+              </td>
+              
+              <td class="text-center">
+               <div style="display:flex; flex-direction:column; align-items:center; gap:4px;">
+               {% set has_sources_flag = product.has_sources_flag|default(0) %}
+               {% set has_specifics_flag = product.has_specifics_flag|default(0) %}
+               {% if has_sources_flag == 1 %}
+                  <button type="button" data-toggle="tooltip" title="{{ text_sources_set }}" class="btn btn-success btn-sources-fed btn-sm" style="padding:2px 4px; font-size:10px;"disabled>
+                    <i class="fa-solid fa-check"></i>
+                  </button>
+                {% elseif has_sources_flag == 2 %}
+                  <button type="button" data-toggle="tooltip" title="{{ text_sources_error }}" class="btn btn-danger btn-sm" style="padding:2px 4px; font-size:10px;" onclick="handleSourcesError({{ product.product_id }});">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                  </button>
+                {% else %}
+                  <button type="button" data-toggle="tooltip" title="{{ text_sources_not_set }}" class="btn btn-warning btn-sm" style="padding:2px 4px; font-size:10px;"onclick="handleFeed({{ product.product_id }});">
+                    <i class="fa-solid fa-rss"></i>
+                  </button>
+                {% endif %}
+                {% set filled = product.filled_specifics_count|default(0) %}
+                {% set total = product.total_specifics_count|default(0) %}
+                {% if total > 0 %}
+                  {% set percentage = (total > 0) ? ((filled / total) * 100)|round : 0 %}
+                  {% set red = max(0, min(255, 255 - (percentage * 2.55))) %}
+                  {% set green = max(0, min(255, percentage * 2.55)) %}
+                  {% set color = "rgb(" ~ red ~ ", " ~ green ~ ", 0)" %}
+                  
+                  <div style="position: relative; width: 60px; height: 15px; background-color: #ddd; border-radius: 5px; overflow: hidden;">
+                    <div style="width: {{ percentage }}%; height: 100%; background-color: {{ color }};"></div>
+                  </div>
+                  ({{ filled }}/{{ total }})
+                {% else %}
+                  {% set percentage = has_specifics_flag ? 100 : 0 %}
+                  {% set red = max(0, min(255, 255 - (percentage * 2.55))) %}
+                  {% set green = max(0, min(255, percentage * 2.55)) %}
+                  {% set color = "rgb(" ~ red ~ ", " ~ green ~ ", 0)" %}
+                  <div style="position: relative; width: 60px; height: 15px; background-color: #ddd; border-radius: 5px; overflow: hidden;">
+                    <div style="width: {{ percentage }}%; height: 100%; background-color: {{ color }};"></div>
+                  </div>
+                {% endif %}
+                </div>
+              </td>
+              
+             
+            </tr>
+          {% endfor %}
+        {% else %}
+          <tr>
+            <td class="text-center" colspan="11">{{ text_no_results }}</td>
+          </tr>
+        {% endif %}
+        {{ wait_popup|raw }}
+      </tbody>
+    </table>
+  </div>
+  <div class="row">
+    <div class="col-sm-6 text-left">{{ pagination|raw }}</div>
+    <div class="col-sm-6 text-right">{{ results }}</div>
+  </div>
+</form>
+
+{{ performance_log|raw }}

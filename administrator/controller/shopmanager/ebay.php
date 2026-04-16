@@ -5,9 +5,9 @@ class Ebay extends \Opencart\System\Engine\Controller {
     private $error = array();
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ebay');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -570,9 +570,9 @@ class Ebay extends \Opencart\System\Engine\Controller {
 	}
 	
     public function searchByName() {
-        $lang = $this->load->language('shopmanager/ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ebay');
+        $data = [];
+        
         $this->load->model('shopmanager/ebay');
         $this->load->model('shopmanager/tools');
         $json = [];
@@ -640,7 +640,7 @@ class Ebay extends \Opencart\System\Engine\Controller {
     }
    
     public function getProduct() {
-        $lang = $this->load->language('shopmanager/ebay'); // Charger le fichier de langue
+        $this->load->language('shopmanager/ebay'); // Charger le fichier de langue
         $json = [];
 
       //  if ($this->request->server['REQUEST_METHOD'] === 'POST') {

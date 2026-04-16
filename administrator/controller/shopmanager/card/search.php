@@ -17,9 +17,9 @@ class Search extends \Opencart\System\Engine\Controller {
      * Main page — wrapper with filter panel + AJAX list area
      */
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/search');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/search');
+        $data = [];
+        
 
         $this->document->setTitle($lang['heading_title'] ?? 'Card Value Search');
 
@@ -82,7 +82,7 @@ class Search extends \Opencart\System\Engine\Controller {
      * @return string  Rendered HTML
      */
     public function getList(): string {
-        $lang = $this->load->language('shopmanager/card/search');
+        $this->load->language('shopmanager/card/search');
 
         $filters = $this->getFiltersFromRequest();
 

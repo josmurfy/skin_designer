@@ -1,0 +1,151 @@
+{# Original: shopmanager/fast_add_form.twig #}
+{{ header }}{{ column_left }}
+
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="submit" form="form-product" id="saveButton" data-bs-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa-solid fa-save"></i></button>
+        <a href="{{ cancel }}" data-bs-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-light"><i class="fa-solid fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    {% if warning %}
+      <div class="alert alert-warning alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> {{ warning }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> {{ success }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+    {% if error %}
+      <div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header"><i class="fa-solid fa-pencil"></i> {{ text_form|default(heading_title) }}</div>
+      <div class="card-body">
+        <form id="form-product" action="{{ action }}" method="post" enctype="multipart/form-data">
+          <input type="hidden" name="user_token" value="{{ user_token }}" />
+          <input type="hidden" name="product_id" value="{{ product_id|default('') }}" />
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-upc">{{ entry_upc }}</label>
+            <div class="col-sm-10">
+              <small id="error-message" style="color:red;display:none;">{{ error_invalid_upc }}</small>
+              <input type="text" id="input-upc" name="upc" value="" class="form-control" autofocus onchange="checkValidUPC();checkFormStatus();" />
+            </div>
+          </div>
+
+          {% set category_id_format = product_categories[0].category_id is defined ? '(' ~ product_categories[0].category_id ~ ')' : '' %}
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label" for="input-category">
+              <span data-bs-toggle="tooltip" title="{{ help_category }}">{{ entry_category }}</span>
+            </label>
+            <div class="col-sm-8">
+              {% if error_category %}
+                <div class="text-danger">{{ error_category }}</div>
+              {% endif %}
+              <input type="text"
+                     name="category"
+                     value="{{ product_categories[0].name_category|default('') }} {{ category_id_format }}"
+                     placeholder="{{ entry_category }}"
+                     id="input-category"
+                     class="form-control" />
+              <input type="hidden" id="category_id" name="category_id" value="{{ product_categories[0].category_id|default('') }}" />
+              <div id="product-category" class="well well-sm" style="height:35px;overflow:auto;">
+                <div id="product-category-{{ product_categories[0].category_id|default('') }}">{{ product_categories[0].name|default('') }}</div>
+                {% if product_categories is defined %}
+                  {% for product_category in product_categories %}
+                    <input type="hidden" name="product_category[]" value="{{ product_category.category_id }}" />
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div id="conditions-group">
+            {% if conditions is defined %}
+              <div class="row mb-3">
+                <label class="col-sm-2 col-form-label">{{ entry_condition }}</label>
+                <input type="hidden" id="conditions_json" name="conditions_json" value='{{ conditions|default([])|json_encode|e('html_attr') }}' />
+                <div class="col-sm-10">
+                  <div class="row">
+                    {% for condition in conditions %}
+                      <div class="col-sm-4">
+                        <div class="form-check">
+                          <input type="radio"
+                                 name="condition_id"
+                                 class="form-check-input save_data-radio"
+                                 id="condition-{{ condition.condition_marketplace_item_id }}"
+                                 value="{{ condition.condition_id }}"
+                                 {% if condition_id is defined and condition_id == condition.condition_id %}checked{% endif %}
+                                 onclick="updateCondition('{{ condition.condition_marketplace_item_id }}','{{ condition.condition_id }}');checkFormStatus();">
+                          <label class="form-check-label" for="condition-{{ condition.condition_marketplace_item_id }}">
+                            {{ condition.condition_name }}
+                          </label>
+                        </div>
+                      </div>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="row mb-3">
+            <label class="col-sm-2 col-form-label">{{ entry_unallocated_quantity }}</label>
+            <div class="col-sm-10">
+              <input type="number" name="unallocated_quantity" value="1" class="form-control" min="1" />
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function change_autofocus(){
+    var upcField = document.getElementById("upc");
+    if(upcField){ upcField.focus(); }
+  }
+</script>
+
+<script type="text/javascript" src="view/javascript/summernote/summernote.js"></script>
+<link href="view/javascript/summernote/summernote.css" rel="stylesheet" />
+<script type="text/javascript" src="view/javascript/summernote/opencart.js"></script>
+
+
+
+<script type="text/javascript">
+  var confirmMessage = '{{ text_confirm|default('') }}';
+  var enableUrl = '{{ enable|default('')|replace({'&amp;':'&'}) }}';
+  var disableUrl = '{{ disable|default('')|replace({'&amp;':'&'}) }}';
+  var copyUrl = '{{ copy|default('')|replace({'&amp;':'&'}) }}';
+  var limitLink = '{{ limit_link|default('')|replace({'&amp;':'&'}) }}';
+</script>
+
+<script>
+  {% if condition_id is defined %}
+    checkFormStatus();
+  {% endif %}
+</script>
+
+<script>
+var TEXT_INVALID_UPC        = '{{ text_invalid_upc|escape('js') }}';
+var TEXT_CATEGORY_NOT_FOUND = '{{ text_category_not_found|escape('js') }}';
+</script>
+{{ footer }}

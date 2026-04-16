@@ -1,0 +1,104 @@
+{# Original: shopmanager/inventory/location.twig #}
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" data-bs-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-inventory').toggleClass('d-none');" class="btn btn-light d-lg-none"><i class="fa-solid fa-filter"></i></button>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="row">
+      <div id="filter-inventory" class="col-lg-3 col-md-12 order-lg-last d-none d-lg-block mb-3">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-filter"></i> {{ text_filter }}</div>
+          <div class="card-body">
+            <form id="form-filter">
+              <div class="mb-3">
+                <label for="input-location" class="form-label">{{ entry_location }}</label>
+                <input type="text" name="filter_location" value="{{ filter_location }}" placeholder="{{ entry_location }}" id="input-location" class="form-control"/>
+              </div>
+              <div class="text-end">
+                <button type="button" id="button-filter" class="btn btn-primary"><i class="fa-solid fa-filter"></i> {{ button_filter }}</button>
+                <button type="reset" data-bs-toggle="tooltip" title="{{ button_reset }}" class="btn btn-outline-secondary"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col col-lg-9 col-md-12">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-list"></i> {{ text_list }}</div>
+          <div id="inventory" class="card-body">{{ list }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+var TEXT_SELECT_AT_LEAST_ONE = '{{ text_select_at_least_one|escape('js') }}';
+var TEXT_PLEASE_ENTER_LOCATION = '{{ text_please_enter_location|escape('js') }}';
+var TEXT_PLEASE_SET_COUNTRY = '{{ text_please_set_country|escape('js') }}';
+var TEXT_PRODUCT_FOUND_CONFIRM = '{{ text_product_found_confirm|escape('js') }}';
+var TEXT_SCAN_EXCEEDS_QUANTITY = '{{ text_scan_exceeds_quantity|escape('js') }}';
+var TEXT_SKU_NOT_FOUND = '{{ text_sku_not_found|escape('js') }}';
+var TEXT_LOCATION_UPDATED = '{{ text_location_updated|escape('js') }}';
+var TEXT_JUST_NOW = '{{ text_just_now|escape('js') }}';
+var TEXT_MINUTES_AGO = '{{ text_minutes_ago|escape('js') }}';
+var TEXT_HOURS_AGO = '{{ text_hours_ago|escape('js') }}';
+var TEXT_DAYS_AGO = '{{ text_days_ago|escape('js') }}';
+var TEXT_WEEKS_AGO = '{{ text_weeks_ago|escape('js') }}';
+var TEXT_MONTHS_AGO = '{{ text_months_ago|escape('js') }}';
+var TEXT_YEARS_AGO = '{{ text_years_ago|escape('js') }}';
+var TEXT_UNSAVED_CHANGES              = '{{ text_unsaved_changes|escape('js') }}';
+var TEXT_SELECT_COUNTRY               = '{{ text_select_country|escape('js') }}';
+var TEXT_ERROR_SAVE_COUNTRY           = '{{ text_error_save_country|escape('js') }}';
+var TEXT_ERROR_SAVE_COUNTRY_GENERIC   = '{{ text_error_save_country_generic|escape('js') }}';
+var USER_TOKEN = '{{ user_token }}';
+</script>
+<script type="text/javascript" src="view/javascript/shopmanager/sound.js"></script>
+<script type="text/javascript" src="view/javascript/shopmanager/inventory/location.js"></script>
+<script type="text/javascript"><!--
+// Init inventory on page load
+if (typeof window.reinitInventory === 'function') {
+    window.reinitInventory();
+}
+
+$('#inventory').on('click', 'thead a, .pagination a', function(e) {
+    e.preventDefault();
+    $('#inventory').load(this.href);
+});
+
+$('#form-filter').on('submit', function(e) {
+    e.preventDefault();
+    $('#button-filter').trigger('click');
+    return false;
+});
+
+$('#button-filter').on('click', function() {
+    var url = '';
+
+    var filter_location = $('#input-location').val();
+    if (filter_location) {
+        url += '&filter_location=' + encodeURIComponent(filter_location);
+    }
+
+    window.history.pushState({}, null, 'index.php?route=shopmanager/inventory/location&user_token=' + USER_TOKEN + url);
+    $('#inventory').load('index.php?route=shopmanager/inventory/location.list&user_token=' + USER_TOKEN + url);
+});
+
+$('#form-filter').on('reset', function() {
+    setTimeout(function() {
+        window.history.pushState({}, null, 'index.php?route=shopmanager/inventory/location&user_token=' + USER_TOKEN);
+        $('#inventory').load('index.php?route=shopmanager/inventory/location.list&user_token=' + USER_TOKEN);
+    }, 10);
+});
+//--></script>
+{{ footer }}

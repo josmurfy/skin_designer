@@ -1,0 +1,4818 @@
+<?php
+// Original: shopmanager/card/card_listing.php
+namespace Opencart\Admin\Model\Shopmanager\Card;
+
+class CardListing extends \Opencart\System\Engine\Model {
+
+    const MERGE_PRICE_THRESHOLD  = 3.00;  // Variantes lettres : fusionner si prix max < ce seuil
+    const MERGE_SPREAD_THRESHOLD = 0.50;  // Variantes lettres : fusionner si spread < ce ratio
+
+    /**
+     * Parse CSV file and return card data
+     * @param string $file_path Path to CSV file
+     * @return array ['data' => [], 'error' => '']
+     */
+    public function parseCSV(string $file_path): array {
+        $result = [
+            'data' => [],
+            'error' => ''
+        ];
+        
+        if (!file_exists($file_path)) {
+            $result['error'] = 'CSV file does not exist';
+            return $result;
+        }
+        
+        $handle = fopen($file_path, 'r');
+        if ($handle === false) {
+            $result['error'] = 'Cannot open CSV file';
+            return $result;
+        }
+        
+        // Read headers
+        $headers = fgetcsv($handle, 0, ',');
+        if (!$headers) {
+            fclose($handle);
+            $result['error'] = 'CSV file has no headers';
+            return $result;
+        }
+        
+        // Validate required columns
+        $required_columns = ['title', 'sale_price'];
+        $missing_columns = [];
+        
+        foreach ($required_columns as $col) {
+            if (!in_array($col, $headers)) {
+                $missing_columns[] = $col;
+            }
+        }
+        
+        if (!empty($missing_columns)) {
+            fclose($handle);
+            $result['error'] = 'Missing required columns: ' . implode(', ', $missing_columns);
+            return $result;
+        }
+        
+        $row_number = 1;
+        
+        // Parse rows
+        while (($row = fgetcsv($handle, 0, ',')) !== false) {
+            $row_number++;
+            
+            if (count($row) < count($headers)) {
+                // Skip incomplete rows
+                continue;
+            }
+            
+            $card = [];
+            foreach ($headers as $index => $header) {
+                $card[trim($header)] = isset($row[$index]) ? trim($row[$index]) : '';
+            }
+            
+            // Basic validation
+            if (empty($card['title'])) {
+                // Skip cards without title
+                continue;
+            }
+            
+            // Add row number for reference
+            $card['_row_number'] = $row_number;
+            
+            $result['data'][] = $card;
+        }
+        
+        fclose($handle);
+        
+        if (empty($result['data'])) {
+            $result['error'] = 'No valid data found in CSV file';
+            return $result;
+        }
+        
+        // DEBUG: Write all parsed rows BEFORE deduplication
+        $debug_file = DIR_UPLOAD . 'parsed_rows_debug.json';
+        file_put_contents($debug_file, json_encode([
+            'total_parsed' => count($result['data']),
+            'last_5_rows' => array_slice($result['data'], -5),
+            'all_titles' => array_map(function($c) { return $c['title'] ?? 'EMPTY'; }, $result['data'])
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+     
+        // No global deduplication - deduplication is done per group based on price category
+        // Cards < $10 are deduplicated within their SET group
+        // Cards >= $10 remain individual even if identical
+        return $result;
+    }
+    
+    
+    
+    /**
+     * NOTE: getCardTypes() has been moved to model/shopmanager/card/card_type.php
+     */
+    
+    /**
+     * Check if a manufacturer exists in the database
+     * @param string $name Manufacturer name
+     * @return bool True if exists, false otherwise
+     */
+    public function checkManufacturerExists(string $name): bool {
+        if (empty(trim($name))) {
+            return false;
+        }
+        
+        $query = $this->db->query("
+            SELECT COUNT(*) as total 
+            FROM " . DB_PREFIX . "card_manufacturer 
+            WHERE LOWER(name) = '" . $this->db->escape(strtolower($name)) . "'
+        ");
+        
+        return isset($query->row['total']) && $query->row['total'] > 0;
+    }
+    
+    /**
+     * Add a new manufacturer to the database
+     * @param string $name Manufacturer name
+     * @return int The new manufacturer ID, or 0 on failure
+     */
+    public function addManufacturer(string $name): int {
+        $name = trim($name);
+        if (empty($name)) {
+            return 0;
+        }
+        
+        // Check if already exists (case-insensitive)
+        if ($this->checkManufacturerExists($name)) {
+            // Return existing ID
+            $query = $this->db->query("
+                SELECT manufacturer_id 
+                FROM " . DB_PREFIX . "card_manufacturer 
+                WHERE LOWER(name) = '" . $this->db->escape(strtolower($name)) . "'
+                LIMIT 1
+            ");
+            return isset($query->row['manufacturer_id']) ? (int)$query->row['manufacturer_id'] : 0;
+        }
+        
+        // Insert new manufacturer
+        $this->db->query("
+            INSERT INTO " . DB_PREFIX . "card_manufacturer 
+            SET name = '" . $this->db->escape($name) . "',
+                status = 1
+        ");
+        
+        return (int)$this->db->getLastId();
+    }
+    
+    /**
+     * Smart grouping of cards by SET, Brand, Year with AI optimization
+     * @param array $cards Array of card data
+     * @return array Array of groups with suggested titles
+     */
+    public function smartGroupCards(array $cards): array {
+        if (empty($cards)) {
+            return [];
+        }
+        $this->load->model('shopmanager/card/card_manufacturer');
+        
+        // Get manufacturers from database
+        $manufacturers = array_column(
+            $this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]),
+            'name'
+        );
+        
+        // Sort manufacturers by length (longest first) to match specific brands before generic
+        // e.g., "Fleer Metal" before "Fleer", "Upper Deck MVP" before "Upper Deck"
+        usort($manufacturers, function($a, $b) {
+            return strlen($b) - strlen($a);
+        });
+        
+        // Step 1: Group by SET - SIMPLE
+        $groups = [];
+        
+        foreach ($cards as $card) {
+            $set = trim($card['set'] ?? '');
+            $brand = trim($card['brand'] ?? '');
+            
+            // Si brand est vide, cherche dans SET
+            if (empty($brand) && !empty($set)) {
+                foreach ($manufacturers as $mfg) {
+                    if (stripos($set, $mfg) !== false) {
+                        $brand = $mfg;
+                        $card['brand'] = $brand;
+                        break;
+                    }
+                }
+            }
+            
+            if (empty($set)) {
+                $set = 'No SET';
+            }
+            
+            // Normalize key (lowercase pour éviter duplicatas de casse)
+            $key = strtolower($set);
+            
+            if (!isset($groups[$key])) {
+                $groups[$key] = [
+                    'key' => $key,
+                    'set' => $set,
+                    'brand' => $brand,
+                    'year' => trim($card['year'] ?? ''),
+                    'cards' => []
+                ];
+            }
+            
+            $groups[$key]['cards'][] = $card;
+        }
+        
+        // Step 2: Process cards within each group based on price categories
+        foreach ($groups as &$group) {
+            $processed_cards = [];
+            $card_map = []; // For deduplication of cards < $10
+            
+            foreach ($group['cards'] as $card) {
+                $price = floatval($card['sale_price'] ?? 0);
+                
+                if ($price < 10) {
+                    // Cards < $10: deduplicate and count quantities
+                    // Unique key WITHOUT price (so cards with different prices are grouped)
+                    // Use title + card_number + condition for safer grouping
+                    $unique_key = strtolower(trim($card['title'] ?? '')) . '|' 
+                                . strtolower(trim($card['card_number'] ?? '')) . '|'
+                                . strtolower(trim($card['condition'] ?? ''));
+                    
+                    if (!isset($card_map[$unique_key])) {
+                        $card_copy = $card;
+                        $card_copy['quantity'] = 0;
+                        $card_copy['all_images'] = []; // Store all images for this card
+                        $card_map[$unique_key] = $card_copy;
+                    }
+                    
+                    $card_map[$unique_key]['quantity']++;
+                    
+                    // Take the HIGHEST price among duplicates
+                    $current_price = floatval($card_map[$unique_key]['sale_price'] ?? 0);
+                    if ($price > $current_price) {
+                        $card_map[$unique_key]['sale_price'] = $card['sale_price'];
+                    }
+                    
+                    // Collect all images (front and back)
+                    if (!empty($card['front_image'])) {
+                        $card_map[$unique_key]['all_images'][] = $card['front_image'];
+                    }
+                    if (!empty($card['back_image'])) {
+                        $card_map[$unique_key]['all_images'][] = $card['back_image'];
+                    }
+                } else {
+                    // Cards >= $10: keep individual (no deduplication)
+                    $card['quantity'] = 1;
+                    $card['all_images'] = [];
+                    if (!empty($card['front_image'])) {
+                        $card['all_images'][] = $card['front_image'];
+                    }
+                    if (!empty($card['back_image'])) {
+                        $card['all_images'][] = $card['back_image'];
+                    }
+                    $processed_cards[] = $card;
+                }
+            }
+            
+            // Add deduplicated cards < $10
+            foreach ($card_map as $card) {
+                // Remove duplicate images
+                $card['all_images'] = array_unique($card['all_images']);
+                $processed_cards[] = $card;
+            }
+            
+            // Sort by title using natural order (handles numbers correctly: R1, R2, R11, R22)
+            usort($processed_cards, function($a, $b) {
+                $title_a = $a['title'] ?? '';
+                $title_b = $b['title'] ?? '';
+                return strnatcasecmp($title_a, $title_b);
+            });
+            
+            $group['cards'] = $processed_cards;
+        }
+        unset($group); // Important: unset the reference to avoid bugs
+        
+        // Step 3: Convert to indexed array
+        $result = array_values($groups);
+        
+        // Step 4: Add metadata
+        foreach ($result as &$group) {
+            $group['suggested_title'] = $this->generateGroupTitle($group);
+            
+            // Calculate total quantity (sum of individual card quantities)
+            $total_quantity = 0;
+            $prices = [];
+            foreach ($group['cards'] as $card) {
+                $quantity = intval($card['quantity'] ?? 1);
+                $total_quantity += $quantity;
+                $price = floatval($card['sale_price'] ?? 0);
+                // Add price for each quantity
+                for ($i = 0; $i < $quantity; $i++) {
+                    $prices[] = $price;
+                }
+            }
+            
+            $group['card_count'] = count($group['cards']); // Unique cards
+            $group['total_quantity'] = $total_quantity; // Total physical cards
+            
+            $group['min_price'] = !empty($prices) ? min($prices) : 0;
+            $group['max_price'] = !empty($prices) ? max($prices) : 0;
+            $group['avg_price'] = !empty($prices) ? (array_sum($prices) / count($prices)) : 0;
+            
+            // Add price category based on average price (avoid conflict with sport category)
+            $group['price_category'] = $this->determineCardCategory($group['avg_price']);
+
+            // Extract common subset from all cards in group (store at group level)
+            $_subsets = array_unique(array_filter(array_map(function($c) { return trim($c['subset'] ?? ''); }, $group['cards'])));
+            $group['subset'] = (count($_subsets) === 1) ? reset($_subsets) : '';
+        }
+
+        // Step 5: Sort groups by total quantity (largest first)
+        usort($result, function($a, $b) {
+            $a_qty = $a['total_quantity'] ?? $a['card_count'];
+            $b_qty = $b['total_quantity'] ?? $b['card_count'];
+            return $b_qty - $a_qty;
+        });
+        //error_log('Smart Grouping Result: ' . print_r($result, true) . "\n", 3, '/home/n7f9655/public_html/storage_phoenixliquidation/logs/debug.log');
+        return $result;
+    }
+    
+    /**
+     * Determine card category based on price
+     * @param float $price Average price of the group
+     * @return string Category: 'green', 'yellow', 'red', 'gray'
+     */
+    private function determineCardCategory(float $price): string {
+        if ($price < 2) {
+            return 'gray'; // Under $2
+        } elseif ($price < 10) {
+            return 'blue'; // $2-$10
+        } elseif ($price < 50) {
+            return 'orange'; // $10-$50
+        } else {
+            return 'gold'; // Over $50
+        }
+    }
+    
+    /**
+     * Generate optimized listing title for a group
+     */
+    private function generateGroupTitle(array $group): string {
+        $set = $group['set'] ?? '';
+        $brand = $group['brand'] ?? '';
+        $year = $group['year'] ?? '';
+        $count = count($group['cards']);
+        
+        // Extract brand from set name if brand is empty
+        if (empty($brand) && !empty($set)) {
+            
+            $this->load->model('shopmanager/card/card_manufacturer');
+            $manufacturers = array_column(
+                $this->model_shopmanager_card_card_manufacturer->getManufacturers(['filter_status' => 1]),
+                'name'
+            );
+            
+            // Sort by length (longest first) to match specific brands before generic
+            usort($manufacturers, function($a, $b) {
+                return strlen($b) - strlen($a);
+            });
+            
+            foreach ($manufacturers as $mfg) {
+                if (stripos($set, $mfg) !== false) {
+                    $brand = $mfg;
+                    break;
+                }
+            }
+        }
+        
+        // Get unique player names for special descriptions
+        $players = array_unique(array_filter(array_map(function($card) {
+            return $card['player'] ?? '';
+        }, $group['cards'])));
+        
+        // Check if has rookies or stars
+        $hasRookie = false;
+        $hasHOF = false;
+        foreach ($group['cards'] as $card) {
+            $title = strtolower($card['title'] ?? '');
+            if (stripos($title, 'rookie') !== false || stripos($title, 'RC') !== false) {
+                $hasRookie = true;
+            }
+            // Common HOF/Star indicators
+            if (stripos($title, 'Michael Jordan') !== false || 
+                stripos($title, 'LeBron') !== false || 
+                stripos($title, 'Kobe') !== false ||
+                stripos($title, 'Shaq') !== false ||
+                stripos($title, 'Gretzky') !== false) {
+                $hasHOF = true;
+            }
+        }
+        
+        // Get sport from CSV category column
+        $sport = !empty($group['cards'][0]['category']) ? trim($group['cards'][0]['category']) : 'Basketball';
+        
+        // Build attractive title
+        $title = '';
+        
+        if (!empty($set) && $set !== 'Mixed') {
+            // Start with SET name (has year + brand usually)
+            $title = $set;
+            
+            // Add subset if common across all cards
+            $subsets = array_unique(array_filter(array_map(function($card) {
+                return $card['subset'] ?? '';
+            }, $group['cards'])));
+            
+            if (count($subsets) === 1 && !empty($subsets[0])) {
+                $subset = reset($subsets);
+                if (stripos($title, $subset) === false) {
+                    $title .= ' ' . $subset;
+                }
+            }
+            
+            // Add sport if not already there
+            if (stripos($title, $sport) === false && stripos($title, 'NBA') === false && stripos($title, 'NHL') === false) {
+                $title .= ' ' . $sport;
+            }
+            
+            // Add "Trading Cards" if not there
+            if (stripos($title, 'Card') === false) {
+                $title .= ' Trading Cards ';
+            } else if (stripos($title, 'Cards') === false) {
+                $title .= 's'; // Make it plural
+            }
+            
+            // Add attractive qualifiers based on content
+            $qualifiers = [];
+            
+            if ($hasRookie) {
+                $qualifiers[] = 'Rookies';
+            }
+            if ($hasHOF) {
+                $qualifiers[] = 'Stars';
+            }
+            if (count($players) > 5) {
+                $qualifiers[] = 'Multi-Player';
+            }
+            
+            // Add qualifiers if room
+            if (!empty($qualifiers) && strlen($title) < 60) {
+                $qualifier_text = ' - ' . implode(' & ', array_slice($qualifiers, 0, 2));
+                if (strlen($title . $qualifier_text) <= 60) {
+                    $title .= $qualifier_text;
+                }
+            }
+            
+            // Add "Pick One or More" type message if room
+            if (strlen($title) < 55) {
+                $title .= ' - You Pick - Choose One or More';
+            } else if (strlen($title) < 65) {
+                $title .= ' - Pick One or More';
+            } else if (strlen($title) < 70) {
+                $title .= ' - You Pick';
+            } else if (strlen($title) < 75) {
+                $title .= ' - U Pick';
+            }
+            
+        } else if (!empty($brand) && !empty($year)) {
+            // Fallback: build from year + brand
+            $title = $year . ' ' . $brand . ' ' . $sport . ' ';
+            
+            if ($hasRookie || $hasHOF) {
+                $title .= ' - Stars & Rookies';
+            }
+            
+            if (strlen($title) < 65) {
+                $title .= ' - Pick One or More';
+            } else if (strlen($title) < 75) {
+                $title .= ' - You Pick';
+            }
+            
+        } else {
+            // Last resort
+            $title = 'Sports Trading Cards - Pick One or More - Multiple Players';
+        }
+        
+        // Ensure eBay 80 character limit
+        if (strlen($title) > 80) {
+            $title = substr($title, 0, 77) . '...';
+        }
+        
+        return $title;
+    }
+    
+
+    
+    /**
+     * Generate eBay CSV file from card data
+     * @param array $cards Array of card data  
+     * @param array $config Configuration (listing title, category, condition, etc.)
+     * @return string CSV content
+     */
+    public function generateEbayCSV(array $cards, array $config): string {
+        if (empty($cards)) {
+            return '';
+        }
+        
+        // Check if data is grouped (has 'cards' sub-array in first element)
+        if (isset($cards[0]['cards']) && is_array($cards[0]['cards'])) {
+            // Data is grouped - generate multiple listings
+            return $this->generateMultipleListingsCSV($cards, $config);
+        }
+        
+        // Data is flat cards array - use old logic
+        $grouping_type = isset($config['grouping_type']) ? $config['grouping_type'] : 'single';
+        
+        if ($grouping_type == 'multi') {
+            return $this->generateMultiVariationCSV($cards, $config);
+        } else {
+            return $this->generateSingleListingsCSV($cards, $config);
+        }
+    }
+    
+    /**
+     * Generate CSV with multiple multi-variation listings (one per group)
+     * @param array $groups Array of groups, each with 'cards' array and 'title'
+     * @param array $config Configuration
+     * @return string CSV content
+     */
+    private function generateMultipleListingsCSV(array $groups, array $config): string {
+        $csv_lines = [];
+        
+        // eBay File Exchange headers for variations
+        $headers = [
+            '*Action(SiteID=Canada|Country=CA|Currency=CAD|Version=1193)',
+            '*Category',
+            '*Title',
+            '*Description',
+            'C:Card Name',
+            'C:Condition',
+            'C:Year',
+            'C:Brand',
+            '*StartPrice',
+            '*Quantity',
+            'PicURL',
+            '*Format',
+            '*Duration',
+            'ConditionID',
+            'SellerProfiles:ShippingPolicy',
+            'SellerProfiles:ReturnPolicy',
+            'SellerProfiles:PaymentPolicy'
+        ];
+        
+        $csv_lines[] = implode(',', array_map(function($h) {
+            return '"' . str_replace('"', '""', $h) . '"';
+        }, $headers));
+        
+        // Use config values
+        $category = !empty($config['category']) ? $config['category'] : '261328'; // Sports Cards
+        $condition_id = !empty($config['condition_id']) ? $config['condition_id'] : '4000'; // Very Good
+        
+        // eBay Business Policies (TOUJOURS ces valeurs pour les cartes)
+        $shipping_policy = '270305103019'; // Cards
+        $return_policy = '261009811019';   // Canada_No_Return
+        $payment_policy = '66471759019';   // Canada_PayPal
+        
+        // Generate one multi-variation listing per group
+        foreach ($groups as $index => $group) {
+            $cards = $group['cards'];
+            $listing_title = !empty($group['title']) ? $group['title'] : ($group['suggested_title'] ?? '');
+            
+            if (empty($listing_title)) {
+                $listing_title = $this->generateGroupTitle($group);
+            }
+            
+            // Ensure 80 character limit
+            if (strlen($listing_title) > 80) {
+                $listing_title = substr($listing_title, 0, 77) . '...';
+            }
+            
+            // Generate description for this group
+            $description = $this->generateDescription($cards, $listing_title);
+            
+            // First card determines base price and main image
+            $first_card = reset($cards);
+            $base_price = floatval($first_card['sale_price'] ?? 0);
+            $main_image = $first_card['front_image'] ?? '';
+            
+            // Parent listing row (Add action with empty variations)
+            $parent_row = [
+                'Add', // Action
+                $category, // Category
+                $listing_title, // Title
+                $description, // Description
+                '', // C:Card Name (empty for parent)
+                '', // C:Condition (empty)
+                '', // C:Year (empty)
+                '', // C:Brand (empty)
+                $base_price, // StartPrice
+                1, // Quantity
+                $main_image, // PicURL
+                'FixedPrice', // Format
+                'GTC', // Duration
+                $condition_id, // ConditionID
+                $shipping_policy, // SellerProfiles:ShippingPolicy
+                $return_policy, // SellerProfiles:ReturnPolicy
+                $payment_policy // SellerProfiles:PaymentPolicy
+            ];
+            
+            $csv_lines[] = implode(',', array_map(function($v) {
+                return '"' . str_replace('"', '""', $v) . '"';
+            }, $parent_row));
+            
+            // Add each card as a variation - use pre-processed quantities and images
+            // Cards are already deduplicated in smartGroupCards based on price categories
+            foreach ($cards as $card) {
+                $card_title = trim($this->generateCardTitle($card));
+                $card_price = floatval($card['sale_price'] ?? 0);
+                $card_condition = trim($card['condition'] ?? 'Near Mint or Better');
+                $card_year = trim($card['year'] ?? '');
+                $card_brand = trim($card['brand'] ?? '');
+                $quantity = intval($card['quantity'] ?? 1);
+                $all_images = $card['all_images'] ?? [];
+                
+                // Use all available images for this card
+                $images = implode('|', array_filter($all_images));
+                if (empty($images)) {
+                    $images = $card['front_image'] ?? '';
+                }
+                
+                // Create variations based on quantity
+                for ($i = 0; $i < $quantity; $i++) {
+                    // Variation row
+                    $variation_row = [
+                        'Revise', // Action (Revise to add variation)
+                        '', // Category (empty for variation)
+                        '', // Title (empty - will match parent)
+                        '', // Description (empty)
+                        $card_title, // C:Card Name (variation specific)
+                        $card_condition, // C:Condition
+                        $card_year, // C:Year
+                        $card_brand, // C:Brand
+                        $card_price, // StartPrice (variation price)
+                        1, // Quantity (always 1 for variations)
+                        $images, // PicURL (all images for this card)
+                        '', '', '', '', '', // Empty shipping for variations
+                        '', '', '', '' // Empty condition/returns for variations
+                    ];
+                    
+                    $csv_lines[] = implode(',', array_map(function($v) {
+                        return '"' . str_replace('"', '""', $v) . '"';
+                    }, $variation_row));
+                }
+            }
+        }
+        
+        return implode("\n", $csv_lines);
+    }
+    
+    /**
+     * Generate CSV with multiple cards as variations in one listing
+     */
+    private function generateMultiVariationCSV(array $cards, array $config): string {
+        $csv_lines = [];
+        
+        // eBay File Exchange headers for variations
+        $headers = [
+            '*Action(SiteID=Canada|Country=CA|Currency=CAD|Version=1193)',
+            '*Category',
+            '*Title',
+            '*Description',
+            'C:Card Name',
+            'C:Condition',
+            'C:Year',
+            'C:Brand',
+            '*StartPrice',
+            '*Quantity',
+            'PicURL',
+            '*Format',
+            '*Duration',
+            '*Location',
+            '*ConditionID',
+            'SellerProfiles:ShippingPolicy',
+            'SellerProfiles:ReturnPolicy',
+            'SellerProfiles:PaymentPolicy'
+        ];
+        
+        $csv_lines[] = implode(',', array_map(function($h) { return '"' . $h . '"'; }, $headers));
+        
+        // Main listing (first row)
+        $listing_title = isset($config['listing_title']) ? $config['listing_title'] : 'Sports Trading Cards - Multiple Cards Available';
+        $category = isset($config['category']) ? $config['category'] : '261328'; // Sports Trading Cards
+        $condition_id = isset($config['condition_id']) ? $config['condition_id'] : '4000'; // Used
+        $location = isset($config['location']) ? $config['location'] : 'United States';
+        
+        // eBay Business Policies (TOUJOURS ces valeurs pour les cartes)
+        $shipping_policy = '270305103019'; // Cards
+        $return_policy = '261009811019';   // Canada_No_Return
+        $payment_policy = '66471759019';   // Canada_PayPal
+        
+        $description = $this->generateDescription($cards, $config);
+        
+        // First card with listing details
+        $first_card = $cards[0];
+        $row = [
+            'Add', // Action
+            $category,
+            $listing_title,
+            $description,
+            isset($first_card['title']) ? $first_card['title'] : '',
+            isset($first_card['condition']) ? $first_card['condition'] : 'Near Mint or Better',
+            isset($first_card['year']) ? $first_card['year'] : '',
+            isset($first_card['brand']) ? $first_card['brand'] : '',
+            isset($first_card['sale_price']) ? $first_card['sale_price'] : '9.99',
+            '1', // Quantity always 1 for variations
+            isset($first_card['front_image']) ? $first_card['front_image'] : '',
+            'FixedPrice',
+            'GTC',
+            $location,
+            $condition_id,
+            $shipping_policy,
+            $return_policy,
+            $payment_policy
+        ];
+        
+        $csv_lines[] = implode(',', array_map(function($v) { return '"' . str_replace('"', '""', $v) . '"'; }, $row));
+        
+        // Additional variations (remaining cards)
+        for ($i = 1; $i < count($cards); $i++) {
+            $card = $cards[$i];
+            $row = [
+                'Add',
+                '',
+                '',
+                '',
+                isset($card['title']) ? $card['title'] : '',
+                isset($card['condition']) ? $card['condition'] : 'Near Mint or Better',
+                isset($card['year']) ? $card['year'] : '',
+                isset($card['brand']) ? $card['brand'] : '',
+                isset($card['sale_price']) ? $card['sale_price'] : '9.99',
+                '1',
+                isset($card['front_image']) ? $card['front_image'] : '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+            ];
+            
+            $csv_lines[] = implode(',', array_map(function($v) { return '"' . str_replace('"', '""', $v) . '"'; }, $row));
+        }
+        
+        return implode("\n", $csv_lines);
+    }
+    
+    /**
+     * Generate CSV with each card as separate listing
+     */
+    private function generateSingleListingsCSV(array $cards, array $config): string {
+        $csv_lines = [];
+        
+        // eBay headers
+        $headers = [
+            '*Action(SiteID=Canada|Country=CA|Currency=CAD|Version=1193)',
+            '*Category',
+            '*Title',
+            '*Description',
+            '*StartPrice',
+            '*Quantity',
+            'PicURL',
+            '*Format',
+            '*Duration',
+            '*Location',
+            '*ConditionID',
+            'SellerProfiles:ShippingPolicy',
+            'SellerProfiles:ReturnPolicy',
+            'SellerProfiles:PaymentPolicy'
+        ];
+        
+        $csv_lines[] = implode(',', array_map(function($h) { return '"' . $h . '"'; }, $headers));
+        
+        $category = isset($config['category']) ? $config['category'] : '261328';
+        $condition_id = isset($config['condition_id']) ? $config['condition_id'] : '4000';
+        $location = isset($config['location']) ? $config['location'] : 'United States';
+        
+        // eBay Business Policies (TOUJOURS ces valeurs pour les cartes)
+        $shipping_policy = '270305103019'; // Cards
+        $return_policy = '261009811019';   // Canada_No_Return
+        $payment_policy = '66471759019';   // Canada_PayPal
+        
+        foreach ($cards as $card) {
+            $title = isset($card['title']) ? $card['title'] : $this->generateCardTitle($card);
+            $description = isset($card['description']) && !empty($card['description']) ? $card['description'] : $this->generateCardDescription($card);
+            
+            $row = [
+                'Add',
+                $category,
+                $title,
+                $description,
+                isset($card['sale_price']) ? $card['sale_price'] : '9.99',
+                '1',
+                isset($card['front_image']) ? $card['front_image'] : '',
+                'FixedPrice',
+                'GTC',
+                $location,
+                $condition_id,
+                $shipping_policy,
+                $return_policy,
+                $payment_policy
+            ];
+            
+            $csv_lines[] = implode(',', array_map(function($v) { return '"' . str_replace('"', '""', $v) . '"'; }, $row));
+        }
+        
+        return implode("\n", $csv_lines);
+    }
+    
+    /**
+     * Generate listing title for single card
+     */
+    private function generateCardTitle(array $card): string {
+        // Try to use existing title first
+        if (isset($card['title']) && !empty($card['title'])) {
+            $title = $card['title'];
+        } else {
+            // Build from components
+            $parts = [];
+            
+            if (isset($card['year']) && !empty($card['year'])) {
+                $parts[] = $card['year'];
+            }
+            
+            if (isset($card['brand']) && !empty($card['brand'])) {
+                $parts[] = $card['brand'];
+            }
+            
+            if (isset($card['set']) && !empty($card['set'])) {
+                $parts[] = $card['set'];
+            }
+            
+            if (isset($card['card_number']) && !empty($card['card_number'])) {
+                $parts[] = '#' . $card['card_number'];
+            }
+            
+            if (isset($card['player']) && !empty($card['player'])) {
+                $parts[] = $card['player'];
+            }
+            
+            if (isset($card['team_name']) && !empty($card['team_name'])) {
+                $parts[] = $card['team_name'];
+            }
+            
+            $title = implode(' ', $parts);
+        }
+        
+        // eBay title limit is 80 characters
+        if (strlen($title) > 80) {
+            $title = substr($title, 0, 77) . '...';
+        }
+        
+        return $title;
+    }
+    
+    /**
+     * Generate description for single card
+     */
+    private function generateCardDescription(array $card): string {
+        // Use existing description if available
+        if (isset($card['description']) && !empty($card['description'])) {
+            return $card['description'];
+        }
+        
+        // Otherwise generate one
+        $title = isset($card['title']) ? $card['title'] : 'Trading Card';
+        $desc = '<h2>' . htmlspecialchars($title) . '</h2>';
+        
+        $desc .= '<ul>';
+        
+        if (isset($card['player_name']) && !empty($card['player_name'])) {
+            $desc .= '<li><strong>Player:</strong> ' . htmlspecialchars($card['player_name']) . '</li>';
+        }
+        
+        if (isset($card['team_name']) && !empty($card['team_name'])) {
+            $desc .= '<li><strong>Team:</strong> ' . htmlspecialchars($card['team_name']) . '</li>';
+        }
+        
+        if (isset($card['year']) && !empty($card['year'])) {
+            $desc .= '<li><strong>Year:</strong> ' . htmlspecialchars($card['year']) . '</li>';
+        }
+        
+        if (isset($card['brand']) && !empty($card['brand'])) {
+            $desc .= '<li><strong>Brand:</strong> ' . htmlspecialchars($card['brand']) . '</li>';
+        }
+        
+        if (isset($card['set_name']) && !empty($card['set_name'])) {
+            $desc .= '<li><strong>Set:</strong> ' . htmlspecialchars($card['set_name']) . '</li>';
+        }
+        
+        if (isset($card['card_number']) && !empty($card['card_number'])) {
+            $desc .= '<li><strong>Card Number:</strong> ' . htmlspecialchars($card['card_number']) . '</li>';
+        }
+        
+        if (isset($card['condition']) && !empty($card['condition'])) {
+            $desc .= '<li><strong>Condition:</strong> ' . htmlspecialchars($card['condition']) . '</li>';
+        }
+        
+        $desc .= '</ul>';
+        
+        $desc .= '<p>Fast shipping! Combined shipping available for multiple purchases.</p>';
+        
+        return $desc;
+    }
+    
+    /**
+     * Generate description for multi-variation listing
+     */
+    private function generateDescription(array $cards, array $config): string {
+        $desc = '<h2>Multiple Sports  Available</h2>';
+        $desc .= '<p>Select your card from the variations menu. Each card is individually priced.</p>';
+        $desc .= '<h3>Cards in this listing:</h3>';
+        $desc .= '<ul style="column-count: 3; column-gap: 20px; -webkit-column-count: 3; -moz-column-count: 3;">';
+        
+        // Deduplicate cards by card_number + player_name + team_name
+        $unique_cards = [];
+        foreach ($cards as $card) {
+            $key = strtolower(trim($card['card_number'] ?? '') . '|' . trim($card['player_name'] ?? '') . '|' . trim($card['team_name'] ?? ''));
+            if (!isset($unique_cards[$key])) {
+                $unique_cards[$key] = $card;
+            }
+        }
+        
+        foreach ($unique_cards as $card) {
+            // Format: #1 Charles Barkley (Team Name)
+            $card_info = '';
+            
+            if (!empty($card['card_number'])) {
+                $card_info .= '#' . $card['card_number'] . ' - ';
+            }
+            
+            if (!empty($card['player_name'])) {
+                $card_info .= ($card_info ? ' ' : '') . $card['player_name'];
+            }
+            
+            if (!empty($card['team_name'])) {
+                $card_info .= ' (' . $card['team_name'] . ')';
+            }
+            
+            // Fallback to title if no data
+            if (empty($card_info)) {
+                $card_info = isset($card['title']) ? $card['title'] : 'Card';
+            }
+
+            $desc .= '<li><strong>' . htmlspecialchars($card_info) . '</strong></li>';
+        }
+        
+        $desc .= '</ul>';
+        $desc .= '<p><strong>Fast Canadian shipping! Combined shipping available.</strong><br>';
+        $desc .= 'Satisfaction guaranteed!</p>';
+        
+        return $desc;
+    }
+
+    /**
+     * Public wrapper — generate a card-list description for a specific batch.
+     * Used by ebay.php to build per-batch eBay descriptions.
+     *
+     * @param array $batchVariations  Variations (cards) belonging to this batch only.
+     * @return string  Raw HTML description (before eBay template wrapping).
+     */
+    public function generateBatchDescription(array $batchVariations): string {
+        if (empty($batchVariations)) {
+            return '';
+        }
+
+        // Deduplicate by card_number + player_name + team_name
+        // Track max price per key so featured sort uses highest variation price
+        $seen      = [];
+        $unique    = [];
+        $maxPrices = [];
+        foreach ($batchVariations as $card) {
+            $key = strtolower(trim($card['card_number'] ?? '') . '|' . trim($card['player_name'] ?? '') . '|' . trim($card['team_name'] ?? ''));
+            $p   = (float)($card['price'] ?? 0);
+            if (!isset($seen[$key])) {
+                $seen[$key]      = true;
+                $unique[]        = $card;
+                $maxPrices[$key] = $p;
+            } else {
+                if ($p > $maxPrices[$key]) $maxPrices[$key] = $p;
+            }
+        }
+        // Attach max price to each unique card for reliable sorting
+        foreach ($unique as &$u) {
+            $key = strtolower(trim($u['card_number'] ?? '') . '|' . trim($u['player_name'] ?? '') . '|' . trim($u['team_name'] ?? ''));
+            $u['_max_price'] = $maxPrices[$key] ?? 0;
+        }
+        unset($u);
+
+        $cardCount  = count($batchVariations); // actual variation count (for display)
+        $uniqueCount = count($unique);          // deduplicated (for single-card branch check)
+
+        // ── Single card: description spéciale ────────────────────────────────
+        if ($uniqueCount === 1) {
+            $card = $unique[0];
+            $title   = !empty($card['title'])       ? htmlspecialchars($card['title'])       : '';
+            $player  = !empty($card['player_name']) ? htmlspecialchars($card['player_name']) : '';
+            $team    = !empty($card['team_name'])   ? htmlspecialchars($card['team_name'])   : '';
+            $number  = !empty($card['card_number']) ? htmlspecialchars($card['card_number']) : '';
+            $year    = !empty($card['year'])         ? htmlspecialchars($card['year'])         : '';
+            $brand   = !empty($card['brand'])        ? htmlspecialchars($card['brand'])        : '';
+            $set     = !empty($card['set_name'])     ? htmlspecialchars($card['set_name'])     : '';
+            $cond    = !empty($card['condition'])    ? htmlspecialchars($card['condition'])    : '';
+            $cond    .= ' (See pictures for details)'; // Encourage buyers to check images for condition
+            // Load images from DB via card_id
+            $imgs = [];
+            if (!empty($card['card_id'])) {
+                $this->load->model('shopmanager/card/card');
+                $imgs = $this->model_shopmanager_card_card->getCardImageUrls((int)$card['card_id']);
+            }
+            // Fallback to inline fields if DB returns nothing
+            if (empty($imgs)) {
+                if (!empty($card['front_image'])) $imgs[] = $card['front_image'];
+                if (!empty($card['back_image']))  $imgs[] = $card['back_image'];
+                foreach ($card['all_images'] ?? [] as $img) {
+                    if (!empty($img) && !in_array($img, $imgs)) $imgs[] = $img;
+                }
+            }
+
+            $d  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#333;line-height:1.6;">';
+            $d .= '<div style="background:#1a1a2e;color:#fff;padding:14px 20px;text-align:center;border-radius:6px 6px 0 0;">';
+            $d .= '<h2 style="margin:0 0 4px;font-size:1.4em;color:#fff;">🏆 ' . ($player ?: $title) . '</h2>';
+            if ($team) $d .= '<p style="margin:0;font-size:0.9em;color:#ccc;">' . $team . '</p>';
+            $d .= '</div>';
+
+            // Images front + back
+            if (!empty($imgs)) {
+                $d .= '<div style="background:#fff;border:1px solid #ccc;border-top:none;padding:14px 20px;text-align:center;">';
+                foreach ($imgs as $img_url) {
+                    $d .= '<img src="' . htmlspecialchars($img_url) . '" style="max-width:48%;max-height:320px;margin:4px;border:1px solid #ddd;border-radius:4px;" />';
+                }
+                $d .= '</div>';
+            }
+
+            // Clean up card description: decode entities, collapse multiple <br>, trim
+            $card_desc = '';
+            if (!empty($card['description'])) {
+                $card_desc = html_entity_decode($card['description'], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                // Unwrap outer <p> tags (eBay doesn't like nested blocks)
+                $card_desc = preg_replace('/^\s*<p[^>]*>(.*)<\/p>\s*$/is', '$1', $card_desc);
+                // Collapse 2+ consecutive <br> (any variant, with optional whitespace/newlines) → single <br>
+                $card_desc = preg_replace('/(\s*<br\s*\/?>\s*[\r\n]*){2,}/i', '<br>', $card_desc);
+                // Trim leading/trailing <br>
+                $card_desc = preg_replace('/^(\s*<br\s*\/?>\s*)+|(\s*<br\s*\/?>\s*)+$/i', '', $card_desc);
+                $card_desc = trim($card_desc);
+            }
+
+            $d .= '<div style="background:#fff;border:1px solid #ccc;border-top:none;padding:14px 20px;">';
+            $d .= '<table style="width:100%;border-collapse:collapse;">';
+            if ($number) $d .= '<tr><td style="padding:4px 8px;color:#888;width:140px;">Card #</td><td style="padding:4px 8px;"><strong>#' . $number . '</strong></td></tr>';
+            if ($year)   $d .= '<tr><td style="padding:4px 8px;color:#888;">Year</td><td style="padding:4px 8px;">' . $year . '</td></tr>';
+            if ($brand)  $d .= '<tr><td style="padding:4px 8px;color:#888;">Brand</td><td style="padding:4px 8px;">' . $brand . '</td></tr>';
+            if ($set)    $d .= '<tr><td style="padding:4px 8px;color:#888;">Set</td><td style="padding:4px 8px;">' . $set . '</td></tr>';
+            $d .= '<tr><td style="padding:4px 8px;color:#888;">Condition</td><td style="padding:4px 8px;"><strong>' . $cond . '</strong></td></tr>';
+            $d .= '</table>';
+            if ($card_desc) {
+                $d .= '<div style="margin:12px 0 0;padding-top:12px;border-top:2px solid #e0e0e0;color:#333;font-size:1em;line-height:1.8;letter-spacing:0.02em;">' . $card_desc . '</div>';
+            }
+            $d .= '</div>';
+
+            $d .= '<div style="background:#f0f4f8;border:1px solid #ccc;border-top:none;padding:10px 20px;text-align:center;color:#333;border-radius:0 0 6px 6px;">';
+            $d .= '<span style="margin:0 16px;">🌎 Ships Worldwide &mdash; Canada Post (LETTER MAIL)</span>';
+            $d .= '<span style="margin:0 16px;">🛒 <strong>Combined shipping available</strong></span>';
+            $d .= '<span style="margin:0 16px;">✅ <strong>Satisfaction guaranteed</strong></span>';
+            $d .= '</div>';
+            $d .= '</div>';
+            return $d;
+        }
+
+        $desc  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#333;line-height:1.6;">';
+
+        // ── Hero banner ───────────────────────────────────────────────────────
+        $desc .= '<div style="background:#1a1a2e;color:#fff;padding:14px 20px;margin-bottom:2px;text-align:center;border-radius:6px 6px 0 0;">';
+        $desc .= '<h2 style="margin:0 0 4px;font-size:1.4em;color:#fff;letter-spacing:.5px;">🏆 YOU PICK &mdash; Choose the Card You Want!</h2>';
+        $desc .= '<p style="margin:0;font-size:0.9em;color:#ccc;">' . $cardCount . ' cards available in this listing &mdash; add one or more to your cart!</p>';
+        $desc .= '</div>';
+
+        // ── How it works ─────────────────────────────────────────────────────
+        $desc .= '<div style="background:#f0f4f8;padding:10px 20px;margin-bottom:2px;display:flex;gap:16px;flex-wrap:wrap;">';
+        $desc .= '<span style="flex:1;min-width:160px;text-align:center;">📋 <strong>1.</strong> Browse the cards below</span>';
+        $desc .= '<span style="flex:1;min-width:160px;text-align:center;">🎯 <strong>2.</strong> Select your card in the variation menu</span>';
+        $desc .= '<span style="flex:1;min-width:160px;text-align:center;">🛒 <strong>3.</strong> Add to cart &mdash; combined shipping!</span>';
+        $desc .= '</div>';
+
+        // ── Featured cards (top 3 by price) ──────────────────────────────────
+        $featured = $unique;
+        usort($featured, fn($a, $b) => $b['_max_price'] <=> $a['_max_price']);
+        $featured = array_slice($featured, 0, 3);
+        // Only show block if at least one card has images
+        $this->load->model('shopmanager/card/card');
+        $featuredItems = [];
+        foreach ($featured as $fc) {
+            if (empty($fc['card_id'])) continue;
+            $fcImgs = $this->model_shopmanager_card_card->getCardImageUrls((int)$fc['card_id']);
+            if (!empty($fcImgs)) {
+                $featuredItems[] = ['card' => $fc, 'img' => $fcImgs[0]];
+            }
+        }
+        if (!empty($featuredItems)) {
+            $desc .= '<div style="background:#fff;border:1px solid #ccc;padding:14px 20px;margin-bottom:2px;text-align:center;">';
+            $desc .= '<p style="margin:0 0 10px;font-size:0.85em;color:#888;text-transform:uppercase;letter-spacing:.05em;">⭐ Featured Cards</p>';
+            $desc .= '<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;">';
+            foreach ($featuredItems as $fi) {
+                $fc   = $fi['card'];
+                $label = htmlspecialchars($fc['player_name'] ?? $fc['title'] ?? '');
+                $num   = !empty($fc['card_number']) ? ' #' . htmlspecialchars($fc['card_number']) : '';
+                $desc .= '<div style="flex:0 0 auto;max-width:200px;">';
+                $desc .= '<img src="' . htmlspecialchars($fi['img']) . '" style="max-width:160px;max-height:220px;border:1px solid #ddd;border-radius:4px;display:block;margin:0 auto;" />';
+                $desc .= '<p style="margin:6px 0 0;font-size:0.88em;color:#333;"><strong>' . $label . $num . '</strong></p>';
+                $desc .= '</div>';
+            }
+            $desc .= '</div>';
+            $desc .= '</div>';
+        }
+
+        // ── Card list ─────────────────────────────────────────────────────────
+        $desc .= '<div style="background:#fff;border:1px solid #ccc;padding:14px 20px;margin-bottom:2px;">';
+        $desc .= '<h3 style="margin:0 0 10px;font-size:1em;font-weight:bold;color:#333;border-bottom:2px solid #ccc;padding-bottom:4px;">📋 Cards Included in This Listing</h3>';
+        $desc .= '<ul style="column-count:3;column-gap:20px;-webkit-column-count:3;-moz-column-count:3;margin:0;padding-left:20px;">';
+
+        foreach ($unique as $card) {
+            $card_info = '';
+
+            if (!empty($card['card_number'])) {
+                $card_info .= '<span style="color:#888;font-size:0.85em;">#' . htmlspecialchars($card['card_number']) . '</span> ';
+            }
+
+            if (!empty($card['player_name'])) {
+                $card_info .= '<strong>' . htmlspecialchars($card['player_name']) . '</strong>';
+            }
+
+            if (!empty($card['team_name'])) {
+                $card_info .= ' <span style="color:#666;font-size:0.85em;">(' . htmlspecialchars($card['team_name']) . ')</span>';
+            }
+
+            // Fallback to title
+            if ($card_info === '' && !empty($card['title'])) {
+                $card_info = '<strong>' . htmlspecialchars($card['title']) . '</strong>';
+            }
+
+            if ($card_info !== '') {
+                $desc .= '<li style="margin-bottom:4px;break-inside:avoid;">' . $card_info . '</li>';
+            }
+        }
+
+        $desc .= '</ul>';
+        $desc .= '</div>';
+
+        // ── Trust / shipping ──────────────────────────────────────────────────
+        $desc .= '<div style="background:#f0f4f8;border:1px solid #ccc;border-top:none;padding:10px 20px;text-align:center;color:#333;border-radius:0 0 6px 6px;">';
+        $desc .= '<span style="margin:0 16px;">🌎 Ships Worldwide &mdash; Canada Post (LETTER MAIL)</span>';
+        $desc .= '<span style="margin:0 16px;">🛒 <strong>Combined shipping available</strong></span>';
+        $desc .= '<span style="margin:0 16px;">✅ <strong>Satisfaction guaranteed</strong></span>';
+        $desc .= '</div>';
+
+        $desc .= '</div>';
+
+        return $desc;
+    }
+
+    /**
+     * Build a per-batch eBay title.
+     * Format: "(#start-end) {base_title}"  — range prefix is always visible.
+     * For special batches (B99+): "(#Special) {base_title}"
+     * Always truncated to 80 chars max.
+     *
+     * @param string $baseTitle       The listing's base title (language_id=1).
+     * @param int    $batchNumber     Batch number (1, 2 … 99+).
+     * @param mixed  $cardSortStart   First card sort position in this batch.
+     * @param mixed  $cardSortEnd     Last card sort position in this batch.
+     * @return string
+     */
+    public function generateBatchTitle(string $baseTitle, int $batchNumber, $cardSortStart, $cardSortEnd, string $labelStart = '', string $labelEnd = '', string $sport = '', array $singleCard = [], string $subset = ''): string {
+        // Build range label: "SQ1-SQ30" for specials, "#1-#250" for numeric
+        if ($cardSortStart != $cardSortEnd && $cardSortStart !== '' && $cardSortEnd !== '') {
+         
+        
+            if ($batchNumber >= 99 && $labelStart !== '') {
+                $range = $labelStart . '-' . $labelEnd;
+            } else {
+                $range = '#' . $cardSortStart . '-#' . $cardSortEnd;
+            }
+        } else {
+            $range = '';
+        }
+
+        // ── Single card: use oc_card.title as base, append team/sport/condition ──
+        if (!empty($singleCard)) {
+            // Condition abbreviation map
+            $condMap = [
+                'near mint or better' => 'NM',
+                'near mint'           => 'NM',
+                'excellent mint'      => 'ExMt',
+                'excellent - mint'    => 'ExMt',
+                'very good - excellent' => 'VGEx',
+                'very good'           => 'VG',
+                'good'                => 'G',
+                'poor'                => 'P',
+            ];
+            $condRaw  = trim($singleCard['condition_name'] ?? '');
+            $condShort = $condMap[strtolower($condRaw)] ?? '';
+
+            // Start from the card's own title (already has year/brand/set/#/player)
+            $base = trim($singleCard['title'] ?? '');
+            $parts = $base ? [$base] : [];
+
+            // Append team if not already present in base title
+            $team = trim($singleCard['team_name'] ?? '');
+            if ($team && stripos($base, $team) === false) {
+                $parts[] = $team;
+            }
+
+            // Append sport
+            if (!empty($sport)) $parts[] = strtoupper($sport);
+
+            $parts[] = 'Card';
+
+            // Append condition abbreviation if space allows
+            $title = implode(' ', $parts);
+            if ($condShort && strlen($title) + strlen($condShort) + 1 <= 80) {
+                $title .= ' ' . $condShort;
+            }
+
+            if (strlen($title) > 80) $title = substr($title, 0, 77) . '...';
+            return $title;
+        }
+
+        // Start from set_name (baseTitle)
+        $title = trim($baseTitle);
+
+        // Insert subset right after set_name (before sport)
+        if (!empty($subset) && stripos($title, $subset) === false) {
+            $title .= ' ' . trim($subset);
+        }
+
+        // Add sport if not already in title (mirrors importer logic)
+        if (!empty($sport) && stripos($title, $sport) === false
+            && stripos($title, 'NBA') === false
+            && stripos($title, 'NHL') === false
+            && stripos($title, 'NFL') === false
+            && stripos($title, 'MLB') === false) {
+            $title .= ' ' . $sport;
+        }
+
+        // Add "Trading Cards" if not already there (mirrors importer logic)
+        if (stripos($title, 'Cards') === false) {
+            if (stripos($title, 'Card') === false) {
+                $title .= ' Trading Cards ';
+            } else {
+                $title .= 's';
+            }
+        }
+
+        // Append card number range in parentheses
+        if($range) {
+            $title .= '(' . $range . ')';
+        }
+
+        // Append pick qualifier if room
+        if (strlen($title) < 55) {
+            $title .= ' - You Pick - Choose One or More';
+        } elseif (strlen($title) < 65) {
+            $title .= ' - Pick One or More';
+        } elseif (strlen($title) < 70) {
+            $title .= ' - You Pick';
+        } elseif (strlen($title) < 75) {
+            $title .= ' - U Pick';
+        }
+
+        // eBay 80-char hard limit
+        if (strlen($title) > 80) {
+            $title = substr($title, 0, 77) . '...';
+        }
+
+        return $title;
+    }
+
+    
+    // =====================================================
+    // DATABASE METHODS - Multi-Variation Table Management
+    // =====================================================
+    
+    /**
+     * Install multi-variation database tables
+     * Creates all necessary tables for managing eBay multi-variation listings
+     */
+    public function install(): bool {
+        $sql_file = DIR_APPLICATION . 'model/shopmanager/ebay/install_multivariation.sql';
+        
+        if (!file_exists($sql_file)) {
+            return false;
+        }
+        
+        $sql_content = file_get_contents($sql_file);
+        
+        // Split by ; and execute each statement
+        $statements = array_filter(array_map('trim', explode(';', $sql_content)));
+        
+        foreach ($statements as $statement) {
+            // Skip comments and empty statements
+            if (empty($statement) || strpos($statement, '--') === 0) {
+                continue;
+            }
+            
+            try {
+                $this->db->query($statement);
+            } catch (\Exception $e) {
+                //error_log('Multi-variation install error: ' . $e->getMessage());
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+
+    /**
+     * Save complete multi-variation listing to database
+     * @param array $data Listing data with variations
+     * @return int listing_id
+     */
+    public function saveListing(array $data): int {
+      
+        // DEBUG LOGS TEMPORARILY DISABLED - Testing JSON response
+        // @error_log('=== saveListing: Starting ===');
+        // @error_log('Set: ' . ($data['set_name'] ?? 'NOT SET') . ' | Sport: ' . ($data['sport'] ?? 'NOT SET') . ' | Variations: ' . count($data['variations'] ?? []));
+   
+
+        // Use existing_listing_id passed from the form (already resolved by findListingByCardTitles in preview)
+        // DO NOT re-run findExistingListing by set_name — that would ignore title-based distinction (e.g. Gold vs base card)
+        $card_type_id = isset($data['card_type_id']) ? (int)$data['card_type_id'] : 0;
+        $existing_listing_id = (int)($data['existing_listing_id'] ?? 0);
+        
+        if ($existing_listing_id > 0) {
+            // Listing exists - only add new variations
+            //error_log("DEBUG saveListing - Listing exists (ID={$existing_listing_id}), adding " . count($data['variations']) . " new variations");
+            
+            if (!empty($data['variations'])) {
+                $sort_order = $this->getMaxVariationSortOrder($existing_listing_id) + 1;
+                
+                foreach ($data['variations'] as $variation) {
+                    // saveVariation() handles everything: INSERT card + images, or UPDATE qty + add images
+                    $card_id = $this->saveVariation($existing_listing_id, $variation, $sort_order++);
+                }
+                
+                // Update totals
+                $this->updateListingTotals($existing_listing_id);
+                
+                // Update descriptions with new cards
+               // $this->updateDescriptionsWithNewCards($existing_listing_id, $data['variations']);
+                
+                // Log history
+                $this->addHistory($existing_listing_id, 'added_variations', 'Added ' . count($data['variations']) . ' new variations');
+            }
+            $this->recalculateBatches($existing_listing_id);
+
+            return $existing_listing_id;
+        }
+        
+        // New listing - create everything
+        
+        // Calculate totals
+        $total_quantity = 0;
+        $average_price = 0;
+        $total_price = 0;
+        $price_count = 0;
+        
+        if (!empty($data['variations'])) {
+            foreach ($data['variations'] as $variation) {
+                $qty = (int)($variation['quantity'] ?? 1);
+                $price = (float)($variation['price'] ?? 0);
+                
+                $total_quantity += $qty;
+                if ($price > 0) {
+                    $total_price += $price;
+                    $price_count++;
+                }
+            }
+        }
+        
+        if ($price_count > 0) {
+            $average_price = $total_price / $price_count;
+        }
+        
+        // DEBUG LOGS TEMPORARILY DISABLED
+        // @error_log('SQL INSERT: qty_total=' . $total_quantity . ' | avg_price=' . round($average_price, 2) . ' | year=' . ($data['year'] ?? '0'));
+        
+        // Insert main listing
+        $sql = "INSERT INTO `" . DB_PREFIX . "card_listing` SET 
+            `set_name` = '" . $this->db->escape($data['set_name'] ?? '') . "',
+            `subset` = '" . $this->db->escape($data['subset'] ?? '') . "',
+            `sport` = '" . $this->db->escape($data['sport'] ?? '') . "',
+            `card_type_id` = " . $card_type_id . ",
+            `ebay_category_id` = '" . $this->db->escape($data['ebay_category_id'] ?? '') . "',
+            `condition_id` = " . (int)($data['condition_id'] ?? 4000) . ",
+            `listing_format` = '" . $this->db->escape($data['listing_format'] ?? 'FixedPrice') . "',
+            `listing_duration` = '" . $this->db->escape($data['listing_duration'] ?? 'GTC') . "',
+            `status` = 1,
+            `total_quantity` = " . $total_quantity . ",
+            `price` = " . $average_price . ",
+            `year` = " . (int)($data['year'] ?? 0) . ",
+            `brand` = '" . $this->db->escape($data['brand'] ?? '') . "',
+            `date_added` = NOW(),
+            `date_modified` = NOW()";
+        
+        $this->db->query($sql);
+        $listing_id = $this->db->getLastId();
+        
+        // @error_log('Listing created: ID=' . $listing_id);
+       
+        // Descriptions sont créées par batch lors de la configuration (page listing).
+        // Aucune ligne batch_name=0 n'est créée ici.
+        
+        // Insert variations (cards)
+        if (!empty($data['variations'])) {
+            //error_log("DEBUG saveListing - NEW listing, inserting " . count($data['variations']) . " variations");
+            $sort_order = 0;
+            foreach ($data['variations'] as $var_idx => $variation) {
+                // saveVariation() handles everything: INSERT card + images
+                $card_id = $this->saveVariation($listing_id, $variation, $sort_order++);
+            }
+        }
+        
+        // Les specifics sont construits depuis les champs oc_card_listing (sport/brand/year/set_name)
+        // et écrits dans oc_card_listing_description.specifics lors de la configuration des batches.
+        
+        // Log history
+        $this->addHistory($listing_id, 'created', null);
+        $this->recalculateBatches($listing_id);   
+        
+        $this->migrateImages($listing_id); // Move any temp images to permanent location after cards are created and have IDs
+
+        return $listing_id;
+    }
+    
+    /**
+     * Check if listing exists (public method for controller access)
+     * @param string $set_name SET name
+     * @param int $card_type_id Card type ID
+     * @return int listing_id or 0 if not found
+     */
+    public function checkListingExists(string $set_name, int $card_type_id = 0): int {
+        return $this->findExistingListing($set_name, $card_type_id);
+    }
+
+    /**
+     * Find an existing listing by searching card titles in oc_card.
+     * Returns the listing_id of the first card whose title matches any of the given titles.
+     * Exact match only (case-insensitive).
+     *
+     * @param string[] $titles  Array of card titles from the CSV group
+     * @return int  listing_id or 0 if not found
+     */
+    /**
+     * Find existing listing by set_name and card_type_id (public wrapper)
+     * @param string $set_name
+     * @param int    $card_type_id  0 = ignore type
+     * @return int listing_id or 0
+     */
+    public function findListingBySetName(string $set_name, int $card_type_id = 0): int {
+        return $this->findExistingListing($set_name, $card_type_id);
+    }
+
+    public function findListingByCardTitles(array $titles): int {
+    //$this->log->write('findListingByCardTitles - Searching for listing with card titles: ' . json_encode($titles, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT)); 
+        foreach ($titles as $title) {
+            $title = trim($title);
+            if (empty($title)) continue;
+            $q = $this->db->query(
+                "SELECT listing_id FROM `" . DB_PREFIX . "card`
+                 WHERE title = '" . $this->db->escape($title) . "'
+                 AND listing_id > 0 LIMIT 1"
+            );
+            if ($q->num_rows > 0) {
+                //$this->log->write('findListingByCardTitles - Found listing ID: ' . $q->row['listing_id'] . ' for title: ' . $title);
+                return (int)$q->row['listing_id'];
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * Get all mergeable cards for a listing, keyed by card_number
+     * Used by preview to indicate which cards will be incremented vs new
+     * @param int $listing_id
+     * @return array [ card_number => ['card_id'=>X, 'quantity'=>Y, 'title'=>Z], ... ]
+     */
+    public function getExistingCardsForListing(int $listing_id): array {
+        //$this->log->write('getExistingCardsForListing - Fetching existing cards for listing ID: ' . $listing_id);
+        $query = $this->db->query(
+            "SELECT card_id, card_number, title, quantity
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = " . (int)$listing_id . " AND `merge` = 1"
+        );
+        // Indexed by card_number → array of card rows (multiple variants per number possible)
+        $result = [];
+        foreach ($query->rows as $row) {
+            $num = trim($row['card_number'] ?? '');
+            $result[$num][] = [
+                'card_id'  => (int)$row['card_id'],
+                'quantity' => (int)$row['quantity'],
+                'title'    => $row['title'],
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Update listing descriptions with new cards added
+     * @param int $listing_id Listing ID
+     * @param array $new_variations Array of new variation data
+     */
+   /* private function updateDescriptionsWithNewCards(int $listing_id, array $new_variations): void {
+        // Get existing descriptions
+        $query = $this->db->query(
+            "SELECT language_id, title, description 
+            FROM `" . DB_PREFIX . "card_listing_description` 
+            WHERE listing_id = " . (int)$listing_id
+        );
+        
+        if ($query->num_rows == 0) {
+            return; // No descriptions to update
+        }
+        
+        $descriptions = [];
+        foreach ($query->rows as $row) {
+            $descriptions[$row['language_id']] = [
+                'title' => $row['title'],
+                'description' => $row['description']
+            ];
+        }
+        
+        // Extract new card titles
+        $new_card_items = [];
+        foreach ($new_variations as $variation) {
+            if (!empty($variation['title'])) {
+                $new_card_items[] = '<li>' . htmlspecialchars($variation['title']) . '</li>';
+            }
+        }
+        
+        if (empty($new_card_items)) {
+            return; // Nothing to add
+        }
+        
+        $new_cards_html = implode("\n        ", $new_card_items);
+        
+        // Update each language description
+        foreach ($descriptions as $language_id => $desc_data) {
+            $description = $desc_data['description'];
+            
+            // Find the closing </ul> tag and insert new cards before it
+            if (strpos($description, '</ul>') !== false) {
+                // Insert new cards before closing </ul>
+                $description = str_replace('</ul>', $new_cards_html . "\n        </ul>", $description);
+                
+                // Update all existing batch rows for this language with refreshed description
+                $this->db->query(
+                    "UPDATE `" . DB_PREFIX . "card_listing_description`
+                    SET `description` = '" . $this->db->escape($description) . "'
+                    WHERE `listing_id`  = " . (int)$listing_id . "
+                    AND `language_id` = " . (int)$language_id . "
+                    AND `batch_name`    > 0"
+                );
+                
+                //error_log("Updated description for listing {$listing_id}, language {$language_id} with " . count($new_variations) . " new cards");
+            }
+        }
+    }*/
+    
+    /**
+     * Find existing listing by set_name and card_type_id
+     * @param string $set_name SET name from CSV
+     * @param int $card_type_id Card type ID
+     * @return int listing_id or 0 if not found
+     */
+    private function findExistingListing(string $set_name, int $card_type_id = 0): int {
+        if (empty($set_name)) {
+            return 0;
+        }
+        
+        $sql = "SELECT listing_id FROM `" . DB_PREFIX . "card_listing` 
+                WHERE `set_name` = '" . $this->db->escape($set_name) . "'";
+        
+        // Only check card_type_id if provided
+        if ($card_type_id > 0) {
+            $sql .= " AND `card_type_id` = " . (int)$card_type_id;
+        }
+        
+        $sql .= " LIMIT 1";
+        
+        $query = $this->db->query($sql);
+        
+        return $query->num_rows > 0 ? (int)$query->row['listing_id'] : 0;
+    }
+    
+    /**
+     * Get maximum sort_order for variations in a listing
+     * @param int $listing_id Listing ID
+     * @return int Maximum sort_order
+     */
+    private function getMaxVariationSortOrder(int $listing_id): int {
+        $query = $this->db->query("SELECT MAX(sort_order) as max_order 
+                                    FROM `" . DB_PREFIX . "card` 
+                                    WHERE `listing_id` = " . (int)$listing_id);
+        
+        return $query->num_rows > 0 ? (int)$query->row['max_order'] : 0;
+    }
+    
+    /**
+     * Update listing totals after adding variations
+     * @param int $listing_id Listing ID
+     */
+    private function updateListingTotals(int $listing_id): void {
+        $query = $this->db->query("SELECT 
+                                    COUNT(*) as total_qty,
+                                    AVG(price) as avg_price
+                                    FROM `" . DB_PREFIX . "card` 
+                                    WHERE `listing_id` = " . (int)$listing_id);
+        
+        if ($query->num_rows > 0) {
+            $this->db->query("UPDATE `" . DB_PREFIX . "card_listing` SET 
+                `total_quantity` = " . (int)$query->row['total_qty'] . ",
+                `price` = " . (float)$query->row['avg_price'] . ",
+                `date_modified` = NOW()
+                WHERE `listing_id` = " . (int)$listing_id);
+        }
+    }
+    
+    /**
+     * Save single variation
+     */
+    private function saveVariation(int $listing_id, array $variation, int $sort_order = 0): int {
+        $title = $variation['title'] ?? 'Variation';
+        $card_number = $variation['card_number'] ?? '';
+        $price = (float)($variation['price'] ?? 0);
+        $quantity_to_add = (int)($variation['quantity'] ?? 1);
+        $merge = $variation['merge'] ; // Default merge=1 (allow merging)
+        
+        // DEBUG: Log carte et merge status
+        //error_log("DEBUG saveVariation - Title: {$title} | card#: {$card_number} | Price: \${$price} | Merge: {$merge} | Qty: {$quantity_to_add}");
+        
+        // If merge=1, check if variation already exists (same card_number AND title)
+        // If merge=0 (high-value cards ≥$10) → ALWAYS INSERT new card (never merge)
+        if ($merge == 1 && !empty($card_number)) {
+            //error_log("DEBUG saveVariation - Checking for existing card (merge=1, card_number={$card_number}, title={$title})...");
+            $check_query = $this->db->query(
+                "SELECT card_id, quantity FROM `" . DB_PREFIX . "card` 
+                WHERE `listing_id` = " . (int)$listing_id . " 
+                AND `card_number` = '" . $this->db->escape($card_number) . "'
+                AND `title` = '" . $this->db->escape($title) . "'
+                AND `merge` = 1
+                LIMIT 1"
+            );
+            
+            if ($check_query->num_rows > 0) {
+                // Card exists - UPDATE quantity
+                $card_id = (int)$check_query->row['card_id'];
+                $current_qty = (int)$check_query->row['quantity'];
+                $new_qty = $current_qty + $quantity_to_add;
+                
+                //error_log("DEBUG saveVariation - FOUND existing card_id={$card_id}, merging qty: {$current_qty} + {$quantity_to_add} = {$new_qty}");
+                
+                $this->db->query(
+                    "UPDATE `" . DB_PREFIX . "card` SET 
+                    `quantity` = " . $new_qty . ",
+                    `price` = " . $price . ",
+                    `to_sync` = 1,
+                    `date_modified` = NOW()
+                    WHERE `card_id` = " . $card_id
+                );
+                
+                // Add new images from this duplicate card
+                if (!empty($variation['images'])) {
+                    // Get current max sort_order for this card's images
+                    $sort_query = $this->db->query(
+                        "SELECT MAX(sort_order) as max_sort FROM `" . DB_PREFIX . "card_image` 
+                        WHERE `card_id` = " . (int)$card_id
+                    );
+                    $next_sort = $sort_query->num_rows > 0 ? ((int)$sort_query->row['max_sort'] + 1) : 1;
+                    
+                    foreach ($variation['images'] as $image_key => $image_url) {
+                        if (!empty($image_url)) {
+                            $this->db->query("INSERT INTO `" . DB_PREFIX . "card_image` SET 
+                                `card_id` = " . (int)$card_id . ",
+                                `image_type` = 'product',
+                                `image_url` = '" . $this->db->escape($image_url) . "',
+                                `sort_order` = " . $next_sort);
+                            
+                            $next_sort++;
+                        }
+                    }
+                }
+                
+                $this->updateListingTotals($listing_id);
+                return $card_id;
+            } else {
+                //error_log("DEBUG saveVariation - No existing card found with card_number={$card_number}, will INSERT new");
+            }
+        } else {
+            if ($merge == 0) {
+                //error_log("DEBUG saveVariation - MERGE=0 (high-value card ≥\$10) → ALWAYS INSERT new card, never merge");
+            } else {
+                //error_log("DEBUG saveVariation - card_number is empty or merge!=1 → will INSERT new");
+            }
+        }
+        
+        // Card doesn't exist OR merge=0 - INSERT new variation
+        // Generate SKU from card_number and player_name
+        $card_number = intval($variation['card_number'] ?? 0);
+        $player_name = trim($variation['player'] ?? '');
+        
+        // Replace spaces with underscores and remove special characters
+        $player_name_clean = str_replace(' ', '_', $player_name);
+        $player_name_clean = preg_replace('/[^a-zA-Z0-9_]/', '', $player_name_clean);
+        
+        $sku = $card_number . '_' . $player_name_clean;
+        
+        $sql = "INSERT INTO `" . DB_PREFIX . "card` SET 
+            `listing_id` = " . (int)$listing_id . ",
+            `sku` = '" . $this->db->escape($sku) . "',
+            `title` = '" . $this->db->escape($title) . "',
+            `description` = '" . $this->db->escape($variation['description'] ?? $title) . "',
+            `card_number` = '" . $this->db->escape($variation['card_number'] ?? '') . "',
+            `player_name` = '" . $this->db->escape($variation['player'] ?? '') . "',
+            `team_name` = '" . $this->db->escape($variation['team'] ?? '') . "',
+            `year` = " . (int)($variation['year'] ?? 0) . ",
+            `brand` = '" . $this->db->escape($variation['brand'] ?? '') . "',
+            `condition_name` = '" . $this->db->escape($variation['condition'] ?? 'Near Mint or Better') . "',
+            `price` = " . $price . ",
+            `quantity` = " . $quantity_to_add . ",
+            `sort_order` = " . (int)$sort_order . ",
+            `status` = 1,
+            `merge` = " . $merge . ",
+            `to_sync` = 1,
+            `date_added` = NOW()";
+        
+        $this->db->query($sql);
+        $card_id = $this->db->getLastId();
+
+        // Générer et stocker la clé d'inventaire eBay (stable, unique)
+        $inventoryKey = self::buildInventoryKey($card_id, $variation['card_number'] ?? '');
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card` SET `inventory_key` = '" . $this->db->escape($inventoryKey) . "'
+              WHERE `card_id` = " . $card_id
+        );
+
+        
+        // Insert images into oc_card_image
+        if (!empty($variation['images'])) {
+            $sort_order_img = 1;
+            
+            foreach ($variation['images'] as $image_key => $image_url) {
+                if (!empty($image_url)) {
+                    //error_log("DEBUG saveVariation - Inserting image: {$image_url} (sort: {$sort_order_img})");
+                    
+                    $this->db->query("INSERT INTO `" . DB_PREFIX . "card_image` SET 
+                        `card_id` = " . (int)$card_id . ",
+                        `image_type` = 'product',
+                        `image_url` = '" . $this->db->escape($image_url) . "',
+                        `sort_order` = " . $sort_order_img);
+                    
+                    $sort_order_img++;
+                }
+            }
+        } else {
+            //error_log("DEBUG saveVariation - NO IMAGES for card_id {$card_id}");
+        }
+        
+        $this->updateListingTotals($listing_id);
+        return $card_id;
+    }
+    
+    /**
+     * Update editable fields of a listing from the admin form.
+     */
+    public function updateListing(int $listing_id, array $data): void {
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing` SET
+             `set_name`         = '" . $this->db->escape($data['set_name']         ?? '') . "',
+             `subset`           = '" . $this->db->escape($data['subset']           ?? '') . "',
+             `card_type_id`     = "  . (int)($data['card_type_id']     ?? 0) . ",
+             `year`             = "  . (int)($data['year']             ?? 0) . ",
+             `brand`            = '" . $this->db->escape($data['brand']            ?? '') . "',
+             `location`         = '" . $this->db->escape($data['location']         ?? '') . "',
+             `status`           = "  . (int)($data['status']           ?? 0) . ",
+             `ebay_category_id` = '" . $this->db->escape($data['ebay_category_id'] ?? '') . "',
+             `date_modified`    = NOW()
+             WHERE `listing_id` = " . (int)$listing_id
+        );
+    }
+
+    public function updateLocation(int $listing_id, string $location): void {
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing`
+            SET `location` = '" . $this->db->escape($location) . "'
+            WHERE `listing_id` = " . $listing_id
+        );
+    }
+
+    /**
+     * Return just the location field for a listing (lightweight query for preview)
+     */
+    public function getListingLocation(int $listing_id): string {
+        $query = $this->db->query(
+            "SELECT location FROM `" . DB_PREFIX . "card_listing`
+             WHERE listing_id = " . (int)$listing_id . " LIMIT 1"
+        );
+        return $query->num_rows ? (string)$query->row['location'] : '';
+    }
+
+    public function updateListingLocation(int $listing_id, string $location): void {
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing` SET
+             `location` = '" . $this->db->escape(trim($location)) . "',
+             `date_modified` = NOW()
+             WHERE listing_id = " . (int)$listing_id
+        );
+    }
+
+    /**
+     * Get listing by ID with all variations and descriptions
+     */
+    public function getListing(int $listing_id): array {
+        // Get main listing data
+        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "card_listing` 
+            WHERE `listing_id` = " . (int)$listing_id);
+        
+        if (!$query->num_rows) {
+            return [];
+        }
+        
+        $listing = $query->row;
+        
+        // Get description for specified language
+      /*  $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "card_listing_description` 
+            WHERE `listing_id` = " . (int)$listing_id . " 
+            AND `language_id` = " . (int)$language_id);
+        
+        if ($query->num_rows) {
+            $listing = array_merge($listing, $query->row);
+        }*/
+        
+        // Get all variations - Sort by card_number numerically (1, 2, 3, ... 11, 22 not 1, 11, 2, 22)
+        $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "card` 
+            WHERE `listing_id` = " . (int)$listing_id . " 
+            ORDER BY CAST(`card_number` AS UNSIGNED) ASC, `sort_order` ASC");
+        
+        $listing['variations'] = [];
+        foreach ($query->rows as $variation) {
+            // Get images for this variation
+            $image_query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "card_image` 
+                WHERE `card_id` = " . (int)$variation['card_id'] . " 
+                ORDER BY `sort_order` ASC");
+            
+            $variation['images'] = [];
+            foreach ($image_query->rows as $image) {
+                // Use numeric array for eBay (all images in order)
+                $variation['images'][] = $image['image_url'];
+            }
+            
+            $listing['variations'][] = $variation;
+        }
+        
+        // Calculate variation_count and total_quantity from loaded variations
+        $listing['variation_count'] = count($listing['variations']);
+        $listing['total_quantity'] = 0;
+        foreach ($listing['variations'] as $variation) {
+            $listing['total_quantity'] += (int)($variation['quantity'] ?? 0);
+        }
+        
+        //print('Listing variations: ' .  print_r($listing['variations'], true   )); // Debug
+        // Specifics are stored per-batch in oc_card_listing_description.specifics.
+        $listing['specifics'] = [];
+        
+        return $listing;
+    }
+    
+     /**
+     * Get descriptions for a listing in all languages
+     * @deprecated Utiliser getDescriptions() à la place, indexé par batch_name.
+     */
+
+    /**
+     * Regenerate descriptions with ALL current cards for a listing
+     * @param int $listing_id Listing ID
+     * @return bool Success
+     */
+    public function regenerateDescriptions(int $listing_id): bool {
+        // Get base listing info (set_name, sport, year, brand)
+        $listingRow = $this->db->query(
+            "SELECT `set_name`, `subset`, `sport`, `year`, `brand`
+               FROM `" . DB_PREFIX . "card_listing`
+              WHERE `listing_id` = " . (int)$listing_id . " LIMIT 1"
+        )->row;
+
+        if (empty($listingRow)) {
+            return false;
+        }
+
+        // ── Static specifics from oc_card_listing fields ──────────────────────
+        $staticSpecifics = $this->buildStaticSpecificsForListing($listing_id);
+
+        // ── Load batch metadata (card_sort_start/end, card_label_start/end) ───
+        $batchMeta = [];
+        foreach ($this->getBatches($listing_id) as $b) {
+            $batchMeta[(int)$b['batch_id']] = $b;  // keyed by FK batch_id
+        }
+
+        // ── Cards per batch (batch_id > 0 only) ────────────────────────────────
+        $batchCardsQuery = $this->db->query(
+            "SELECT c.`card_id`, c.`batch_id`, c.`player_name`, c.`team_name`, c.`card_number`, c.`title`, c.`description`, c.`condition_name`, c.`price`
+               FROM `" . DB_PREFIX . "card` c
+              WHERE c.`listing_id` = " . (int)$listing_id . "
+                AND c.`batch_id`   > 0
+              ORDER BY c.`batch_id` ASC, CAST(c.`card_number` AS UNSIGNED) ASC"
+        );
+
+        $batchCardMap = [];
+        foreach ($batchCardsQuery->rows as $bcard) {
+            $batchCardMap[(int)$bcard['batch_id']][] = $bcard;  // keyed by FK
+        }
+
+        if (empty($batchCardMap)) {
+            return false;
+        }
+
+        $totalBatches = count($batchCardMap);
+        $baseTitle    = $listingRow['set_name'] ?? '';
+        $sport        = $listingRow['sport']    ?? '';
+
+        foreach ($batchCardMap as $bid_fk => $bCards) {
+            $meta            = $batchMeta[$bid_fk] ?? [];
+            $batchLogicalNum = (int)($meta['batch_name'] ?? $bid_fk);  // logical number for title
+
+            // ── Generate title ─────────────────────────────────────────────
+            $singleCardData = (count($bCards) === 1) ? reset($bCards) : [];
+            if (!empty($singleCardData)) {
+                $singleCardData['year']     = $listingRow['year']     ?? '';
+                $singleCardData['brand']    = $listingRow['brand']    ?? '';
+                $singleCardData['set_name'] = $listingRow['set_name'] ?? '';
+            }
+            $title = $this->generateBatchTitle(
+                $baseTitle,
+                $batchLogicalNum,
+                $meta['card_sort_start']  ?? null,
+                $meta['card_sort_end']    ?? null,
+                $meta['card_label_start'] ?? '',
+                $meta['card_label_end']   ?? '',
+                $sport,
+                $singleCardData,
+                $listingRow['subset'] ?? ''
+            );
+
+            // ── Generate description ───────────────────────────────────────
+            // Enrich cards with listing-level fields missing from the SQL query
+            $enrichedCards = array_map(function($c) use ($listingRow) {
+                $c['year']     = $listingRow['year']     ?? '';
+                $c['brand']    = $listingRow['brand']    ?? '';
+                $c['set_name'] = $listingRow['set_name'] ?? '';
+                return $c;
+            }, $bCards);
+            $description = $this->generateBatchDescription($enrichedCards);
+
+            // ── Build specifics: static base + dynamic per-batch ──────────
+            $batchSpecifics = $staticSpecifics;
+
+            $dynPlayers = $this->getUniqueSpecificArray($bCards, 'player_name');
+            $dynTeams   = $this->getUniqueSpecificArray($bCards, 'team_name');
+            $dynNums    = $this->getUniqueSpecificArray($bCards, 'card_number');
+            sort($dynPlayers);
+            sort($dynTeams);
+            sort($dynNums);
+            if (!empty($dynPlayers)) $batchSpecifics['Player/Athlete'] = $dynPlayers;
+            if (!empty($dynTeams))   $batchSpecifics['Team']           = $dynTeams;
+            if (!empty($dynNums))    $batchSpecifics['Card Number']    = $dynNums;
+
+            // ── UPSERT (saveBatchDescription handles INSERT...ON DUPLICATE KEY) ──
+            $this->saveBatchDescription($listing_id, $bid_fk, $title, $description, 1, $batchSpecifics);
+        }
+
+        // Note: to_sync=1 est posé uniquement sur les cartes réellement modifiées
+        // (dans mergeCardGroup / cleanupOrphanVariant) — pas de blanket update ici.
+
+        return true;
+    }
+
+     /**
+     * Retourne les batches enregistrés pour un listing avec les card_ids.
+     * Lecture seule — ne modifie rien en base.
+     *
+     * @return array  [ ['batch'=>N, 'count'=>N, 'card_sort_start'=>X, 'card_sort_end'=>Y, 'card_ids'=>[…]], … ]
+     */
+    public function getBatchesWithCardIds(int $listing_id): array {
+        $batches = $this->getBatches($listing_id);
+        $result  = [];
+        foreach ($batches as $row) {
+            $batchFkId   = (int)$row['batch_id'];    // FK auto-inc
+            $batchName   = (int)$row['batch_name'];  // logical number
+            $cardQ       = $this->db->query(
+                "SELECT `card_id` FROM `" . DB_PREFIX . "card`
+                  WHERE `listing_id` = " . (int)$listing_id . "
+                    AND `batch_id`   = " . $batchFkId
+            );
+            $result[] = [
+                'batch'           => $batchName,   // logical number for callers
+                'batch_id'        => $batchFkId,   // FK
+                'count'           => (int)$row['variation_count'],
+                'card_sort_start' => (int)$row['card_sort_start'],
+                'card_sort_end'   => (int)$row['card_sort_end'],
+                'card_ids'        => array_column($cardQ->rows, 'card_id'),
+            ];
+        }
+        return $result;
+    }
+/** @deprecated — use getDescriptions() or buildStaticSpecificsForListing() */
+	public function getCardListingSpecifics($listing_id, $language_id = 1): array {
+		return $this->buildStaticSpecificsForListing($listing_id);
+	}
+
+    /**
+     * Build the static listing-level eBay specifics from oc_card_listing fields.
+     * These are identical across all batches (e.g. Sport, Brand, Year, Set).
+     * Dynamic fields (Player/Athlete, Team, Card Number) are added per-batch.
+     */
+    private function buildStaticSpecificsForListing(int $listing_id): array {
+        $row = $this->db->query(
+            "SELECT `sport`, `brand`, `year`, `set_name`
+               FROM `" . DB_PREFIX . "card_listing`
+              WHERE `listing_id` = " . (int)$listing_id . "
+              LIMIT 1"
+        )->row;
+
+        if (empty($row)) {
+            return [];
+        }
+
+        $year  = (int)($row['year'] ?? 0);
+        $sport = $row['sport']    ?? '';
+        $brand = $row['brand']    ?? '';
+        $set   = $row['set_name'] ?? '';
+
+        $specifics = [
+            'Sport'                     => $sport,
+            'Type'                      => 'Sports Trading Card',
+            'League'                    => $this->getLeagueFromSport($sport),
+            'Set'                       => $set,
+            'Season'                    => $this->getSeasonFromSetName($set),
+            'Year Manufactured'         => $year > 0 ? (string)$year : null,
+            'Manufacturer'              => $brand ?: null,
+            'Brand'                     => $brand ?: null,
+            'Card Size'                 => 'Standard',
+            'Original/Licensed Reprint' => 'Original',
+            'Vintage'                   => $year > 0 ? ($year <= 1980 ? 'Yes' : 'No') : null,
+            'Language'                  => 'English',
+            'Material'                  => 'Card Stock',
+            'Graded'                    => 'No',
+            'Autographed'               => 'No',
+        ];
+
+        // Remove null / empty values
+        return array_filter($specifics, fn($v) => $v !== null && $v !== '');
+    }
+
+
+    /**
+     * Get distinct set names for autocomplete
+     */
+    public function getDistinctSetNames(string $filter = ''): array {
+        $sql = "SELECT DISTINCT l.set_name 
+                FROM `" . DB_PREFIX . "card_listing` l 
+                WHERE 1=1";
+        
+        if ($filter != '') {
+            $sql .= " AND l.set_name LIKE '" . $this->db->escape($filter) . "%'";
+        }
+        
+        $sql .= " ORDER BY l.set_name ASC LIMIT 10";
+        
+        $query = $this->db->query($sql);
+        return $query->rows;
+    }
+    
+    /**
+     * Get distinct sports for autocomplete
+     */
+    public function getDistinctSports(string $filter = ''): array {
+        $sql = "SELECT DISTINCT l.sport 
+                FROM `" . DB_PREFIX . "card_listing` l 
+                WHERE 1=1";
+        
+        if ($filter != '') {
+            $sql .= " AND l.sport LIKE '" . $this->db->escape($filter) . "%'";
+        }
+        
+        $sql .= " ORDER BY l.sport ASC LIMIT 10";
+        
+        $query = $this->db->query($sql);
+        return $query->rows;
+    }
+    
+    /**
+     * Get distinct brands for autocomplete
+     */
+    public function getDistinctBrands(string $filter = ''): array {
+        $sql = "SELECT DISTINCT l.brand 
+                FROM `" . DB_PREFIX . "card_listing` l 
+                WHERE l.brand != '' AND l.brand IS NOT NULL";
+        
+        if ($filter != '') {
+            $sql .= " AND l.brand LIKE '" . $this->db->escape($filter) . "%'";
+        }
+        
+        $sql .= " ORDER BY l.brand ASC LIMIT 10";
+        
+        $query = $this->db->query($sql);
+        return $query->rows;
+    }
+
+    public function getListings(array $filters = []): array {
+        $sql = "SELECT l.*, 
+                ld.title, ld.description, ld.ebay_item_id,
+                ct.name as card_type_name,
+                COUNT(DISTINCT v.card_id) as variation_count,
+                COALESCE((SELECT SUM(qc.quantity) FROM `" . DB_PREFIX . "card` qc WHERE qc.listing_id = l.listing_id AND qc.status = 1), 0) as total_quantity,
+                (SELECT COALESCE(SUM(vc.price * vc.quantity), 0) FROM `" . DB_PREFIX . "card` vc WHERE vc.listing_id = l.listing_id) as total_value,
+                CASE WHEN EXISTS (
+                    SELECT 1 FROM `" . DB_PREFIX . "card_listing_description` ld2 
+                    WHERE ld2.listing_id = l.listing_id 
+                    AND ld2.ebay_item_id IS NOT NULL 
+                    AND ld2.ebay_item_id != ''
+                ) THEN 1 ELSE 0 END as is_published,
+                (SELECT COUNT(DISTINCT cb.batch_id) FROM `" . DB_PREFIX . "card` cb
+                 WHERE cb.listing_id = l.listing_id AND cb.batch_id > 0) as total_batches,
+                (SELECT COUNT(DISTINCT ld4.batch_id) FROM `" . DB_PREFIX . "card_listing_description` ld4
+                 WHERE ld4.listing_id = l.listing_id AND ld4.batch_id > 0 AND ld4.language_id = 1
+                 AND ld4.ebay_item_id IS NOT NULL AND ld4.ebay_item_id != ''
+                 AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "card` cx WHERE cx.listing_id = l.listing_id AND cx.batch_id = ld4.batch_id)) as published_batches,
+                (SELECT ci.image_url FROM `" . DB_PREFIX . "card_image` ci
+                 INNER JOIN `" . DB_PREFIX . "card` c2 ON ci.card_id = c2.card_id
+                 WHERE c2.listing_id = l.listing_id AND ci.image_url != '' AND ci.image_url IS NOT NULL
+                 ORDER BY c2.sort_order ASC, c2.card_id ASC, ci.sort_order ASC LIMIT 1) as first_image,
+                (SELECT COUNT(*) FROM `" . DB_PREFIX . "card` cs
+                 WHERE cs.listing_id = l.listing_id AND cs.to_sync = 1) as cards_to_sync,
+                (SELECT
+                    CASE
+                        WHEN COUNT(*) = 0 THEN 0
+                        WHEN SUM(CASE WHEN b2.health_status IN (2,3) THEN 1 ELSE 0 END) > 0 THEN 2
+                        WHEN SUM(CASE WHEN b2.health_status = 1 THEN 1 ELSE 0 END) = COUNT(*)
+                             AND (MIN(b2.health_checked_at) IS NULL OR MIN(b2.health_checked_at) < DATE_SUB(NOW(), INTERVAL 6 MONTH)) THEN 0
+                        WHEN SUM(CASE WHEN b2.health_status = 1 THEN 1 ELSE 0 END) = COUNT(*) THEN 1
+                        ELSE 0
+                    END
+                 FROM `" . DB_PREFIX . "card_listing_batch` b2
+                 WHERE b2.listing_id = l.listing_id) as health_status,
+                (SELECT GROUP_CONCAT(DISTINCT b3.health_error ORDER BY b3.batch_name SEPARATOR ' | ')
+                 FROM `" . DB_PREFIX . "card_listing_batch` b3
+                 WHERE b3.listing_id = l.listing_id AND b3.health_error IS NOT NULL AND b3.health_error != '') as health_error
+            FROM `" . DB_PREFIX . "card_listing` l
+            LEFT JOIN `" . DB_PREFIX . "card_listing_description` ld 
+                ON (l.listing_id = ld.listing_id AND ld.language_id = 1)
+            LEFT JOIN `" . DB_PREFIX . "card_type` ct
+                ON (l.card_type_id = ct.card_type_id)
+            LEFT JOIN `" . DB_PREFIX . "card` v 
+                ON (l.listing_id = v.listing_id)
+            WHERE 1=1";
+        
+        if (!empty($filters['filter_listing_id'])) {
+            $sql .= " AND l.listing_id = " . (int)$filters['filter_listing_id'];
+        }
+        
+        if (!empty($filters['filter_set_name'])) {
+            $sql .= " AND l.set_name LIKE '%" . $this->db->escape($filters['filter_set_name']) . "%'";
+        }
+        
+        if (!empty($filters['filter_card_type_id'])) {
+            $sql .= " AND l.card_type_id = " . (int)$filters['filter_card_type_id'];
+        }
+        
+        if (!empty($filters['filter_status']) || $filters['filter_status'] === '0') {
+            $sql .= " AND l.status = " . (int)$filters['filter_status'];
+        }
+        
+        if (!empty($filters['filter_year'])) {
+            $sql .= " AND l.year = " . (int)$filters['filter_year'];
+        }
+        
+        if (!empty($filters['filter_manufacturer'])) {
+            $sql .= " AND l.brand = '" . $this->db->escape($filters['filter_manufacturer']) . "'";
+        }
+
+        if (!empty($filters['filter_location'])) {
+            $sql .= " AND l.location LIKE '%" . $this->db->escape($filters['filter_location']) . "%'";
+        }
+        
+        if (!empty($filters['filter_ebay_item_id'])) {
+            $sql .= " AND ld.ebay_item_id = '" . $this->db->escape($filters['filter_ebay_item_id']) . "'";
+        }
+        
+        if (!empty($filters['filter_language'])) {
+            $sql .= " AND ld.language_id = " . (int)$filters['filter_language'];
+        }
+        
+        $sql .= " GROUP BY l.listing_id";
+        
+        // HAVING filters (combine multiple conditions safely)
+        $having = [];
+        if (!empty($filters['filter_publish_status'])) {
+            if ($filters['filter_publish_status'] === 'none') {
+                $having[] = "published_batches = 0";
+            } elseif ($filters['filter_publish_status'] === 'partial') {
+                $having[] = "published_batches > 0 AND published_batches < total_batches";
+            } elseif ($filters['filter_publish_status'] === 'full') {
+                $having[] = "published_batches > 0 AND published_batches >= total_batches";
+            }
+        }
+        if (isset($filters['filter_sync']) && $filters['filter_sync'] !== '') {
+            if ($filters['filter_sync'] === '1') {
+                $having[] = "cards_to_sync > 0";
+            } elseif ($filters['filter_sync'] === '0') {
+                $having[] = "cards_to_sync = 0";
+            }
+        }
+        if (!empty($having)) {
+            $sql .= " HAVING " . implode(" AND ", $having);
+        }
+        
+        // Sorting
+        $sort_data = [
+            'l.listing_id',
+            'l.set_name',
+            'ct.name',
+            'l.year',
+            'l.brand',
+            'variation_count',
+            'total_quantity',
+            'total_value',
+            'l.location',
+            'l.status',
+            'l.date_added'
+        ];
+        
+        if (isset($filters['sort']) && in_array($filters['sort'], $sort_data)) {
+            $sql .= " ORDER BY " . $filters['sort'];
+        } else {
+            $sql .= " ORDER BY l.date_added";
+        }
+        
+        if (isset($filters['order']) && ($filters['order'] == 'DESC')) {
+            $sql .= " DESC";
+        } else {
+            $sql .= " ASC";
+        }
+        
+        if (isset($filters['start']) || isset($filters['limit'])) {
+            if ($filters['start'] < 0) {
+                $filters['start'] = 0;
+            }
+            
+            if ($filters['limit'] < 1) {
+                $filters['limit'] = 20;
+            }
+            
+            $sql .= " LIMIT " . (int)$filters['start'] . "," . (int)$filters['limit'];
+        }
+        
+        $query = $this->db->query($sql);
+        return $query->rows;
+    }
+    
+    /**
+     * Get total number of listings with filters
+     */
+    public function getTotalListings(array $filters = []): int {
+        $sql = "SELECT COUNT(DISTINCT l.listing_id) as total
+            FROM `" . DB_PREFIX . "card_listing` l
+            LEFT JOIN `" . DB_PREFIX . "card_listing_description` ld 
+                ON (l.listing_id = ld.listing_id AND ld.language_id = 1)
+            LEFT JOIN `" . DB_PREFIX . "card` v 
+                ON (l.listing_id = v.listing_id)
+            WHERE 1=1";
+        
+        if (!empty($filters['filter_listing_id'])) {
+            $sql .= " AND l.listing_id = " . (int)$filters['filter_listing_id'];
+        }
+        
+        if (!empty($filters['filter_set_name'])) {
+            $sql .= " AND l.set_name LIKE '%" . $this->db->escape($filters['filter_set_name']) . "%'";
+        }
+        
+        if (!empty($filters['filter_card_type_id'])) {
+            $sql .= " AND l.card_type_id = " . (int)$filters['filter_card_type_id'];
+        }
+        
+        if (!empty($filters['filter_status']) || $filters['filter_status'] === '0') {
+            $sql .= " AND l.status = " . (int)$filters['filter_status'];
+        }
+        
+        if (!empty($filters['filter_year'])) {
+            $sql .= " AND l.year = " . (int)$filters['filter_year'];
+        }
+        
+        if (!empty($filters['filter_manufacturer'])) {
+            $sql .= " AND l.brand = '" . $this->db->escape($filters['filter_manufacturer']) . "'";
+        }
+
+        if (!empty($filters['filter_location'])) {
+            $sql .= " AND l.location LIKE '%" . $this->db->escape($filters['filter_location']) . "%'";
+        }
+        
+        if (!empty($filters['filter_ebay_item_id'])) {
+            $sql .= " AND ld.ebay_item_id = '" . $this->db->escape($filters['filter_ebay_item_id']) . "'";
+        }
+        
+        if (!empty($filters['filter_language'])) {
+            $sql .= " AND ld.language_id = " . (int)$filters['filter_language'];
+        }
+        
+        // Publish status filter using correlated subqueries
+        if (!empty($filters['filter_publish_status'])) {
+            $pub_sub = "(SELECT COUNT(DISTINCT ld_ps.batch_id) FROM `" . DB_PREFIX . "card_listing_description` ld_ps WHERE ld_ps.listing_id = l.listing_id AND ld_ps.batch_id > 0 AND ld_ps.language_id = 1 AND ld_ps.ebay_item_id IS NOT NULL AND ld_ps.ebay_item_id != '' AND EXISTS (SELECT 1 FROM `" . DB_PREFIX . "card` cx WHERE cx.listing_id = l.listing_id AND cx.batch_id = ld_ps.batch_id))";
+            $tot_sub = "(SELECT COUNT(DISTINCT cb_pt.batch_id) FROM `" . DB_PREFIX . "card` cb_pt WHERE cb_pt.listing_id = l.listing_id AND cb_pt.batch_id > 0)";
+            if ($filters['filter_publish_status'] === 'none') {
+                $sql .= " AND $pub_sub = 0";
+            } elseif ($filters['filter_publish_status'] === 'partial') {
+                $sql .= " AND $pub_sub > 0 AND $pub_sub < $tot_sub";
+            } elseif ($filters['filter_publish_status'] === 'full') {
+                $sql .= " AND $pub_sub > 0 AND $pub_sub >= $tot_sub";
+            }
+        }
+
+        // Sync filter
+        if (isset($filters['filter_sync']) && $filters['filter_sync'] !== '') {
+            $sync_sub = "(SELECT COUNT(*) FROM `" . DB_PREFIX . "card` cs WHERE cs.listing_id = l.listing_id AND cs.to_sync = 1)";
+            if ($filters['filter_sync'] === '1') {
+                $sql .= " AND $sync_sub > 0";
+            } elseif ($filters['filter_sync'] === '0') {
+                $sql .= " AND $sync_sub = 0";
+            }
+        }
+        
+        $query = $this->db->query($sql);
+        
+        return (int)$query->row['total'];
+    }
+    
+    /**
+     * Update listing status (draft, active, ended)
+     */
+    public function updateStatus(int $listing_id, int $status): bool {
+        $this->db->query("UPDATE `" . DB_PREFIX . "card_listing` SET 
+            `status` = " . (int)$status . ",
+            `date_modified` = NOW()
+            WHERE `listing_id` = " . (int)$listing_id);
+        
+        return true;
+    }
+    
+    /**
+     * Add history entry
+     */
+    private function addHistory(int $listing_id, string $action, ?string $ebay_response = null): void {
+        $user_id = isset($this->session->data['user_id']) ? (int)$this->session->data['user_id'] : 0;
+        
+        $this->db->query("INSERT INTO `" . DB_PREFIX . "card_listing_history` SET 
+            `listing_id` = " . (int)$listing_id . ",
+            `action` = '" . $this->db->escape($action) . "',
+            `ebay_response` = " . ($ebay_response ? "'" . $this->db->escape($ebay_response) . "'" : "NULL") . ",
+            `user_id` = " . $user_id . ",
+            `date_added` = NOW()");
+    }
+    
+    /**
+     * Detect sport from group data
+     * @param array $group Group data with set name and cards
+     * @return string Detected sport or 'Unknown'
+     */
+    private function detectSport(array $group): string {
+        $set_name = strtolower($group['set_name'] ?? $group['set'] ?? '');
+        
+        // Check set name for sport keywords
+        $sport_keywords = [
+            'Basketball' => ['basketball', 'nba', 'hoops', 'hardwood'],
+            'Hockey' => ['hockey', 'nhl', 'ice'],
+            'Baseball' => ['baseball', 'mlb', 'diamond'],
+            'Football' => ['football', 'nfl', 'gridiron'],
+            'Soccer' => ['soccer', 'mls', 'fifa', 'football'],
+            'Wrestling' => ['wwe', 'wwf', 'wrestling', 'wcw'],
+            'UFC' => ['ufc', 'mma', 'fighting'],
+            'Racing' => ['nascar', 'racing', 'f1', 'formula']
+        ];
+        
+        foreach ($sport_keywords as $sport => $keywords) {
+            foreach ($keywords as $keyword) {
+                if (stripos($set_name, $keyword) !== false) {
+                    return $sport;
+                }
+            }
+        }
+        
+        // Check card titles if set name didn't match
+        if (!empty($group['cards'])) {
+            foreach ($group['cards'] as $card) {
+                $title = strtolower($card['title'] ?? '');
+                
+                foreach ($sport_keywords as $sport => $keywords) {
+                    foreach ($keywords as $keyword) {
+                        if (stripos($title, $keyword) !== false) {
+                            return $sport;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return 'Unknown';
+    }
+    
+    /**
+     * Convert CSV group to database format
+     * Maps CSV structure to database listing format
+     */
+    public function convertGroupToListing(array $group, array $config): array {
+        // Detect sport from set name or cards
+        $sport = !empty($group['cards'][0]['category']) ? trim($group['cards'][0]['category']) : 'Unknown';
+        
+        // Get card_type_id from sport/category name
+        $this->load->model('shopmanager/card/card_type');
+        $card_type_id = $this->model_shopmanager_card_card_type->getCardTypeIdByName($sport);
+        
+        $listing_data = [
+            'set_name'            => $group['set_name'] ?? $group['set'] ?? $group['key'] ?? 'Unknown Set',
+            'subset'              => $group['subset'] ?? '',
+            'sport'               => $sport,
+            'card_type_id'        => $card_type_id,
+            'existing_listing_id' => (int)($group['existing_listing_id'] ?? 0),
+            'year'  => $group['year']  ?? null,
+            'brand' => $group['brand'] ?? null,
+            'title' => $group['title'] ,
+            'description' => $this->generateDescription($group['cards'], $config),
+            'ebay_category_id' => $config['ebay_category_id'] ?? null,
+            'condition_id' => $config['condition_id'] ?? 4000,
+            'variations' => [],
+            'specifics' => [
+                // Core
+                
+                'Sport' => $sport,
+                'Type' => 'Sports Trading Card',
+                'League' => $this->getLeagueFromSport($sport),
+                'Set' => $group['set_name'] ?? $group['set'] ?? $group['key'] ?? 'Unknown Set',
+                'Season' => $this->getSeasonFromSetName($group['set_name'] ?? $group['set'] ?? ''),
+                'Year Manufactured' => $group['year'] ?? '',
+                'Manufacturer' => $group['brand'] ?? 'Unknown',
+                'Brand' => $group['brand'] ?? 'Unknown',
+
+                // Card basics
+                'Card Size' => 'Standard',
+                'Original/Licensed Reprint' => 'Original',
+                'Vintage' => ((int)($group['year'] ?? 0) <= 1980) ? 'Yes' : 'No',
+                'Language' =>  $group['language'] ?? 'English',
+                'Material' => 'Card Stock',
+
+                // Variation-level normally (mais utile en fallback)
+                'Player/Athlete' => $this->getUniqueSpecificArray($group['cards'], 'player'),
+                'Team' => $this->getUniqueSpecificArray($group['cards'], 'team'),
+                'Card Number' => $this->getUniqueSpecificArray($group['cards'], 'card_number'),
+                'Parallel/Variety' => null,
+                'Features' => null,
+
+                // Grading (si non gradé par défaut)
+                'Graded' => 'No',
+                'Professional Grader' => null,
+                'Grade' => null,
+                'Certification Number' => null,
+
+                // Autres souvent présents
+                'Autographed' => 'No',
+                'Insert Set' => null,
+            ]
+
+        ];
+        
+
+        
+        // ===============================================
+        // PROCESS CARDS - Form already sends grouped data with all_images and quantity
+        // ===============================================
+        
+        foreach ($group['cards'] as $idx => $card) {
+            // Skip empty cards
+            if (empty($card['title'])) {
+                continue;
+            }
+            
+            $title = trim($card['title']);
+            $price = round((float)($card['sale_price'] ?? 0), 2);
+            $quantity = isset($card['quantity']) ? (int)$card['quantity'] : 1;
+            
+            // Add quantity indicator to title if multiple copies
+            $final_title = $title;
+            
+            $variation = [
+                'title' => $final_title,
+                'description' => $card['description'] ?? $title,
+                'card_number' => $card['card_number'] ?? '',
+                'player' => $card['player'] ?? '',
+                'team' => $card['team'] ?? '',
+                'year' => $card['year'] ?? null,
+                'brand' => $card['brand'] ?? null,
+                'condition' => $card['condition'] ?? 'Near Mint or Better',
+                'price' => $price,
+                'quantity' => $quantity,
+                'merge' => isset($card['merge']) ? (int)$card['merge'] : 1, // Default merge=1 (allow merging)
+                'images' => []
+            ];
+            
+            // Extract images from all_images field (pipe-separated)
+            if (!empty($card['all_images'])) {
+                $image_urls = array_filter(explode('|', $card['all_images']));
+                $img_count = 0;
+                
+                // DEBUG: Log images
+                //error_log("DEBUG convertGroupToListing - Card: {$title}, all_images raw: " . $card['all_images']);
+                //error_log("DEBUG convertGroupToListing - Parsed images count: " . count($image_urls));
+                
+                foreach ($image_urls as $url) {
+                    if ($img_count >= 12) break; // eBay limit
+                    $img_count++;
+                    $key = 'image_' . $img_count;
+                    $variation['images'][$key] = trim($url);
+                }
+            } else {
+                // FALLBACK: Use front_image and back_image if all_images is missing
+                //error_log("DEBUG convertGroupToListing - Card: {$title}, all_images is EMPTY, using front+back fallback");
+                $img_count = 0;
+                if (!empty($card['front_image'])) {
+                    $img_count++;
+                    $variation['images']['image_' . $img_count] = trim($card['front_image']);
+                }
+                if (!empty($card['back_image'])) {
+                    $img_count++;
+                    $variation['images']['image_' . $img_count] = trim($card['back_image']);
+                }
+            }
+            
+            $listing_data['variations'][] = $variation;
+        }
+        
+        return $listing_data;
+    }
+    
+    private function getSeasonFromSetName(string $setName): string
+    {
+        if (!$setName) {
+            return '';
+        }
+
+        // match 1990-91 ou 2001-02
+        if (preg_match('/\b(19|20)\d{2}\-\d{2}\b/', $setName, $matches)) {
+            return $matches[0];
+        }
+
+        // fallback année simple
+        if (preg_match('/\b(19|20)\d{2}\b/', $setName, $matches)) {
+            return $matches[0];
+        }
+
+        return '';
+    }
+
+    private function getUniqueSpecificArray(array $cards, string $field): array
+    {
+        $values = [];
+
+        foreach ($cards as $card) {
+            if (!empty($card[$field])) {
+                $values[] = trim($card[$field]);
+            }
+        }
+
+        return array_values(array_unique($values));
+    }
+
+
+    /**
+     * Get league abbreviation from sport name
+     */
+    private function getLeagueFromSport(string $sport): string {
+
+    
+        $leagues = [
+            'basketball' => 'NBA',
+            'hockey' => 'NHL',
+            'baseball' => 'MLB',
+            'football' => 'NFL',
+            'soccer' => 'MLS',
+            'wrestling' => 'WWE',
+            'ufc' => 'UFC',
+            'racing' => 'NASCAR'
+        ];
+        
+        return $leagues[strtolower($sport)] ?? '';
+    }
+    
+    /**
+     * Add a single variation to an existing listing (public, used by confirmImport)
+     */
+    public function addVariationToListing(int $listing_id, array $variation): int {
+        $sort_order = $this->getMaxVariationSortOrder($listing_id) + 1;
+        return $this->saveVariation($listing_id, $variation, $sort_order);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Private helpers pour le merge
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Consolide les images d'un dupe vers un keeper.
+     * Met à jour card_image.card_id pour les URLs uniques, supprime les doublons.
+     * @param  array  &$existing_urls  Liste courante URLs du keeper (modifiée in-place)
+     * @return int    Nombre d'images déplacées
+     */
+    private function consolidateImages(int $keeper_id, int $dupe_id, array &$existing_urls): int {
+        $moved     = 0;
+        $dupe_imgs = $this->db->query(
+            "SELECT `image_url`, `sort_order` FROM `" . DB_PREFIX . "card_image`
+             WHERE `card_id` = " . $dupe_id . "
+             ORDER BY `sort_order` ASC, `image_id` ASC"
+        );
+        foreach ($dupe_imgs->rows as $img) {
+            if (!in_array($img['image_url'], $existing_urls)) {
+                $this->db->query(
+                    "UPDATE `" . DB_PREFIX . "card_image`
+                       SET `card_id`    = " . $keeper_id . ",
+                           `sort_order` = " . (1000 + count($existing_urls)) . "
+                     WHERE `card_id`   = " . $dupe_id . "
+                       AND `image_url` = '" . $this->db->escape($img['image_url']) . "'"
+                );
+                $existing_urls[] = $img['image_url'];
+                $moved++;
+            } else {
+                $this->db->query(
+                    "DELETE FROM `" . DB_PREFIX . "card_image`
+                     WHERE `card_id`   = " . $dupe_id . "
+                       AND `image_url` = '" . $this->db->escape($img['image_url']) . "'"
+                );
+            }
+        }
+        return $moved;
+    }
+
+    /**
+     * Renumérote les sort_order de oc_card_image pour une carte donnée (1, 2, 3…).
+     * Appeler après consolidateImages pour éviter les collisions de sort_order.
+     */
+    private function renormalizeImageSortOrder(int $card_id): void {
+        $rows = $this->db->query(
+            "SELECT `image_id` FROM `" . DB_PREFIX . "card_image`
+             WHERE `card_id` = " . (int)$card_id . "
+             ORDER BY `sort_order` ASC, `image_id` ASC"
+        )->rows;
+        $sort = 1;
+        foreach ($rows as $row) {
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_image`
+                   SET `sort_order` = " . $sort . "
+                 WHERE `image_id` = " . (int)$row['image_id']
+            );
+            $sort++;
+        }
+    }
+
+    /**
+     * Enregistre une carte supprimée dans oc_card_pending_delete pour retrait eBay différé.
+     * Si offer_id est vide, le batch n'a jamais été publié sur eBay → rien à retirer.
+     */
+    private function addPendingDelete(int $card_id, int $listing_id, string $inventory_key, string $offer_id = '', string $reason = 'merge'): void {
+        if (empty($offer_id)) {
+            return; // Pas de ebay_item_id → pas de suppression eBay nécessaire
+        }
+        $this->db->query(
+            "INSERT INTO `" . DB_PREFIX . "card_pending_delete`
+                 (`card_id`, `listing_id`, `inventory_key`, `offer_id`, `reason`, `processed`, `date_added`)
+             VALUES (" . $card_id . ",
+                     " . $listing_id . ",
+                     '" . $this->db->escape($inventory_key) . "',
+                     '" . $this->db->escape($offer_id) . "',
+                     '" . $this->db->escape($reason) . "',
+                     0, NOW())"
+        );
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Merge duplicate cards in oc_card, consolidate images, delete duplicates.
+     * Passe 1 : exact duplicates (même card_number + player_name).
+     * Passe 2 : variantes lettres (1a/1b → 1) si prix < MERGE_PRICE_THRESHOLD et spread < MERGE_SPREAD_THRESHOLD.
+     * @return array stats
+     */
+    public function mergeAndDeduplicateCards(int $listing_id): array {
+        $stats = [
+            'merged'               => 0,
+            'deleted'              => 0,
+            'images_consolidated'  => 0,
+            'letter_merged'        => 0,
+            'letter_warned_price'  => 0,
+            'letter_warned_format' => 0,
+            'ebay_pending_deletes' => 0,
+            'ebay_live_warnings'   => [],
+        ];
+
+        // ── Passe 1 : duplicates exacts (même card_number + player_name) ──────
+        $query = $this->db->query(
+            "SELECT * FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = " . (int)$listing_id . "
+               AND `merge` = 1
+             ORDER BY `card_id` ASC"
+        );
+
+        if ($query->num_rows > 0) {
+            // Group by dedup key: card_number + player_name  (BUGFIX: was player)
+            $groups = [];
+            foreach ($query->rows as $card) {
+                $key = strtolower(trim($card['card_number'] ?? '') . '|' . trim($card['player_name'] ?? ''));
+                $groups[$key][] = $card;
+            }
+
+            foreach ($groups as $dupes) {
+                if (count($dupes) <= 1) {
+                    continue;
+                }
+
+                $keeper    = $dupes[0];
+                $keeper_id = (int)$keeper['card_id'];
+                $total_qty  = (int)$keeper['quantity'];
+                $best_price = (float)$keeper['price'];
+
+                // Collect keeper images
+                $keeperImgQuery  = $this->db->query(
+                    "SELECT `image_url` FROM `" . DB_PREFIX . "card_image` WHERE `card_id` = " . $keeper_id
+                );
+                $existing_images = array_column($keeperImgQuery->rows, 'image_url');
+
+                for ($i = 1; $i < count($dupes); $i++) {
+                    $dupe    = $dupes[$i];
+                    $dupe_id = (int)$dupe['card_id'];
+
+                    $total_qty  += (int)$dupe['quantity'];
+                    if ((float)$dupe['price'] > $best_price) {
+                        $best_price = (float)$dupe['price'];
+                    }
+
+                    // Warning si live sur eBay
+                    if (!empty($dupe['offer_id'])) {
+                        $stats['ebay_live_warnings'][] = [
+                            'card_id'       => $dupe_id,
+                            'card_number'   => $dupe['card_number'],
+                            'player_name'   => $dupe['player_name'],
+                            'offer_id'      => $dupe['offer_id'],
+                            'inventory_key' => $dupe['inventory_key'],
+                        ];
+                    }
+
+                    // Tracer pour suppression eBay différée
+                    $this->addPendingDelete($dupe_id, $listing_id, $dupe['inventory_key'] ?? '', $dupe['offer_id'] ?? '', 'merge');
+                    $stats['ebay_pending_deletes']++;
+
+                    // Consolider les images
+                    $moved = $this->consolidateImages($keeper_id, $dupe_id, $existing_images);
+                    $stats['images_consolidated'] += $moved;
+
+                    // Supprimer le dupe
+                    $this->db->query("DELETE FROM `" . DB_PREFIX . "card` WHERE `card_id` = " . $dupe_id);
+                    $stats['deleted']++;
+                }
+
+                // Renormaliser sort_order des images du keeper après les fusions
+                $this->renormalizeImageSortOrder($keeper_id);
+
+                // Mettre à jour le keeper : qty + prix + to_sync + inventory_key
+                $newKey = self::buildInventoryKey($keeper_id, $keeper['card_number']);
+                $this->db->query(
+                    "UPDATE `" . DB_PREFIX . "card`
+                       SET `quantity`      = " . (int)$total_qty . ",
+                           `price`         = " . round($best_price, 2) . ",
+                           `to_sync`       = 1,
+                           `inventory_key` = '" . $this->db->escape($newKey) . "'
+                     WHERE `card_id` = " . $keeper_id
+                );
+                $stats['merged']++;
+            }
+        }
+
+        // ── Passe 2 : variantes lettres (1a/1b → 1) ──────────────────────────
+        $queryP2 = $this->db->query(
+            "SELECT * FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = " . (int)$listing_id . "
+               AND `merge` = 1
+             ORDER BY `card_id` ASC"
+        );
+
+        $letterGroups    = [];
+        $letterGroupHas  = []; // true si le groupe a au moins une variante avec lettre
+        foreach ($queryP2->rows as $card) {
+            $cn = trim($card['card_number'] ?? '');
+            // Accepte : "101b" (lettre) ET "101" (base pure — potentiellement jumeau d'une variante)
+            if (!preg_match('/^(\d+)([a-zA-Z])?$/', $cn, $m)) {
+                continue;
+            }
+            $base      = $m[1];
+            $hasLetter = isset($m[2]) && $m[2] !== '';
+            $rawPlayer = strtolower(trim($card['player_name'] ?? ''));
+            // Strip trailing uppercase card markers e.g. "DPK, CL", "SP", "RC"
+            $playerKey = preg_replace('/[\s,]+[a-z]{2,5}(,\s*[a-z]{2,5})*\s*$/i', '', $rawPlayer);
+            $gkey      = $base . '|' . $playerKey;
+            $letterGroups[$gkey][] = $card;
+            if ($hasLetter) {
+                $letterGroupHas[$gkey] = true;
+            }
+        }
+
+        foreach ($letterGroups as $groupKey => $variants) {
+            // Doit avoir >= 2 cartes ET au moins une avec suffixe lettre
+            if (count($variants) <= 1 || empty($letterGroupHas[$groupKey])) {
+                continue;
+            }
+
+            $prices   = array_map(fn($c) => (float)$c['price'], $variants);
+            $maxPrice = max($prices);
+            $minPrice = min($prices);
+            $spread   = $maxPrice > 0 ? (($maxPrice - $minPrice) / $maxPrice) : 0;
+
+            if ($maxPrice >= self::MERGE_PRICE_THRESHOLD || $spread >= self::MERGE_SPREAD_THRESHOLD) {
+                $stats['letter_warned_price']++;
+                continue;
+            }
+
+            [$base] = explode('|', $groupKey, 2);
+
+            // Survivor = carte sans lettre si elle existe, sinon premier card_id
+            $survivor = null;
+            foreach ($variants as $v) {
+                if (trim($v['card_number']) === $base) {
+                    $survivor = $v;
+                    break;
+                }
+            }
+            if ($survivor === null) {
+                $survivor = $variants[0];
+            }
+            $survivor_id = (int)$survivor['card_id'];
+
+            // Images du survivor
+            $sImgQ         = $this->db->query(
+                "SELECT `image_url` FROM `" . DB_PREFIX . "card_image` WHERE `card_id` = " . $survivor_id
+            );
+            $survivorImages = array_column($sImgQ->rows, 'image_url');
+
+            $totalQty  = (int)$survivor['quantity'];
+            $bestPrice = (float)$survivor['price'];
+
+            foreach ($variants as $v) {
+                if ((int)$v['card_id'] === $survivor_id) {
+                    continue;
+                }
+                $vid = (int)$v['card_id'];
+
+                $totalQty += (int)$v['quantity'];
+                if ((float)$v['price'] > $bestPrice) {
+                    $bestPrice = (float)$v['price'];
+                }
+
+                // Warning si live sur eBay
+                if (!empty($v['offer_id'])) {
+                    $stats['ebay_live_warnings'][] = [
+                        'card_id'       => $vid,
+                        'card_number'   => $v['card_number'],
+                        'player_name'   => $v['player_name'],
+                        'offer_id'      => $v['offer_id'],
+                        'inventory_key' => $v['inventory_key'],
+                    ];
+                }
+
+                // Tracer pour suppression eBay
+                $this->addPendingDelete($vid, $listing_id, $v['inventory_key'] ?? '', $v['offer_id'] ?? '', 'merge_letter');
+                $stats['ebay_pending_deletes']++;
+
+                // Consolider images
+                $moved = $this->consolidateImages($survivor_id, $vid, $survivorImages);
+                $stats['images_consolidated'] += $moved;
+
+                // Supprimer la variante
+                $this->db->query("DELETE FROM `" . DB_PREFIX . "card` WHERE `card_id` = " . $vid);
+                $stats['deleted']++;
+            }
+
+            // Renormaliser sort_order des images du survivor après les fusions
+            $this->renormalizeImageSortOrder($survivor_id);
+
+            // Normaliser le survivor
+            $oldNum   = $survivor['card_number'];
+            $newTitle = preg_replace('/\b' . preg_quote($oldNum, '/') . '\b/', $base, $survivor['title'] ?? '');
+            $newKey   = self::buildInventoryKey($survivor_id, $base);
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card`
+                   SET `quantity`      = " . (int)$totalQty . ",
+                       `price`         = " . round($bestPrice, 2) . ",
+                       `card_number`   = '" . $this->db->escape($base) . "',
+                       `title`         = '" . $this->db->escape($newTitle) . "',
+                       `inventory_key` = '" . $this->db->escape($newKey) . "',
+                       `to_sync`       = 1
+                 WHERE `card_id` = " . $survivor_id
+            );
+            $stats['letter_merged']++;
+        }
+
+        // Update listing totals
+        $this->updateListingTotals($listing_id);
+
+        return $stats;
+    }
+
+    /**
+     * Build the full regen preview groups (Pass 1/2/3) from SQL — ALL cards,
+     * not limited by pagination. Called by getRegenPreview() controller endpoint.
+     *
+     * @param  int   $listing_id
+     * @return array { p1: [...], p2: [...], p3: [...] }
+     */
+    public function getRegenGroups(int $listing_id): array {
+        $query = $this->db->query(
+            "SELECT card_id, card_number, player_name, price, quantity
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = " . (int)$listing_id . "
+             ORDER BY card_id ASC"
+        );
+
+        $p1    = [];          // key = "card_number|player_lower"
+        $p2    = [];          // key = "base|player_normalized"
+        $p2has = [];          // true if group has at least one letter variant
+
+        foreach ($query->rows as $card) {
+            $cn     = trim($card['card_number'] ?? '');
+            $player = trim($card['player_name'] ?? 'Unknown');
+            $price  = (float)$card['price'];
+            $qty    = (int)$card['quantity'];
+            $id     = (int)$card['card_id'];
+
+            // ── Pass 1: exact duplicates ───────────────────────────────
+            $p1key = strtolower($cn . '|' . $player);
+            if (!isset($p1[$p1key])) {
+                $p1[$p1key] = [
+                    'card_number' => $cn,
+                    'player'      => $player,
+                    'price'       => $price,
+                    'min_price'   => $price,
+                    'qty'         => $qty,
+                    'count'       => 1,
+                    'card_ids'    => [$id],
+                ];
+            } else {
+                $p1[$p1key]['qty']  += $qty;
+                $p1[$p1key]['count']++;
+                $p1[$p1key]['card_ids'][] = $id;
+                if ($price > $p1[$p1key]['price']) {
+                    $p1[$p1key]['price'] = $price;
+                }
+                if ($price < $p1[$p1key]['min_price']) {
+                    $p1[$p1key]['min_price'] = $price;
+                }
+            }
+
+            // ── Pass 2: letter variants (101 + 101b → same group) ─────
+            if (!preg_match('/^(\d+)([a-zA-Z])?$/', $cn, $m)) {
+                continue;
+            }
+            $base      = $m[1];
+            $hasLetter = isset($m[2]) && $m[2] !== '';
+            // Normalize player: strip trailing 2-5-letter uppercase card markers
+            $normPlayer = preg_replace('/[\s,]+[a-z]{2,5}(,\s*[a-z]{2,5})*\s*$/i', '', strtolower($player));
+            $p2key = $base . '|' . trim($normPlayer);
+
+            if (!isset($p2[$p2key])) {
+                $p2[$p2key] = [
+                    'base'         => $base,
+                    'player'       => $player,
+                    'maxPrice'     => $price,
+                    'minPrice'     => $price,
+                    'qty'          => $qty,
+                    'card_numbers' => [$cn],
+                    'card_ids'     => [$id],
+                    'hasLetter'    => $hasLetter,
+                ];
+            } else {
+                $p2[$p2key]['qty']  += $qty;
+                $p2[$p2key]['card_numbers'][] = $cn;
+                $p2[$p2key]['card_ids'][]     = $id;
+                if ($price > $p2[$p2key]['maxPrice']) $p2[$p2key]['maxPrice'] = $price;
+                if ($price < $p2[$p2key]['minPrice']) $p2[$p2key]['minPrice'] = $price;
+                if ($hasLetter) $p2[$p2key]['hasLetter'] = true;
+            }
+            if ($hasLetter) $p2has[$p2key] = true;
+        }
+
+        // ── Build result arrays ────────────────────────────────────────
+        $result_p1 = [];
+        foreach ($p1 as $g) {
+            if ($g['count'] > 1) {
+                $result_p1[] = $g;
+            }
+        }
+
+        $result_p2 = [];
+        $result_p3 = [];
+        foreach ($p2 as $key => $g) {
+            if (!($p2has[$key] ?? false)) {
+                continue; // no letter variant in this group — skip
+            }
+            $spread   = $g['maxPrice'] > 0 ? ($g['maxPrice'] - $g['minPrice']) / $g['maxPrice'] : 0;
+            $eligible = $g['maxPrice'] < self::MERGE_PRICE_THRESHOLD && $spread < self::MERGE_SPREAD_THRESHOLD;
+            $g['spread']   = round($spread, 4);
+            $g['eligible'] = $eligible;
+
+            if (count($g['card_numbers']) > 1) {
+                $result_p2[] = $g;
+            } else {
+                // orphan: single card with letter suffix, no companion base card
+                $result_p3[] = [
+                    'base'        => $g['base'],
+                    'player'      => $g['player'],
+                    'price'       => $g['maxPrice'],
+                    'card_number' => $g['card_numbers'][0],
+                    'card_id'     => $g['card_ids'][0],
+                ];
+            }
+        }
+
+        // ── Pass 4: same card_number, different player_name ─────────────────
+        $p4raw = [];
+        foreach ($query->rows as $card) {
+            $cn_low = strtolower(trim($card['card_number'] ?? ''));
+            $player = trim($card['player_name'] ?? 'Unknown');
+            $price  = (float)$card['price'];
+            $id     = (int)$card['card_id'];
+            if (!isset($p4raw[$cn_low])) {
+                $p4raw[$cn_low] = [
+                    'card_number' => trim($card['card_number'] ?? ''),
+                    'candidates'  => [],
+                    'player_set'  => [],
+                ];
+            }
+            $p4raw[$cn_low]['candidates'][] = ['card_id' => $id, 'player' => $player, 'price' => $price];
+            $p4raw[$cn_low]['player_set'][strtolower($player)] = true;
+        }
+        $result_p4 = [];
+        foreach ($p4raw as $g) {
+            if (count($g['player_set']) >= 2) {
+                unset($g['player_set']);
+                $result_p4[] = $g;
+            }
+        }
+
+        return ['p1' => $result_p1, 'p2' => $result_p2, 'p3' => $result_p3, 'p4' => $result_p4];
+    }
+
+    /**
+     * Fusion manuelle d'un groupe de card_ids (sans seuils de prix).
+     * Utilisé par l'endpoint AJAX mergeVariants() du contrôleur.
+     * Même logique que passe 2, mais forcée.
+     *
+     * @param  int   $listing_id
+     * @param  int[] $card_ids    Au moins 2 card_id à fusionner
+     * @return int   card_id du survivor
+     */
+    public function mergeCardGroup(int $listing_id, array $card_ids, int $survivor_card_id = 0): int {
+        if (count($card_ids) < 2) {
+            return $card_ids[0] ?? 0;
+        }
+
+        // Charger les cartes demandées
+        $ids_sql = implode(',', array_map('intval', $card_ids));
+        $query = $this->db->query(
+            "SELECT * FROM `" . DB_PREFIX . "card`
+             WHERE `card_id` IN (" . $ids_sql . ")
+               AND `listing_id` = " . (int)$listing_id . "
+             ORDER BY `card_id` ASC"
+        );
+
+        if ($query->num_rows < 2) {
+            return (int)($query->rows[0]['card_id'] ?? $card_ids[0]);
+        }
+
+        $cards     = $query->rows;
+        $base      = ltrim($cards[0]['card_number'], '0123456789' === '' ? '' : '');
+        // Survivor = chosen card_id if provided, else card without letter, else first
+        $survivor = $cards[0];
+        if ($survivor_card_id > 0) {
+            foreach ($cards as $c) {
+                if ((int)$c['card_id'] === $survivor_card_id) {
+                    $survivor = $c;
+                    break;
+                }
+            }
+        } else {
+            foreach ($cards as $c) {
+                if (preg_match('/^\d+$/', trim($c['card_number']))) {
+                    $survivor = $c;
+                    break;
+                }
+            }
+        }
+        $survivor_id  = (int)$survivor['card_id'];
+        $survivorBase = preg_replace('/[a-zA-Z]+$/', '', trim($survivor['card_number']));
+
+        $sImgQ         = $this->db->query(
+            "SELECT `image_url` FROM `" . DB_PREFIX . "card_image` WHERE `card_id` = " . $survivor_id
+        );
+        $survivorImages = array_column($sImgQ->rows, 'image_url');
+
+        $totalQty  = (int)$survivor['quantity'];
+        $bestPrice = (float)$survivor['price'];
+
+        foreach ($cards as $c) {
+            if ((int)$c['card_id'] === $survivor_id) {
+                continue;
+            }
+            $vid = (int)$c['card_id'];
+            $totalQty  += (int)$c['quantity'];
+            if ((float)$c['price'] > $bestPrice) {
+                $bestPrice = (float)$c['price'];
+            }
+            if (!empty($c['offer_id'])) {
+                $this->addPendingDelete($vid, $listing_id, $c['inventory_key'] ?? '', $c['offer_id'] ?? '', 'merge_manual');
+            }
+            $this->consolidateImages($survivor_id, $vid, $survivorImages);
+            $this->db->query("DELETE FROM `" . DB_PREFIX . "card` WHERE `card_id` = " . $vid);
+        }
+
+        // Renormaliser sort_order des images du survivor après les fusions
+        $this->renormalizeImageSortOrder($survivor_id);
+
+        $newKey   = self::buildInventoryKey($survivor_id, $survivorBase);
+        $newTitle = preg_replace('/\b' . preg_quote($survivor['card_number'], '/') . '\b/', $survivorBase, $survivor['title'] ?? '');
+        $newDesc  = preg_replace('/\b' . preg_quote($survivor['card_number'], '/') . '\b/', $survivorBase, $survivor['description'] ?? '');
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card`
+               SET `quantity`      = " . (int)$totalQty . ",
+                   `price`         = " . round($bestPrice, 2) . ",
+                   `card_number`   = '" . $this->db->escape($survivorBase) . "',
+                   `title`         = '" . $this->db->escape($newTitle) . "',
+                   `description`   = '" . $this->db->escape($newDesc) . "',
+                   `inventory_key` = '" . $this->db->escape($newKey) . "',
+                   `to_sync`       = 1
+             WHERE `card_id` = " . $survivor_id
+        );
+        $this->updateListingTotals($listing_id);
+
+        return $survivor_id;
+    }
+
+    /**
+     * Rename an orphan letter-variant card by stripping its letter suffix.
+     * e.g. card_number "2b" → "2", updates title, inventory_key, marks to_sync=1.
+     * If the card has an active offer_id, queues it for eBay deletion (re-publish with new number).
+     */
+    public function cleanupOrphanVariant(int $listing_id, int $card_id): bool {
+        $query = $this->db->query(
+            "SELECT * FROM `" . DB_PREFIX . "card`
+             WHERE `card_id` = " . $card_id . "
+               AND `listing_id` = " . $listing_id
+        );
+        if (!$query->num_rows) return false;
+
+        $card = $query->rows[0];
+        $cn   = trim($card['card_number'] ?? '');
+
+        // Must be a pure digit + letter(s) format e.g. "2b", "101a"
+        if (!preg_match('/^(\d+)[a-zA-Z]+$/', $cn, $m)) {
+            return false;
+        }
+        $base = $m[1];
+
+        // Update title and description: replace old card_number with base
+        $newTitle = preg_replace('/\b' . preg_quote($cn, '/') . '\b/', $base, $card['title'] ?? '');
+        $newDesc  = preg_replace('/\b' . preg_quote($cn, '/') . '\b/', $base, $card['description'] ?? '');
+        $newKey   = self::buildInventoryKey($card_id, $base);
+
+        // If live eBay offer, queue for deletion so it gets re-published with new card_number
+        if (!empty($card['offer_id'])) {
+            $this->addPendingDelete($card_id, $listing_id, $card['inventory_key'] ?? '', $card['offer_id'], 'orphan_rename');
+        }
+
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card`
+               SET `card_number`   = '" . $this->db->escape($base) . "',
+                   `title`         = '" . $this->db->escape($newTitle) . "',
+                   `description`   = '" . $this->db->escape($newDesc) . "',
+                   `inventory_key` = '" . $this->db->escape($newKey) . "',
+                   `offer_id`      = '',
+                   `to_sync`       = 1
+             WHERE `card_id` = " . $card_id
+        );
+        return true;
+    }
+
+    /**
+     * Delete listing and all related data
+     */
+    /**
+     * Supprime TOUT ce qui est lié à un listing :
+     *   1. oc_card_image        (images des cartes)
+     *   2. oc_card              (cartes / variations)
+     *   3. oc_card_listing_description (batches, titres eBay, offer_ids)
+     *   4. oc_card_listing_history     (historique)
+     *   5. oc_card_listing      (listing principal)
+     *
+     * NE supprime PAS : oc_card_raw
+     *
+     * @param  int  $listing_id
+     * @return array ['deleted' => ['images'=>N,'cards'=>N,...], 'ok' => bool]
+     */
+    public function deleteListing(int $listing_id): array {
+        $id = (int)$listing_id;
+        if ($id <= 0) {
+            return ['ok' => false, 'error' => 'Invalid listing_id'];
+        }
+
+        $counts = [];
+
+        try {
+            $this->db->query("START TRANSACTION");
+
+            // 1. Images (via card_ids de ce listing)
+            $this->db->query(
+                "DELETE ci FROM `" . DB_PREFIX . "card_image` ci
+                 INNER JOIN `" . DB_PREFIX . "card` c ON c.card_id = ci.card_id
+                 WHERE c.listing_id = " . $id
+            );
+            $counts['images'] = $this->db->countAffected();
+
+            // 2. Cartes
+            $this->db->query(
+                "DELETE FROM `" . DB_PREFIX . "card` WHERE `listing_id` = " . $id
+            );
+            $counts['cards'] = $this->db->countAffected();
+
+            // 3. Descriptions / batches
+            $this->db->query(
+                "DELETE FROM `" . DB_PREFIX . "card_listing_description` WHERE `listing_id` = " . $id
+            );
+            $counts['descriptions'] = $this->db->countAffected();
+
+            // 3b. Orphan batch rows (no cards, no descriptions reference them)
+            $this->db->query(
+                "DELETE clb FROM `" . DB_PREFIX . "card_listing_batch` clb
+                  WHERE clb.`listing_id` = " . $id . "
+                    AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "card` c WHERE c.batch_id = clb.batch_id)
+                    AND NOT EXISTS (SELECT 1 FROM `" . DB_PREFIX . "card_listing_description` d WHERE d.batch_id = clb.batch_id)"
+            );
+            $counts['batches'] = $this->db->countAffected();
+
+            // 4. Historique
+            $this->db->query(
+                "DELETE FROM `" . DB_PREFIX . "card_listing_history` WHERE `listing_id` = " . $id
+            );
+            $counts['history'] = $this->db->countAffected();
+
+            // 5. Listing principal
+            $this->db->query(
+                "DELETE FROM `" . DB_PREFIX . "card_listing` WHERE `listing_id` = " . $id
+            );
+            $counts['listing'] = $this->db->countAffected();
+
+            $this->db->query("COMMIT");
+
+            //$this->log->write('[deleteListing] listing_id=' . $id . ' deleted — ' . json_encode($counts));
+
+            return ['ok' => true, 'deleted' => $counts];
+
+        } catch (\Exception $e) {
+            $this->db->query("ROLLBACK");
+            $this->log->write('[deleteListing] ROLLBACK listing_id=' . $id . ' — ' . $e->getMessage());
+            return ['ok' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    /**
+     * Update eBay item ID for a listing.
+     * Uses UPSERT so it works even if the description row doesn't exist yet.
+     *
+     * @param int $batch_id  FK → oc_card_listing_batch.batch_id (0 = global/unassigned)
+     */
+    public function updateEbayListingId(int $listing_id, $ebay_item_id, int $language_id, int $batch_id = 0): bool {
+        $escapedId  = $ebay_item_id ? "'" . $this->db->escape($ebay_item_id) . "'" : 'NULL';
+        $batchCond  = "batch_id = " . (int)$batch_id;
+        $existing   = $this->db->query(
+            "SELECT id FROM `" . DB_PREFIX . "card_listing_description`
+              WHERE listing_id  = " . (int)$listing_id . "
+                AND language_id = " . (int)$language_id . "
+                AND " . $batchCond . " LIMIT 1"
+        );
+        if ($existing->num_rows) {
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_listing_description`
+                    SET ebay_item_id = " . $escapedId . "
+                  WHERE id = " . (int)$existing->row['id']
+            );
+        } else {
+            $this->db->query(
+                "INSERT INTO `" . DB_PREFIX . "card_listing_description`
+                    (listing_id, language_id, batch_id, title, ebay_item_id)
+                 VALUES (" . (int)$listing_id . ", " . (int)$language_id . ", " . (int)$batch_id . ", '', " . $escapedId . ")"
+            );
+        }
+        return true;
+    }
+    
+    /**
+     * Update status and date_published for a batch in oc_card_listing_description.
+     *
+     * @param int         $batch_id       FK → oc_card_listing_batch.batch_id
+     * @param int         $status         0 = draft, 1 = published, 2 = ended
+     * @param string|null $datePublished  datetime string or null
+     */
+    public function updateBatchPublishedStatus(int $listing_id, int $batch_id, int $status, ?string $datePublished = null, int $language_id = 1): void {
+        $dp = $datePublished ? "'" . $this->db->escape($datePublished) . "'" : 'NULL';
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing_description`
+                SET `status`         = " . (int)$status . ",
+                    `date_published` = " . $dp . "
+              WHERE `listing_id`  = " . (int)$listing_id . "
+                AND `language_id` = " . (int)$language_id . "
+                AND `batch_id`    = " . (int)$batch_id
+        );
+    }
+
+    /**
+     * Get eBay item ID for a listing and language.
+     *
+     * @param int $batch_id  FK → oc_card_listing_batch.batch_id (0 = global/unassigned)
+     */
+    public function getEbayItemId(int $listing_id, int $language_id, int $batch_id = 0): ?string {
+        $query = $this->db->query(
+            "SELECT `ebay_item_id` FROM `" . DB_PREFIX . "card_listing_description`
+              WHERE `listing_id`   = " . (int)$listing_id . "
+                AND `language_id`  = " . (int)$language_id . "
+                AND `batch_id`     = " . (int)$batch_id . "
+                AND `ebay_item_id` IS NOT NULL
+                AND `ebay_item_id` != ''"
+        );
+        
+        return $query->row['ebay_item_id'] ?? null;
+    }
+
+    /**
+     * Save (INSERT or UPDATE) a per-batch title + description.
+     *
+     * @param int    $listing_id
+     * @param int    $batch_id    FK → oc_card_listing_batch.batch_id (0 = global/unassigned)
+     * @param string $title         Batch-specific title (max 80 chars)
+     * @param string $description   Raw HTML card-list description for this batch
+     * @param int    $language_id   Defaults to 1 (English)
+     */
+    public function saveBatchDescription(
+        int    $listing_id,
+        int    $batch_id,
+        string $title,
+        string $description,
+        int    $language_id = 1,
+        ?array $specifics   = null
+    ): void {
+        $specificsVal = ($specifics !== null)
+            ? "'" . $this->db->escape(json_encode($specifics, JSON_UNESCAPED_UNICODE)) . "'"
+            : 'NULL';
+        $existing = $this->db->query(
+            "SELECT id FROM `" . DB_PREFIX . "card_listing_description`
+              WHERE listing_id  = " . (int)$listing_id . "
+                AND language_id = " . (int)$language_id . "
+                AND batch_id    = " . (int)$batch_id . " LIMIT 1"
+        );
+        if ($existing->num_rows) {
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_listing_description`
+                    SET title       = '" . $this->db->escape(substr($title, 0, 80)) . "',
+                        description = '" . $this->db->escape($description) . "',
+                        specifics   = COALESCE(" . $specificsVal . ", specifics)
+                  WHERE id = " . (int)$existing->row['id']
+            );
+        } else {
+            $this->db->query(
+                "INSERT INTO `" . DB_PREFIX . "card_listing_description`
+                        (listing_id, language_id, batch_id, title, description, specifics)
+                 VALUES (" . (int)$listing_id . ", " . (int)$language_id . ", " . (int)$batch_id . ", "
+                    . "'" . $this->db->escape(substr($title, 0, 80)) . "', "
+                    . "'" . $this->db->escape($description) . "', "
+                    . $specificsVal . ")"
+            );
+        }
+    }
+
+    /**
+     * Retrieve all stored per-batch descriptions for a listing.
+     * Returns an array keyed by batch_id (FK).
+     * Each row also contains 'batch_name' (logical number) via JOIN.
+     *
+     * @return array<int, array{batch_id:int, batch_name:int, title:string, description:string, ebay_item_id:string|null, status:int, date_published:string|null}>
+     */
+    public function getDescriptions(int $listing_id, int $language_id = 1, bool $only_published = false): array {
+        $this->regenerateDescriptions($listing_id);
+        $sql = "SELECT d.*, clb.`batch_name`, clb.`group_key`
+              FROM `" . DB_PREFIX . "card_listing_description` d
+              JOIN `" . DB_PREFIX . "card_listing_batch` clb ON clb.`batch_id` = d.`batch_id`
+             WHERE d.`listing_id`  = " . (int)$listing_id . "
+               AND d.`language_id` = " . (int)$language_id;
+        if ($only_published) {
+            $sql .= " AND d.`ebay_item_id` IS NOT NULL AND d.`ebay_item_id` != ''";
+        }
+        $sql .= " ORDER BY clb.`batch_name` ASC";
+        $query = $this->db->query($sql);
+        $result = [];
+        foreach ($query->rows as $row) {
+            $result[(int)$row['batch_name']] = [
+                'batch_id'       => (int)$row['batch_id'],    // FK — pour les appels DB
+                'batch_name'     => (int)$row['batch_name'],  // numéro logique — clé du tableau
+                'group_key'      => $row['group_key'] ?? null, // from oc_card_listing_batch
+                'language_id'    => (int)$row['language_id'],
+                'title'          => $row['title'],
+                'description'    => $row['description'],
+                'ebay_item_id'   => $row['ebay_item_id'],
+                'status'         => (int)$row['status'],
+                'date_published' => $row['date_published'],
+                'specifics'      => !empty($row['specifics'])
+                    ? (json_decode($row['specifics'], true) ?? [])
+                    : [],
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Update (or create) the specifics JSON for a single batch description row.
+     * Static (non-dynamic) fields in the existing JSON are preserved unless overwritten.
+     *
+     * @param int $batch_id  FK → oc_card_listing_batch.batch_id
+     */
+    public function updateBatchSpecifics(int $listing_id, int $batch_id, array $specifics, int $language_id = 1): void {
+        $json = $this->db->escape(json_encode($specifics, JSON_UNESCAPED_UNICODE));
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing_description`
+             SET `specifics` = '" . $json . "'
+             WHERE `listing_id` = " . (int)$listing_id . "
+               AND `language_id` = " . (int)$language_id . "
+               AND `batch_id`   = " . (int)$batch_id
+        );
+    }
+
+    /**
+     * Returns the first non-null ebay_item_id across all languages for a listing.
+     * Used to migrate legacy item IDs to oc_card_listing_ebay batch 1.
+     */
+    public function getLegacyEbayItemIdOLD(int $listing_id): ?string {
+        $query = $this->db->query(
+            "SELECT `ebay_item_id` FROM `" . DB_PREFIX . "card_listing_description`
+             WHERE `listing_id` = " . (int)$listing_id . "
+               AND `ebay_item_id` IS NOT NULL
+               AND `ebay_item_id` != ''
+             ORDER BY `language_id` ASC LIMIT 1"
+        );
+        return $query->num_rows > 0 ? $query->row['ebay_item_id'] : null;
+    }
+
+
+
+    /**
+     * Count Google images (googleapis.com) linked to a listing via oc_card
+     */
+    public function getGoogleImageCount(int $listing_id): int {
+        $query = $this->db->query(
+            "SELECT COUNT(*) AS cnt
+             FROM " . DB_PREFIX . "card_image ci
+             INNER JOIN " . DB_PREFIX . "card c ON c.card_id = ci.card_id
+             WHERE c.listing_id = '" . (int)$listing_id . "'
+               AND ci.image_url LIKE '%googleapis.com%'"
+        );
+        return (int)($query->row['cnt'] ?? 0);
+    }
+
+    /**
+     * Count cards for a listing that have no offer_id (NULL or empty string).
+     */
+    public function getCardsWithoutOfferCount(int $listing_id): int {
+        $query = $this->db->query(
+            "SELECT COUNT(*) AS cnt
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = '" . (int)$listing_id . "'
+               AND (`offer_id` IS NULL OR `offer_id` = '')"
+        );
+        return (int)($query->row['cnt'] ?? 0);
+    }
+
+    /**
+     * Return rows for cards that are missing an offer_id for a given listing.
+     */
+    public function getCardsWithoutOfferRows(int $listing_id): array {
+        $query = $this->db->query(
+            "SELECT `card_id`, `sku`, `card_number`, `price`, `batch_id`
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = '" . (int)$listing_id . "'
+               AND (`offer_id` IS NULL OR `offer_id` = '')
+             ORDER BY CAST(`card_number` AS UNSIGNED) ASC, `card_id` ASC"
+        );
+        return $query->rows;
+    }
+
+    /**
+     * Return ALL cards for a listing (regardless of offer_id).
+     */
+    public function getAllCardRows(int $listing_id): array {
+        $query = $this->db->query(
+            "SELECT `card_id`, `sku`, `card_number`, `offer_id`, `batch_id`
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = '" . (int)$listing_id . "'
+             ORDER BY CAST(`card_number` AS UNSIGNED) ASC, `card_id` ASC"
+        );
+        return $query->rows;
+    }
+
+    /**
+     * Count cards for a listing that have an offer_id but are NOT published (published=0).
+     */
+    public function getCardsUnpublishedWithOffer(int $listing_id): int {
+        $query = $this->db->query(
+            "SELECT COUNT(*) AS cnt
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = '" . (int)$listing_id . "'
+               AND `offer_id` IS NOT NULL AND `offer_id` != ''
+               AND `published` = 0"
+        );
+        return (int)($query->row['cnt'] ?? 0);
+    }
+
+    /**
+     * Return rows for cards that have an offer_id but are NOT published (published=0).
+     */
+    public function getCardsUnpublishedWithOfferRows(int $listing_id): array {
+        $query = $this->db->query(
+            "SELECT `card_id`, `sku`, `offer_id`, `card_number`, `batch_id`
+             FROM `" . DB_PREFIX . "card`
+             WHERE `listing_id` = '" . (int)$listing_id . "'
+               AND `offer_id` IS NOT NULL AND `offer_id` != ''
+               AND `published` = 0
+             ORDER BY CAST(`card_number` AS UNSIGNED) ASC, `card_id` ASC"
+        );
+        return $query->rows;
+    }
+
+    /**
+     * Retourne tous les batches eBay enregistrés pour un listing.
+     * Rows include both batch_id (FK auto-inc) and batch_name (logical number).
+     */
+    public function getBatches(int $listing_id): array {
+        $query = $this->db->query(
+            "SELECT clb.*,
+                    MIN(c.card_number) AS _cn_min,
+                    MAX(c.card_number) AS _cn_max,
+                    GROUP_CONCAT(c.card_number ORDER BY c.card_number ASC) AS _cn_all
+             FROM `" . DB_PREFIX . "card_listing_batch` clb
+             LEFT JOIN `" . DB_PREFIX . "card` c
+                    ON c.listing_id = clb.listing_id AND c.batch_id = clb.batch_id
+             WHERE clb.`listing_id` = " . (int)$listing_id . "
+             GROUP BY clb.batch_id
+             HAVING COUNT(c.card_id) > 0
+             ORDER BY clb.`batch_name` ASC"
+        );
+
+        $rows = [];
+        foreach ($query->rows as $row) {
+            $batchLogical = (int)$row['batch_name'];  // logical number (1, 2, 99...)
+            if ($batchLogical >= 99 && !empty($row['_cn_all'])) {
+                $nums = explode(',', $row['_cn_all']);
+                usort($nums, 'strnatcasecmp');
+                $row['card_label_start'] = reset($nums);
+                $row['card_label_end']   = end($nums);
+            } else {
+                $row['card_label_start'] = '';
+                $row['card_label_end']   = '';
+            }
+            unset($row['_cn_min'], $row['_cn_max'], $row['_cn_all']);
+            $rows[] = $row;
+        }
+        return $rows;
+    }
+
+    /**
+     * Returns per-batch totals: total value (SUM price*quantity) and card count.
+     * Keyed by batch_id (FK).
+     *
+     * @return array<int, array{batch_id:int, batch_name:int, total_value:float, card_count:int}>
+     */
+    public function getBatchTotals(int $listing_id): array {
+        $query = $this->db->query(
+            "SELECT c.`batch_id`, clb.`batch_name`,
+                    COUNT(*) AS card_count,
+                    SUM(c.`price` * c.`quantity`) AS total_value
+             FROM `" . DB_PREFIX . "card` c
+             JOIN `" . DB_PREFIX . "card_listing_batch` clb ON clb.`batch_id` = c.`batch_id`
+             WHERE c.`listing_id` = " . (int)$listing_id . "
+               AND c.`batch_id` > 0
+             GROUP BY c.`batch_id`, clb.`batch_name`"
+        );
+        $result = [];
+        foreach ($query->rows as $row) {
+            $result[(int)$row['batch_name']] = [
+                'batch_id'    => (int)$row['batch_id'],
+                'batch_name'  => (int)$row['batch_name'],
+                'card_count'  => (int)$row['card_count'],
+                'total_value' => (float)$row['total_value'],
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Retourne un batch spécifique.
+     */
+    public function getEbayBatch(int $listing_id, int $batch_name): ?array {
+        $query = $this->db->query(
+            "SELECT *
+             FROM `" . DB_PREFIX . "card_listing_batch`
+             WHERE `listing_id`   = '" . (int)$listing_id   . "'
+               AND `batch_name` = '" . (int)$batch_name . "'"
+        );
+        return !empty($query->row) ? $query->row : null;
+    }
+
+    /**
+     * Assign batch_name to all cards of a listing based on card_number ranges.
+     *  B1  = numeric card_numbers  #1–250
+     *  B2  = numeric card_numbers #251–500
+     *  …
+     *  B99 = non-numeric / special card_numbers  (SQ1, RC, etc.)
+     *
+     * Writes batch_name to oc_card and creates/refreshes oc_card_listing_batch rows.
+     * Returns array of batch summaries.
+     */
+    public function recalculateBatches(int $listing_id, string $countryCode = 'CA'): array {
+        $batchSize = 250;
+
+        // ── 1. Load all cards ──────────────────────────────────────────────────
+        $q = $this->db->query(
+            "SELECT `card_id`, `card_number`
+               FROM `" . DB_PREFIX . "card`
+              WHERE `listing_id` = " . (int)$listing_id . "
+              ORDER BY `card_id` ASC"
+        );
+        if (!$q->num_rows) {
+            return [];
+        }
+
+        // ── 2. Separate numeric vs special ────────────────────────────────────
+        // Rule:
+        //   starts with digit  (e.g. "355", "2Z", "355F") → regular batches b1…bN
+        //     sort / batch slot determined by the leading numeric part only
+        //   starts with letter (e.g. "Z2", "F355", "RC3")  → special batch b99
+        $numericCards = [];
+        $specialCards = [];
+        foreach ($q->rows as $row) {
+            $cn = trim($row['card_number']);
+            if ($cn === '') {
+                // empty → treat as special
+                $specialCards[] = (int)$row['card_id'];
+            } elseif (preg_match('/^\d/', $cn)) {
+                // Starts with a digit → regular batch.
+                // Extract leading digits only as the sort/slot value.
+                $numericValue = (int)preg_replace('/\D.*$/', '', $cn);
+                $numericCards[] = ['card_id' => (int)$row['card_id'], 'card_number' => $numericValue];
+            } else {
+                // Starts with a letter (ZZZnum pattern) → special / b99
+                $specialCards[] = (int)$row['card_id'];
+            }
+        }
+
+        // ── 3. Sort numeric by card_number ASC ────────────────────────────────
+        usort($numericCards, fn($a, $b) => $a['card_number'] <=> $b['card_number']);
+
+        // ── 4. Assign each card to the batch that covers its card_number slot ──
+        //  B1 = #1–250, B2 = #251–500 … gaps in card_number keep their slot.
+        //  Empty batches are never created.
+        $batches = []; // batch_name => [ card_ids[], sort_start, sort_end ]
+        foreach ($numericCards as $card) {
+            $batchId = (int)ceil($card['card_number'] / $batchSize);
+            if ($batchId < 1) {
+                $batchId = 1; // card_number 0 goes to B1
+            }
+            if (!isset($batches[$batchId])) {
+                $batches[$batchId] = [
+                    'card_ids'   => [],
+                    'sort_start' => $card['card_number'],
+                    'sort_end'   => $card['card_number'],
+                ];
+            }
+            $batches[$batchId]['card_ids'][] = $card['card_id'];
+            if ($card['card_number'] < $batches[$batchId]['sort_start']) {
+                $batches[$batchId]['sort_start'] = $card['card_number'];
+            }
+            if ($card['card_number'] > $batches[$batchId]['sort_end']) {
+                $batches[$batchId]['sort_end'] = $card['card_number'];
+            }
+        }
+        // B99 for non-numeric / letter-prefix cards (only created if any exist)
+        if (!empty($specialCards)) {
+            $batches[99] = [
+                'card_ids'   => $specialCards,
+                'sort_start' => 0,
+                'sort_end'   => 0,
+            ];
+        }
+
+        // ── 5 & 6. UPSERT batch rows, get FK batch_id, update oc_card ────────
+        $result       = [];
+        $totalBatches = count($batches);
+        foreach ($batches as $batchLogicalId => $info) {
+            $cnt      = count($info['card_ids']);
+            $groupKey = $this->buildGroupKey($countryCode, $listing_id, $batchLogicalId, $totalBatches);
+
+            // UPSERT: keep existing batch_id (auto-inc PK) if row already exists
+            $this->db->query(
+                "INSERT INTO `" . DB_PREFIX . "card_listing_batch`
+                    (`listing_id`, `batch_name`, `variation_count`, `card_sort_start`, `card_sort_end`, `group_key`)
+                 VALUES (" . (int)$listing_id . ", "
+                         . (int)$batchLogicalId . ", "
+                         . (int)$cnt . ", "
+                         . (int)$info['sort_start'] . ", "
+                         . (int)$info['sort_end'] . ", "
+                         . "'" . $this->db->escape($groupKey) . "')"
+                . " ON DUPLICATE KEY UPDATE"
+                . "   `variation_count` = VALUES(`variation_count`),"
+                . "   `card_sort_start` = VALUES(`card_sort_start`),"
+                . "   `card_sort_end`   = VALUES(`card_sort_end`),"
+                . "   `group_key`       = VALUES(`group_key`)"
+            );
+
+            // Retrieve the stable FK batch_id (existing or just inserted)
+            $batchRow   = $this->db->query(
+                "SELECT `batch_id` FROM `" . DB_PREFIX . "card_listing_batch`
+                  WHERE `listing_id` = " . (int)$listing_id . "
+                    AND `batch_name` = " . (int)$batchLogicalId . "
+                  LIMIT 1"
+            );
+            $batchFkId = (int)($batchRow->row['batch_id'] ?? 0);
+
+            // Update oc_card to store FK batch_id
+            foreach (array_chunk($info['card_ids'], 50) as $chunk) {
+                $ids = implode(',', $chunk);
+                $this->db->query(
+                    "UPDATE `" . DB_PREFIX . "card`
+                        SET `batch_id` = " . $batchFkId . "
+                      WHERE `card_id` IN (" . $ids . ")
+                        AND `listing_id` = " . (int)$listing_id
+                );
+            }
+
+            $result[] = [
+                'batch_id'        => $batchFkId,
+                'batch_name'      => $batchLogicalId,
+                'count'           => $cnt,
+                'card_sort_start' => $info['sort_start'],
+                'card_sort_end'   => $info['sort_end'],
+                'group_key'       => $groupKey,
+            ];
+        }
+
+        // ── 7. Rafraîchir inventory_key pour toutes les cartes du listing ────────
+        //  Utilise REGEXP_REPLACE pour recalculer CA_CARD_{clean_number}_{card_id}
+        //  Synchronisé avec buildInventoryKey() — met à jour même les keys existantes
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card`
+                SET `inventory_key` = SUBSTR(CONCAT('CA_CARD_', REGEXP_REPLACE(`card_number`, '[^A-Za-z0-9]', ''), '_', `card_id`), 1, 50)
+              WHERE `listing_id` = " . (int)$listing_id
+        );
+
+        // ── 8. Delete orphan batch rows ────────────────────────────────────────
+        //  Condition : aucune carte liée AU batch
+        //           ET aucune description publiée (ebay_item_id NULL ou '')
+        //  → si le batch a un ebay_item_id actif, on le conserve même sans cartes
+        $this->db->query(
+            "DELETE clb FROM `" . DB_PREFIX . "card_listing_batch` clb
+              WHERE clb.`listing_id` = " . (int)$listing_id . "
+                AND NOT EXISTS (
+                    SELECT 1 FROM `" . DB_PREFIX . "card` c
+                    WHERE c.`batch_id` = clb.`batch_id`
+                )
+                AND NOT EXISTS (
+                    SELECT 1 FROM `" . DB_PREFIX . "card_listing_description` d
+                    WHERE d.`batch_id` = clb.`batch_id`
+                      AND d.`ebay_item_id` IS NOT NULL
+                      AND d.`ebay_item_id` != ''
+                )"
+        );
+
+        return $result;
+    }
+
+    /**
+     * Sauvegarde les infos eBay d'un batch (group_key, ebay_item_id, status…).
+     * Crée la ligne si elle n'existe pas encore.
+     *
+     * @param array $data  Clés : group_key, ebay_item_id, status, date_published, variation_count
+     */
+    public function saveEbayBatch(int $listing_id, int $batch_name, array $data): void {
+        // Ensure the batch row exists (keeps existing batch_id auto-inc PK)
+        $this->db->query(
+            "INSERT IGNORE INTO `" . DB_PREFIX . "card_listing_batch`
+                    (`listing_id`, `batch_name`)
+             VALUES (" . (int)$listing_id . ", " . (int)$batch_name . ")"
+        );
+
+        $sets    = [];
+        $allowed = ['group_key', 'variation_count', 'card_sort_start', 'card_sort_end'];
+        // Note: ebay_item_id, status, date_published live in oc_card_listing_description, not here.
+        foreach ($allowed as $col) {
+            if (!array_key_exists($col, $data)) {
+                continue;
+            }
+            if ($data[$col] === null) {
+                $sets[] = "`$col` = NULL";
+            } else {
+                $sets[] = "`$col` = '" . $this->db->escape((string)$data[$col]) . "'";
+            }
+        }
+
+        if (!empty($sets)) {
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_listing_batch`
+                    SET " . implode(', ', $sets) . "
+                  WHERE `listing_id`   = '" . (int)$listing_id   . "'
+                    AND `batch_name` = '" . (int)$batch_name . "'"
+            );
+        }
+    }
+
+    /**
+     * Construit le group_key eBay pour un batch donné.
+     * Format fixe : CA_CARD_LIST_{batch_name}_{listing_id}  ex: CA_CARD_LIST_1_103
+     */
+    public function buildGroupKey(string $country_code, int $listing_id, int $batch_name, int $total_batches): string {
+        return 'CA_CARD_LIST_' . $batch_name . '_' . $listing_id;
+    }
+
+    /**
+     * Construit la clé d'inventaire eBay pour une carte.
+     * Format fixe : CA_CARD_{clean_card_number}_{card_id}  ex: CA_CARD_355_1234
+     * Stocké dans oc_card.inventory_key — ne jamais le recalculer à la volée.
+     */
+    public static function buildInventoryKey(int $card_id, string $card_number): string {
+        $clean = preg_replace('/[^A-Za-z0-9]/', '', $card_number);
+        return substr('CA_CARD_' . $clean . '_' . $card_id, 0, 50);
+    }
+
+    /**
+     * Backfill inventory_key pour toutes les cartes d'un listing qui n'en ont pas encore.
+     * Appeler une seule fois après la migration de colonnes.
+     *
+     * @return int  Nombre de cartes mises à jour
+     */
+    public function backfillInventoryKeys(int $listing_id = 0): int {
+        $where = $listing_id > 0 ? "AND `listing_id` = " . (int)$listing_id : '';
+        $q = $this->db->query(
+            "SELECT `card_id`, `card_number` FROM `" . DB_PREFIX . "card`
+              WHERE (`inventory_key` IS NULL OR `inventory_key` = '') " . $where
+        );
+        $count = 0;
+        foreach ($q->rows as $row) {
+            $key = self::buildInventoryKey((int)$row['card_id'], $row['card_number']);
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card`
+                    SET `inventory_key` = '" . $this->db->escape($key) . "'
+                  WHERE `card_id` = " . (int)$row['card_id']
+            );
+            $count++;
+        }
+        return $count;
+    }
+
+    // =====================================================
+    // EBAY HEALTH CHECK
+    // =====================================================
+
+    /**
+     * Vérifie la santé eBay d'un batch donné.
+     * 1 seul appel REST : GET /sell/inventory/v1/inventory_item_group/{key}
+     * Met à jour health_status / health_error / health_checked_at dans
+     * oc_card_listing_batch ET oc_card_listing_description.
+     *
+     * @param int $listing_id
+     * @param int $batch_id               FK batch_id (oc_card_listing_batch.batch_id)
+     * @param int $marketplace_account_id  Compte eBay (défaut: 1)
+     * @return array ['status'=>int, 'error'=>string|null, 'batch_name'=>int]
+     */
+    public function checkBatchHealth(int $listing_id, int $batch_id, int $marketplace_account_id = 1): array
+    {
+        // Charger group_key (batch) + ebay_item_id (description) en 1 query
+        $q = $this->db->query(
+            "SELECT b.group_key, b.batch_name, d.ebay_item_id
+               FROM `" . DB_PREFIX . "card_listing_batch` b
+               LEFT JOIN `" . DB_PREFIX . "card_listing_description` d
+                    ON d.listing_id = b.listing_id
+                   AND d.batch_id   = b.batch_id
+                   AND d.language_id = 1
+              WHERE b.batch_id   = " . (int)$batch_id . "
+                AND b.listing_id = " . (int)$listing_id . "
+              LIMIT 1"
+        );
+
+        if (!$q->num_rows) {
+            return ['status' => 2, 'error' => 'batch_id not found', 'batch_name' => 0];
+        }
+
+        $row        = $q->row;
+        $group_key  = trim($row['group_key']  ?? '');
+        $ebay_item_id = trim($row['ebay_item_id'] ?? '');
+        $batch_name = (int)$row['batch_name'];
+
+        if (empty($ebay_item_id)) {
+            // Pas d'ebay_item_id → non publié, rien à vérifier
+            return ['status' => 0, 'error' => null, 'skipped' => true, 'batch_name' => $batch_name];
+        }
+
+        if (empty($group_key)) {
+            $result = ['status' => 2, 'error' => 'No group_key in batch', 'batch_name' => $batch_name];
+        } else {
+            $this->load->model('shopmanager/ebay');
+            $apiResult = $this->model_shopmanager_ebay->verifyInventoryGroupStatus($group_key, $ebay_item_id, $marketplace_account_id);
+            $result = [
+                'status'     => $apiResult['status'],
+                'error'      => $apiResult['error'],
+                'batch_name' => $batch_name,
+            ];
+        }
+
+        $now     = date('Y-m-d H:i:s');
+        $status  = (int)$result['status'];
+        $errMsg  = $result['error'] ?? null;
+        $errSql  = $errMsg ? "'" . $this->db->escape($errMsg) . "'" : 'NULL';
+
+        // UPDATE oc_card_listing_batch
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing_batch`
+                SET `health_status`     = " . $status . ",
+                    `health_error`      = " . $errSql . ",
+                    `health_checked_at` = '" . $now . "'
+              WHERE `batch_id` = " . (int)$batch_id
+        );
+
+        // UPDATE oc_card_listing_description (toutes langues pour ce batch)
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing_description`
+                SET `health_status`     = " . $status . ",
+                    `health_error`      = " . $errSql . ",
+                    `health_checked_at` = '" . $now . "'
+              WHERE `listing_id` = " . (int)$listing_id . "
+                AND `batch_id`   = " . (int)$batch_id
+        );
+
+        return $result;
+    }
+
+    /**
+     * Retourne le statut de santé agrégé d'un listing pour l'affichage dans la liste.
+     * Lit directement depuis oc_card_listing_batch (pas d'appel API).
+     *
+     * Valeurs retournées :
+     *   0 = jamais vérifié ou vérification > 6 mois (gris)
+     *   1 = tous les batches OK (vert)
+     *   2 = au moins 1 batch en erreur ou terminé (rouge)
+     *
+     * @param int $listing_id
+     * @return int 0|1|2
+     */
+    public function getAggregatedHealthStatus(int $listing_id): int
+    {
+        $q = $this->db->query(
+            "SELECT
+                COUNT(*)                                               AS total,
+                SUM(CASE WHEN health_status IN (2,3) THEN 1 ELSE 0 END) AS errors,
+                SUM(CASE WHEN health_status = 1      THEN 1 ELSE 0 END) AS ok_count,
+                MIN(health_checked_at)                                 AS oldest_check
+               FROM `" . DB_PREFIX . "card_listing_batch`
+              WHERE `listing_id` = " . (int)$listing_id
+        );
+
+        if (!$q->num_rows || (int)$q->row['total'] === 0) {
+            return 0;
+        }
+
+        if ((int)$q->row['errors'] > 0) {
+            return 2;
+        }
+
+        if ((int)$q->row['ok_count'] === (int)$q->row['total']) {
+            $oldest = $q->row['oldest_check'];
+            // Gris si jamais vérifié ou vérification ancienne (> 6 mois)
+            if (!$oldest || strtotime($oldest) < strtotime('-6 months')) {
+                return 0;
+            }
+            return 1;
+        }
+
+        return 0; // mixte non vérifié
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // LOT LISTING METHODS
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * Calcule le prix total du lot et les statistiques des cartes.
+     * Plancher de 0.25 par carte pour éviter les prix nuls.
+     */
+    public function getLotPriceSummary(int $listing_id): array {
+        // backfillRawPrices() est déjà appelé avant dans le controller — raw_price toujours peuplé ici
+        $sql = "SELECT
+                    COUNT(DISTINCT c.card_id)                                             AS card_count,
+                    SUM(c.quantity)                                                       AS total_qty,
+                    SUM(GREATEST(COALESCE(c.raw_price, 0), 0.01) * c.quantity)            AS calculated_price,
+                    SUM(CASE WHEN c.raw_price IS NULL OR c.raw_price < 0.01
+                             THEN 1 ELSE 0 END)                                           AS floored_count
+                FROM `" . DB_PREFIX . "card` c
+                WHERE c.listing_id = " . (int)$listing_id . "
+                  AND c.status = 1";
+
+        $row = $this->db->query($sql)->row;
+
+        return [
+            'card_count'       => (int)($row['card_count'] ?? 0),
+            'total_qty'        => (int)($row['total_qty'] ?? 0),
+            'calculated_price' => round((float)($row['calculated_price'] ?? 0), 2),
+            'floored_count'    => (int)($row['floored_count'] ?? 0),
+        ];
+    }
+
+    /**
+     * Génère le titre eBay du lot (≤80 caractères).
+     * Format : "{N}x {year} {brand} {set_name} Cards Lot"
+     */
+    public function generateLotTitle(int $listing_id): string {
+        $listing = $this->db->query(
+            "SELECT set_name, brand, year, sport FROM `" . DB_PREFIX . "card_listing`
+             WHERE listing_id = " . (int)$listing_id
+        )->row;
+
+        if (!$listing) {
+            return 'Card Lot';
+        }
+
+        $summary = $this->getLotPriceSummary($listing_id);
+        $qty     = $summary['total_qty'] ?: 1;
+
+        $parts = [$qty . 'x'];
+        if ($listing['year'])  $parts[] = (string)$listing['year'];
+        if ($listing['brand']) $parts[] = $listing['brand'];
+        if ($listing['set_name']) $parts[] = $listing['set_name'];
+
+        $sport = strtoupper($listing['sport'] ?? '');
+        if ($sport) $parts[] = $sport;
+
+        $parts[] = 'Cards Lot';
+
+        $title = implode(' ', $parts);
+
+        // Truncate to 80 chars, clean word boundary
+        if (strlen($title) > 80) {
+            $title = substr($title, 0, 77) . '...';
+        }
+
+        return $title;
+    }
+
+    /**
+     * Génère la description HTML complète du lot avec tableau de cartes.
+     */
+    public function generateLotDescription(int $listing_id): string {
+        $listing = $this->db->query(
+            "SELECT set_name, brand, year, sport FROM `" . DB_PREFIX . "card_listing`
+             WHERE listing_id = " . (int)$listing_id
+        )->row;
+
+        $cards = $this->db->query(
+            "SELECT card_number, player_name, team_name
+             FROM `" . DB_PREFIX . "card` c
+             WHERE c.listing_id = " . (int)$listing_id . "
+               AND c.status = 1
+             ORDER BY CAST(card_number AS UNSIGNED) ASC, card_number ASC"
+        )->rows;
+
+        $summary         = $this->getLotPriceSummary($listing_id);
+        $setName         = htmlspecialchars($listing['set_name'] ?? '');
+        $brand           = htmlspecialchars($listing['brand'] ?? '');
+        $year            = htmlspecialchars((string)($listing['year'] ?? ''));
+        $sport           = htmlspecialchars(strtoupper($listing['sport'] ?? ''));
+        $totalQty        = (int)($summary['total_qty'] ?? count($cards));
+        $cardCount       = (int)($summary['card_count'] ?? count($cards));
+        $calculatedValue = (float)($summary['calculated_price'] ?? 0);
+        // Recommended eBay lot price: 60 % of individual card total value
+        $recommendedPrice = round($calculatedValue * 0.60, 2);
+
+        // Build title line: "250x 1990 Score Hockey Cards Lot"
+        $titleParts = array_filter([$year, $brand, $setName, $sport]);
+        $titleStr   = implode(' ', $titleParts);
+        $lotTitle   = $totalQty . 'x ' . $titleStr . ' Cards Lot';
+
+        $d  = '<div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#333;line-height:1.6;">';
+
+        // ── Hero banner ───────────────────────────────────────────────────────
+        $d .= '<div style="background:#1a1a2e;color:#fff;padding:14px 20px;margin-bottom:2px;text-align:center;border-radius:6px 6px 0 0;">';
+        $d .= '<h2 style="margin:0 0 6px;font-size:1.4em;color:#fff;letter-spacing:.5px;">🏆 ' . htmlspecialchars($lotTitle) . '</h2>';
+        $d .= '<p style="margin:0 0 2px;font-size:0.95em;color:#ccc;">';
+        $d .= $cardCount . ' different card' . ($cardCount > 1 ? 's' : '') . ' &mdash; ' . $totalQty . ' total &mdash; all shipped together in one lot!';
+        $d .= '</p>';
+        if ($calculatedValue > 0) {
+            $d .= '<p style="margin:6px 0 0;font-size:0.9em;color:#f0c040;">💰 Individual card value: <strong>$' . number_format($calculatedValue, 2) . ' CAD</strong></p>';
+        }
+        $d .= '</div>';
+
+        // ── Lot details bar ───────────────────────────────────────────────────
+        $d .= '<div style="background:#f0f4f8;padding:10px 20px;margin-bottom:2px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;">';
+        if ($year)    $d .= '<span style="flex:1;min-width:120px;text-align:center;">📅 Year: <strong>' . $year . '</strong></span>';
+        if ($brand)   $d .= '<span style="flex:1;min-width:120px;text-align:center;">🏷️ Brand: <strong>' . $brand . '</strong></span>';
+        if ($setName) $d .= '<span style="flex:1;min-width:120px;text-align:center;">📦 Set: <strong>' . $setName . '</strong></span>';
+        if ($sport)   $d .= '<span style="flex:1;min-width:120px;text-align:center;">🏒 Sport: <strong>' . $sport . '</strong></span>';
+        $d .= '<span style="flex:1;min-width:120px;text-align:center;">🃏 Cards: <strong>' . $cardCount . '</strong></span>';
+        $d .= '</div>';
+
+        // ── Value box ─────────────────────────────────────────────────────────
+        if ($calculatedValue > 0) {
+            $d .= '<div style="background:#fff8e1;border:1px solid #f0c040;padding:12px 20px;margin-bottom:2px;display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:center;">';
+            $d .= '<div style="text-align:center;">';
+            $d .= '<div style="font-size:0.8em;color:#888;text-transform:uppercase;letter-spacing:.04em;">Total card value (sold separately)</div>';
+            $d .= '<div style="font-size:1.6em;font-weight:bold;color:#c47a00;">$' . number_format($calculatedValue, 2) . ' CAD</div>';
+            $d .= '</div>';
+            $d .= '<div style="text-align:center;">';
+            $d .= '<div style="font-size:0.8em;color:#888;text-transform:uppercase;letter-spacing:.04em;">You save vs. buying separately</div>';
+            $d .= '<div style="font-size:1.6em;font-weight:bold;color:#2e7d32;">~40% OFF</div>';
+            $d .= '</div>';
+            if ($recommendedPrice > 0) {
+                $d .= '<div style="text-align:center;">';
+                $d .= '<div style="font-size:0.8em;color:#888;text-transform:uppercase;letter-spacing:.04em;">Lot price</div>';
+                $d .= '<div style="font-size:1.6em;font-weight:bold;color:#1a1a2e;">$' . number_format($recommendedPrice, 2) . ' CAD</div>';
+                $d .= '</div>';
+            }
+            $d .= '</div>';
+        }
+
+        // ── Card list ─────────────────────────────────────────────────────────
+        $d .= '<div style="background:#fff;border:1px solid #ccc;padding:14px 20px;margin-bottom:2px;">';
+        $d .= '<h3 style="margin:0 0 10px;font-size:1em;font-weight:bold;color:#333;border-bottom:2px solid #ccc;padding-bottom:4px;">📋 Cards Included in This Lot (' . $cardCount . ')</h3>';
+        $d .= '<ul style="column-count:3;column-gap:20px;-webkit-column-count:3;-moz-column-count:3;margin:0;padding-left:20px;">';
+
+        foreach ($cards as $card) {
+            $card_info = '';
+
+            if (!empty($card['card_number'])) {
+                $card_info .= '<span style="color:#888;font-size:0.85em;">#' . htmlspecialchars($card['card_number']) . '</span> ';
+            }
+
+            if (!empty($card['player_name'])) {
+                $card_info .= '<strong>' . htmlspecialchars($card['player_name']) . '</strong>';
+            }
+
+            if (!empty($card['team_name'])) {
+                $card_info .= ' <span style="color:#666;font-size:0.85em;">(' . htmlspecialchars($card['team_name']) . ')</span>';
+            }
+
+            if ($card_info !== '') {
+                $d .= '<li style="margin-bottom:4px;break-inside:avoid;">' . $card_info . '</li>';
+            }
+        }
+
+        $d .= '</ul>';
+        $d .= '</div>';
+
+        // ── Trust / shipping ──────────────────────────────────────────────────
+        $d .= '<div style="background:#f0f4f8;border:1px solid #ccc;border-top:none;padding:10px 20px;text-align:center;color:#333;border-radius:0 0 6px 6px;">';
+        $d .= '<span style="margin:0 16px;">🌎 Ships Worldwide &mdash; Canada Post (LETTER MAIL)</span>';
+        $d .= '<span style="margin:0 16px;">🛒 <strong>Combined shipping available</strong></span>';
+        $d .= '<span style="margin:0 16px;">✅ <strong>Satisfaction guaranteed</strong></span>';
+        $d .= '</div>';
+
+        $d .= '</div>';
+
+        return $d;
+    }
+
+    /**
+     * Retourne une image par carte du listing (la première par sort_order).
+     * Accepte images locales ET URLs distantes (eBay, etc.).
+     * Retourne max $max entrées (default 500).
+     *
+     * @return array  Chaque élément : ['src' => string, 'remote' => bool, 'qty' => int, 'show_qty' => bool]
+     */
+    public function getCardFrontImagePaths(int $listing_id, int $max = 500): array {
+        $rows = $this->db->query(
+            "SELECT ci.image_url, c.quantity, ci.sort_order
+             FROM `" . DB_PREFIX . "card_image` ci
+             INNER JOIN `" . DB_PREFIX . "card` c ON c.card_id = ci.card_id
+             WHERE c.listing_id = " . (int)$listing_id . "
+               AND c.status = 1
+               AND ci.sort_order = (
+                   SELECT MIN(ci2.sort_order)
+                   FROM `" . DB_PREFIX . "card_image` ci2
+                   WHERE ci2.card_id = ci.card_id
+               )
+             ORDER BY CAST(c.card_number AS UNSIGNED) ASC, c.card_number ASC
+             LIMIT " . (int)$max
+        )->rows;
+
+        return $this->_urlRowsToEntries($rows, true);
+    }
+
+    /**
+     * Retourne une image de dos par carte du listing (sort_order = MAX ou 2).
+     * Badge quantité affiché sur toutes (vue séparée).
+     *
+     * @return array  Chaque élément : ['src' => string, 'remote' => bool, 'qty' => int, 'show_qty' => bool]
+     */
+    public function getCardBackImagePaths(int $listing_id, int $max = 500): array {
+        $rows = $this->db->query(
+            "SELECT ci.image_url, c.quantity, ci.sort_order
+             FROM `" . DB_PREFIX . "card_image` ci
+             INNER JOIN `" . DB_PREFIX . "card` c ON c.card_id = ci.card_id
+             WHERE c.listing_id = " . (int)$listing_id . "
+               AND c.status = 1
+               AND ci.sort_order = (
+                   SELECT MAX(ci2.sort_order)
+                   FROM `" . DB_PREFIX . "card_image` ci2
+                   WHERE ci2.card_id = ci.card_id
+               )
+             ORDER BY CAST(c.card_number AS UNSIGNED) ASC, c.card_number ASC
+             LIMIT " . (int)$max
+        )->rows;
+
+        return $this->_urlRowsToEntries($rows, true);
+    }
+
+    /**
+     * Retourne les deux premières images par carte (recto + verso) intercalées :
+     * [card1-front, card1-back, card2-front, card2-back, …]
+     * Le badge quantité s'affiche uniquement sur le recto (sort_order=1).
+     * Retourne max $max entrées.
+     */
+    public function getCardBothSidesImagePaths(int $listing_id, int $max = 1000): array {
+        $rows = $this->db->query(
+            "SELECT ci.image_url, c.quantity, ci.sort_order
+             FROM `" . DB_PREFIX . "card_image` ci
+             INNER JOIN `" . DB_PREFIX . "card` c ON c.card_id = ci.card_id
+             WHERE c.listing_id = " . (int)$listing_id . "
+               AND c.status = 1
+               AND ci.sort_order <= 2
+             ORDER BY CAST(c.card_number AS UNSIGNED) ASC, c.card_number ASC, ci.sort_order ASC
+             LIMIT " . (int)$max
+        )->rows;
+
+        // Badge qty sur le recto seulement (sort_order minimal = 1)
+        return $this->_urlRowsToEntries($rows, false, true);
+    }
+
+    /**
+     * @internal Convertit des rows {image_url, quantity, sort_order} en entrées.
+     * @param bool $alwaysShowQty  Affiche qty sur toutes les images (vue d'ensemble)
+     * @param bool $frontOnlyQty   Affiche qty uniquement sur sort_order=1 (recto)
+     */
+    private function _urlRowsToEntries(array $rows, bool $alwaysShowQty = false, bool $frontOnlyQty = false): array {
+        $paths = [];
+        foreach ($rows as $row) {
+            $url      = trim($row['image_url'] ?? '');
+            if ($url === '') continue;
+            $qty      = (int)($row['quantity'] ?? 1);
+            $sortOrd  = (int)($row['sort_order'] ?? 1);
+            $showQty  = $qty > 1 && ($alwaysShowQty || ($frontOnlyQty && $sortOrd === 1));
+
+            if (preg_match('#^https?://#i', $url)) {
+                $paths[] = ['src' => $url, 'remote' => true, 'qty' => $qty, 'show_qty' => $showQty];
+            } else {
+                $abs = str_starts_with($url, '/') ? $url : DIR_IMAGE . $url;
+                if (file_exists($abs)) {
+                    $paths[] = ['src' => $abs, 'remote' => false, 'qty' => $qty, 'show_qty' => $showQty];
+                }
+            }
+        }
+        return $paths;
+    }
+
+    /**
+     * Télécharge les images distantes eBay et les sauvegarde localement en WebP.
+     * Convention : image/catalog/cards/{lid}/{lid}_{hex8}_pri.webp  (sort_order = 1)
+     *              image/catalog/cards/{lid}/{lid}_{hex8}_sec.webp  (sort_order > 1)
+     * Met à jour oc_card_image.image_url avec le chemin relatif local.
+     * Les images déjà locales (pas de http://) sont ignorées.
+     */
+    /**
+     * Télécharge ou migre les images vers la convention produit :
+     *   catalog/cards/{floor(card_id/1000)}/{card_id}/{card_id}pri{2digits}.webp  (sort_order=1)
+     *   catalog/cards/{floor(card_id/1000)}/{card_id}/{card_id}sec{2digits}.webp  (sort_order>1)
+     *
+     * - Images distantes (https://) → téléchargement + sauvegarde WebP
+     * - Images déjà locales mais ancien format → renommage vers nouveau format
+     * - Images déjà au bon format (contiennent 'pri' ou 'sec' dans le nom) → ignorées
+     */
+    public function downloadAndCacheCardImages(int $listing_id): void {
+        $rows = $this->db->query(
+            "SELECT ci.image_id, ci.image_url, ci.sort_order, c.card_id
+             FROM `" . DB_PREFIX . "card_image` ci
+             INNER JOIN `" . DB_PREFIX . "card` c ON c.card_id = ci.card_id
+             WHERE c.listing_id = " . (int)$listing_id . "
+               AND c.status = 1
+             ORDER BY ci.card_id ASC, ci.sort_order ASC"
+        )->rows;
+
+        if (empty($rows)) return;
+
+        foreach ($rows as $row) {
+            $imageId = (int)$row['image_id'];
+            $cardId  = (int)$row['card_id'];
+            $curUrl  = trim($row['image_url']);
+            $sortOrd = (int)$row['sort_order'];
+
+            // Convention cible : {card_id}pri{2digits}.webp  /  {card_id}sec{2digits}.webp
+            $suffix   = ($sortOrd === 1) ? 'pri' : 'sec';
+            $subDir   = (string)(int)floor($cardId / 1000);
+            $localDir = DIR_IMAGE . 'catalog/cards/' . $subDir . '/' . $cardId . '/';
+            $relBase  = 'catalog/cards/' . $subDir . '/' . $cardId . '/';
+
+            // Déjà au bon format : {cardId}pri... ou {cardId}sec... dans le bon dossier
+            if (str_starts_with($curUrl, $relBase) && preg_match('#^' . $cardId . $suffix . '\d{2}\.webp$#', basename($curUrl))) {
+                continue;
+            }
+
+            $rand2    = str_pad((string)mt_rand(10, 99), 2, '0', STR_PAD_LEFT);
+            $filename = $cardId . $suffix . $rand2 . '.webp';
+            $localAbs = $localDir . $filename;
+            $relPath  = $relBase . $filename;
+
+            if (!is_dir($localDir)) {
+                mkdir($localDir, 0755, true);
+            }
+
+            if (preg_match('#^https?://#i', $curUrl)) {
+                // ── Image distante : télécharger ──────────────────────────
+                $bytes = @file_get_contents($curUrl);
+                if ($bytes === false || strlen($bytes) < 100) continue;
+                $gd = @imagecreatefromstring($bytes);
+                if (!$gd) continue;
+                imagewebp($gd, $localAbs, 90);
+                imagedestroy($gd);
+            } else {
+                // ── Image locale ancien format : renommer ─────────────────
+                $oldAbs = str_starts_with($curUrl, '/') ? $curUrl : DIR_IMAGE . $curUrl;
+                if (!file_exists($oldAbs)) continue;
+                if (!rename($oldAbs, $localAbs)) continue;
+            }
+
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_image`
+                 SET image_url = '" . $this->db->escape($relPath) . "'
+                 WHERE image_id = " . $imageId
+            );
+        }
+    }
+
+    /**
+     * Compose une mosaïque à partir d'un sous-ensemble d'entrées déjà slicé.
+     * - Fond noir
+     * - Sortie WebP (qualité 85)
+     * - $tileEntries = array de ['src' => string, 'remote' => bool]
+     * - $tileIndex   = index 0-based pour le nom du fichier
+     */
+    public function composeMosaicTile(array $tileEntries, int $grid_n, int $tileIndex, int $listing_id): string {
+        $tileSize = 1600;
+        $cellSize = (int)floor($tileSize / $grid_n);
+        $padding  = 0; // images collées bord à bord
+
+        $outDir = DIR_IMAGE . 'shopmanager/lot_' . (int)$listing_id . '/';
+        if (!is_dir($outDir)) {
+            mkdir($outDir, 0755, true);
+        }
+        $outFile = $outDir . 'mosaic_' . ($tileIndex + 1) . '.webp';
+
+        // Canvas fond noir
+        $canvas = imagecreatetruecolor($tileSize, $tileSize);
+        $black  = imagecolorallocate($canvas, 0, 0, 0);
+        imagefill($canvas, 0, 0, $black);
+
+        $w = $cellSize;
+        $h = $cellSize;
+
+        // Font pour badge quantité
+        $fontFile = '/usr/share/fonts/open-sans/OpenSans-Bold.ttf';
+        $hasTTF   = function_exists('imagettftext') && file_exists($fontFile);
+        $fontSize = max(8, (int)round($cellSize * 0.13)); // ~13% de la cellule
+
+        foreach ($tileEntries as $idx => $entry) {
+            $imgSrc  = $entry['src'];
+            $remote  = $entry['remote'] ?? false;
+            $qty     = (int)($entry['qty'] ?? 1);
+            $showQty = (bool)($entry['show_qty'] ?? false);
+
+            $src = null;
+            try {
+                if ($remote) {
+                    $bytes = @file_get_contents($imgSrc);
+                    if ($bytes !== false && strlen($bytes) > 100) {
+                        $src = @imagecreatefromstring($bytes);
+                    }
+                } else {
+                    $ext = strtolower(pathinfo($imgSrc, PATHINFO_EXTENSION));
+                    $src = match ($ext) {
+                        'jpg', 'jpeg' => @imagecreatefromjpeg($imgSrc),
+                        'png'         => @imagecreatefrompng($imgSrc),
+                        'gif'         => @imagecreatefromgif($imgSrc),
+                        'webp'        => @imagecreatefromwebp($imgSrc),
+                        default       => @imagecreatefromstring(@file_get_contents($imgSrc) ?: ''),
+                    };
+                }
+            } catch (\Throwable $e) {
+                $src = null;
+            }
+            if (!$src) continue;
+
+            $sw = imagesx($src);
+            $sh = imagesy($src);
+
+            $scale = min($w / $sw, $h / $sh);
+            $dw    = (int)round($sw * $scale);
+            $dh    = (int)round($sh * $scale);
+
+            $thumb = imagecreatetruecolor($dw, $dh);
+            $tbg   = imagecolorallocate($thumb, 0, 0, 0);
+            imagefill($thumb, 0, 0, $tbg);
+            imagecopyresampled($thumb, $src, 0, 0, 0, 0, $dw, $dh, $sw, $sh);
+            imagedestroy($src);
+
+            $col   = $idx % $grid_n;
+            $row   = (int)floor($idx / $grid_n);
+            $destX = $col * $cellSize + (int)floor(($w - $dw) / 2);
+            $destY = $row * $cellSize + (int)floor(($h - $dh) / 2);
+
+            imagecopy($canvas, $thumb, $destX, $destY, 0, 0, $dw, $dh);
+            imagedestroy($thumb);
+
+            // ── Badge quantité ─────────────────────────────────────────────
+            if ($showQty && $qty > 1) {
+                $label   = $qty . 'x';
+                $padX    = (int)round($cellSize * 0.04);
+                $padY    = (int)round($cellSize * 0.04);
+
+                if ($hasTTF) {
+                    // Mesure du texte
+                    $bbox = imagettfbbox($fontSize, 0, $fontFile, $label);
+                    $tw   = abs($bbox[4] - $bbox[0]);
+                    $th   = abs($bbox[5] - $bbox[1]);
+                } else {
+                    $tw = strlen($label) * 8;
+                    $th = 12;
+                }
+
+                // Badge fond semi-opaque (rectangle plein rouge foncé)
+                $bx1 = $destX + $dw - $tw - $padX * 2;
+                $by1 = $destY + $dh - $th - $padY * 2;
+                $bx2 = $destX + $dw;
+                $by2 = $destY + $dh;
+                $badgeBg  = imagecolorallocate($canvas, 180, 0, 0);   // rouge foncé
+                $badgeTxt = imagecolorallocate($canvas, 255, 255, 255); // blanc
+                imagefilledrectangle($canvas, $bx1, $by1, $bx2, $by2, $badgeBg);
+
+                $tx = $bx1 + $padX;
+                if ($hasTTF) {
+                    $ty = $by2 - $padY;
+                    imagettftext($canvas, $fontSize, 0, $tx, $ty, $badgeTxt, $fontFile, $label);
+                } else {
+                    $ty = $by1 + $padY;
+                    imagestring($canvas, 5, $tx, $ty, $label, $badgeTxt);
+                }
+            }
+        }
+
+        imagewebp($canvas, $outFile, 85);
+        imagedestroy($canvas);
+
+        return $outFile;
+    }
+
+    /**
+     * Génère les mosaïques WebP pour le lot (max 12 images eBay).
+     *
+     * Image 1     — VUE D'ENSEMBLE : toutes les cartes (recto), grille ceil(√N)²
+     * Images 2..7 — PAGES RECTO : recto seulement, grille 3×3 min, max 6 pages
+     * Images 8..12— PAGES VERSO : verso seulement, grille 3×3 min, max 5 pages
+     *
+     * NOTE: Les images distantes (eBay) sont téléchargées à la volée dans composeMosaicTile().
+     *       downloadAndCacheCardImages() doit être appelé SÉPARÉMENT/EXPLICITEMENT si désiré.
+     */
+    public function generateMosaicImages(int $listing_id): array {
+        // ── Récupérer les chemins (distants ou locaux) ────────────────────────
+        $frontPaths = $this->getCardFrontImagePaths($listing_id, 500);
+        $backPaths  = $this->getCardBackImagePaths($listing_id, 500);
+
+        if (empty($frontPaths)) {
+            return [];
+        }
+
+        $totalFront = count($frontPaths);
+        $totalBack  = count($backPaths);
+        $this->clearLotImages($listing_id);
+        $results   = [];
+        $sortOrder = 0; // sort_order dans oc_card_listing_image
+
+        // ── Mosaïque 1 : VUE D'ENSEMBLE — toutes les cartes (recto) ──────────
+        $overviewGrid = max(2, (int)ceil(sqrt($totalFront)));
+        $outFile = $this->composeMosaicTile($frontPaths, $overviewGrid, 0, $listing_id);
+        if ($outFile && file_exists($outFile)) {
+            $results[] = $outFile;
+            $relPath   = 'shopmanager/lot_' . (int)$listing_id . '/mosaic_1.webp';
+            $this->db->query(
+                "INSERT INTO `" . DB_PREFIX . "card_listing_image` (listing_id, image_path, sort_order)
+                 VALUES (" . (int)$listing_id . ", '" . $this->db->escape($relPath) . "', " . $sortOrder . ")"
+            );
+            $sortOrder++;
+        }
+
+        // ── Mosaïques 2..7 : PAGES RECTO seulement (max 6 pages) ─────────────
+        $frontGrid  = max(3, (int)ceil(sqrt((int)ceil($totalFront / 6))));
+        $perFront   = $frontGrid * $frontGrid;
+        $frontPages = min((int)ceil($totalFront / $perFront), 6);
+
+        for ($i = 0; $i < $frontPages; $i++) {
+            $mosaicNum = $sortOrder + 1; // 1-based filename: mosaic_2.webp, mosaic_3.webp...
+            $slice     = array_slice($frontPaths, $i * $perFront, $perFront);
+            $outFile   = $this->composeMosaicTile($slice, $frontGrid, $mosaicNum - 1, $listing_id);
+            if ($outFile && file_exists($outFile)) {
+                $results[] = $outFile;
+                $relPath   = 'shopmanager/lot_' . (int)$listing_id . '/mosaic_' . $mosaicNum . '.webp';
+                $this->db->query(
+                    "INSERT INTO `" . DB_PREFIX . "card_listing_image` (listing_id, image_path, sort_order)
+                     VALUES (" . (int)$listing_id . ", '" . $this->db->escape($relPath) . "', " . $sortOrder . ")"
+                );
+                $sortOrder++;
+            }
+        }
+
+        // ── Mosaïques suivantes : PAGES VERSO seulement (max 5 pages) ─────────
+        if (!empty($backPaths)) {
+            $backGrid  = max(3, (int)ceil(sqrt((int)ceil($totalBack / 5))));
+            $perBack   = $backGrid * $backGrid;
+            $backPages = min((int)ceil($totalBack / $perBack), 5);
+
+            for ($i = 0; $i < $backPages; $i++) {
+                $mosaicNum = $sortOrder + 1;
+                $slice     = array_slice($backPaths, $i * $perBack, $perBack);
+                $outFile   = $this->composeMosaicTile($slice, $backGrid, $mosaicNum - 1, $listing_id);
+                if ($outFile && file_exists($outFile)) {
+                    $results[] = $outFile;
+                    $relPath   = 'shopmanager/lot_' . (int)$listing_id . '/mosaic_' . $mosaicNum . '.webp';
+                    $this->db->query(
+                        "INSERT INTO `" . DB_PREFIX . "card_listing_image` (listing_id, image_path, sort_order)
+                         VALUES (" . (int)$listing_id . ", '" . $this->db->escape($relPath) . "', " . $sortOrder . ")"
+                    );
+                    $sortOrder++;
+                }
+            }
+        }
+
+        return $results;
+    }
+
+    /**
+     * Enregistre les informations du lot après publication eBay.
+     * - ebay_item_id / date_published / status → oc_card_listing_description (batch_id = NULL)
+     * - price override                          → oc_card_listing.price
+     * Language_id = 1 (EN) — le lot n'est publié que dans une langue.
+     */
+    public function saveLotInfo(int $listing_id, string $ebay_item_id, float $price): void {
+        // Titre généré pour la row description
+        $title = $this->db->escape(substr($this->generateLotTitle($listing_id), 0, 255));
+        $itemId = $this->db->escape($ebay_item_id);
+
+        // Upsert description row avec batch_id = NULL
+        $exists = $this->db->query(
+            "SELECT id FROM `" . DB_PREFIX . "card_listing_description`
+             WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+        )->num_rows;
+
+        if ($exists) {
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_listing_description`
+                 SET ebay_item_id = '" . $itemId . "',
+                     status = 1,
+                     date_published = NOW(),
+                     title = '" . $title . "'
+                 WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+            );
+        } else {
+            $this->db->query(
+                "INSERT INTO `" . DB_PREFIX . "card_listing_description`
+                 (listing_id, language_id, batch_id, title, ebay_item_id, status, date_published)
+                 VALUES (" . (int)$listing_id . ", 1, NULL, '" . $title . "', '" . $itemId . "', 1, NOW())"
+            );
+        }
+
+        // Prix lot → oc_card_listing.price
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing`
+             SET `price` = '" . (float)$price . "'
+             WHERE `listing_id` = " . (int)$listing_id
+        );
+    }
+
+    /**
+     * Récupère les informations lot d'un listing.
+     * - ebay_item_id, status, date_published → oc_card_listing_description (batch_id IS NULL)
+     * - price                                → oc_card_listing.price
+     * - weight/dims                          → oc_card_listing.lot_weight*
+     */
+    public function getLotInfo(int $listing_id): array {
+        $descRow = $this->db->query(
+            "SELECT ebay_item_id, status, date_published
+             FROM `" . DB_PREFIX . "card_listing_description`
+             WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+        )->row;
+
+        $listingRow = $this->db->query(
+            "SELECT price, lot_weight, lot_weight_class_id, lot_length, lot_width, lot_height, lot_length_class_id
+             FROM `" . DB_PREFIX . "card_listing`
+             WHERE listing_id = " . (int)$listing_id
+        )->row;
+
+        return [
+            'lot_ebay_item_id'    => $descRow['ebay_item_id']    ?? '',
+            'lot_status'          => (int)($descRow['status']         ?? 0),
+            'lot_date_published'  => $descRow['date_published']  ?? null,
+            'lot_price'           => $listingRow['price']        ?? null,
+            'lot_weight'          => $listingRow['lot_weight']          ?? '0',
+            'lot_weight_class_id' => (int)($listingRow['lot_weight_class_id'] ?? 5),
+            'lot_length'          => $listingRow['lot_length']          ?? '0',
+            'lot_width'           => $listingRow['lot_width']           ?? '0',
+            'lot_height'          => $listingRow['lot_height']          ?? '0',
+            'lot_length_class_id' => (int)($listingRow['lot_length_class_id'] ?? 3),
+        ];
+    }
+
+    /**
+     * Enregistre le poids et les dimensions du lot.
+     */
+    public function saveLotShipping(int $listing_id, float $weight, int $weight_class_id, float $length, float $width, float $height, int $length_class_id): void {
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing`
+             SET `lot_weight`           = '" . (float)$weight . "',
+                 `lot_weight_class_id`  = " . (int)$weight_class_id . ",
+                 `lot_length`           = '" . (float)$length . "',
+                 `lot_width`            = '" . (float)$width . "',
+                 `lot_height`           = '" . (float)$height . "',
+                 `lot_length_class_id`  = " . (int)$length_class_id . "
+             WHERE `listing_id` = " . (int)$listing_id
+        );
+    }
+
+    /**
+     * Efface les informations lot (après fin de l'annonce eBay).
+     * Met l'status à 2 (ended) dans la row description, et remet price à 0.
+     */
+    public function clearLotInfo(int $listing_id): void {
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing_description`
+             SET ebay_item_id = NULL, status = 2
+             WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+        );
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing`
+             SET `price` = 0
+             WHERE `listing_id` = " . (int)$listing_id
+        );
+    }
+
+    /**
+     * Enregistre un prix lot manuel (override du calcul automatique).
+     * Stocké dans oc_card_listing.price.
+     */
+    public function saveLotPriceOverride(int $listing_id, float $price): void {
+        $this->db->query(
+            "UPDATE `" . DB_PREFIX . "card_listing`
+             SET `price` = '" . (float)$price . "'
+             WHERE `listing_id` = " . (int)$listing_id
+        );
+    }
+
+    // ── oc_card_listing_image ─────────────────────────────────────────────────
+
+    public function clearLotImages(int $listing_id): void {
+        $this->db->query(
+            "DELETE FROM `" . DB_PREFIX . "card_listing_image`
+             WHERE listing_id = " . (int)$listing_id
+        );
+    }
+
+    /**
+     * Retourne les images générées pour le lot (depuis oc_card_listing_image).
+     * Chaque entrée contient image_id, image_path, sort_order.
+     */
+    public function getLotImages(int $listing_id): array {
+        return $this->db->query(
+            "SELECT image_id, image_path, sort_order
+             FROM `" . DB_PREFIX . "card_listing_image`
+             WHERE listing_id = " . (int)$listing_id . "
+             ORDER BY sort_order ASC, image_id ASC"
+        )->rows;
+    }
+
+    // ── Lot description éditable ──────────────────────────────────────────────
+
+    /**
+     * Sauvegarde le titre et la description du lot dans oc_card_listing_description
+     * (batch_id IS NULL, language_id = 1).
+     * Ne touche pas aux champs eBay (ebay_item_id, status, date_published).
+     */
+    public function saveLotDescription(int $listing_id, string $title, string $description): void {
+        $title = $this->db->escape(substr($title, 0, 255));
+        $desc  = $this->db->escape($description);
+
+        $exists = $this->db->query(
+            "SELECT id FROM `" . DB_PREFIX . "card_listing_description`
+             WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+        )->num_rows;
+
+        if ($exists) {
+            $this->db->query(
+                "UPDATE `" . DB_PREFIX . "card_listing_description`
+                 SET title = '" . $title . "', description = '" . $desc . "'
+                 WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+            );
+        } else {
+            $this->db->query(
+                "INSERT INTO `" . DB_PREFIX . "card_listing_description`
+                 (listing_id, language_id, batch_id, title, description, status)
+                 VALUES (" . (int)$listing_id . ", 1, NULL, '" . $title . "', '" . $desc . "', 0)"
+            );
+        }
+    }
+
+    /**
+     * Retourne le titre + description sauvegardés du lot (batch_id IS NULL).
+     * Retourne ['title' => '', 'description' => ''] si rien n'est enregistré.
+     */
+    public function getSavedLotDescription(int $listing_id): array {
+        $row = $this->db->query(
+            "SELECT title, description FROM `" . DB_PREFIX . "card_listing_description`
+             WHERE listing_id = " . (int)$listing_id . " AND language_id = 1 AND batch_id IS NULL"
+        )->row;
+        return $row ?: ['title' => '', 'description' => ''];
+    }
+
+    /**
+     * Régénère et sauvegarde le titre + description du lot depuis les données live.
+     * Retourne ['title' => ..., 'description' => ...].
+     */
+    public function regenAndSaveLotDescription(int $listing_id): array {
+        $title = $this->generateLotTitle($listing_id);
+        $desc  = $this->generateLotDescription($listing_id);
+        $this->saveLotDescription($listing_id, $title, $desc);
+        return ['title' => $title, 'description' => $desc];
+    }
+
+    private function migrateImages ($listing_id){
+     
+        set_time_limit(300);
+        ini_set('memory_limit', '512M');
+
+    
+            $this->load->model('shopmanager/marketplace');
+            $this->load->model('shopmanager/ebay');
+
+            // Use customer_id=10, language_id=1 (English CA account)
+            $marketplace_account = $this->model_shopmanager_marketplace->getMarketplaceAccount([
+                'customer_id' => 10,
+                'filter_language_id' => 1
+            ]);
+
+            if (empty($marketplace_account['marketplace_account_id'])) {
+                throw new \Exception('No marketplace account found (customer_id=10, language_id=1)');
+            }
+
+            $marketplace_account_id = $marketplace_account['marketplace_account_id'];
+
+            $result = $this->model_shopmanager_ebay->migrateImagesToEbay($listing_id, $marketplace_account_id);
+
+            $json['success'] = true;
+            $json['result']  = $result;
+
+    }
+
+}
+

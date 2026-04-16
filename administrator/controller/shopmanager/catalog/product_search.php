@@ -15,9 +15,9 @@ public function index() {
 	$start_time = microtime(true); 
 	$execution_times = [];
 	$n=0;
-	$lang = $this->load->language('shopmanager/catalog/product_search');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product_search');
+	$data = [];
+	
 	$this->document->addScript('view/javascript/shopmanager/catalog/product_search.js');
 		$this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
 		//$this->document->addScript('view/javascript/shopmanager/alert_popup.js');
@@ -2112,9 +2112,9 @@ public function product_feed() {
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
-	$lang = $this->load->language('shopmanager/catalog/product_search');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product_search');
+	$data = [];
+	
 	$this->load->model('shopmanager/catalog/product_search');
 	$this->load->model('shopmanager/catalog/product');
 	$this->load->model('shopmanager/ai');
@@ -2777,9 +2777,9 @@ public function process_search_field_fast_list($data) {
 	//print("<pre>" . print_r(($data), true) . "</pre>");
 	//print("<pre>" . print_r('2440:product.php', true) . "</pre>");
 	$product_info_source=$data['product_info_source'];
-    $lang = $this->load->language('shopmanager/catalog/product_search');
-    $data = $data ?? [];
-    $data += $lang;
+    $this->load->language('shopmanager/catalog/product_search');
+    $data = [];
+    
 	$this->load->model('shopmanager/manufacturer');
 	
 	$data['entry_condition'] = ($lang['entry_condition'] ?? '');
@@ -3519,9 +3519,9 @@ public function process_search_field($data) {
 	//print("<pre>" . print_r(($data), true) . "</pre>");
 	//print("<pre>" . print_r('2440:product.php', true) . "</pre>");
 	$product_info_source=$data['product_info_source'];
-    $lang = $this->load->language('shopmanager/catalog/product_search');
-    $data = $data ?? [];
-    $data += $lang;
+    $this->load->language('shopmanager/catalog/product_search');
+    $data = [];
+    
 	$this->load->model('shopmanager/manufacturer');
 	$this->load->model('shopmanager/localisation/country');
 
@@ -4334,9 +4334,9 @@ public function getSearchData() {
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 
-	$lang = $this->load->language('shopmanager/catalog/product_search');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product_search');
+	$data = [];
+	
    $json = [];
 
 	if (!$this->user->hasPermission('modify', 'shopmanager/catalog/product_search')) {
@@ -4600,7 +4600,7 @@ public function getSearchData() {
 	protected function buildEbayPricevariantTable(): string {
 		$this->load->model('shopmanager/catalog/product_search');
 		$this->load->model('shopmanager/catalog/product');
-		$lang = $this->load->language('shopmanager/catalog/product_search');
+		$this->load->language('shopmanager/catalog/product_search');
 
 		$product_id = (int)($this->request->get['product_id'] ?? ($this->request->post['product_id'] ?? 0));
 		$upc        = $this->request->get['upc'] ?? ($this->request->post['upc'] ?? null);

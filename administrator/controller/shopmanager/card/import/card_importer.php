@@ -4,9 +4,9 @@ namespace Opencart\Admin\Controller\Shopmanager\Card\Import;
 class CardImporter extends \Opencart\System\Engine\Controller {
     
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         
@@ -128,9 +128,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates request, processes file, returns JSON response
      */
     public function upload(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         
         $json = [];
         
@@ -571,9 +571,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Validates request, generates CSV file, returns download link
      */
     public function generate(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         $this->load->model('shopmanager/card/card_listing');
         
         $json = [];
@@ -688,8 +688,8 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      */
     public function download(): void {
         $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $data = [];
+        
         
         // Validate permission
         if (!$this->user->hasPermission('access', 'shopmanager/card/import/card_importer')) {
@@ -726,9 +726,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * AJAX endpoint for brand validation
      */
     public function validateManufacturer(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         
         $json = [];
         
@@ -763,9 +763,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * AJAX endpoint for adding new brand
      */
     public function addManufacturer(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         
         $json = [];
         
@@ -805,9 +805,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * Returns ungraded + graded auction/list prices in CAD.
      */
     public function getMarketPricesPreview(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         $this->load->model('shopmanager/ebay');
 
         $json = [];
@@ -1082,9 +1082,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
     }
 
     private function getPreviewTable(array $groups): string {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         $this->load->model('shopmanager/card/card_listing');
         $this->load->model('shopmanager/card/card_type');
         $this->load->model('shopmanager/card/card_manufacturer');
@@ -1289,7 +1289,7 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Groups, config data or error
      */
     private function getSaveListingsInput(): array {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
+        $this->load->language('shopmanager/card/import/card_importer');
         $groups = $this->request->post['groups'] ?? [];
         
         if (empty($groups)) {
@@ -1669,9 +1669,9 @@ class CardImporter extends \Opencart\System\Engine\Controller {
      * @return array Result array with success/error status
      */
     public function publishToEbay($listing_id = null): array {
-        $lang = $this->load->language('shopmanager/card/import/card_importer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/import/card_importer');
+        $data = [];
+        
         
         try {
             $this->load->model('shopmanager/ebay');

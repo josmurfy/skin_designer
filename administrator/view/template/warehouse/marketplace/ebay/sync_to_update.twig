@@ -1,0 +1,91 @@
+{# Original: shopmanager/inventory/sync_to_update.twig #}
+{# To Update Tab — Products with to_update = 1 pending push to eBay #}
+
+{% if to_update|length > 0 %}
+
+  {# Top action bar — always visible when items exist #}
+  <div class="mb-2 p-2 bg-light border rounded d-flex align-items-center gap-2">
+    <button type="button" id="tu-btn-update-all" class="btn btn-sm btn-danger">
+      <i class="fa-solid fa-bolt"></i> {{ button_update_all_ebay }} <span class="badge bg-light text-danger">{{ to_update_total }}</span>
+    </button>
+    <span id="tu-toolbar" style="display:none;" class="d-flex align-items-center gap-2">
+      <span id="tu-count" class="text-muted small fw-bold"></span>
+      <button type="button" id="tu-btn-update" class="btn btn-sm btn-primary">
+        <i class="fa-solid fa-rotate"></i> Update Selected on eBay
+      </button>
+      <button type="button" id="tu-btn-deselect" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-times"></i> Deselect All
+      </button>
+    </span>
+  </div>
+
+  <div class="table-responsive">
+    <table id="tbl-to-update" class="table table-bordered table-hover table-sm" style="font-size: 11px;">
+      <thead class="table-light">
+        <tr>
+          <th style="width:32px; text-align:center;">
+            <input type="checkbox" id="tu-check-all">
+          </th>
+          <th style="width:70px;">{{ column_product_id }}</th>
+          <th>{{ column_product }}</th>
+          <th style="width:90px;">{{ column_sku }}</th>
+          <th style="width:150px;">{{ column_ebay_id }}</th>
+          <th style="width:80px;">{{ column_location }}</th>
+          <th style="width:120px;">{{ text_last_sync }}</th>
+          <th style="width:60px;" class="text-center">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in to_update %}
+          <tr data-product-id="{{ product.product_id }}">
+            <td class="text-center">
+              <input type="checkbox" class="tu-cb" value="{{ product.product_id }}">
+            </td>
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ product.name }}">{{ product.name }}</td>
+            <td><code>{{ product.sku }}</code></td>
+            <td>
+              {% if product.marketplace_item_id %}
+                <a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary">
+                  <i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}
+                </a>
+              {% else %}
+                <span class="text-muted">{{ text_not_listed }}</span>
+              {% endif %}
+            </td>
+            <td><span class="badge bg-secondary">{{ product.location }}</span></td>
+            <td>
+              {% if product.last_sync and product.last_sync != '0000-00-00 00:00:00' %}
+                <small>{{ product.last_sync|date('Y-m-d H:i') }}</small>
+              {% else %}
+                <span class="badge bg-danger">{{ text_never_synced }}</span>
+              {% endif %}
+            </td>
+            <td class="text-center">
+              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-xs btn-primary btn-sm" title="{{ text_edit_product }}">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if to_update_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-2">
+      <small class="text-muted">{{ to_update_start }}–{{ to_update_end }} / {{ to_update_total }}</small>
+      <nav><ul class="pagination pagination-sm mb-0">
+        {% for p in 1..to_update_num_pages %}
+          <li class="page-item {{ p == to_update_page ? 'active' : '' }}">
+            <a class="page-link load-to-update-page" href="#" data-page="{{ p }}">{{ p }}</a>
+          </li>
+        {% endfor %}
+      </ul></nav>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ text_no_to_update }}</div>
+{% endif %}

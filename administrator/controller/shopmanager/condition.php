@@ -3,9 +3,9 @@ namespace Opencart\Admin\Controller\Shopmanager;
 
 class Condition extends \Opencart\System\Engine\Controller {
     public function getConditionDetails(): void {
-        $lang = $this->load->language('shopmanager/condition');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/condition');
+        $data = [];
+        
         $json = array();
 
         if (isset($this->request->get['category_id'])) {

@@ -344,6 +344,335 @@ class ColumnLeft extends \Opencart\System\Engine\Controller {
 				];
 			}
 
+			// =============================================
+			// WAREHOUSE MENU (warehouse/ controllers)
+			// =============================================
+			$warehouse = [];
+
+			// Groupe : Produits
+			$wh_product = [];
+			if ($this->user->hasPermission('access', 'warehouse/product/product')) {
+				$wh_product[] = [
+					'name'     => $this->language->get('text_wh_product'),
+					'href'     => $this->url->link('warehouse/product/product', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/product/receive')) {
+				$wh_product[] = [
+					'name'     => $this->language->get('text_wh_receive'),
+					'href'     => $this->url->link('warehouse/product/receive', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+		
+			if ($this->user->hasPermission('access', 'warehouse/product/research')) {
+				$wh_product[] = [
+					'name'     => $this->language->get('text_wh_research'),
+					'href'     => $this->url->link('warehouse/product/research', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+		
+
+			if ($this->user->hasPermission('access', 'warehouse/product/category')) {
+				$wh_product[] = [
+					'name'     => $this->language->get('text_wh_category'),
+					'href'     => $this->url->link('warehouse/product/category', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+		
+			
+
+			if ($this->user->hasPermission('access', 'warehouse/product/manufacturer')) {
+				$wh_product[] = [
+					'name'     => $this->language->get('text_wh_manufacturer'),
+					'href'     => $this->url->link('warehouse/product/manufacturer', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/product/condition')) {
+				$wh_product[] = [
+					'name'     => $this->language->get('text_wh_condition'),
+					'href'     => $this->url->link('warehouse/product/condition', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_product) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_wh_product_group'),
+					'href'     => '',
+					'children' => $wh_product
+				];
+			}
+
+			// Groupe : Cartes
+			$wh_cards = [];
+			if ($this->user->hasPermission('access', 'warehouse/card/card')) {
+				$wh_cards[] = [
+					'name'     => $this->language->get('text_wh_cards'),
+					'href'     => $this->url->link('warehouse/card/card', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/card/listing')) {
+				$wh_cards[] = [
+					'name'     => $this->language->get('text_wh_card_listings'),
+					'href'     => $this->url->link('warehouse/card/listing', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+
+			// Sous-groupe : Import
+			$wh_import = [];
+			if ($this->user->hasPermission('access', 'warehouse/card/import/card')) {
+				$wh_import[] = [
+					'name'     => $this->language->get('text_wh_card_importer'),
+					'href'     => $this->url->link('warehouse/card/import/card', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/card/import/set')) {
+				$wh_import[] = [
+					'name'     => $this->language->get('text_wh_card_set_importer'),
+					'href'     => $this->url->link('warehouse/card/import/set', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/card/import/sold')) {
+				$wh_import[] = [
+					'name'     => $this->language->get('text_wh_card_sold_importer'),
+					'href'     => $this->url->link('warehouse/card/import/sold', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/card/import/active')) {
+				$wh_import[] = [
+					'name'     => $this->language->get('text_wh_card_price_active'),
+					'href'     => $this->url->link('warehouse/card/import/active', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_import) {
+				$wh_cards[] = [
+					'name'     => $this->language->get('text_wh_import_group'),
+					'href'     => '',
+					'children' => $wh_import
+				];
+			}
+
+			if ($this->user->hasPermission('access', 'warehouse/card/search')) {
+				$wh_cards[] = [
+					'name'     => $this->language->get('text_wh_card_search'),
+					'href'     => $this->url->link('warehouse/card/search', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/card/market')) {
+				$wh_cards[] = [
+					'name'     => $this->language->get('text_wh_card_market'),
+					'href'     => $this->url->link('warehouse/card/market', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/card/manufacturer')) {
+				$wh_cards[] = [
+					'name'     => $this->language->get('text_wh_card_manufacturer'),
+					'href'     => $this->url->link('warehouse/card/manufacturer', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_cards) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_wh_cards_group'),
+					'href'     => '',
+					'children' => $wh_cards
+				];
+			}
+
+			// Groupe : Marketplace
+			$wh_marketplace = [];
+			if ($this->user->hasPermission('access', 'warehouse/marketplace/connection')) {
+				$wh_marketplace[] = [
+					'name'     => $this->language->get('text_wh_marketplace_connection'),
+					'href'     => $this->url->link('warehouse/marketplace/connection', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/marketplace/listing')) {
+				$wh_marketplace[] = [
+					'name'     => $this->language->get('text_wh_marketplace_listing'),
+					'href'     => $this->url->link('warehouse/marketplace/listing', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+
+			// Sous-groupe : eBay
+			$wh_ebay = [];
+			if ($this->user->hasPermission('access', 'warehouse/marketplace/ebay/category')) {
+				$wh_ebay[] = [
+					'name'     => $this->language->get('text_wh_ebay_category'),
+					'href'     => $this->url->link('warehouse/marketplace/ebay/category', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/marketplace/ebay/sync')) {
+				$wh_ebay[] = [
+					'name'     => $this->language->get('text_wh_ebay_sync'),
+					'href'     => $this->url->link('warehouse/marketplace/ebay/sync', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/marketplace/ebay/api')) {
+				$wh_ebay[] = [
+					'name'     => $this->language->get('text_wh_ebay_api'),
+					'href'     => $this->url->link('warehouse/marketplace/ebay/api', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_ebay) {
+				$wh_marketplace[] = [
+					'name'     => $this->language->get('text_wh_ebay_sub'),
+					'href'     => '',
+					'children' => $wh_ebay
+				];
+			}
+			if ($wh_marketplace) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_wh_marketplace_group'),
+					'href'     => '',
+					'children' => $wh_marketplace
+				];
+			}
+
+			// Groupe : Commandes
+			if ($this->user->hasPermission('access', 'warehouse/order/order')) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_orders'),
+					'href'     => $this->url->link('warehouse/order/order', 'user_token=' . $this->session->data['user_token'], true),
+					'children' => []
+				];
+			}
+
+			// Groupe : Inventaire
+			$wh_inventory = [];
+			if ($this->user->hasPermission('access', 'warehouse/inventory/inventory')) {
+				$wh_inventory[] = [
+					'name'     => $this->language->get('text_wh_inventory'),
+					'href'     => $this->url->link('warehouse/inventory/inventory', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/inventory/location')) {
+				$wh_inventory[] = [
+					'name'     => $this->language->get('text_wh_location'),
+					'href'     => $this->url->link('warehouse/inventory/location', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/inventory/allocation')) {
+				$wh_inventory[] = [
+					'name'     => $this->language->get('text_wh_allocation'),
+					'href'     => $this->url->link('warehouse/inventory/allocation', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/inventory/label')) {
+				$wh_inventory[] = [
+					'name'     => $this->language->get('text_wh_label'),
+					'href'     => $this->url->link('warehouse/inventory/label', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_inventory) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_wh_inventory_group'),
+					'href'     => '',
+					'children' => $wh_inventory
+				];
+			}
+
+			// Groupe : Outils
+			$wh_tools = [];
+			if ($this->user->hasPermission('access', 'warehouse/tools/ai')) {
+				$wh_tools[] = [
+					'name'     => $this->language->get('text_wh_ai'),
+					'href'     => $this->url->link('warehouse/tools/ai', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/tools/ocr')) {
+				$wh_tools[] = [
+					'name'     => $this->language->get('text_wh_ocr'),
+					'href'     => $this->url->link('warehouse/tools/ocr', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/tools/google')) {
+				$wh_tools[] = [
+					'name'     => $this->language->get('text_wh_google'),
+					'href'     => $this->url->link('warehouse/tools/google', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/tools/utility')) {
+				$wh_tools[] = [
+					'name'     => $this->language->get('text_wh_utility'),
+					'href'     => $this->url->link('warehouse/tools/utility', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/tools/store')) {
+				$wh_tools[] = [
+					'name'     => $this->language->get('text_wh_store'),
+					'href'     => $this->url->link('warehouse/tools/store', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_tools) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_wh_tools_group'),
+					'href'     => '',
+					'children' => $wh_tools
+				];
+			}
+
+			// Groupe : Maintenance
+			$wh_maintenance = [];
+			if ($this->user->hasPermission('access', 'warehouse/maintenance/image')) {
+				$wh_maintenance[] = [
+					'name'     => $this->language->get('text_wh_maintenance_image'),
+					'href'     => $this->url->link('warehouse/maintenance/image', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($this->user->hasPermission('access', 'warehouse/maintenance/description')) {
+				$wh_maintenance[] = [
+					'name'     => $this->language->get('text_wh_maintenance_desc'),
+					'href'     => $this->url->link('warehouse/maintenance/description', 'user_token=' . $this->session->data['user_token']),
+					'children' => []
+				];
+			}
+			if ($wh_maintenance) {
+				$warehouse[] = [
+					'name'     => $this->language->get('text_wh_maintenance_group'),
+					'href'     => '',
+					'children' => $wh_maintenance
+				];
+			}
+
+			// Ajout du groupe Warehouse au menu principal
+			if ($warehouse) {
+				$data['menus'][] = [
+					'id'       => 'menu-warehouse',
+					'icon'     => 'fa-solid fa-warehouse',
+					'name'     => $this->language->get('text_warehouse'),
+					'href'     => '',
+					'children' => $warehouse
+				];
+			}
+
 			// Catalog
 			$catalog = [];
 

@@ -17,9 +17,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function index(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $this->document->addScript('view/javascript/shopmanager/inventory/sync.js?v=' . filemtime(DIR_APPLICATION . 'view/javascript/shopmanager/inventory/sync.js'));
@@ -302,7 +302,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get initial Category Mismatch tab content
      */
     private function getCategoryMismatchContent(): string {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $limit    = 50;
@@ -311,7 +311,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $total    = count($filtered);
         $rows     = array_slice($filtered, 0, $limit);
 
-        $data  = $lang;
+        $data = [];
         $data['category_mismatch']            = $rows;
         $data['category_mismatch_total']      = $total;
         $data['category_mismatch_page']       = 1;
@@ -398,7 +398,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     private function getImageMismatchContent(): string {
         $this->load->model('shopmanager/inventory/sync');
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
 
         $limit = 20;
         $filter_data = ['start' => 0, 'limit' => $limit, 'sort' => 'product_id', 'order' => 'ASC'];
@@ -466,7 +466,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get initial Not Imported tab content
      */
     private function getNotImportedContent(): string {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $limit = 50;
@@ -475,7 +475,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $rows  = $this->model_shopmanager_inventory_sync->getNotImported($filter_data);
         $total = $this->model_shopmanager_inventory_sync->getTotalNotImported();
 
-        $data  = $lang;
+        $data = [];
         $data['not_imported']            = $rows;
         $data['not_imported_total']      = $total;
         $data['not_imported_page']       = 1;
@@ -494,7 +494,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get initial To Update tab content
      */
     private function getToUpdateContent(): string {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $limit = 50;
@@ -503,7 +503,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $rows  = $this->model_shopmanager_inventory_sync->getToUpdate($filter_data);
         $total = $this->model_shopmanager_inventory_sync->getTotalToUpdate();
 
-        $data  = $lang;
+        $data = [];
         $data['to_update']            = $rows;
         $data['to_update_total']      = $total;
         $data['to_update_page']       = 1;
@@ -522,7 +522,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get initial Not Synced tab content
      */
     private function getNotSyncedContent(): string {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $limit = 50;
@@ -531,7 +531,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $rows  = $this->model_shopmanager_inventory_sync->getProductsNotSynced($filter_data);
         $total = $this->model_shopmanager_inventory_sync->getTotalNotSynced();
 
-        $data  = $lang;
+        $data = [];
         $data['not_synced']            = $rows;
         $data['not_synced_total']      = $total;
         $data['not_synced_page']       = 1;
@@ -548,7 +548,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX: paginate Not Synced tab
      */
     public function getNotSyncedTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
@@ -560,7 +560,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $rows  = $this->model_shopmanager_inventory_sync->getProductsNotSynced($filter_data);
         $total = $this->model_shopmanager_inventory_sync->getTotalNotSynced();
 
-        $data  = $lang;
+        $data = [];
         $data['not_synced']            = $rows;
         $data['not_synced_total']      = $total;
         $data['not_synced_page']       = $page;
@@ -579,9 +579,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function getData(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
 
         $json = [];
 
@@ -707,9 +707,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      */
     public function quickStats(): string {
         $this->load->model('shopmanager/inventory/sync');
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
 
         $data = [];
         $data['total_products'] = $this->model_shopmanager_inventory_sync->getTotalProducts();
@@ -1623,9 +1623,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Price Mismatch tab with pagination
      */
     public function getPriceMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory/sync');
         
         // Pagination parameters
@@ -1672,9 +1672,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Quantity Mismatch tab with pagination
      */
     public function getQtyMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory/sync');
         
         // Pagination parameters
@@ -1721,9 +1721,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Specifics Mismatch tab with pagination
      */
     public function getSpecificsMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory/sync');
         
         // Pagination parameters
@@ -1770,9 +1770,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Condition Mismatch tab with pagination
      */
     public function getConditionMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory/sync');
         
         // Pagination parameters
@@ -1819,9 +1819,9 @@ class Sync extends \Opencart\System\Engine\Controller {
      * Get Image Count Mismatch Tab - AJAX reload endpoint
      */
     public function getImageMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/sync');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory/sync');
 
         // === eBay mismatch pagination ===
@@ -2596,7 +2596,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX method to load Category Mismatch tab with pagination (reload after fix)
      */
     public function getCategoryMismatchTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
@@ -2627,7 +2627,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $total = count($filtered);
         $rows  = array_slice($filtered, $start, $limit);
 
-        $data  = $lang;
+        $data = [];
         $data['category_mismatch']            = $rows;
         $data['category_mismatch_total']      = $total;
         $data['category_mismatch_page']       = $page;
@@ -2646,7 +2646,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX: paginate Not Imported tab
      */
     public function getNotImportedTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $page  = max(1, (int)($this->request->get['page'] ?? 1));
@@ -2660,7 +2660,7 @@ class Sync extends \Opencart\System\Engine\Controller {
         $rows  = $this->model_shopmanager_inventory_sync->getNotImported($filter_data);
         $total = $this->model_shopmanager_inventory_sync->getTotalNotImported();
 
-        $data  = $lang;
+        $data = [];
         $data['not_imported']            = $rows;
         $data['not_imported_total']      = $total;
         $data['not_imported_page']       = $page;
@@ -2679,7 +2679,7 @@ class Sync extends \Opencart\System\Engine\Controller {
      * AJAX: paginate To Update tab
      */
     public function getToUpdateTab(): void {
-        $lang = $this->load->language('shopmanager/inventory/sync');
+        $this->load->language('shopmanager/inventory/sync');
         $this->load->model('shopmanager/inventory/sync');
 
         $all   = isset($this->request->get['all']) && $this->request->get['all'] == '1';
@@ -2702,7 +2702,7 @@ class Sync extends \Opencart\System\Engine\Controller {
 
         $rows  = $this->model_shopmanager_inventory_sync->getToUpdate($filter_data);
 
-        $data  = $lang;
+        $data = [];
         $data['to_update']            = $rows;
         $data['to_update_total']      = $total;
         $data['to_update_page']       = $page;

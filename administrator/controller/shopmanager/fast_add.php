@@ -6,9 +6,9 @@ class FastAdd extends \Opencart\System\Engine\Controller {
 
     // Méthode principale : index
     public function index() {
-        $lang = $this->load->language('shopmanager/fast_add');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/fast_add');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
         $this->load->model('shopmanager/catalog/product');
@@ -16,9 +16,9 @@ class FastAdd extends \Opencart\System\Engine\Controller {
         $this->getList();
     }
 	public function delete() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -114,9 +114,9 @@ class FastAdd extends \Opencart\System\Engine\Controller {
 		$this->getList();
 	}
 	public function enable() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -207,9 +207,9 @@ class FastAdd extends \Opencart\System\Engine\Controller {
 		$this->getList();
 	}
 	public function disable() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -299,9 +299,9 @@ class FastAdd extends \Opencart\System\Engine\Controller {
 		$this->getList();
 	}
 	public function copy() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -1152,7 +1152,7 @@ class FastAdd extends \Opencart\System\Engine\Controller {
     protected function getForm() {
         $this->document->addScript('view/javascript/shopmanager/fast_add_form.js');
         $this->document->addScript('view/javascript/shopmanager/condition.js');
-        $lang = $this->load->language('shopmanager/fast_add');
+        $this->load->language('shopmanager/fast_add');
         $data['heading_title'] = ($lang['heading_title'] ?? '');
 
         $data['button_save'] = ($lang['button_save'] ?? '');
@@ -1411,9 +1411,9 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 		ini_set('display_errors', 1);
         ini_set('display_startup_errors', 1);
         error_reporting(E_ALL);
-		$lang = $this->load->language('shopmanager/fast_add');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/fast_add');
+		$data = [];
+		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 	
 		$this->load->model('shopmanager/catalog/product');
@@ -1480,9 +1480,9 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 	
     // Méthode : edit (Modification d'un produit existant)
     public function edit() {
-        $lang = $this->load->language('shopmanager/fast_add');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/fast_add');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
         $this->load->model('shopmanager/catalog/product');
@@ -2115,9 +2115,9 @@ $data['alert_popup'] = $this->load->controller('shopmanager/alert_popup');
 	
 
 	public function product_feed() {
-			$lang = $this->load->language('shopmanager/catalog/product_search');
-			$data = $data ?? [];
-			$data += $lang;
+			$this->load->language('shopmanager/catalog/product_search');
+			$data = [];
+			
 			$this->load->model('shopmanager/catalog/product_search');
 			$this->load->model('shopmanager/catalog/product');
 			$this->load->model('shopmanager/ai');

@@ -1196,7 +1196,6 @@ $result = $this->model_shopmanager_ebay->editListing($product,$quantity,$site_se
 	 * Update Marketplace Listings (eBay, etc.) after product save
 	 * 
 	 * @param int $product_id
-	 * @param array $product_info
 	 * @return void
 	 */
 	public function updateMarketplaceListings(int $product_id): void {

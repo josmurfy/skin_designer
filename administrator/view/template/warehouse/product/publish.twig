@@ -1,0 +1,201 @@
+{# Original: shopmanager/list_fast.twig #}
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <a href="{{ product_search }}" data-bs-toggle="tooltip" title="{{ button_product_search }}" class="btn btn-warning"><i class="fa fa-search"></i></a>
+        <a href="{{ add }}" data-bs-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa fa-plus"></i></a>
+        {% if filter_status == 0 %}
+          <button type="button" data-bs-toggle="tooltip" title="{{ button_enable }}" class="btn btn-success" onclick="handleEnable();"><i class="fa-solid fa-check"></i></button>
+        {% else %}
+          <button type="button" data-bs-toggle="tooltip" title="{{ button_disable }}" class="btn btn-danger" onclick="handleDisable();"><i class="fa-solid fa-ban"></i></button>
+        {% endif %}
+        <button type="submit" form="form-product" formaction="{{ copy }}" data-bs-toggle="tooltip" title="{{ button_copy }}" class="btn btn-secondary"><i class="fa fa-copy"></i></button>
+        <button type="button" data-bs-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger" onclick="confirm('{{ text_confirm }}') ? $('#form-product').submit() : false;"><i class="fa-solid fa-trash-can"></i></button>
+        <a href="{{ print_report }}" target="_blank" class="btn btn-info"><i class="fa fa-print"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <div class="container-fluid">
+    {{ wait_popup|raw }}
+    {{ alert_popup|raw }}
+    {{ marketplace_error_popup|raw }}
+
+    {% if error_warning %}
+      <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+    {% if error %}
+      <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    {% endif %}
+
+    <div class="row">
+      <div class="col-xl-9 col-lg-8 mb-3">
+        {{ list|raw }}
+      </div>
+
+      <div class="col-xl-3 col-lg-4 mb-3">
+        <div class="card">
+          <div class="card-header"><i class="fa fa-filter"></i> {{ text_filter }}</div>
+          <div class="card-body">
+            <form id="search-form">
+              <input type="hidden" name="user_token" value="{{ user_token }}" />
+
+              <div class="mb-3">
+                <label class="form-label" for="input-sku">{{ entry_sku }}</label>
+                <input type="text" name="filter_sku" value="{{ filter_sku }}" placeholder="{{ entry_sku }}" id="input-sku" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-product-id">{{ entry_product_id }}</label>
+                <input type="text" name="filter_product_id" value="{{ filter_product_id }}" placeholder="{{ entry_product_id }}" id="input-product-id" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-category-id">{{ entry_category_id }}</label>
+                <input type="text" name="filter_category_id" value="{{ filter_category_id }}" placeholder="{{ entry_category_id }}" id="input-category-id" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-epid">{{ entry_epid }}</label>
+                <select name="filter_epid" id="input-epid" class="form-select">
+                  <option value="*"></option>
+                  <option value="1" {{ filter_epid == '1' ? 'selected' : '' }}>{{ text_epid_set }}</option>
+                  <option value="0" {{ filter_epid == '0' and filter_epid is not null ? 'selected' : '' }}>{{ text_epid_not_set }}</option>
+                  <option value="2" {{ filter_epid == '2' ? 'selected' : '' }}>{{ text_epid_error }}</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-name">{{ entry_name }}</label>
+                <input type="text" name="filter_name" value="{{ filter_name }}" placeholder="{{ entry_name }}" id="input-name" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-price">{{ entry_price }}</label>
+                <input type="text" name="filter_price" value="{{ filter_price }}" placeholder="{{ entry_price }}" id="input-price" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-quantity">{{ entry_quantity }}</label>
+                <input type="text" name="filter_quantity" value="{{ filter_quantity }}" placeholder="{{ entry_quantity }}" id="input-quantity" class="form-control" />
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-image">{{ entry_image }}</label>
+                <select name="filter_image" id="input-image" class="form-select">
+                  <option value="*"></option>
+                  <option value="1" {{ filter_image == '1' ? 'selected' : '' }}>{{ text_enabled }}</option>
+                  <option value="0" {{ filter_image == '0' and filter_image is not null ? 'selected' : '' }}>{{ text_disabled }}</option>
+                  <option value="2" {{ filter_image == '2' ? 'selected' : '' }}>{{ text_missing_image_file }}</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-status">{{ entry_status }}</label>
+                <select name="filter_status" id="input-status" class="form-select">
+                  <option value="*"></option>
+                  <option value="1" {{ filter_status ? 'selected' : '' }}>{{ text_enabled }}</option>
+                  <option value="0" {{ not filter_status and filter_status is not null ? 'selected' : '' }}>{{ text_disabled }}</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-specifics">{{ entry_specifics }}</label>
+                <select name="filter_specifics" id="input-specifics" class="form-select">
+                  <option value="*"></option>
+                  <option value="1" {{ filter_specifics == '1' ? 'selected' : '' }}>{{ text_specifics_set }}</option>
+                  <option value="0" {{ filter_specifics == '0' and filter_specifics is not null ? 'selected' : '' }}>{{ text_specifics_not_set }}</option>
+                  <option value="2" {{ filter_specifics == '2' ? 'selected' : '' }}>{{ text_specifics_error }}</option>
+                </select>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="input-limit">{{ entry_limit }}</label>
+                <select name="limit" id="input-limit" class="form-select">
+                  {% for option in per_page_options %}
+                    <option value="{{ option }}" {{ limit == option ? 'selected' : '' }}>{{ option }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="text-end">
+                <button type="button" id="button-filter" class="btn btn-primary"><i class="fa fa-filter"></i> {{ button_filter }}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+var confirmMessage = '{{ text_confirm|default('') }}';
+var enableUrl = '{{ enable|default('')|replace({'&amp;':'&'}) }}';
+var disableUrl = '{{ disable|default('')|replace({'&amp;':'&'}) }}';
+var copyUrl = '{{ copy|default('')|replace({'&amp;':'&'}) }}';
+var limitLink = '{{ limit_link|default('')|replace({'&amp;':'&'}) }}';
+var TEXT_SELECT_PRODUCT = '{{ text_select_product|escape('js') }}';
+var TEXT_LOCATION_PLACEHOLDER = '{{ text_location_placeholder|escape('js') }}';
+var TEXT_LOCATION_EMPTY = '{{ text_location_empty|escape('js') }}';
+var TEXT_ERROR_UPDATE_PREFIX = '{{ text_error_update_prefix|escape('js') }}';
+var TEXT_ERROR_API = '{{ text_error_api|escape('js') }}';
+var TEXT_CONFIRM_QTY_TRANSFER = '{{ text_confirm_qty_transfer|escape('js') }}';
+var TEXT_ERROR_UPDATE = '{{ text_error_update|escape('js') }}';
+var TEXT_INVALID_UNALLOCATED_QTY = '{{ text_invalid_unallocated_qty|escape('js') }}';
+var TEXT_ERROR_QTY_UPDATE = '{{ text_error_qty_update|escape('js') }}';
+var TEXT_ERROR_LOCATION_UPDATE = '{{ text_error_location_update|escape('js') }}';
+var TEXT_INVALID_QTY = '{{ text_invalid_qty|escape('js') }}';
+
+$('#button-filter').on('click', function() {
+  var url = 'index.php?route=shopmanager/list_fast&user_token={{ user_token }}';
+
+  var filter_sku = $('input[name="filter_sku"]').val();
+  if (filter_sku) url += '&filter_sku=' + encodeURIComponent(filter_sku);
+
+  var filter_product_id = $('input[name="filter_product_id"]').val();
+  if (filter_product_id) url += '&filter_product_id=' + encodeURIComponent(filter_product_id);
+
+  var filter_epid = $('select[name="filter_epid"]').val();
+  if (filter_epid && filter_epid !== '*') url += '&filter_epid=' + encodeURIComponent(filter_epid);
+
+  var filter_name = $('input[name="filter_name"]').val();
+  if (filter_name) url += '&filter_name=' + encodeURIComponent(filter_name);
+
+  var filter_category_id = $('input[name="filter_category_id"]').val();
+  if (filter_category_id) url += '&filter_category_id=' + encodeURIComponent(filter_category_id);
+
+  var filter_price = $('input[name="filter_price"]').val();
+  if (filter_price) url += '&filter_price=' + encodeURIComponent(filter_price);
+
+  var filter_quantity = $('input[name="filter_quantity"]').val();
+  if (filter_quantity) url += '&filter_quantity=' + encodeURIComponent(filter_quantity);
+
+  var filter_status = $('select[name="filter_status"]').val();
+  if (filter_status && filter_status !== '*') url += '&filter_status=' + encodeURIComponent(filter_status);
+
+  var filter_image = $('select[name="filter_image"]').val();
+  if (filter_image && filter_image !== '*') url += '&filter_image=' + encodeURIComponent(filter_image);
+
+  var filter_specifics = $('select[name="filter_specifics"]').val();
+  if (filter_specifics && filter_specifics !== '*') url += '&filter_specifics=' + encodeURIComponent(filter_specifics);
+
+  var limit = $('select[name="limit"]').val();
+  if (limit && limit !== '*') url += '&limit=' + encodeURIComponent(limit);
+
+  location = url;
+});
+</script>
+
+{{ footer }}

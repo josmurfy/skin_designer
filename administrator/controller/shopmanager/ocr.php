@@ -7,9 +7,9 @@ class Ocr extends \Opencart\System\Engine\Controller {
 		
       
 
-        $lang = $this->load->language('shopmanager/ocr');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ocr');
+        $data = [];
+        
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
    
@@ -39,9 +39,9 @@ class Ocr extends \Opencart\System\Engine\Controller {
     }
 
     public function upload(): void {
-        $lang = $this->load->language('shopmanager/ocr');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ocr');
+        $data = [];
+        
         $json = [];
       //  echo 'allo';
    //   echo getenv('GOOGLE_APPLICATION_CREDENTIALS'); 

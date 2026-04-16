@@ -1,0 +1,331 @@
+{# Original: shopmanager/card/card_listing.twig #}
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" data-bs-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-listing').toggleClass('d-none');" class="btn btn-light d-lg-none"><i class="fa-solid fa-filter"></i></button>
+        <a href="{{ add }}" data-bs-toggle="tooltip" title="{{ button_add }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i></a>
+        <button type="submit" form="form-listing" formaction="{{ delete }}" data-bs-toggle="tooltip" title="{{ button_delete }}" onclick="return confirm('{{ text_confirm }}');" class="btn btn-danger"><i class="fa-regular fa-trash-can"></i></button>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="row">
+      <div id="filter-listing" class="col-lg-3 col-md-12 order-lg-last d-none d-lg-block mb-3">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-filter"></i> {{ text_filter }} <button type="button" id="button-reset-filters" class="btn btn-sm btn-outline-secondary float-end" data-bs-toggle="tooltip" title="{{ button_reset }}"><i class="fa-solid fa-redo"></i></button></div>
+          <div class="card-body">
+            <form id="form-filter">
+            <div class="mb-3">
+              <label for="input-listing-id" class="form-label">{{ entry_listing_id }}</label>
+              <input type="text" name="filter_listing_id" value="{{ filter_listing_id }}" placeholder="{{ entry_listing_id }}" id="input-listing-id" class="form-control"/>
+            </div>
+            <div class="mb-3">
+              <label for="input-set-name" class="form-label">{{ entry_set_name }}</label>
+              <input type="text" name="filter_set_name" value="{{ filter_set_name }}" placeholder="{{ entry_set_name }}" id="input-set-name" data-oc-target="autocomplete-set-name" class="form-control" autocomplete="off"/>
+              <ul id="autocomplete-set-name" class="dropdown-menu"></ul>
+            </div>
+            <div class="mb-3">
+              <label for="input-card-type" class="form-label">{{ entry_sport }}</label>
+              <select name="filter_card_type_id" id="input-card-type" class="form-select" onchange="$('#button-filter').trigger('click');">
+                <option value=""></option>
+                {% for card_type in card_types %}
+                  {% if filter_card_type_id == card_type.card_type_id %}
+                    <option value="{{ card_type.card_type_id }}" selected>{{ card_type.name }}</option>
+                  {% else %}
+                    <option value="{{ card_type.card_type_id }}">{{ card_type.name }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="input-year" class="form-label">{{ entry_year }}</label>
+              <input type="text" name="filter_year" value="{{ filter_year }}" placeholder="{{ entry_year }}" id="input-year" class="form-control"/>
+            </div>
+            <div class="mb-3">
+              <label for="input-manufacturer" class="form-label">{{ entry_manufacturer }}</label>
+              <input type="text" name="filter_manufacturer" value="{{ filter_manufacturer }}" placeholder="{{ entry_manufacturer }}" id="input-manufacturer" data-oc-target="autocomplete-manufacturer" class="form-control" autocomplete="off"/>
+              <ul id="autocomplete-manufacturer" class="dropdown-menu"></ul>
+            </div>
+            <div class="mb-3">
+              <label for="input-location" class="form-label">{{ entry_location }}</label>
+              <input type="text" name="filter_location" value="{{ filter_location }}" placeholder="{{ entry_location }}" id="input-location" class="form-control"/>
+            </div>
+            <div class="mb-3">
+              <label for="input-status" class="form-label">{{ entry_status }}</label>
+              <select name="filter_status" id="input-status" class="form-select" onchange="$('#button-filter').trigger('click');">
+                <option value=""></option>
+                {% if filter_status == '1' %}
+                  <option value="1" selected>{{ text_enabled }}</option>
+                {% else %}
+                  <option value="1">{{ text_enabled }}</option>
+                {% endif %}
+                {% if filter_status == '0' %}
+                  <option value="0" selected>{{ text_disabled }}</option>
+                {% else %}
+                  <option value="0">{{ text_disabled }}</option>
+                {% endif %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="input-ebay-item-id" class="form-label">{{ entry_ebay_item_id }}</label>
+              <input type="text" name="filter_ebay_item_id" value="{{ filter_ebay_item_id }}" placeholder="{{ entry_ebay_item_id }}" id="input-ebay-item-id" class="form-control"/>
+            </div>
+            <div class="mb-3">
+              <label for="input-publish-status" class="form-label">Statut eBay</label>
+              <select name="filter_publish_status" id="input-publish-status" class="form-select" onchange="$('#button-filter').trigger('click');">
+                <option value="">-- Tous --</option>
+                <option value="none" {% if filter_publish_status == 'none' %}selected{% endif %}>Non publié</option>
+                <option value="partial" {% if filter_publish_status == 'partial' %}selected{% endif %}>Partiel</option>
+                <option value="full" {% if filter_publish_status == 'full' %}selected{% endif %}>Publié</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="input-sync" class="form-label"><i class="fa-solid fa-heart-pulse"></i> Sync eBay</label>
+              <select name="filter_sync" id="input-sync" class="form-select" onchange="$('#button-filter').trigger('click');">
+                <option value="">-- Tous --</option>
+                <option value="1" {% if filter_sync == '1' %}selected{% endif %}>À synchroniser</option>
+                <option value="0" {% if filter_sync == '0' %}selected{% endif %}>Synchronisé</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="input-limit" class="form-label">{{ entry_limit }}</label>
+              <select name="limit" id="input-limit" class="form-select">
+                {% for option in per_page_options %}
+                  <option value="{{ option }}" {% if limit == option %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="text-end">
+              <button type="button" id="button-filter" class="btn btn-light"><i class="fa-solid fa-filter"></i> {{ button_filter }}</button>
+            </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-9 col-md-12">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-list"></i> {{ text_list }}</div>
+          <div id="listing" class="card-body">{{ list }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+var TEXT_SESSION_EXPIRED = '{{ error_session_expired|escape('js') }}';
+var TEXT_PERMISSION_DENIED = '{{ error_permission_denied|escape('js') }}';
+var TEXT_NO_LISTINGS_SELECTED = '{{ error_no_listings_selected|escape('js') }}';
+var TEXT_INVALID_PARAMETERS = '{{ error_invalid_parameters|escape('js') }}';
+var TEXT_AJAX_ERROR = '{{ error_ajax_error|escape('js') }}';
+var TEXT_DETAILS = '{{ error_details|escape('js') }}';
+var TEXT_LISTING_NOT_FOUND = '{{ error_listing_not_found|escape('js') }}';
+var TEXT_NO_DESCRIPTIONS_FOUND = '{{ error_no_descriptions_found|escape('js') }}';
+var TEXT_LOADING_IN_PROGRESS = '{{ text_loading_in_progress|escape('js') }}';
+var TEXT_COMPLETED = '{{ text_completed|escape('js') }}';
+var TEXT_CONFIRM_PUBLISH_SINGLE = '{{ text_confirm_publish_single|escape('js') }}';
+var TEXT_PUBLISHING_TO_EBAY = '{{ text_publishing_to_ebay|escape('js') }}';
+var TEXT_INITIALIZING_PUBLICATION = '{{ text_initializing_publication|escape('js') }}';
+var TEXT_PREPARING_CARD_SET_DATA = '{{ text_preparing_card_set_data|escape('js') }}';
+var TEXT_RETRIEVING_DESCRIPTIONS = '{{ text_retrieving_descriptions|escape('js') }}';
+var TEXT_CONNECTING_EBAY_ACCOUNTS = '{{ text_connecting_ebay_accounts|escape('js') }}';
+var TEXT_SENDING_DATA_TO_EBAY = '{{ text_sending_data_to_ebay|escape('js') }}';
+var TEXT_CREATING_CARD_VARIATIONS = '{{ text_creating_card_variations|escape('js') }}';
+var TEXT_UPLOADING_IMAGES = '{{ text_uploading_images|escape('js') }}';
+var TEXT_PUBLICATION_FAILED = '{{ text_publication_failed|escape('js') }}';
+var TEXT_CARD_SET_PUBLISHED_SUCCESSFULLY = '{{ text_card_set_published_successfully|escape('js') }}';
+var TEXT_PUBLICATION_COMPLETED_SUCCESSFULLY = '{{ text_publication_completed_successfully|escape('js') }}';
+var TEXT_COMMUNICATION_ERROR = '{{ text_communication_error|escape('js') }}';
+var TEXT_NO_LISTINGS_SELECTED_JS = '{{ text_no_listings_selected|escape('js') }}';
+var TEXT_CONFIRM_PUBLISH_MULTIPLE = '{{ text_confirm_publish_multiple|escape('js') }}';
+var TEXT_PUBLISHING_MULTIPLE_LISTINGS = '{{ text_publishing_multiple_listings|escape('js') }}';
+var TEXT_LISTINGS_TO_PUBLISH = '{{ text_listings_to_publish|escape('js') }}';
+var TEXT_PREPARING_DATA = '{{ text_preparing_data|escape('js') }}';
+var TEXT_SUCCESS_PUBLISHED_COUNT = '{{ text_success_published_count|escape('js') }}';
+var TEXT_LISTING_PUBLISHED = '{{ text_listing_published|escape('js') }}';
+var TEXT_LISTING_FAILED = '{{ text_listing_failed|escape('js') }}';
+var TEXT_ERRORS_COUNT = '{{ text_errors_count|escape('js') }}';
+var TEXT_PUBLICATION_COMPLETED = '{{ text_publication_completed|escape('js') }}';
+var TEXT_AJAX_ERROR_WITH_DETAILS = '{{ text_ajax_error_with_details|escape('js') }}';
+var TEXT_CONFIRM_END_LISTINGS = '{{ text_confirm_end_listings|escape('js') }}';
+var TEXT_ENDING_LISTINGS = '{{ text_ending_listings|escape('js') }}';
+var TEXT_LISTINGS_TO_END = '{{ text_listings_to_end|escape('js') }}';
+var TEXT_PREPARING = '{{ text_preparing|escape('js') }}';
+var TEXT_ENDING_FAILED = '{{ text_ending_failed|escape('js') }}';
+var TEXT_SUCCESS_ENDED_COUNT = '{{ text_success_ended_count|escape('js') }}';
+var TEXT_LISTING_ENDED = '{{ text_listing_ended|escape('js') }}';
+var TEXT_ENDING_COMPLETED = '{{ text_ending_completed|escape('js') }}';
+var TEXT_ERROR_PREFIX = '{{ text_error_prefix|escape('js') }}';
+var TEXT_REFRESH = '{{ text_refresh|escape('js') }}';
+var TEXT_CONFIRM_BATCH_SYNC = '{{ text_confirm_batch_sync|escape('js') }}';
+var TEXT_BATCH_SYNC_RUNNING = '{{ text_batch_sync_running|escape('js') }}';
+var TEXT_BATCH_SYNC_COMPLETED = '{{ text_batch_sync_completed|escape('js') }}';
+var TEXT_BATCH_SYNC_FAILED = '{{ text_batch_sync_failed|escape('js') }}';
+var TEXT_MIGRATE = '{{ text_migrate|escape('js') }}';
+var TEXT_SYNC = '{{ text_sync|escape('js') }}';
+var TEXT_REPUBLISH = '{{ text_republish|escape('js') }}';
+var URL_UPDATE_LOCATION = '{{ url_update_location|escape('js') }}';
+var URL_CHECK_EBAY_HEALTH = '{{ url_check_ebay_health|escape('js') }}';
+var BUTTON_HEALTH_CHECK = '{{ button_health_check|escape('js') }}';
+var TEXT_HEALTH_CHECK_RUNNING = '{{ text_health_check_running|escape('js') }}';
+var TEXT_HEALTH_CHECK_COMPLETED = '{{ text_health_check_completed|escape('js') }}';
+var TEXT_HEALTH_CHECK_FAILED = '{{ text_health_check_failed|escape('js') }}';
+
+// Dynamic content loading for table headers and pagination
+$('#listing').on('click', 'thead a, .pagination a', function(e) {
+    e.preventDefault();
+    
+    var url = this.href;
+    
+    $('#listing').html('<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><br/>Loading...</div>');
+    
+    $('#listing').load(url);
+});
+
+$('#button-filter').on('click', function() {
+    var url = '';
+    
+    var filter_listing_id = $('input[name=\'filter_listing_id\']').val();
+    if (filter_listing_id) {
+        url += '&filter_listing_id=' + encodeURIComponent(filter_listing_id);
+    }
+    
+    var filter_set_name = $('input[name=\'filter_set_name\']').val();
+    if (filter_set_name) {
+        url += '&filter_set_name=' + encodeURIComponent(filter_set_name);
+    }
+    
+    var filter_card_type_id = $('select[name=\'filter_card_type_id\']').val();
+    if (filter_card_type_id !== '') {
+        url += '&filter_card_type_id=' + encodeURIComponent(filter_card_type_id);
+    }
+    
+    var filter_year = $('input[name=\'filter_year\']').val();
+    if (filter_year) {
+        url += '&filter_year=' + encodeURIComponent(filter_year);
+    }
+    
+    var filter_manufacturer = $('input[name=\'filter_manufacturer\']').val();
+    if (filter_manufacturer) {
+        url += '&filter_manufacturer=' + encodeURIComponent(filter_manufacturer);
+    }
+    
+    var filter_location = $('input[name=\'filter_location\']').val();
+    if (filter_location) {
+        url += '&filter_location=' + encodeURIComponent(filter_location);
+    }
+    
+    var filter_status = $('select[name=\'filter_status\']').val();
+    if (filter_status !== '') {
+        url += '&filter_status=' + encodeURIComponent(filter_status);
+    }
+    
+    var filter_ebay_item_id = $('input[name=\'filter_ebay_item_id\']').val();
+    if (filter_ebay_item_id) {
+        url += '&filter_ebay_item_id=' + encodeURIComponent(filter_ebay_item_id);
+    }
+    
+    var filter_publish_status = $('select[name=\'filter_publish_status\']').val();
+    if (filter_publish_status !== '') {
+        url += '&filter_publish_status=' + encodeURIComponent(filter_publish_status);
+    }
+
+    var filter_sync = $('select[name=\'filter_sync\']').val();
+    if (filter_sync !== '') {
+        url += '&filter_sync=' + encodeURIComponent(filter_sync);
+    }
+
+    var limit = $('#input-limit').val();
+    if (limit) {
+        url += '&limit=' + encodeURIComponent(limit);
+    }
+    
+    // Update URL in browser without page reload
+    window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_listing&user_token={{ user_token }}' + url);
+    
+    // Load list content via AJAX
+    $('#listing').load('index.php?route=shopmanager/card/card_listing.list&user_token={{ user_token }}' + url);
+});
+
+// Reset filters
+$('#button-reset-filters').on('click', function() {
+    // Clear all form inputs and selects
+    $('#form-filter input, #form-filter select').each(function() {
+        $(this).val('');
+    });
+    
+    // Reload list without filters
+    window.history.pushState({}, null, 'index.php?route=shopmanager/card/card_listing&user_token={{ user_token }}');
+    $('#listing').load('index.php?route=shopmanager/card/card_listing.list&user_token={{ user_token }}');
+});
+
+// Trigger filter on Enter key
+$('input[name^=\'filter_\']').on('keydown', function(e) {
+    if (e.which == 13) {
+        $('#button-filter').trigger('click');
+    }
+});
+
+// Autocomplete for Set Name
+$('#input-set-name').autocomplete({
+    'source': function(request, response) {
+        $.ajax({
+            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token={{ user_token }}&filter_set_name=' + encodeURIComponent(request),
+            dataType: 'json',
+            success: function(json) {
+                response($.map(json, function(item) {
+                    return {
+                        label: item['label'],
+                        value: item['value']
+                    };
+                }));
+            }
+        });
+    },
+    'select': function(item) {
+        $('#input-set-name').val(item['label']);
+    }
+});
+
+// Autocomplete for Manufacturer
+$('#input-manufacturer').autocomplete({
+    'source': function(request, response) {
+        $.ajax({
+            url: 'index.php?route=shopmanager/card/card_listing.autocomplete&user_token={{ user_token }}&filter_manufacturer=' + encodeURIComponent(request),
+            dataType: 'json',
+            success: function(json) {
+                response($.map(json, function(item) {
+                    return {
+                        label: item['label'],
+                        value: item['value']
+                    };
+                }));
+            }
+        });
+    },
+    'select': function(item) {
+        $('#input-manufacturer').val(item['label']);
+    }
+});
+</script>
+
+<!-- Loading Popup for eBay Publishing -->
+<div id="loading-popup" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background-color:rgba(0,0,0,0.6); z-index:9999;">
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; padding:20px 30px; border-radius:8px; width:500px; max-width:90%; box-shadow:0 0 15px rgba(0,0,0,0.3); text-align:center;">
+        <div id="loading-spinner" style="margin-bottom:10px;">
+            <img src="https://i.imgur.com/llF5iyg.gif" width="50" alt="Loading..."> <!-- Spinner GIF -->
+        </div>
+        <h4 id="loading-title" style="color:#0056b3; margin-bottom:15px;">Publication sur eBay...</h4>
+        <div id="loading-messages" style="max-height:300px; overflow-y:auto; text-align:left; margin-top:10px; font-size:13px; line-height:1.6; padding:10px; background:#f8f9fa; border-radius:5px;"></div>
+        <button onclick="hideLoadingPopup()" style="margin-top:15px; display:none; padding:8px 20px; background:#0056b3; color:#fff; border:none; border-radius:5px; cursor:pointer;" id="close-loading-btn">Fermer</button>
+    </div>
+</div>
+
+{{ footer }}

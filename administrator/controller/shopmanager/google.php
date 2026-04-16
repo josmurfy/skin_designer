@@ -6,9 +6,9 @@ class Google extends \Opencart\System\Engine\Controller {
         ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
-        $lang = $this->load->language('shopmanager/google');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/google');
+        $data = [];
+        
         $this->load->model('shopmanager/google');
 
         $data['heading_title'] = ($lang['heading_title'] ?? '');
@@ -71,9 +71,9 @@ class Google extends \Opencart\System\Engine\Controller {
     }
 
      public function translate(): void {
-        $lang = $this->load->language('shopmanager/google');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/google');
+        $data = [];
+        
 
         $json = [];
         $result = null;
@@ -95,7 +95,7 @@ class Google extends \Opencart\System\Engine\Controller {
             } else {
                 try {
                     putenv('GOOGLE_APPLICATION_CREDENTIALS=' . __DIR__ . '/translate.json');
-                    $translate = new Google\Cloud\Translate\V2\TranslateClient();
+                    $translate = new \Google\Cloud\Translate\V2\TranslateClient();
                     $result = $translate->translate($text_field, ['target' => $targetLanguage]);
                     $json['success'] = addslashes($result['text']);
                 } catch (\Exception $e) {

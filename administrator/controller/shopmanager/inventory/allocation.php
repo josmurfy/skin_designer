@@ -5,9 +5,9 @@ class Allocation extends \Opencart\System\Engine\Controller {
     private array $error = [];
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/inventory/allocation');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/allocation');
+        $data = [];
+        
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $this->document->addScript('view/javascript/shopmanager/inventory/allocation.js');
@@ -66,9 +66,9 @@ class Allocation extends \Opencart\System\Engine\Controller {
     }
 
     public function list(): void {
-        $lang = $this->load->language('shopmanager/inventory/allocation');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/allocation');
+        $data = [];
+        
 
         $this->response->setOutput($this->getList());
     }
@@ -275,9 +275,9 @@ class Allocation extends \Opencart\System\Engine\Controller {
     }
 
     public function transfert() {
-        $lang = $this->load->language('shopmanager/inventory/allocation');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/allocation');
+        $data = [];
+        
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 

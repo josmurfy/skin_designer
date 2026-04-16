@@ -1,0 +1,415 @@
+{# Original: shopmanager/marketplace/marketplace.twig #}
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" data-modalmarket-target="#modalmarket" data-bs-toggle="tooltip" title="{{ text_add }}" class="btn btn-primary"><i class="fa-solid fa-circle-plus"></i> {{ text_add }}</button>
+        <button type="button" id="button-delete" data-bs-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i></button>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if success %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="fa fa-check-circle"></i> {{ success }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    {% if error_warning %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="fa fa-exclamation-triangle"></i> {{ error_warning }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <div class="row">
+      {# ── Filter Sidebar ── #}
+      <div class="col-lg-3 col-md-12 order-lg-last">
+        <div class="card mb-3">
+          <div class="card-header">
+            <i class="fa-solid fa-filter"></i> {{ button_filter }}
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label for="input-filter-store-name" class="form-label">{{ column_marketplace_store_name }}</label>
+              <input type="text" name="filter_store_name" value="{{ filter_store_name }}" id="input-filter-store-name" class="form-control" placeholder="{{ column_marketplace_store_name }}" />
+            </div>
+            <div class="mb-3">
+              <label for="input-filter-user-id" class="form-label">{{ column_marketplace_user_id }}</label>
+              <input type="text" name="filter_user_id" value="{{ filter_user_id }}" id="input-filter-user-id" class="form-control" placeholder="{{ column_marketplace_user_id }}" />
+            </div>
+            <div class="mb-3">
+              <label for="input-filter-marketplace-id" class="form-label">{{ column_marketplace_sites }}</label>
+              <input type="text" name="filter_marketplace_id" value="{{ filter_marketplace_id }}" id="input-filter-marketplace-id" class="form-control" placeholder="{{ column_marketplace_sites }}" />
+            </div>
+            <div class="mb-3">
+              <label for="input-filter-status" class="form-label">{{ column_status }}</label>
+              <select name="filter_status" id="input-filter-status" class="form-select">
+                <option value="">—</option>
+                <option value="1"{% if filter_status == '1' %} selected{% endif %}>{{ text_enabled }}</option>
+                <option value="0"{% if filter_status == '0' %} selected{% endif %}>{{ text_disabled }}</option>
+              </select>
+            </div>
+            <div class="text-end">
+              <button type="button" id="button-filter" class="btn btn-primary btn-sm"><i class="fa-solid fa-magnifying-glass"></i> {{ button_filter }}</button>
+              <button type="button" id="button-clear" class="btn btn-light btn-sm"><i class="fa-solid fa-eraser"></i> {{ button_clear }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {# ── Account List (AJAX container) ── #}
+      <div class="col-lg-9 col-md-12">
+        <div id="marketplace">{{ list }}</div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Modal: Connect a New Marketplace ── #}
+  <div class="modalmarket" id="modalmarket">
+    <div class="modalmarket-header">
+      <div class="title">{{ text_add }}</div>
+      <button data-close-button class="close-button">&times;</button>
+    </div>
+    <div class="modalmarket-body" id="modalmarket-body">
+      <div class="marketplace-grid-modal">
+        <div class="title"><h5>{{ text_add }}</h5></div>
+        <div class="marketplace-grid">
+          <button class="btn btn-light">
+            <img src="{{ amazon }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_amazon_account }}" onClick="window.open('{{ add_amazon_account }}', '_self')">
+            <div class="title">Connect</div>
+          </button>
+          <button class="btn btn-light">
+            <img src="{{ bonanza }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_bonanza_account }}" onClick="window.open('{{ add_bonanza_account }}', '_self')">
+            <div class="title">Connect</div>
+          </button>
+          <button class="btn btn-light">
+            <img src="{{ ebay }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_ebay_account }}" onClick="window.open('{{ add_ebay_account }}', '_self')">
+            <div class="title">Connect</div>
+          </button>
+          <button class="btn btn-light">
+            <img src="{{ etsy }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_etsy_account }}" onClick="window.open('{{ add_etsy_account }}', '_self')">
+            <div class="title">Connect</div>
+          </button>
+          <button class="btn btn-light">
+            <img src="{{ opencart }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_opencart_account }}" onClick="instruction_opencart();">
+            <div class="title">Connect</div>
+          </button>
+          <button class="btn btn-light">
+            <img src="{{ shipstation }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_shipstation_account }}" onClick="instruction_shipstation();">
+            <div class="title">Connect</div>
+          </button>
+          <button class="btn btn-light">
+            <img src="{{ shopify }}" class="thumbnail" data-bs-toggle="tooltip" title="{{ button_add_shopify_account }}" onClick="instruction_shopify();">
+            <div class="title">Connect</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay"></div>
+
+  {# ── Modal: Update Refresh Token ── #}
+  <div class="modal fade" id="modal-token" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fa fa-key"></i> {{ text_update_token }} — <span id="modal-token-store"></span></h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <strong>{{ text_token_instructions_title }}</strong><br>
+            {{ text_token_instructions|raw }}
+          </div>
+          <input type="hidden" id="modal-token-account-id" value="" />
+          <div class="mb-3">
+            <label class="form-label" for="input-refresh-token">{{ text_new_refresh_token }}</label>
+            <textarea id="input-refresh-token" class="form-control" rows="5" placeholder="{{ text_token_placeholder }}"></textarea>
+            <div class="form-text">{{ text_token_hint }}</div>
+          </div>
+          <div id="modal-token-result" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ button_cancel }}</button>
+          <button type="button" class="btn btn-primary" id="btn-save-token"><i class="fa fa-save"></i> {{ button_save_token }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modalmarket {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  transition: 200ms ease-in-out;
+  border: 1px solid black;
+  border-radius: 10px;
+  z-index: 10;
+  background-color: white;
+  width: 900px;
+  height: 400px;
+  max-width: 80%;
+  overflow-y: auto;
+}
+.modalmarket.active {
+  transform: translate(-50%, -50%) scale(1);
+}
+.modalmarket-header {
+  padding: 10px 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid black;
+}
+.modalmarket-header .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+.modalmarket-header .close-button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background: none;
+  font-size: 2rem;
+  font-weight: bold;
+}
+.modalmarket-body {
+  padding: 10px 15px;
+}
+#overlay {
+  position: fixed;
+  opacity: 0;
+  transition: 200ms ease-in-out;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, .5);
+  pointer-events: none;
+}
+#overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.marketplace-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px;
+}
+.marketplace-grid .btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 10px;
+}
+.marketplace-grid .thumbnail {
+  max-height: 40px;
+}
+.token-status-badge { font-size: 0.85rem; padding: 4px 10px; border-radius: 4px; }
+.token-ok  { background: #d4edda; color: #155724; }
+.token-bad { background: #f8d7da; color: #721c24; }
+.token-warning { background: #fff3cd; color: #856404; }
+</style>
+
+{{ footer }}
+
+<script type="text/javascript">
+// ── Marketplace Connect Modal ──
+const openModalButtons = document.querySelectorAll('[data-modalmarket-target]');
+const closeModalButtons = document.querySelectorAll('[data-close-button]');
+const overlay = document.getElementById('overlay');
+
+openModalButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const modalmarket = document.querySelector(button.dataset.modalmarketTarget);
+    openModal(modalmarket);
+  });
+});
+
+if (overlay) {
+  overlay.addEventListener('click', () => {
+    const modals = document.querySelectorAll('.modalmarket.active');
+    modals.forEach(modalmarket => { closeModal(modalmarket); });
+  });
+}
+
+closeModalButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const modalmarket = button.closest('.modalmarket');
+    closeModal(modalmarket);
+  });
+});
+
+function openModal(modalmarket) {
+  if (modalmarket == null) return;
+  modalmarket.classList.add('active');
+  overlay.classList.add('active');
+}
+
+function closeModal(modalmarket) {
+  if (modalmarket == null) return;
+  modalmarket.classList.remove('active');
+  overlay.classList.remove('active');
+}
+
+// ── AJAX Filter ──
+$('#button-filter').on('click', function() {
+  var url = 'index.php?route=shopmanager/marketplace/marketplace.list&user_token={{ user_token }}';
+
+  var filter_store_name = $('#input-filter-store-name').val();
+  if (filter_store_name) {
+    url += '&filter_store_name=' + encodeURIComponent(filter_store_name);
+  }
+
+  var filter_user_id = $('#input-filter-user-id').val();
+  if (filter_user_id) {
+    url += '&filter_user_id=' + encodeURIComponent(filter_user_id);
+  }
+
+  var filter_marketplace_id = $('#input-filter-marketplace-id').val();
+  if (filter_marketplace_id) {
+    url += '&filter_marketplace_id=' + encodeURIComponent(filter_marketplace_id);
+  }
+
+  var filter_status = $('#input-filter-status').val();
+  if (filter_status !== '') {
+    url += '&filter_status=' + encodeURIComponent(filter_status);
+  }
+
+  $('#marketplace').load(url);
+});
+
+$('#button-clear').on('click', function() {
+  $('#input-filter-store-name').val('');
+  $('#input-filter-user-id').val('');
+  $('#input-filter-marketplace-id').val('');
+  $('#input-filter-status').val('');
+  $('#marketplace').load('index.php?route=shopmanager/marketplace/marketplace.list&user_token={{ user_token }}');
+});
+
+// ── Intercept sort & pagination links (AJAX) ──
+$('#marketplace').on('click', 'thead a, .pagination a', function(e) {
+  e.preventDefault();
+  $('#marketplace').load(this.href);
+});
+
+// ── Delete (AJAX) ──
+$('#button-delete').on('click', function() {
+  var selected = [];
+  $('input[name^=\'selected\']:checked').each(function() {
+    selected.push($(this).val());
+  });
+
+  if (selected.length === 0) {
+    alert('{{ text_confirm }}');
+    return;
+  }
+
+  if (confirm('{{ text_confirm }}')) {
+    $.ajax({
+      url: '{{ delete }}',
+      method: 'POST',
+      data: { selected: selected },
+      dataType: 'json',
+      success: function(json) {
+        if (json.success) {
+          $('#marketplace').load('index.php?route=shopmanager/marketplace/marketplace.list&user_token={{ user_token }}');
+        }
+      },
+      error: function(xhr) {
+        alert('Error: ' + xhr.responseText);
+      }
+    });
+  }
+});
+
+// ── Show Token Update Modal ──
+function showTokenModal(marketplace_account_id, store_name) {
+  $('#modal-token-account-id').val(marketplace_account_id);
+  $('#modal-token-store').text(store_name);
+  $('#input-refresh-token').val('');
+  $('#modal-token-result').hide().html('');
+  var modal = new bootstrap.Modal(document.getElementById('modal-token'));
+  modal.show();
+}
+
+// ── Save Token (AJAX) ──
+$('#btn-save-token').on('click', function() {
+  var accountId = $('#modal-token-account-id').val();
+  var token = $('#input-refresh-token').val().trim();
+  var $result = $('#modal-token-result');
+
+  if (!token) {
+    $result.show().html('<div class="alert alert-warning">{{ text_token_empty }}</div>');
+    return;
+  }
+
+  $(this).prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> ...');
+
+  $.ajax({
+    url: '{{ url_save_token|raw }}',
+    method: 'POST',
+    data: { marketplace_account_id: accountId, refresh_token: token },
+    dataType: 'json',
+    success: function(json) {
+      if (json.success) {
+        $result.show().html('<div class="alert alert-success"><i class="fa fa-check-circle"></i> ' + json.message + '</div>');
+        $('#token-status-' + accountId).html('<span class="token-status-badge token-ok"><i class="fa fa-check-circle"></i> ' + json.message + '</span>');
+      } else {
+        $result.show().html('<div class="alert alert-danger"><i class="fa fa-times-circle"></i> ' + json.message + '</div>');
+      }
+    },
+    error: function(xhr) {
+      $result.show().html('<div class="alert alert-danger">Erreur réseau</div>');
+    },
+    complete: function() {
+      $('#btn-save-token').prop('disabled', false).html('<i class="fa fa-save"></i> {{ button_save_token }}');
+    }
+  });
+});
+
+// ── Instruction Popups (existing marketplace connectors) ──
+function instruction_opencart() {
+  $.ajax({
+    url: 'index.php?route=shopmanager/opencart/openInstruction&user_token={{ user_token }}',
+    method: 'POST',
+    dataType: 'json',
+    success: function(json) { $('#modalmarket-body').html(json['html']); },
+    error: function(xhr, ajaxOptions, thrownError) { alert(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText); }
+  });
+}
+
+function instruction_shopify() {
+  $.ajax({
+    url: 'index.php?route=shopmanager/shopify/openInstruction&user_token={{ user_token }}',
+    method: 'POST',
+    dataType: 'json',
+    success: function(json) { $('#modalmarket-body').html(json['html']); }
+  });
+}
+
+function instruction_shipstation() {
+  $.ajax({
+    url: 'index.php?route=shopmanager/shipstation/openInstruction&user_token={{ user_token }}',
+    method: 'POST',
+    dataType: 'json',
+    success: function(json) { $('#modalmarket-body').html(json['html']); }
+  });
+}
+
+// ── Initialize Tooltips ──
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+tooltipTriggerList.forEach(function(el) { new bootstrap.Tooltip(el); });
+</script>

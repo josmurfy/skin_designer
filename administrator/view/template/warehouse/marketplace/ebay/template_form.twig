@@ -1,0 +1,97 @@
+{# Original: shopmanager/ebay_template_form.twig #}
+{{ header }}
+{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="pull-right">
+        <button type="submit" form="form-ebay-template" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save"></i></button>
+        <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a>
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ul class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="container-fluid">
+    {% if error_warning %}
+      <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+    {% if success %}
+      <div class="alert alert-success alert-dismissible"><i class="fa fa-check-circle"></i> {{ success }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+    {% endif %}
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+      </div>
+      <div class="panel-body">
+        <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-ebay-template" class="form-horizontal">
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-seller-info">{{ entry_seller_info }}</label>
+            <div class="col-sm-10">
+              <textarea name="ebay_seller_info" id="input-seller-info" class="form-control summernote">{{ ebay_seller_info }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-shipping-info">{{ entry_shipping_info }}</label>
+            <div class="col-sm-10">
+              <textarea name="ebay_shipping_info" id="input-shipping-info" class="form-control summernote">{{ ebay_shipping_info }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-return-policy">{{ entry_return_policy }}</label>
+            <div class="col-sm-10">
+              <textarea name="ebay_return_policy" id="input-return-policy" class="form-control summernote">{{ ebay_return_policy }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-product-disclaimer">{{ entry_product_disclaimer }}</label>
+            <div class="col-sm-10">
+              <textarea name="ebay_product_disclaimer" id="input-product-disclaimer" class="form-control summernote">{{ ebay_product_disclaimer }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-payment-info">{{ entry_payment_info }}</label>
+            <div class="col-sm-10">
+              <textarea name="ebay_payment_info" id="input-payment-info" class="form-control summernote">{{ ebay_payment_info }}</textarea>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-template-style">{{ entry_template_style }}</label>
+            <div class="col-sm-10">
+              <textarea name="ebay_template_style" id="input-template-style" class="form-control summernote">{{ ebay_template_style }}</textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.8.18/summernote.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+  $('.summernote').summernote({
+    height: 300,
+    toolbar: [
+      ['style', ['bold', 'italic', 'underline', 'clear']],
+      ['font', ['strikethrough', 'superscript', 'subscript']],
+      ['fontsize', ['fontsize']],
+      ['color', ['color']],
+      ['para', ['ul', 'ol', 'paragraph']],
+      ['height', ['height']],
+      ['insert', ['picture', 'link', 'video']],
+      ['view', ['fullscreen', 'codeview', 'help']]
+    ]
+  });
+});
+</script>

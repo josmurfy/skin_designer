@@ -1,0 +1,409 @@
+{# Original: shopmanager/card/card_listing_tab_descriptions.twig #}
+<h4>{{ tab_descriptions }}</h4>
+<p class="text-muted">{{ help_tab_descriptions }}</p>
+
+{% if ebay_batches is not empty %}
+
+  {# ── Published batches — one tab per batch ── #}
+  <ul class="nav nav-tabs mb-3">
+    {% for batch in ebay_batches %}
+      {% set desc = batch_descriptions[batch.batch_name] ?? {} %}
+      <li class="nav-item">
+        <a href="#desc-batch-{{ batch.batch_name }}" data-bs-toggle="tab"
+           class="nav-link{% if loop.first %} active{% endif %}">
+          <i class="fa fa-layer-group"></i> {{ column_batch }} {{ batch.batch_name }}
+          <small class="text-muted">{{ batch.card_label_start ? batch.card_label_start ~ '-' ~ batch.card_label_end : '#' ~ batch.card_sort_start ~ '-#' ~ batch.card_sort_end }}</small>
+          {% if desc.status == 1 %}
+            &nbsp;<span class="badge bg-success">{{ text_badge_live }}</span>
+          {% elseif desc.status == 2 %}
+            &nbsp;<span class="badge bg-secondary">{{ text_batch_status_ended }}</span>
+          {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+    {% if lot_title is defined and lot_title %}
+      <li class="nav-item">
+        <a href="#desc-lot" data-bs-toggle="tab" class="nav-link">
+          <i class="fa fa-tags text-warning"></i> Lot
+          {% if lot_info.lot_status == 1 and lot_info.lot_ebay_item_id %}
+            &nbsp;<span class="badge bg-success">Live</span>
+          {% endif %}
+        </a>
+      </li>
+    {% endif %}
+  </ul>
+
+  <div class="tab-content">
+    {% for batch in ebay_batches %}
+      {% set desc = batch_descriptions[batch.batch_name] ?? {} %}
+      <div id="desc-batch-{{ batch.batch_name }}" class="tab-pane{% if loop.first %} active{% endif %}">
+
+        <div class="row mb-2">
+          <label class="col-sm-2 col-form-label fw-bold">{{ entry_title }}</label>
+          <div class="col-sm-10">
+            <input type="text" class="form-control" value="{{ desc.title ?? '' }}" readonly/>
+          </div>
+        </div>
+
+        <div class="row mb-2">
+          <label class="col-sm-2 col-form-label fw-bold">{{ entry_cards }}</label>
+          <div class="col-sm-4">
+            <input type="text" class="form-control" value="{{ batch.card_label_start ? batch.card_label_start ~ ' – ' ~ batch.card_label_end : '#' ~ batch.card_sort_start ~ ' – #' ~ batch.card_sort_end }} ({{ batch.variation_count }} cards)" readonly/>
+          </div>
+          <div class="col-sm-5" id="ebay-item-area-{{ batch.batch_name }}">
+            {% if desc.ebay_item_id %}
+            <div class="input-group mb-1">
+              <span class="input-group-text">{{ text_ebay_id }}</span>
+              <input type="text" class="form-control" value="{{ desc.ebay_item_id }}" readonly/>
+              <a href="https://www.ebay.ca/itm/{{ desc.ebay_item_id }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                <i class="fa fa-external-link"></i>
+              </a>
+            </div>
+            <div class="d-flex gap-2 align-items-center">
+              <button type="button" class="btn btn-sm btn-danger btn-end-batch"
+                      data-listing-id="{{ listing_id }}" data-batch-name="{{ batch.batch_name }}">
+                <i class="fa fa-stop-circle"></i> End Listing
+              </button>
+              <span class="text-muted small" id="batch-status-{{ batch.batch_name }}"></span>
+            </div>
+            {% else %}
+            <div class="d-flex gap-2 align-items-center">
+              <button type="button" class="btn btn-sm btn-success btn-add-batch"
+                      data-listing-id="{{ listing_id }}" data-batch-name="{{ batch.batch_name }}">
+                <i class="fa fa-upload"></i> Add Listing
+              </button>
+              <span class="text-muted small" id="batch-status-{{ batch.batch_name }}"></span>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="row mb-2">
+          <label class="col-sm-2 col-form-label fw-bold">{{ entry_description }}</label>
+          <div class="col-sm-10">
+            <div class="border rounded p-3 bg-light" style="max-height:420px; overflow-y:auto; font-size:0.88em;">
+              {% if desc.description is defined and desc.description %}
+                {{ desc.description|raw }}
+              {% else %}
+                <span class="text-muted fst-italic">{{ text_no_description_stored }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {# ── Specifics (read-only per batch) ─────────────────── #}
+        <div class="row mb-2">
+          <label class="col-sm-2 col-form-label fw-bold">{{ text_specifics }}</label>
+          <div class="col-sm-10">
+            {% if desc.specifics is defined and desc.specifics is not empty %}
+            <table class="table table-sm table-bordered mb-0" style="font-size:0.85em;">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:35%">Name</th>
+                  <th>Value(s)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for name, value in desc.specifics %}
+                <tr>
+                  <td class="fw-semibold text-nowrap align-top pt-2">{{ name }}</td>
+                  <td>
+                    {% if value is iterable %}
+                      {% set sorted_values = value|sort %}
+                      {% set sel_size = sorted_values|length > 6 ? 6 : (sorted_values|length < 2 ? 2 : sorted_values|length) %}
+                      <select multiple disabled size="{{ sel_size }}"
+                              style="width:100%; font-size:0.85em; pointer-events:none;">
+                        {% for v in sorted_values %}
+                          <option selected>{{ v }}</option>
+                        {% endfor %}
+                      </select>
+                    {% else %}
+                      <span class="text-nowrap">{{ value }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+              <span class="text-muted fst-italic small">{{ text_no_specifics }}</span>
+            {% endif %}
+          </div>
+        </div>
+        {# ──────────────────────────────────────────────────────────────── #}
+
+      </div>
+    {% endfor %}
+    {% if lot_title is defined and lot_title %}
+    <div id="desc-lot" class="tab-pane">
+
+      {# ─ Titre ─ #}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ entry_title }}</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" value="{{ lot_title }}" readonly/>
+        </div>
+      </div>
+
+      {# ─ eBay ID si publié ─ #}
+      {% if lot_info.lot_ebay_item_id %}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ text_ebay_id }}</label>
+        <div class="col-sm-10">
+          <div class="input-group">
+            <input type="text" class="form-control" value="{{ lot_info.lot_ebay_item_id }}" readonly/>
+            <a href="https://www.ebay.ca/itm/{{ lot_info.lot_ebay_item_id }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+              <i class="fa fa-external-link"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ─ Images mosaïques ─ #}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ text_lot_images }}</label>
+        <div class="col-sm-10">
+          <div class="border rounded p-3 bg-light" style="font-size:0.88em;">
+            <div class="mb-2">
+              <button type="button" class="btn btn-sm btn-dark btn-generate-lot-mosaic">
+                🖼️ Generate Mosaic Images
+              </button>
+            </div>
+            <div class="lot-mosaic-images-panel">
+            {% if lot_images is defined and lot_images is not empty %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for img in lot_images %}
+                  <a href="{{ lot_image_base_url }}{{ img.image_path }}" target="_blank">
+                    <img src="{{ lot_image_base_url }}{{ img.image_path }}"
+                         style="width:120px;height:120px;object-fit:cover;border:1px solid #dee2e6;border-radius:4px;"/>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="text-muted fst-italic">No mosaics yet.</span>
+            {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ─ Description ─ #}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ entry_description }}</label>
+        <div class="col-sm-10">
+          <div class="border rounded p-3 bg-light" style="max-height:420px; overflow-y:auto; font-size:0.88em;">
+            {% if lot_description %}
+              {{ lot_description|raw }}
+            {% else %}
+              <span class="text-muted fst-italic">{{ text_no_description_stored }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+    {% endif %}
+  </div>
+
+{% else %}
+
+  {# ── Not published yet — show global description (batch 0) ── #}
+  {% set global_desc = batch_descriptions[0] ?? {} %}
+  <div class="alert alert-secondary py-2 mb-3">
+    <i class="fa fa-info-circle"></i> {{ text_not_published_yet }}
+  </div>
+
+  <div class="row mb-2">
+    <label class="col-sm-2 col-form-label fw-bold">{{ entry_title }}</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" value="{{ global_desc.title ?? '' }}" readonly/>
+    </div>
+  </div>
+
+  <div class="row mb-2">
+    <label class="col-sm-2 col-form-label fw-bold">{{ entry_description }}</label>
+    <div class="col-sm-10">
+      <div class="border rounded p-3 bg-light" style="max-height:480px; overflow-y:auto; font-size:0.88em;">
+        {% if global_desc.description is defined and global_desc.description %}
+          {{ global_desc.description|raw }}
+        {% else %}
+          <span class="text-muted fst-italic">{{ text_no_description_yet }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if lot_title is defined and lot_title %}
+  <ul class="nav nav-tabs mb-3 mt-4">
+    <li class="nav-item">
+      <a href="#desc-lot-standalone" data-bs-toggle="tab" class="nav-link active">
+        <i class="fa fa-tags text-warning"></i> Lot
+        {% if lot_info.lot_status == 1 and lot_info.lot_ebay_item_id %}
+          &nbsp;<span class="badge bg-success">Live</span>
+        {% endif %}
+      </a>
+    </li>
+  </ul>
+  <div class="tab-content">
+    <div id="desc-lot-standalone" class="tab-pane active">
+
+      {# ─ Titre ─ #}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ entry_title }}</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" value="{{ lot_title }}" readonly/>
+        </div>
+      </div>
+
+      {# ─ eBay ID si publié ─ #}
+      {% if lot_info.lot_ebay_item_id %}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ text_ebay_id }}</label>
+        <div class="col-sm-10">
+          <div class="input-group">
+            <input type="text" class="form-control" value="{{ lot_info.lot_ebay_item_id }}" readonly/>
+            <a href="https://www.ebay.ca/itm/{{ lot_info.lot_ebay_item_id }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+              <i class="fa fa-external-link"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ─ Images mosaïques ─ #}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ text_lot_images }}</label>
+        <div class="col-sm-10">
+          <div class="border rounded p-3 bg-light" style="font-size:0.88em;">
+            <div class="mb-2">
+              <button type="button" class="btn btn-sm btn-dark btn-generate-lot-mosaic">
+                🖼️ Generate Mosaic Images
+              </button>
+            </div>
+            <div class="lot-mosaic-images-panel">
+            {% if lot_images is defined and lot_images is not empty %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for img in lot_images %}
+                  <a href="{{ lot_image_base_url }}{{ img.image_path }}" target="_blank">
+                    <img src="{{ lot_image_base_url }}{{ img.image_path }}"
+                         style="width:120px;height:120px;object-fit:cover;border:1px solid #dee2e6;border-radius:4px;"/>
+                  </a>
+                {% endfor %}
+              </div>
+            {% else %}
+              <span class="text-muted fst-italic">No mosaics yet.</span>
+            {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ─ Description ─ #}
+      <div class="row mb-2">
+        <label class="col-sm-2 col-form-label fw-bold">{{ entry_description }}</label>
+        <div class="col-sm-10">
+          <div class="border rounded p-3 bg-light" style="max-height:420px; overflow-y:auto; font-size:0.88em;">
+            {% if lot_description %}
+              {{ lot_description|raw }}
+            {% else %}
+              <span class="text-muted fst-italic">{{ text_no_description_stored }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  {% endif %}
+
+{% endif %}
+
+<script>
+(function () {
+  var URL_ADD_BATCH = '{{ url_add_batch }}';
+  var URL_END_BATCH = '{{ url_end_batch }}';
+
+  function bind() {
+
+    document.querySelectorAll('.btn-add-batch:not([data-bound])').forEach(function (btn) {
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        var listingId = btn.dataset.listingId;
+        var batchName = btn.dataset.batchName;
+        var area      = document.getElementById('ebay-item-area-' + batchName);
+        var statusEl  = document.getElementById('batch-status-' + batchName);
+        btn.disabled  = true;
+        statusEl.textContent = 'Publication\u2026';
+        $.ajax({
+          url: URL_ADD_BATCH, type: 'POST', dataType: 'json',
+          data: { listing_id: listingId, batch_name: batchName },
+          success: function (json) {
+            if (json.error) {
+              statusEl.textContent = '\u274C ' + json.error;
+              btn.disabled = false;
+            } else {
+              var eid = json.ebay_item_id;
+              area.innerHTML =
+                '<div class="input-group mb-1">' +
+                  '<span class="input-group-text">eBay ID</span>' +
+                  '<input type="text" class="form-control" value="' + eid + '" readonly/>' +
+                  '<a href="https://www.ebay.ca/itm/' + eid + '" target="_blank" class="btn btn-outline-secondary btn-sm"><i class="fa fa-external-link"></i></a>' +
+                '</div>' +
+                '<div class="d-flex gap-2 align-items-center">' +
+                  '<button type="button" class="btn btn-sm btn-danger btn-end-batch"' +
+                  ' data-listing-id="' + listingId + '" data-batch-name="' + batchName + '">' +
+                  '<i class="fa fa-stop-circle"></i> End Listing</button>' +
+                  '<span class="text-success small" id="batch-status-' + batchName + '">\u2705 Publi\u00e9!</span>' +
+                '</div>';
+              bind();
+            }
+          },
+          error: function (xhr) {
+            statusEl.textContent = 'AJAX ' + xhr.status;
+            btn.disabled = false;
+          }
+        });
+      });
+    });
+
+    document.querySelectorAll('.btn-end-batch:not([data-bound])').forEach(function (btn) {
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', function () {
+        if (!confirm('Terminer ce listing eBay ?')) return;
+        var listingId = btn.dataset.listingId;
+        var batchName = btn.dataset.batchName;
+        var area      = document.getElementById('ebay-item-area-' + batchName);
+        var statusEl  = document.getElementById('batch-status-' + batchName);
+        btn.disabled  = true;
+        statusEl.textContent = 'Arr\u00eat\u2026';
+        $.ajax({
+          url: URL_END_BATCH, type: 'POST', dataType: 'json',
+          data: { listing_id: listingId, batch_name: batchName },
+          success: function (json) {
+            if (json.error) {
+              statusEl.textContent = '\u274C ' + json.error;
+              btn.disabled = false;
+            } else {
+              area.innerHTML =
+                '<div class="d-flex gap-2 align-items-center">' +
+                  '<button type="button" class="btn btn-sm btn-success btn-add-batch"' +
+                  ' data-listing-id="' + listingId + '" data-batch-name="' + batchName + '">' +
+                  '<i class="fa fa-upload"></i> Add Listing</button>' +
+                  '<span class="text-muted small" id="batch-status-' + batchName + '">\u2705 Termin\u00e9.</span>' +
+                '</div>';
+              bind();
+            }
+          },
+          error: function (xhr) {
+            statusEl.textContent = 'AJAX ' + xhr.status;
+            btn.disabled = false;
+          }
+        });
+      });
+    });
+  }
+
+  bind();
+})();
+</script>

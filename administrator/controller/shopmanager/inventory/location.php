@@ -5,9 +5,9 @@ class Location extends \Opencart\System\Engine\Controller {
     private array $error = [];
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/inventory/location');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/location');
+        $data = [];
+        
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $this->document->addScript('view/javascript/shopmanager/inventory/location.js?v=' . time());
@@ -49,17 +49,17 @@ class Location extends \Opencart\System\Engine\Controller {
     }
 
     public function list(): void {
-        $lang = $this->load->language('shopmanager/inventory/location');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/location');
+        $data = [];
+        
 
         $this->response->setOutput($this->getList());
     }
 
     public function searchProduct(): void {
-        $lang = $this->load->language('shopmanager/inventory/location');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/location');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory');
         $this->load->model('tool/image');
 
@@ -240,9 +240,9 @@ class Location extends \Opencart\System\Engine\Controller {
     }
 
     public function updateQuantity(): void {
-        $lang = $this->load->language('shopmanager/inventory/location');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/location');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory');
 
         $json = [];
@@ -268,9 +268,9 @@ class Location extends \Opencart\System\Engine\Controller {
     }
 
     public function updateLocation(): void {
-        $lang = $this->load->language('shopmanager/inventory/location');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/inventory/location');
+        $data = [];
+        
         $this->load->model('shopmanager/inventory');
         $this->load->model('shopmanager/catalog/product');
 

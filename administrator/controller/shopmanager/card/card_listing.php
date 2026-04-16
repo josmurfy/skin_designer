@@ -840,7 +840,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Save (update) a card listing from the admin form.
      */
     public function save(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $this->session->data['error'] = ($lang['error_permission'] ?? '');
@@ -939,7 +939,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function delete(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         $json = [];
 
@@ -972,7 +972,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function publishToEbay(): void {
         $json = [];
 
-          $lang = $this->load->language('shopmanager/card/card_listing');
+          $this->load->language('shopmanager/card/card_listing');
 
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1053,7 +1053,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
     public function publishMultiple(): void {
         $json = [];
 
-          $lang = $this->load->language('shopmanager/card/card_listing');
+          $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -1216,7 +1216,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function saveBatchSpecifics(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission'] ?? '');
@@ -1269,7 +1269,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
 
         $json = [];
 
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
 
 
@@ -1390,7 +1390,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function updatePrice(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         $json = [];
 
@@ -1448,7 +1448,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Update listing location via AJAX (inline save in form)
      */
     public function updateLocation(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         $json = [];
 
@@ -1489,7 +1489,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function updateSortOrder(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         $json = [];
 
@@ -1540,7 +1540,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Import CSV - add cards to existing listing (like variant_listing_creator)
      */
     public function importCsv(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1647,7 +1647,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Confirm import - save CSV cards to existing listing
      */
     public function confirmImport(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1710,7 +1710,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Regenerate - merge duplicates, consolidate images, rebuild descriptions
      */
     public function regenerateCards(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1769,7 +1769,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Retourne  : { success, merged_card_id, message }
      */
     public function mergeVariants(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1811,7 +1811,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Calls mergeCardGroup() for each group, then recalculateBatches + regenerateDescriptions.
      */
     public function processMergeGroups(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1890,7 +1890,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function addBatch(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -1956,7 +1956,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function endBatch(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -2335,7 +2335,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      * Pour chaque listing, itère sur ses batches et appelle checkBatchHealth().
      */
     public function checkEbayHealth(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
         $this->load->model('shopmanager/card/card_listing');
 
         $json = [
@@ -2407,7 +2407,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function getLotPreview(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         $listing_id = (int)($this->request->get['listing_id'] ?? 0);
         if (!$listing_id) {
@@ -2440,7 +2440,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function publishLot(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -2517,7 +2517,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function endLot(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -2577,7 +2577,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function saveLotDescription(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -2613,7 +2613,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function regenLotDescription(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');
@@ -2647,7 +2647,7 @@ class CardListing extends \Opencart\System\Engine\Controller {
      */
     public function generateLotImages(): void {
         $json = [];
-        $lang = $this->load->language('shopmanager/card/card_listing');
+        $this->load->language('shopmanager/card/card_listing');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
             $json['error'] = ($lang['error_permission_denied'] ?? '');

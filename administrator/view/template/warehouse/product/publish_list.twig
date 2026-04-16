@@ -1,0 +1,235 @@
+{# Original: shopmanager/list_fast_list.twig #}
+<div class="card">
+  <div class="card-header"><i class="fa fa-list"></i> {{ text_list }}</div>
+  <div class="card-body p-0">
+    <form action="{{ delete }}" method="post" enctype="multipart/form-data" id="form-product">
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+              <thead>
+                <tr>
+                  <td style="width:1px;" class="text-center"><input type="checkbox" onclick="$('input[name*=\'selected\']').prop('checked', this.checked);" /></td>
+                  <td class="text-center">{{ column_product_id }}</td>
+                  <td class="text-center">{{ column_image }}</td>
+                  <td class="text-left">
+                    {% if sort == 'p.condition_id' %}
+                      <a href="{{ sort_condition_id }}" class="{{ order|lower }}">{{ column_condition_id }}</a>
+                    {% else %}
+                      <a href="{{ sort_condition_id }}">{{ column_condition_id }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-left">{{ column_marketplace_item_id }}</td>
+                  <td class="text-left">
+                    {% if sort == 'p.epid' %}
+                      <a href="{{ sort_epid }}" class="{{ order|lower }}">{{ column_epid }}</a>
+                    {% else %}
+                      <a href="{{ sort_epid }}">{{ column_epid }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-left">
+                    {% if sort == 'pd.name' %}
+                      <a href="{{ sort_name }}" class="{{ order|lower }}">{{ column_name }}</a>
+                    {% else %}
+                      <a href="{{ sort_name }}">{{ column_name }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-right">
+                    {% if sort == 'p.price' %}
+                      <a href="{{ sort_price }}" class="{{ order|lower }}">{{ column_price }}</a>
+                    {% else %}
+                      <a href="{{ sort_price }}">{{ column_price }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-right">
+                    {% if sort == 'p.unallocated_quantity' %}
+                      <a href="{{ sort_unallocated_quantity }}" class="{{ order|lower }}">{{ column_unallocated_quantity }}</a>
+                    {% else %}
+                      <a href="{{ sort_unallocated_quantity }}">{{ column_unallocated_quantity }}</a>
+                    {% endif %}
+                  </td>
+                  <td></td>
+                  <td class="text-right">
+                    {% if sort == 'p.quantity' %}
+                      <a href="{{ sort_quantity }}" class="{{ order|lower }}">{{ column_quantity }}</a>
+                    {% else %}
+                      <a href="{{ sort_quantity }}">{{ column_quantity }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-left">
+                    {% if sort == 'p.location' %}
+                      <a href="{{ sort_location }}" class="{{ order|lower }}">{{ column_location }}</a>
+                    {% else %}
+                      <a href="{{ sort_location }}">{{ column_location }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-right">
+                    {% if sort == 'has_sources' %}
+                      <a href="{{ sort_sources }}" class="{{ order|lower }}">{{ column_sources }}</a>
+                    {% else %}
+                      <a href="{{ sort_sources }}">{{ column_sources }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-right">
+                    {% if sort == 'has_specifics' %}
+                      <a href="{{ sort_specifics }}" class="{{ order|lower }}">{{ column_specifics }}</a>
+                    {% else %}
+                      <a href="{{ sort_specifics }}">{{ column_specifics }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="text-left">
+                    {% if sort == 'p.status' %}
+                      <a href="{{ sort_status }}" class="{{ order|lower }}">{{ column_status }}</a>
+                    {% else %}
+                      <a href="{{ sort_status }}">{{ column_status }}</a>
+                    {% endif %}
+                  </td>
+                  <td class="col-sm-2 text-right">{{ column_action }}</td>
+                </tr>
+              </thead>
+              <tbody>
+                {% if products %}
+                  {% for product in products %}
+                    <tr id="product-main-row-{{ product.product_id }}">
+                      <td class="text-center">
+                        {% if product.product_id in selected %}
+                          <input type="checkbox" name="selected[{{ product.product_id }}]" value="{{ product.product_id }}" checked="checked" />
+                        {% else %}
+                          <input type="checkbox" name="selected[{{ product.product_id }}]" value="{{ product.product_id }}" />
+                        {% endif %}
+                      </td>
+                      <td class="text-center">{{ product.product_id }}</td>
+                      <td class="text-center">
+                        {% if product.image %}
+                          <img src="{{ product.image }}" alt="{{ product.name }}" class="img-thumbnail" />
+                        {% else %}
+                          <span class="img-thumbnail list"><i class="fa fa-camera fa-2x"></i></span>
+                        {% endif %}
+                      </td>
+                      <td class="text-center">{{ product.condition_name }}</td>
+                      <td class="text-center marketplace_item_id">
+                        <label class="text-center" id="label-marketplace-item-id">
+                          {% if product.marketplace_accounts_id %}
+                            {% for marketplace_account_id, marketplace in product.marketplace_accounts_id %}
+                              {% set marketplace_item_id = marketplace.marketplace_item_id|default(0) %}
+                              {% set url_product = marketplace.url_product %}
+                              {% set marketplace_thumb = marketplace.thumb %}
+                              {% set marketplace_name = marketplace.marketplace_name %}
+                              {% set marketplace_id = marketplace.marketplace_id %}
+                              {% set category_id = product.category_id %}
+                              <span id="marketplace-account-id-{{ product.product_id }}-{{ marketplace_account_id }}">
+                                <input type="hidden" name="url_product_{{ product.product_id }}_{{ marketplace_account_id }}" value="{{ url_product }}" />
+                                <input type="hidden" name="marketplace_name_{{ product.product_id }}_{{ marketplace_account_id }}" value="{{ marketplace_name }}" />
+                                {% if marketplace_item_id %}
+                                  {% set product_link = url_product|replace({'{item_id}': marketplace_item_id}) %}
+                                  <a href="{{ product_link }}" target="marketplace_item_id">
+                                    <img src="{{ marketplace_thumb }}" alt="{{ marketplace_name }}" style="width:50px;height:auto;">
+                                  </a>
+                                {% else %}
+                                  <a href="javascript:void(0);" onclick="addToMarketplace('{{ product.product_id }}','{{ marketplace_account_id }}','{{ marketplace_id }}','{{ category_id }}');">
+                                    <img src="{{ marketplace_thumb }}" alt="{{ marketplace_name }}" style="width:50px;height:auto;">
+                                  </a>
+                                {% endif %}
+                              </span>
+                            {% endfor %}
+                          {% endif %}
+                        </label>
+                      </td>
+                      <td class="text-center epid"><span id="epid-{{ product.product_id }}">{{ product.epid }}</span></td>
+                      <td class="text-left">{{ product.name }}</td>
+                      <td class="text-right">
+                        {% if product.special %}
+                          <span style="text-decoration:line-through;">${{ product.price }}</span><br />
+                          <div class="text-danger">{{ product.special }}</div>
+                        {% else %}
+                          {{ product.price }}
+                        {% endif %}
+                      </td>
+                      <td class="text-right unallocated_quantity">
+                        <span id="unallocated-quantity-{{ product.product_id }}"
+                              rel="{{ product.product_id }}"
+                              rel1="{{ product.unallocated_quantity }}"
+                              class="pedit-unallocated-quantity
+                                {% if product.unallocated_quantity <= 0 %}
+                                  label label-warning
+                                {% elseif product.unallocated_quantity <= 5 %}
+                                  label label-danger
+                                {% else %}
+                                  label label-success
+                                {% endif %}">
+                          {{ product.unallocated_quantity }}
+                        </span>
+                      </td>
+                      <td>
+                        <button type="button" class="btn btn-default" onclick="transferUnallocatedQuantity({{ product.product_id }});" title="{{ button_transfer }}">
+                          <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                      </td>
+                      <td class="text-right quantity">
+                        <span id="quantity-{{ product.product_id }}"
+                              rel="{{ product.product_id }}"
+                              rel1="{{ product.quantity }}"
+                              class="pedit-quantity
+                                {% if product.quantity <= 0 %}
+                                  label label-warning
+                                {% elseif product.quantity <= 5 %}
+                                  label label-danger
+                                {% else %}
+                                  label label-success
+                                {% endif %}">
+                          {{ product.quantity }}
+                        </span>
+                      </td>
+                      <td class="text-center location">
+                        <span id="location-{{ product.product_id }}" class="pedit-location" rel="{{ product.product_id }}" rel1="{{ product.location }}">{{ product.location }}</span>
+                      </td>
+                      <td class="text-center">{{ product.has_sources }}</td>
+                      <td class="text-center">{{ product.has_specifics }}</td>
+                      <td class="text-center">{{ product.status }}</td>
+                      <td class="text-center">
+                        <a href="{{ product.edit }}" data-toggle="tooltip" title="{{ button_edit }}" class="btn btn-primary"><i class="fa fa-pencil"></i></a>
+                        {% if product.status_id == 0 %}
+                          <button type="button" data-toggle="tooltip" title="{{ button_enable }}" class="btn btn-success" onclick="handleEnable({{ product.product_id }});"><i class="fa-solid fa-check"></i></button>
+                        {% else %}
+                          <button type="button" data-toggle="tooltip" title="{{ button_disable }}" class="btn btn-danger" onclick="handleDisable({{ product.product_id }});"><i class="fa-solid fa-ban"></i></button>
+                        {% endif %}
+                        <button type="button" data-toggle="tooltip" title="{{ button_copy }}" class="btn btn-default" onclick="handleCopy({{ product.product_id }});"><i class="fa-solid fa-copy"></i></button>
+                        <button type="button" data-toggle="tooltip" title="{{ button_delete }}" class="btn btn-danger" onclick="handleDelete({{ product.product_id }});"><i class="fa-solid fa-trash-can"></i></button>
+                      </td>
+                    </tr>
+                    <tr id="product-row-{{ product.product_id }}" style="display:none;"></tr>
+                  {% endfor %}
+                {% else %}
+                  <tr><td class="text-center" colspan="11">{{ text_no_results }}</td></tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+    </form>
+  </div>
+</div>
+  <script type="text/javascript">
+    var TEXT_INVALID_UNALLOCATED_QTY = '{{ text_invalid_unallocated_qty|escape('js') }}';
+    var TEXT_ERROR_QTY_UPDATE = '{{ text_error_qty_update|escape('js') }}';
+    var TEXT_ERROR_LOCATION_UPDATE = '{{ text_error_location_update|escape('js') }}';
+    var TEXT_INVALID_QTY = '{{ text_invalid_qty|escape('js') }}';
+    var TEXT_CONFIRM_MANUFACTURER_NOT_FOUND_ADD = '{{ text_confirm_manufacturer_not_found_add|escape('js') }}';
+    var TEXT_ENTER_KEYWORD_SEARCH = '{{ text_enter_keyword_search|escape('js') }}';
+    var TEXT_ERROR_PREFIX_GENERIC = '{{ text_error_prefix_generic|escape('js') }}';
+    var TEXT_UNKNOWN_ERROR_OCCURRED = '{{ text_unknown_error_occurred|escape('js') }}';
+    var TEXT_INVALID_MATH_EXPRESSION = '{{ text_invalid_math_expression|escape('js') }}';
+    var TEXT_INVALID_PRICE_EXPRESSION = '{{ text_invalid_price_expression|escape('js') }}';
+    var TEXT_MANUFACTURER_ADDED_SUCCESS = '{{ text_manufacturer_added_success|escape('js') }}';
+    var TEXT_ERROR_ADD_MANUFACTURER_PREFIX = '{{ text_error_add_manufacturer_prefix|escape('js') }}';
+    var TEXT_ENTER_MANUFACTURER_NAME = '{{ text_enter_manufacturer_name|escape('js') }}';
+    var TEXT_MANUFACTURER_UPDATED_SUCCESS = '{{ text_manufacturer_updated_success|escape('js') }}';
+    var TEXT_ERROR_EDIT_MANUFACTURER_PREFIX = '{{ text_error_edit_manufacturer_prefix|escape('js') }}';
+    var TEXT_SELECT_MANUFACTURER_AND_NAME = '{{ text_select_manufacturer_and_name|escape('js') }}';
+    var TEXT_CONFIRM_DELETE_MANUFACTURER = '{{ text_confirm_delete_manufacturer|escape('js') }}';
+    var TEXT_MANUFACTURER_DELETED_SUCCESS = '{{ text_manufacturer_deleted_success|escape('js') }}';
+    var TEXT_ERROR_DELETE_MANUFACTURER_PREFIX = '{{ text_error_delete_manufacturer_prefix|escape('js') }}';
+    var TEXT_SELECT_MANUFACTURER_DELETE = '{{ text_select_manufacturer_delete|escape('js') }}';
+  </script>
+
+<div class="row mt-3">
+  <div class="col-sm-6 text-start">{{ pagination }}</div>
+  <div class="col-sm-6 text-end">{{ results }}</div>
+</div>

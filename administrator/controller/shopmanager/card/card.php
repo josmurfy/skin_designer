@@ -17,9 +17,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/card');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card');
+        $data = [];
+        
 
         // Filters
         if (isset($this->request->get['filter_name'])) {
@@ -164,9 +164,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function list(): void {
-        $lang = $this->load->language('shopmanager/card/card');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card');
+        $data = [];
+        
 
         $this->response->setOutput($this->load->controller('shopmanager/card/card.getList'));
     }
@@ -454,9 +454,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function form(): void {
-        $lang = $this->load->language('shopmanager/card/card');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -659,9 +659,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function delete(): void {
-        $lang = $this->load->language('shopmanager/card/card');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card');
+        $data = [];
+        
 
         if (isset($this->request->post['selected'])) {
             if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
@@ -726,9 +726,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function copy(): void {
-        $lang = $this->load->language('shopmanager/card/card');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card');
+        $data = [];
+        
 
         if (isset($this->request->post['selected'])) {
             if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {
@@ -802,9 +802,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function getCards(): void {
-        $lang = $this->load->language('shopmanager/card/card');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card');
+        $data = [];
+        
         $this->load->model('shopmanager/card/card');
 
         $json = [];
@@ -886,9 +886,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function updatePrice(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_listing');
+        $data = [];
+        
 
         $json = [];
 
@@ -1118,9 +1118,9 @@ class Card extends \Opencart\System\Engine\Controller {
      * Returns: {success, card_id, price_sold, price_list, date}
      */
     public function fetchCardMarketPrice(): void {
-        $lang = $this->load->language('shopmanager/card/card_listing');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_listing');
+        $data = [];
+        
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_listing')) {
@@ -1200,7 +1200,7 @@ class Card extends \Opencart\System\Engine\Controller {
      * @return void
      */
     public function mergeCards(): void {
-        $lang = $this->load->language('shopmanager/card/card');
+        $this->load->language('shopmanager/card/card');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card')) {

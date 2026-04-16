@@ -16,9 +16,9 @@ class Opencart extends \Opencart\System\Engine\Controller {
 		
 		$this->load->model('shopmanager/dashboard');
 		$this->load->model('shopmanager/opencart');
-		$lang = $this->load->language('shopmanager/marketplace/marketplace');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/marketplace/marketplace');
+		$data = [];
+		
         $json = array();
 		$data = array();
 		$data = array_merge($data, $this->load->language('shopmanager'));
@@ -92,7 +92,7 @@ class Opencart extends \Opencart\System\Engine\Controller {
     public function openInstruction(){
 		$json = array();
         $this->load->model('tool/image');
-		$data = $lang = $this->load->language('shopmanager/opencart');
+		$this->load->language('shopmanager/opencart');
 		$data['opencart']=$this->model_tool_image->resize('/catalog/marketplace/opencart.png',300, 100);
 		$data['text_title']			 = ($lang['text_title'] ?? '');
 

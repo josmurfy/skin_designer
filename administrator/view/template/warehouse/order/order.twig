@@ -1,0 +1,304 @@
+{# Original: shopmanager/order.twig #}
+{{ header }}{{ column_left }}
+<div id="content">
+  <div class="page-header">
+    <div class="container-fluid">
+      <div class="float-end">
+        <button type="button" data-bs-toggle="tooltip" title="{{ button_filter }}" onclick="$('#filter-order').toggleClass('d-none');" class="btn btn-light d-lg-none"><i class="fa-solid fa-filter"></i></button>
+        <button type="button" id="button-process" data-bs-toggle="tooltip" title="{{ button_process }}" class="btn btn-success"><i class="fa-solid fa-check"></i> {{ button_process }}</button>
+        <button type="button" id="button-undo" data-bs-toggle="tooltip" title="{{ button_undo }}" class="btn btn-warning"><i class="fa-solid fa-rotate-left"></i> {{ button_undo }}</button>
+        <button type="button" id="button-print-report" class="btn btn-info"><i class="fa fa-print"></i> {{ button_print }}</button>      
+      </div>
+      <h1>{{ heading_title }}</h1>
+      <ol class="breadcrumb">
+        {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+        {% endfor %}
+      </ol>
+      
+      <div id="alert" class="mb-3"></div>
+
+      {{ alert_popup|raw }}
+      {{ marketplace_error_popup|raw }}
+
+
+    </div>
+  </div>
+  <div class="container-fluid">
+    <div class="row">
+    
+      <div id="filter-order" class="col-lg-3 col-md-12 order-lg-last d-none d-lg-block mb-3">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-filter"></i> {{ text_filter }}</div>
+          <div class="card-body">
+            <form id="form-filter">
+             <input type="hidden" name="user_token" value="{{ user_token }}">
+
+              <div class="mb-3">
+                <label for="input-date-start" class="form-label">{{ entry_date_start }}</label>
+                <input type="date" name="filter_date_start" value="{{ filter_date_start }}" id="input-date-start" class="form-control"/>
+              </div>
+              <div class="mb-3">
+                <label for="input-date-end" class="form-label">{{ entry_date_end }}</label>
+                <input type="date" name="filter_date_end" value="{{ filter_date_end }}" id="input-date-end" class="form-control"/>
+              </div>
+              <div class="mb-3">
+                <label for="input-order-id-start" class="form-label">{{ entry_order_id_start }}</label>
+                <input type="text" name="filter_order_id_start" value="{{ filter_order_id_start }}" placeholder="{{ placeholder_order_id_start }}" id="input-order-id-start" class="form-control"/>
+              </div>
+              <div class="mb-3">
+                <label for="input-order-id-end" class="form-label">{{ entry_order_id_end }}</label>
+                <input type="text" name="filter_order_id_end" value="{{ filter_order_id_end }}" placeholder="{{ placeholder_order_id_end }}" id="input-order-id-end" class="form-control"/>
+              </div>
+
+              <div class="text-end">
+                <button type="button" id="button-filter" class="btn btn-primary"><i class="fa-solid fa-filter"></i> {{ button_filter }}</button>
+                <button type="reset" data-bs-toggle="tooltip" title="{{ button_reset }}" class="btn btn-outline-secondary"><i class="fa-solid fa-filter-circle-xmark"></i></button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col col-lg-9 col-md-12">
+        <div class="card">
+          <div class="card-header"><i class="fa-solid fa-list"></i> {{ text_list }}</div>
+          <div id="order" class="card-body">{{ list }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{{ footer }}
+<script type="text/javascript">
+$(document).ready(function() {
+      // Dynamic content loading for table headers and pagination
+      $('#order').on('click', 'thead a, .pagination a', function(e) {
+          e.preventDefault();
+          $('#order').load(this.href);
+      });
+
+      // Process orders button
+      $('#button-process').on('click', function() {
+          if (!confirm('{{ text_confirm }}')) {
+              return;
+          }
+          
+          var checkedItems = $('input[name="vendu[]"]:checked');
+          if (checkedItems.length === 0) {
+              $('#alert').prepend('<div class="alert alert-warning alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> Please select at least one order to process. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+              return;
+          }
+          
+          // Show processing message
+          $('#alert').prepend('<div class="alert alert-info alert-dismissible" id="alert-processing"><i class="fa-solid fa-circle-info"></i> Processing ' + checkedItems.length + ' order(s)... <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+          
+          $.ajax({
+              url: 'index.php?route=shopmanager/order.updateQuantity&user_token={{ user_token }}',
+              type: 'post',
+              data: $('#form-order').serialize(),
+              dataType: 'json',
+              beforeSend: function() {
+                  $('#button-process').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+              },
+              complete: function() {
+                  $('#button-process').prop('disabled', false).html('<i class="fa-solid fa-check"></i>');
+              },
+              success: function(json) {
+                  $('#alert-processing').remove();
+                  $('.alert-dismissible').remove();
+                  
+                  if (json['error']) {
+                      if (json['error']['warning']) {
+                          $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + json['error']['warning'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                      }
+                  }
+                  
+                  if (json['success']) {
+                      $('#alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> ' + json['success'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                      
+                      // Uncheck all checkboxes
+                      $('input[name="vendu[]"]').prop('checked', false);
+                      
+                      // Reload the order list to refresh data
+                      var url = 'index.php?route=shopmanager/order.list&user_token={{ user_token }}';
+                      var filter_date_start = $('input[name=\'filter_date_start\']').val();
+                      if (filter_date_start) {
+                          url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
+                      }
+                      var filter_date_end = $('input[name=\'filter_date_end\']').val();
+                      if (filter_date_end) {
+                          url += '&filter_date_end=' + encodeURIComponent(filter_date_end);
+                      }
+                      var filter_order_id_start = $('input[name=\'filter_order_id_start\']').val();
+                      if (filter_order_id_start) {
+                          url += '&filter_order_id_start=' + encodeURIComponent(filter_order_id_start);
+                      }
+                      var filter_order_id_end = $('input[name=\'filter_order_id_end\']').val();
+                      if (filter_order_id_end) {
+                          url += '&filter_order_id_end=' + encodeURIComponent(filter_order_id_end);
+                      }
+                      $('#order').load(url);
+                  }
+              },
+              error: function(xhr, ajaxOptions, thrownError) {
+                  $('#alert-processing').remove();
+                  $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + thrownError + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+              }
+          });
+      });
+
+      // Undo orders button
+      $('#button-undo').on('click', function() {
+          if (!confirm('{{ text_confirm_undo }}')) {
+              return;
+          }
+          
+          var checkedItems = $('input[name="vendu[]"]:checked');
+          if (checkedItems.length === 0) {
+              $('#alert').prepend('<div class="alert alert-warning alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> Please select at least one order to undo. <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+              return;
+          }
+          
+          // Show processing message
+          $('#alert').prepend('<div class="alert alert-info alert-dismissible" id="alert-processing"><i class="fa-solid fa-circle-info"></i> Undoing ' + checkedItems.length + ' order(s)... <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+          
+          $.ajax({
+              url: 'index.php?route=shopmanager/order.undoProductQuantity&user_token={{ user_token }}',
+              type: 'post',
+              data: $('#form-order').serialize(),
+              dataType: 'json',
+              beforeSend: function() {
+                  $('#button-undo').prop('disabled', true).html('<i class="fa-solid fa-spinner fa-spin"></i>');
+              },
+              complete: function() {
+                  $('#button-undo').prop('disabled', false).html('<i class="fa-solid fa-rotate-left"></i>');
+              },
+              success: function(json) {
+                  $('#alert-processing').remove();
+                  $('.alert-dismissible').remove();
+                  
+                  if (json['error']) {
+                      if (json['error']['warning']) {
+                          $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + json['error']['warning'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                      }
+                  }
+                  
+                  if (json['success']) {
+                      $('#alert').prepend('<div class="alert alert-success alert-dismissible"><i class="fa-solid fa-circle-check"></i> ' + json['success'] + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+                      
+                      // Uncheck all checkboxes
+                      $('input[name="vendu[]"]').prop('checked', false);
+                      
+                      // Reload the order list to refresh data
+                      var url = 'index.php?route=shopmanager/order.list&user_token={{ user_token }}';
+                      var filter_date_start = $('input[name=\'filter_date_start\']').val();
+                      if (filter_date_start) {
+                          url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
+                      }
+                      var filter_date_end = $('input[name=\'filter_date_end\']').val();
+                      if (filter_date_end) {
+                          url += '&filter_date_end=' + encodeURIComponent(filter_date_end);
+                      }
+                      var filter_order_id_start = $('input[name=\'filter_order_id_start\']').val();
+                      if (filter_order_id_start) {
+                          url += '&filter_order_id_start=' + encodeURIComponent(filter_order_id_start);
+                      }
+                      var filter_order_id_end = $('input[name=\'filter_order_id_end\']').val();
+                      if (filter_order_id_end) {
+                          url += '&filter_order_id_end=' + encodeURIComponent(filter_order_id_end);
+                      }
+                      $('#order').load(url);
+                  }
+              },
+              error: function(xhr, ajaxOptions, thrownError) {
+                  $('#alert-processing').remove();
+                  $('#alert').prepend('<div class="alert alert-danger alert-dismissible"><i class="fa-solid fa-circle-exclamation"></i> ' + thrownError + ' <button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>');
+              }
+          });
+      });
+
+      // Print report button - build URL with current filter values
+      $('#button-print-report').on('click', function() {
+          var url = 'index.php?route=shopmanager/order&type_report=order&user_token={{ user_token }}';
+          
+          var filter_date_start = $('input[name=\'filter_date_start\']').val();
+          if (filter_date_start) {
+              url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
+          }
+          
+          var filter_date_end = $('input[name=\'filter_date_end\']').val();
+          if (filter_date_end) {
+              url += '&filter_date_end=' + encodeURIComponent(filter_date_end);
+          }
+          
+          var filter_order_id_start = $('input[name=\'filter_order_id_start\']').val();
+          if (filter_order_id_start) {
+              url += '&filter_order_id_start=' + encodeURIComponent(filter_order_id_start);
+          }
+          
+          var filter_order_id_end = $('input[name=\'filter_order_id_end\']').val();
+          if (filter_order_id_end) {
+              url += '&filter_order_id_end=' + encodeURIComponent(filter_order_id_end);
+          }
+          
+          window.open(url, '_blank');
+      });
+
+      // Filter button handler
+      $('#button-filter').on('click', function() {
+          var url = 'index.php?route=shopmanager/order.list&user_token={{ user_token }}';
+          
+          var filter_date_start = $('input[name=\'filter_date_start\']').val();
+          if (filter_date_start) {
+              url += '&filter_date_start=' + encodeURIComponent(filter_date_start);
+          }
+          
+          var filter_date_end = $('input[name=\'filter_date_end\']').val();
+          if (filter_date_end) {
+              url += '&filter_date_end=' + encodeURIComponent(filter_date_end);
+          }
+          
+          var filter_order_id_start = $('input[name=\'filter_order_id_start\']').val();
+          if (filter_order_id_start) {
+              url += '&filter_order_id_start=' + encodeURIComponent(filter_order_id_start);
+          }
+          
+          var filter_order_id_end = $('input[name=\'filter_order_id_end\']').val();
+          if (filter_order_id_end) {
+              url += '&filter_order_id_end=' + encodeURIComponent(filter_order_id_end);
+          }
+          
+          $('#order').load(url);
+      });
+
+      // Form reset button
+      $('#form-filter button[type="reset"]').on('click', function() {
+          setTimeout(function() {
+              $('#order').load('index.php?route=shopmanager/order.list&user_token={{ user_token }}');
+          }, 100);
+      });
+      
+      // Clear date filters when order_id filter is used
+      $(document).on('input', '#input-order-id-start, #input-order-id-end', function() {
+          if ($(this).val()) {
+              $('#input-date-start, #input-date-end').val('');
+          }
+      });
+      
+      // Clear order_id filters when date filter is used
+      $(document).on('change', '#input-date-start, #input-date-end', function() {
+          if ($(this).val()) {
+              $('#input-order-id-start, #input-order-id-end').val('');
+          }
+      });
+});
+
+function toggleSelectAll(mainCheckbox) {
+  var items = document.getElementsByName('vendu[]');
+  for (var i = 0; i < items.length; i++) {
+    if (items[i].type === 'checkbox') {
+      items[i].checked = mainCheckbox.checked;
+    }
+  }
+}
+</script>

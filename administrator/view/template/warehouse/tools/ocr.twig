@@ -1,0 +1,56 @@
+{# Original: shopmanager/ocr.twig #}
+<div id="ocr-container">
+  <div class="form-group" id="toggle-button-container" style="display: none;">
+    <label class="col-sm-2 control-label"></label>
+    <div class="col-sm-10">
+      <button type="button" id="toggle-button" class="btn btn-secondary">
+        <i class="fa fa-chevron-down"></i> <i class="fa fa-chevron-down"></i> <i class="fa fa-chevron-down"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="errorDisplay"></div>
+
+  <div id="ocr" style="display: block; overflow: hidden; transition: all 0.3s ease;">
+    <div class="form-group">
+      <label class="col-sm-2 control-label">{{ text_image_upload }}</label>
+      <div class="col-sm-8" id="drop-area" style="border: 2px dashed #ccc; padding: 20px; text-align: center;">
+        <p>{{ text_drag_drop }}</p>
+        <input type="file" id="file-input-drop" name="file-input-drop" accept="image/*" style="display: none;" />
+      </div>
+    </div>
+
+    <div id="ocr-image" style="display: none; overflow: hidden; transition: all 0.3s ease;">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">{{ text_recognized_text }}</label>
+        <div class="col-sm-8">
+          <textarea id="recognizedText" name="recognizedText" class="form-control" rows="3" readonly></textarea>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Canvas for Selection</label>
+        <div class="col-sm-10">
+          <canvas id="imageCanvas" style="border: 1px solid black; display: none;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="ocr-image-cropped" style="display: none; overflow: hidden; transition: all 0.3s ease;">
+      <div class="form-group">
+        <label class="col-sm-2 control-label">Cropped Image</label>
+        <div class="col-sm-10">
+          <img id="croppedImagePreview" style="border: 1px solid black; display: none;" />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" src="view/javascript/summernote/summernote.js"></script>
+<link href="view/javascript/summernote/summernote.css" rel="stylesheet" />
+<script type="text/javascript" src="view/javascript/summernote/opencart.js"></script>
+<script type="text/javascript" src="view/javascript/shopmanager/ocr.js"></script>
+<script type="text/javascript" src="view/javascript/shopmanager/ai.js"></script>
+
+

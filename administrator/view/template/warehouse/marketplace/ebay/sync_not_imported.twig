@@ -1,0 +1,74 @@
+{# Original: shopmanager/inventory/sync_not_imported.twig #}
+{# Not Imported Tab — Listed on eBay but last_import is NULL #}
+
+{% if not_imported|length > 0 %}
+
+  {# Toolbar — always in DOM, shown via JS when rows are checked #}
+  <div id="ni-toolbar" style="display:none;" class="mb-2 p-2 bg-light border rounded">
+    <span id="ni-count" class="me-3 text-muted small fw-bold"></span>
+    <button type="button" id="ni-btn-import" class="btn btn-sm btn-primary me-2">
+      <i class="fa-solid fa-download"></i> Import from eBay (GetItem)
+    </button>
+    <button type="button" id="ni-btn-deselect" class="btn btn-sm btn-outline-secondary">
+      <i class="fa-solid fa-times"></i> Deselect All
+    </button>
+  </div>
+
+  <div class="table-responsive">
+    <table id="tbl-not-imported" class="table table-bordered table-hover table-sm" style="font-size: 11px;">
+      <thead class="table-light">
+        <tr>
+          <th style="width:32px; text-align:center;">
+            <input type="checkbox" id="ni-check-all">
+          </th>
+          <th style="width:70px;">{{ column_product_id }}</th>
+          <th>{{ column_product }}</th>
+          <th style="width:90px;">{{ column_sku }}</th>
+          <th style="width:150px;">{{ column_ebay_id }}</th>
+          <th style="width:80px;">{{ column_location }}</th>
+          <th style="width:60px;" class="text-center">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in not_imported %}
+          <tr data-product-id="{{ product.product_id }}">
+            <td class="text-center">
+              <input type="checkbox" class="ni-cb" value="{{ product.product_id }}">
+            </td>
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="{{ product.name }}">{{ product.name }}</td>
+            <td><code>{{ product.sku }}</code></td>
+            <td>
+              <a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary">
+                <i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}
+              </a>
+            </td>
+            <td><span class="badge bg-secondary">{{ product.location }}</span></td>
+            <td class="text-center">
+              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-xs btn-primary btn-sm" title="{{ text_edit_product }}">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Pagination #}
+  {% if not_imported_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-2">
+      <small class="text-muted">{{ not_imported_start }}–{{ not_imported_end }} / {{ not_imported_total }}</small>
+      <nav><ul class="pagination pagination-sm mb-0">
+        {% for p in 1..not_imported_num_pages %}
+          <li class="page-item {{ p == not_imported_page ? 'active' : '' }}">
+            <a class="page-link load-not-imported-page" href="#" data-page="{{ p }}">{{ p }}</a>
+          </li>
+        {% endfor %}
+      </ul></nav>
+    </div>
+  {% endif %}
+
+{% else %}
+  <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ text_no_not_imported }}</div>
+{% endif %}

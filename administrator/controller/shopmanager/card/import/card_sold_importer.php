@@ -6,7 +6,7 @@ class CardSoldImporter extends \Opencart\System\Engine\Controller {
     // ─── Main page ────────────────────────────────────────────────────────────
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->language('shopmanager/card/import/card_sold_importer');
         $this->load->model('shopmanager/card/import/card_sold_importer');
 
         $data = $lang;
@@ -81,7 +81,7 @@ class CardSoldImporter extends \Opencart\System\Engine\Controller {
     // ─── AJAX: list (returns HTML fragment) ──────────────────────────────────
 
     public function list(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->language('shopmanager/card/import/card_sold_importer');
         $this->load->model('shopmanager/card/import/card_sold_importer');
 
         $filters = [
@@ -130,7 +130,7 @@ class CardSoldImporter extends \Opencart\System\Engine\Controller {
     // ─── AJAX: upload CSV → preview ───────────────────────────────────────────
 
     public function upload(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
@@ -197,7 +197,7 @@ class CardSoldImporter extends \Opencart\System\Engine\Controller {
     // ─── AJAX: save rows to DB ────────────────────────────────────────────────
 
     public function save(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
@@ -247,7 +247,7 @@ class CardSoldImporter extends \Opencart\System\Engine\Controller {
     // ─── AJAX: delete selected ────────────────────────────────────────────────
 
     public function delete(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {
@@ -275,7 +275,7 @@ class CardSoldImporter extends \Opencart\System\Engine\Controller {
     // ─── AJAX: truncate ─────────────────────────────────────────────────────
 
     public function truncate(): void {
-        $lang = $this->load->language('shopmanager/card/import/card_sold_importer');
+        $this->load->language('shopmanager/card/import/card_sold_importer');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/import/card_sold_importer')) {

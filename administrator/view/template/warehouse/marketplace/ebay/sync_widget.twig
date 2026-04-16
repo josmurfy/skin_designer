@@ -1,0 +1,35 @@
+{# Original: shopmanager/inventory/sync_widget.twig #}
+<div class="row">
+  <div class="col-sm-3">
+    <div class="card text-center">
+      <div class="card-body">
+        <h5 class="card-title">{{ total_products }}</h5>
+        <p class="card-text text-muted">Products</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card text-center border-warning">
+      <div class="card-body">
+        <h5 class="card-title text-warning">{{ low_stock }}</h5>
+        <p class="card-text text-muted">Low Stock</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card text-center border-info">
+      <div class="card-body">
+        <h5 class="card-title text-info">{{ pending_orders }}</h5>
+        <p class="card-text text-muted">Pending Orders</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-3">
+    <div class="card text-center border-success">
+      <div class="card-body">
+        <h5 class="card-title text-success">${{ todays_revenue|number_format(2) }}</h5>
+        <p class="card-text text-muted">Today's Revenue</p>
+      </div>
+    </div>
+  </div>
+</div>

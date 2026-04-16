@@ -4846,7 +4846,6 @@ private function initializePriceVariants($category_id, $site_setting = []) {
  * Lit oc_card_image, upload uniquement les images Google, met à jour l'URL dans la DB.
  *
  * @param int   $listing_id  ID du listing (oc_card_listing.listing_id)
- * @param array $headers     Headers OAuth eBay pour uploadImageToEbay
  * @return array Statistiques : uploaded, already_on_ebay, failed, skipped
  */
 public function migrateImagesToEbay(int $listing_id, $marketplace_account_id = null): array {

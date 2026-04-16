@@ -1,0 +1,121 @@
+{# Original: shopmanager/ebay_search_results.twig #}
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th><input type="checkbox" onclick="toggleSelectAlleBayItem(this);"></th>
+      <th>{{ column_picture }}</th>
+      <th>{{ column_condition }}</th>
+      <th>{{ column_product_id }}</th>
+      <th>{{ column_name }}</th>
+      <th>{{ column_category_id }}</th>
+      <th>
+        <select id="categoryFilter" onchange="filterByCategory()">
+          <option value="">{{ column_category_name }}</option>
+          {% for cat in category %}
+            <option value="{{ cat.category_id }}" style="color: {{ cat.has_specifics == 'not_set' ? 'red' : 'black' }};">
+              {{ cat.category_name }} - {{ cat.percent }}%
+            </option>
+          {% endfor %}
+        </select>
+      </th>
+    </tr>
+  </thead>
+  <tbody id="tableBody">
+    {# Build selectedIds #}
+    {% set selectedIds = [] %}
+    {% if selectedItem is defined %}
+      {% for si in selectedItem %}
+        {% set selectedIds = selectedIds|merge([si.marketplace_item_id]) %}
+      {% endfor %}
+    {% endif %}
+
+    {# Merge items + selectedItem #}
+    {% set all_items = [] %}
+    {% if selectedItem is defined %}
+      {% set all_items = all_items|merge(selectedItem) %}
+    {% endif %}
+    {% if items is defined %}
+      {% set all_items = all_items|merge(items) %}
+    {% endif %}
+
+    {# Deduplicate by marketplace_item_id (keep first) #}
+    {% set seen = [] %}
+    {% set items_final = [] %}
+    {% for it in all_items %}
+      {% if it.marketplace_item_id not in seen %}
+        {% set seen = seen|merge([it.marketplace_item_id]) %}
+        {% set items_final = items_final|merge([it]) %}
+      {% endif %}
+    {% endfor %}
+
+    <input type="hidden" name="json_items" id="jsonItems"
+           value="{{ items_final|json_encode|e('html_attr') }}" />
+
+    {% if items_final|length > 0 %}
+      {% for item in items_final %}
+        {% set isChecked = '' %}
+        {% if item.marketplace_item_id in selectedIds %}
+          {% set isChecked = 'checked' %}
+        {% else %}
+          {% if keyword is defined and keyword %}
+            {% set words = item.name|lower|split(' ') %}
+            {% if keyword|lower in words %}
+              {% set isChecked = 'checked' %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+
+        {% set styleRow = isChecked == 'checked' ? 'background-color: #d4edda; color:#155724;' : '' %}
+        {% set name = item.name %}
+        {% if keyword is defined and keyword and (keyword|lower in name|lower) %}
+          {% set highlightedName = name|replace({ (keyword): '<span style="background-color: red; color: white; font-weight: bold; padding:2px 4px; border-radius:3px;">' ~ keyword ~ '</span>' })|raw %}
+        {% else %}
+          {% set highlightedName = name %}
+        {% endif %}
+
+        {% set imageSrc = item.pictureURLSuperSize ?? item.pictureURLLarge ?? item.image ?? null %}
+        <tr data-category-id="{{ item.category_id }}" style="{{ styleRow }}">
+          <td>
+            <input type="checkbox"
+                   name="selected_ebay_item[]"
+                   value="{{ item.marketplace_item_id }}"
+                   onclick="toggleFeedButton()"
+                   {{ isChecked }}>
+          </td>
+          <td>
+            {% if imageSrc %}
+              <div class="thumbnail">
+                <div class="image-container" style="position:relative;">
+                  <img src="{{ imageSrc }}" alt="{{ item.name }}" class="thumbnail-image" style="cursor:pointer;">
+                  <img src="{{ imageSrc }}" alt="{{ item.name }}" class="fullsize-image" style="display:none; position:absolute; z-index:1000; width:200px;">
+                </div>
+              </div>
+            {% endif %}
+          </td>
+          <td>({{ item.condition }}) {{ item.condition_name }}</td>
+          <td>{{ item.marketplace_item_id }}</td>
+          <td>
+            <button type="button"
+                    class="btn btn-primary paste-title-btn"
+                    data-title="{{ item.name|e }}"
+                    onclick="pasteTitle(this)">
+              <i class="fas fa-paste"></i>
+            </button>
+            <span class="item-length" data-length="{{ name|length }}">({{ name|length }})</span>
+            <a href="https://www.ebay.com/itm/{{ item.marketplace_item_id }}" target="ebay">
+              {{ highlightedName }}
+            </a>
+          </td>
+          <td>{{ item.category_id }}</td>
+          <td>{{ item.category_name }}</td>
+        </tr>
+      {% endfor %}
+    {% else %}
+      <tr>
+        <td colspan="6">{{ text_no_results }}</td>
+      </tr>
+    {% endif %}
+  </tbody>
+</table>
+
+

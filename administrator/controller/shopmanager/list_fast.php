@@ -9,9 +9,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		ini_set('display_errors', 1);
 	ini_set('display_startup_errors', 1);
 	error_reporting(E_ALL);
-        $lang = $this->load->language('shopmanager/list_fast');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/list_fast');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
         $this->load->model('shopmanager/list_fast');
@@ -20,18 +20,18 @@ class ListFast extends \Opencart\System\Engine\Controller {
     }
 
 	public function list(): void {
-		$lang = $this->load->language('shopmanager/list_fast');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/list_fast');
+		$data = [];
+		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
 		$this->load->model('shopmanager/list_fast');
 		$this->getList(true);
 	}
 	public function delete() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -127,9 +127,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$this->getList();
 	}
 	public function enable() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -220,9 +220,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$this->getList();
 	}
 	public function disable() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -312,9 +312,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 		$this->getList();
 	}
 	public function copy() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -1404,9 +1404,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 
   
 	public function add() {
-		$lang = $this->load->language('shopmanager/list_fast');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/list_fast');
+		$data = [];
+		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 	
 		$this->load->model('shopmanager/list_fast');
@@ -1475,9 +1475,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	
     // Méthode : edit (Modification d'un produit existant)
     public function edit() {
-        $lang = $this->load->language('shopmanager/list_fast');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/list_fast');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
         $this->load->model('shopmanager/list_fast');
@@ -2097,9 +2097,9 @@ class ListFast extends \Opencart\System\Engine\Controller {
 	
 
 	public function product_feed() {
-			$lang = $this->load->language('shopmanager/catalog/product_search');
-			$data = $data ?? [];
-			$data += $lang;
+			$this->load->language('shopmanager/catalog/product_search');
+			$data = [];
+			
 			$this->load->model('shopmanager/catalog/product_search');
 			$this->load->model('shopmanager/catalog/product');
 			$this->load->model('shopmanager/ai');

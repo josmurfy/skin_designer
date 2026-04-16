@@ -1,0 +1,137 @@
+{# Original: shopmanager/inventory/sync_condition_mismatch.twig #}
+{# Condition Mismatch Tab with Pagination and Ordering #}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    {{ text_mismatch_found|replace({'%s': '<strong>' ~ condition_mismatch_total ~ '</strong> ' ~ text_condition|lower})|raw }}
+  </div>
+  <button class="btn btn-sm btn-primary refresh-condition-mismatch" type="button">
+    <i class="fa-solid fa-rotate"></i> {{ button_refresh }}
+  </button>
+</div>
+
+{% if condition_mismatch|length > 0 %}
+  <div class="table-responsive" style="overflow-x: auto; max-width: 100%;">
+    <table class="table table-bordered table-hover" style="white-space: nowrap; font-size: 11px;">
+      <thead>
+        <tr>
+          <th style="width: 80px;">
+            <a href="#" class="sort-condition-mismatch" data-sort="product_id" data-order="{{ condition_mismatch_sort == 'product_id' and condition_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product_id }}
+              {% if condition_mismatch_sort == 'product_id' %}
+                <i class="fa-solid fa-sort-{{ condition_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="max-width: 200px;">
+            <a href="#" class="sort-condition-mismatch" data-sort="name" data-order="{{ condition_mismatch_sort == 'name' and condition_mismatch_order == 'ASC' ? 'DESC' : 'ASC' }}">
+              {{ column_product }}
+              {% if condition_mismatch_sort == 'name' %}
+                <i class="fa-solid fa-sort-{{ condition_mismatch_order == 'ASC' ? 'up' : 'down' }}"></i>
+              {% endif %}
+            </a>
+          </th>
+          <th style="width: 120px;">{{ column_ebay_id }}</th>
+          <th style="width: 200px;">{{ column_condition }}</th>
+          <th style="width: 100px;">{{ column_location }}</th>
+          <th class="text-center" style="width: 80px;">{{ column_actions }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for product in condition_mismatch %}
+          <tr>
+            <td class="text-center">{{ product.product_id }}</td>
+            <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ product.name }}">{{ product.name }}</td>
+            <td><a href="https://www.ebay.ca/itm/{{ product.marketplace_item_id }}" target="_blank" class="text-primary"><i class="fa-brands fa-ebay"></i> {{ product.marketplace_item_id }}</a></td>
+            <td>
+              <div style="line-height: 1.3;">
+                <small class="text-muted d-block">{{ text_local }}: {{ product.local_condition_id ?? 'N/A' }}</small>
+                <small class="text-muted d-block">{{ text_ebay }}: {{ product.ebay_condition_id ?? 'N/A' }}</small>
+                <span class="badge bg-warning text-dark">⚠ {{ text_diff }}</span>
+                <div class="btn-group btn-group-sm mt-1">
+                  <button class="btn btn-xs btn-outline-primary sync-condition-btn" data-product-id="{{ product.product_id }}" data-direction="to_ebay" title="{{ text_sync_to_ebay }}">
+                    <i class="fa-solid fa-arrow-right"></i>
+                  </button>
+                  <button class="btn btn-xs btn-outline-secondary sync-condition-btn" data-product-id="{{ product.product_id }}" data-direction="from_ebay" title="{{ text_sync_from_ebay }}">
+                    <i class="fa-solid fa-arrow-left"></i>
+                  </button>
+                </div>
+              </div>
+            </td>
+            <td><span class="badge bg-secondary">{{ product.location }}</span></td>
+            <td class="text-center">
+              <a href="index.php?route=shopmanager/catalog/product.form&product_id={{ product.product_id }}&user_token={{ user_token }}" class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-edit"></i>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  {# Pagination #}
+  {% if condition_mismatch_pagination %}
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div>
+        Showing {{ condition_mismatch_start }} to {{ condition_mismatch_end }} of {{ condition_mismatch_total }}
+      </div>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          {% for page_num in 1..condition_mismatch_num_pages %}
+            <li class="page-item {{ page_num == condition_mismatch_page ? 'active' : '' }}">
+              <a class="page-link page-condition-mismatch" href="#" data-page="{{ page_num }}">{{ page_num }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="alert alert-success"><i class="fa-solid fa-check-circle"></i> {{ text_no_mismatch_found|replace({'%s': text_condition|lower}) }}</div>
+{% endif %}
+
+<script>
+$(document).ready(function() {
+  // Refresh condition mismatch data
+  $('.refresh-condition-mismatch').on('click', function() {
+    loadConditionMismatchTab({{ condition_mismatch_page }}, '{{ condition_mismatch_sort }}', '{{ condition_mismatch_order }}');
+  });
+  
+  // Sorting
+  $('.sort-condition-mismatch').on('click', function(e) {
+    e.preventDefault();
+    var sort = $(this).data('sort');
+    var order = $(this).data('order');
+    loadConditionMismatchTab(1, sort, order);
+  });
+  
+  // Pagination
+  $('.page-condition-mismatch').on('click', function(e) {
+    e.preventDefault();
+    var page = $(this).data('page');
+    loadConditionMismatchTab(page, '{{ condition_mismatch_sort }}', '{{ condition_mismatch_order }}');
+  });
+  
+  function loadConditionMismatchTab(page, sort, order) {
+    $.ajax({
+      url: 'index.php?route=shopmanager/inventory/sync.getConditionMismatchTab&user_token={{ user_token }}',
+      type: 'GET',
+      data: {
+        page: page,
+        sort: sort,
+        order: order
+      },
+      dataType: 'html',
+      beforeSend: function() {
+        $('#condition-mismatch').html('<div class="text-center p-5"><i class="fa-solid fa-spinner fa-spin fa-3x"></i></div>');
+      },
+      success: function(html) {
+        $('#condition-mismatch').html(html);
+      },
+      error: function(xhr, ajaxOptions, thrownError) {
+        console.error(thrownError + "\r\n" + xhr.statusText + "\r\n" + xhr.responseText);
+      }
+    });
+  }
+});
+</script>

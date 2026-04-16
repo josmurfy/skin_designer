@@ -4,9 +4,9 @@ namespace Opencart\Admin\Controller\Shopmanager\Maintenance;
 class Image extends \Opencart\System\Engine\Controller {
     
     public function index(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/maintenance/image');
+        $data = [];
+        
         $this->load->model('shopmanager/maintenance/image');
         
         $this->document->setTitle(($lang['heading_title'] ?? ''));
@@ -463,15 +463,15 @@ class Image extends \Opencart\System\Engine\Controller {
     }
     
     public function list(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/maintenance/image');
+        $data = [];
+        
         
         $this->response->setOutput($this->getList());
     }
     
     public function getList(): string {
-        $lang = $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('shopmanager/maintenance/image');
         $this->load->model('tool/image');
         $this->load->model('shopmanager/maintenance/image');
         
@@ -798,7 +798,7 @@ class Image extends \Opencart\System\Engine\Controller {
      * Compare eBay image count/names vs DB images (main + secondary) for one product.
      */
     public function checkEbayImageComparison(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
@@ -825,9 +825,9 @@ class Image extends \Opencart\System\Engine\Controller {
      * Remove missing images from database
      */
     public function removeMissingImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/maintenance/image');
+        $data = [];
+        
         $this->load->model('shopmanager/maintenance/image');
         
         $json = [];
@@ -878,7 +878,7 @@ class Image extends \Opencart\System\Engine\Controller {
      * Called from the Image Mismatch tab in the Inventory/Sync dashboard.
      */
     public function bulkImportMismatchImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
@@ -976,7 +976,7 @@ class Image extends \Opencart\System\Engine\Controller {
      * Used for the per-row "Import" button in the Image Mismatch tab.
      */
     public function syncImagesForProductWitheBay(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
+        $this->load->language('shopmanager/maintenance/image');
         $json = [];
 
         if (!$this->user->hasPermission('modify', 'shopmanager/maintenance/image')) {
@@ -1041,9 +1041,9 @@ class Image extends \Opencart\System\Engine\Controller {
      * Fix image nomenclature and convert to webp
      */
     public function fixImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/maintenance/image');
+        $data = [];
+        
         
         $json = [];
         
@@ -1533,9 +1533,9 @@ class Image extends \Opencart\System\Engine\Controller {
      * Delete remaining files in old directories
      */
     public function deleteRemainingFiles(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/maintenance/image');
+        $data = [];
+        
         
         $json = [];
         
@@ -1667,9 +1667,9 @@ class Image extends \Opencart\System\Engine\Controller {
      * Add orphan images to product
      */
     public function addOrphanImages(): void {
-        $lang = $this->load->language('shopmanager/maintenance/image');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/maintenance/image');
+        $data = [];
+        
         $this->load->model('shopmanager/maintenance/image');
         
         $json = [];

@@ -3,9 +3,9 @@ namespace Opencart\Admin\Controller\Shopmanager;
 
 class CountryConflictPopup extends \Opencart\System\Engine\Controller {
     public function index(): void {
-        $lang = $this->load->language('shopmanager/country_conflict_popup');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/country_conflict_popup');
+        $data = [];
+        
 
         $data['heading_title'] = ($lang['heading_title'] ?? '');
         $data['text_conflict_message'] = ($lang['text_conflict_message'] ?? '');

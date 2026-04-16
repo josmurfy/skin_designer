@@ -134,7 +134,7 @@ class Connect extends \Opencart\System\Engine\Controller {
 	}
 
 	public function add_Account() {
-		$data = $lang = $this->load->language('shopmanager/connect');
+		$data = $this->load->language('shopmanager/connect');
 
 		$this->document->setTitle($this->language->get('heading_title_add'));
 		$this->response->setOutput($this->load->view('shopmanager/connect_form', $data));
@@ -399,7 +399,7 @@ class Connect extends \Opencart\System\Engine\Controller {
 	public function edit() {
 
 		$data = array();
-		$lang = $this->load->language('shopmanager/connect');
+		$this->load->language('shopmanager/connect');
 		$data = array_merge($data, $lang);
 		$this->load->model('shopmanager/marketplace');
 
@@ -431,7 +431,7 @@ class Connect extends \Opencart\System\Engine\Controller {
 	}
 
 	public function getForm() {
-		$data = $lang = $this->load->language('shopmanager/connect');
+		$data = $this->load->language('shopmanager/connect');
 		$this->load->model('shopmanager/marketplace');
 		$data['user_token'] = $this->session->data['user_token'];
 
@@ -561,7 +561,7 @@ class Connect extends \Opencart\System\Engine\Controller {
 	//	$data['wkebay_menu'] = array;
 
 		
-/* 		 $lang = $this->load->language('account/wkebay/ocmod');
+/* 		 $this->load->language('account/wkebay/ocmod');
 
 				$data['wkebay_menu']['account'] =  ($lang['text_ebay_account'] ?? '');
 				$data['wkebay_link']['account'] = $this->url->link('shopmanager/connect', '', true);

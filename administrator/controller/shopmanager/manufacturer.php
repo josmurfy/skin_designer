@@ -5,9 +5,9 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
     private $error = array();
 
 	public function index() {
-		$lang = $this->load->language('shopmanager/manufacturer');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/manufacturer');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -28,9 +28,9 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 			return;
 		}
 
-		$lang = $this->load->language('shopmanager/manufacturer');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/manufacturer');
+		$data = [];
+		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 		$this->load->model('shopmanager/manufacturer');
 	
@@ -88,9 +88,9 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 			return;
 		}
 
-		$lang = $this->load->language('shopmanager/manufacturer');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/manufacturer');
+		$data = [];
+		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 		$this->load->model('shopmanager/manufacturer');
 
@@ -147,9 +147,9 @@ class Manufacturer extends \Opencart\System\Engine\Controller {
 			return;
 		}
 
-		$lang = $this->load->language('shopmanager/manufacturer');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/manufacturer');
+		$data = [];
+		
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 		$this->load->model('shopmanager/manufacturer');
 

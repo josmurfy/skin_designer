@@ -5,9 +5,9 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
     private $error = array();
 
 	public function index(): void {
-		$lang = $this->load->language('shopmanager/catalog/category_specific');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category_specific');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -226,9 +226,9 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
 	
 
     public function edit() {
-        $lang = $this->load->language('shopmanager/catalog/category_specific');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_specific');
+        $data = [];
+        
         $this->load->model('shopmanager/catalog/category_specific');
 
         if (isset($this->request->get['specific_name'])) {
@@ -276,9 +276,9 @@ class CategorySpecific extends \Opencart\System\Engine\Controller {
         $this->response->setOutput(json_encode($json));
     }
 	public function delete() {
-		$lang = $this->load->language('shopmanager/catalog/category_specific');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category_specific');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 

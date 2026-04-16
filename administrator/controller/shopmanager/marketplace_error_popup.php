@@ -7,9 +7,9 @@ class MarketplaceErrorPopup extends \Opencart\System\Engine\Controller {
         //error_log('🔥 GET params: ' . print_r($this->request->get, true));
         
         $this->document->addScript('view/javascript/shopmanager/marketplace_error_popup.js');
-        $lang = $this->load->language('shopmanager/marketplace_error_popup');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/marketplace_error_popup');
+        $data = [];
+        
         $this->load->model('shopmanager/marketplace');
 
         $product_id = $this->request->get['product_id'] ?? null;

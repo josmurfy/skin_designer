@@ -14,9 +14,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
 	public function index(): void {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		if (isset($this->request->get['filter_name'])) {
 			$filter_name = $this->request->get['filter_name'];
@@ -379,9 +379,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
  	public function list(): void {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->response->setOutput($this->load->controller('shopmanager/catalog/product.getList'));
 	}
@@ -1066,9 +1066,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	public function form(): void {
 
 	// error_reporting(E_ALL);
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -2224,9 +2224,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
 	public function save(): void {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$json = [];
 
@@ -2387,9 +2387,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
 	public function delete(): void {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$json = [];
 
@@ -2426,9 +2426,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	}
 
 	public function copy() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$json = [];
 
@@ -2470,9 +2470,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
 	public function report(): void {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$this->response->setOutput($this->getReport());
 	}
@@ -2546,9 +2546,9 @@ class Product extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
 	public function autocomplete() {
-		$lang = $this->load->language('shopmanager/catalog/product');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/product');
+		$data = [];
+		
 
 		$json = [];
 
@@ -2761,9 +2761,9 @@ public function updateUnallocatedQuantity() {
 		return;
 	}
 
-	$lang = $this->load->language('shopmanager/catalog/product');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product');
+	$data = [];
+	
 	$this->load->model('shopmanager/catalog/product');
 
 	// Vérifier si les données nécessaires sont envoyées via POST
@@ -2822,9 +2822,9 @@ public function updateQuantity() {
 		return;
 	}
 	// Charger le modèle qui gère les produits
-	$lang = $this->load->language('shopmanager/catalog/product');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product');
+	$data = [];
+	
 	$this->load->model('shopmanager/catalog/product');
 
 	// Vérifier si les données nécessaires sont envoyées via POST
@@ -2899,9 +2899,9 @@ public function updateLocation() {
 public function editMadeInCountry()
 {
 	// Charge le language pour les messages d'erreur
-	$lang = $this->load->language('shopmanager/catalog/product');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product');
+	$data = [];
+	
 
 	$json = [];
 
@@ -2985,9 +2985,9 @@ public function enable() {
 		return;
 	}
 
-	$lang = $this->load->language('shopmanager/catalog/product');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/product');
+	$data = [];
+	
 
 	if (isset($this->request->post['selected'])) {
 		$selected = (array)$this->request->post['selected'];
@@ -3031,9 +3031,9 @@ public function disable() {
 				return;
 			}
 
-			$lang = $this->load->language('shopmanager/catalog/product');
-			$data = $data ?? [];
-			$data += $lang;
+			$this->load->language('shopmanager/catalog/product');
+			$data = [];
+			
 
 		if (isset($this->request->post['selected'])) {
 			$selected = (array)$this->request->post['selected'];

@@ -149,7 +149,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 	}
 
 	public function add_Account() {
-		$data = $lang = $this->load->language('shopmanager/marketplace/marketplace');
+		$data = $this->load->language('shopmanager/marketplace/marketplace');
 
 		$this->document->setTitle($this->language->get('heading_title_add'));
 		$this->response->setOutput($this->load->view('shopmanager/marketplace/marketplace_form', $data));
@@ -434,7 +434,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 	public function edit() {
 
 		$data = array();
-		$lang = $this->load->language('shopmanager/marketplace/marketplace');
+		$this->load->language('shopmanager/marketplace/marketplace');
 		$data = array_merge($data, $lang);
 		$this->load->model('shopmanager/marketplace');
 
@@ -466,7 +466,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 	}
 
 	public function getForm() {
-		$data = $lang = $this->load->language('shopmanager/marketplace/marketplace');
+		$data = $this->load->language('shopmanager/marketplace/marketplace');
 		$this->load->model('shopmanager/marketplace');
 		$data['user_token'] = $this->session->data['user_token'];
 
@@ -596,7 +596,7 @@ class Marketplace extends \Opencart\System\Engine\Controller {
 	//	$data['wkebay_menu'] = array;
 
 		
-/* 		 $lang = $this->load->language('account/wkebay/ocmod');
+/* 		 $this->load->language('account/wkebay/ocmod');
 
 				$data['wkebay_menu']['account'] =  ($lang['text_ebay_account'] ?? '');
 				$data['wkebay_link']['account'] = $this->url->link('shopmanager/marketplace/marketplace', '', true);

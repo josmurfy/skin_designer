@@ -4,9 +4,9 @@ namespace Opencart\Admin\Controller\Shopmanager;
 
 class WaitPopup extends \Opencart\System\Engine\Controller {
     public function index(): string {
-        $lang = $this->load->language('shopmanager/wait_popup');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/wait_popup');
+        $data = [];
+        
 
         $data['text_loading_please_wait'] = ($lang['text_loading_please_wait'] ?? '');
         $data['text_loading_specifics'] = ($lang['text_loading_specifics'] ?? '');

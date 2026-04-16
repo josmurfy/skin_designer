@@ -1,0 +1,44 @@
+{# Original: shopmanager/google_image_search.twig #}
+{{ header }}{{ column_left }}
+
+<div class="container">
+  <h1>{{ heading_title }}</h1>
+
+  <form action="{{ action }}" method="post">
+    <div class="form-group">
+      <label for="input-query">{{ entry_query }}</label>
+      <input type="text" name="query" id="input-query" class="form-control" value="{{ query|default('') }}" />
+    </div>
+    <button type="submit" class="btn btn-primary">{{ button_search }}</button>
+  </form>
+
+  <hr />
+
+  {% if images is defined and images is iterable and images|length > 0 %}
+    <div class="row">
+      {% for image in images %}
+        {% if loop.index0 > 0 and (loop.index0 % 6) == 0 %}
+          </div><div class="row">
+        {% endif %}
+        <div class="col-md-2">
+          <div class="card" style="margin-bottom:15px;">
+            <img src="{{ image.image }}" alt="{{ image.name|default('') }}" class="img-thumbnail" style="max-width:100%;">
+            <div class="card-body">
+              <p><strong>{{ image.name|default('No title') }}</strong></p>
+              <p>
+                {{ image.width|default('?') }}x{{ image.height|default('?') }} - {{ image.mime|default('unknown') }}
+              </p>
+              {% if image.url is defined and image.url %}
+                <a href="{{ image.url }}" target="_blank">View Source</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% elseif query is defined and query %}
+    <div class="alert alert-warning">{{ text_no_results }}</div>
+  {% endif %}
+</div>
+
+{{ footer }}

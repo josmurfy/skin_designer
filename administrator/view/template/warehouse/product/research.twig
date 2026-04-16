@@ -1,0 +1,309 @@
+{# Original: shopmanager/catalog/product_search.twig #}
+
+{{ header }}
+{{ column_left }} 
+
+<div id="content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="pull-right">
+            <button type="button" form="form-product" data-toggle="tooltip" id="feedButton" title="<?php echo $button_feed; ?>" onclick="FeedProductForm()" class="btn btn-warning feed-action" style="display: none;"><i class="fa-solid fa-feed"></i></button>
+            <button type="submit" form="form-product" data-toggle="tooltip" id="saveButton" title="<?php echo $button_save; ?>" class="btn btn-primary save-action" style="display: none;"><i class="fa-solid fa-save"></i></button>
+                <a href="<?php echo $cancel; ?>" data-toggle="tooltip" title="<?php echo $button_cancel; ?>" class="btn btn-default"><i class="fa fa-reply"></i></a>
+            </div>
+            <h1><?php echo $heading_title; ?></h1>
+            <ul class="breadcrumb">
+            <?php foreach ($breadcrumbs as $breadcrumb) { ?>
+            <li><a href="<?php echo $breadcrumb['href']; ?>"><?php echo $breadcrumb['text']; ?></a></li>
+            <?php } ?>
+            </ul>
+        </div>
+    </div>
+    <div class="container-fluid">
+      <?php echo $wait_popup; ?> 
+  <?php echo $alert_popup; ?>
+  <?php echo $marketplace_error_popup; ?> 
+    
+    <?php if (isset($error_warning)) { ?>
+    <div class="alert alert-danger"><i class="fa-solid fa-exclamation-circle"></i> <?php echo $error_warning; ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    <?php } ?> 
+    <?php if (isset($error)) { ?>
+    <div class="alert alert-danger"><i class="fa-solid fa-exclamation-circle"></i> <?php echo $error; ?>
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+    </div>
+    <?php } ?>
+
+    <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-search"></i> <?php echo $text_search; ?></h3>
+            </div>
+            <div class="panel-body">
+        
+            <form action="<?php echo $save_action; ?>" method="post" enctype="multipart/form-data" id="form-product" class="form-horizontal">
+
+            <input type="hidden" name="user_token" value="<?php echo $user_token; ?>" />
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label required" for="input-search"><?php echo $entry_search; ?></label>
+                        <div class="col-sm-8">
+                            <input type="text" name="search" id="input-search" class="form-control" placeholder="<?php echo $placeholder_search; ?>">
+                         
+                        </div>
+                        <div class="col-sm-2">
+                             <button id="search-by-upc" type="button"  onclick="FeedProductForm();" class="btn btn-warning" data-toggle="tooltip" title="<?php echo $button_search_by_upc; ?>" style="display: none;">
+                             <i class="fa-solid fa-search"></i> <i class="fa-solid fa-barcode fa-xl"></i>
+                             </button>
+                             <button id="search-by-name" type="button" onclick="SearchByName();" data-toggle="tooltip" title="<?php echo $button_search_by_name; ?>" class="btn btn-primary" style="display: none;">
+                             <i class="fa-solid fa-search"></i> <i class="fa-brands fa-product-hunt fa-xl"></i>
+                              </button>
+                        </div>
+                    </div>
+                   
+                    <div class="form-group ">
+                
+                    <label class="col-sm-2 control-label" for="title-search"><?php echo $entry_name; ?></label>
+                  
+                    <div class="col-sm-8">
+                    <label  id="ai-result-name" for="search-by-name" style="display: none;"></label>  <label  id="ai-result-name-count" style="display: none;"></label>
+                      <input type="text" maxlength="80" id="title-search" 
+                      name="title_search" value="" placeholder="<?php echo $entry_name; ?>" 
+                     class="form-control" onChange="if (typeof generateInfo === 'function') {
+    generateInfo();
+}
+" 
+                        oninput="updateCharacterCount(this, 'char-count-search')"/>  
+                      <div id="char-count-search" class="text-right char-count" style="font-weight: bold; margin-top: 5px;">
+                      0/80
+                     
+                  
+                       </div>
+                      </div>
+                     
+                  </div>
+                  <div class="form-group">
+                  <label class="col-sm-2 control-label" for="input-manufacturer">
+                     <?php echo $entry_manufacturer; ?>
+                  </label>
+                  <div class="col-sm-4">
+                      <input type="text" name="manufacturer" placeholder="<?php echo $entry_manufacturer; ?>" id="input-manufacturer" class="form-control" />
+                      <input type="hidden" name="manufacturer_id"/> 
+                      <?php if ((isset($error_manufacturer_id))) { ?>
+                      <div class="text-danger"><?php echo $error_manufacturer_id; ?></div>
+                      <?php } ?>
+                      
+                  </div>
+                  <div class="col-sm-4">
+                      <!-- Boutons Ajouter, Modifier et Supprimer -->
+                     <div class="input-group-custom">
+                  
+                      <button type="button" id="btn-add-manufacturer" class="btn btn-success" title="{{ button_add }}">
+                          <i class="fa-solid fa-plus"></i>
+                      </button>
+                      <button type="button" id="btn-edit-manufacturer" class="btn btn-info" title="{{ button_edit }}">
+                      <i class="fa-solid fa-pencil"></i>
+                      </button>
+                      <button type="button" id="btn-delete-manufacturer" class="btn btn-danger" title="{{ button_delete }}">
+                      <i class="fa-solid fa-trash-o"></i>
+                      </button>
+                      </div>
+                  </div>
+              </div>
+              <div class="form-group">
+              <label class="col-sm-2 control-label" for="input-category"><span data-toggle="tooltip" title="<?PHP echo $help_category; ?>"><?PHP echo $entry_category; ?></span></label>
+              <div class="col-sm-5">
+              <input type="hidden" name="category_specific_names_json" value="<?php echo isset($category_specific_names)?htmlspecialchars(json_encode($category_specific_names), ENT_QUOTES, 'UTF-8'):''; ?>" />
+
+                <input type="text" name="category" value="<?PHP echo $product_categories[0]['name_category']??''; ?> <?PHP echo $product_categories[0]['category_id'] ??''; ?>" placeholder="<?PHP echo $entry_category; ?>" id="input-category" class="form-control" />
+                <input type="hidden" id="category-id" name="category_id" value="<?PHP echo $category_id??''; ?>" />
+                <input type="hidden" id="site-id" name="site_id" value="<?PHP echo $site_id??''; ?>" />
+                <input type="hidden" id="category-name" name="category_name" value="<?PHP echo $category_name??''; ?>" />
+
+                category_name
+                <div id="product-category-" class="well well-sm" style="height: 35px; overflow: auto;">
+                <div id="product-category-<?PHP echo $product_categories[0]['category_id']??''; ?>"><?PHP echo $product_categories[0]['name']??''; ?>
+              
+                  <?PHP if (isset($product_categories)) { foreach ($product_categories as $product_category) { ?>
+                    <input type="hidden" name="product_category[]" value="<?PHP echo $product_category['category_id']; ?>" />
+                  
+                  <?PHP } }?>
+                  </div>
+                </div>
+              </div>
+            
+            </div>
+              <div class="form-group">
+              <label class="col-sm-2 control-label" for="input-model"><?php echo $entry_model; ?></label>
+              <div class="col-sm-3">
+                <input type="text" name="model" placeholder="<?php echo $entry_model; ?>" id="input-model" class="form-control" />
+              
+                
+              </div>
+              <div class="col-sm-2">
+              <button id="search-by-model" type="button" onclick="SearchByName('model');" data-toggle="tooltip" title="<?php echo $button_search_by_name; ?>" class="btn btn-primary" style="display: none;">
+              <i class="fa-solid fa-search"></i>
+               </button>
+              
+                  <!-- Case à cocher -->
+                  <label>
+                      <input type="checkbox" id="checkbox-none" onclick="document.getElementById('input-model').value = this.checked ? 'None' : '';" />
+                      None
+                  </label>
+              </div>
+
+            </div>
+            
+                    <?php echo $ocr; ?> 
+                    <div class="col-sm-12">
+                    <div id="search-results"></div>
+                </div>
+     
+      </div>
+      </form>
+    </div>
+  
+  </div>
+ <script type="text/javascript">
+var TEXT_CONFIRM_MANUFACTURER_NOT_FOUND_ADD = '{{ text_confirm_manufacturer_not_found_add|escape('js') }}';
+var TEXT_ENTER_KEYWORD_SEARCH = '{{ text_enter_keyword_search|escape('js') }}';
+var TEXT_ERROR_PREFIX_GENERIC = '{{ text_error_prefix_generic|escape('js') }}';
+var TEXT_UNKNOWN_ERROR_OCCURRED = '{{ text_unknown_error_occurred|escape('js') }}';
+var TEXT_INVALID_MATH_EXPRESSION = '{{ text_invalid_math_expression|escape('js') }}';
+var TEXT_INVALID_PRICE_EXPRESSION = '{{ text_invalid_price_expression|escape('js') }}';
+var TEXT_MANUFACTURER_ADDED_SUCCESS = '{{ text_manufacturer_added_success|escape('js') }}';
+var TEXT_ERROR_ADD_MANUFACTURER_PREFIX = '{{ text_error_add_manufacturer_prefix|escape('js') }}';
+var TEXT_ENTER_MANUFACTURER_NAME = '{{ text_enter_manufacturer_name|escape('js') }}';
+var TEXT_MANUFACTURER_UPDATED_SUCCESS = '{{ text_manufacturer_updated_success|escape('js') }}';
+var TEXT_ERROR_EDIT_MANUFACTURER_PREFIX = '{{ text_error_edit_manufacturer_prefix|escape('js') }}';
+var TEXT_SELECT_MANUFACTURER_AND_NAME = '{{ text_select_manufacturer_and_name|escape('js') }}';
+var TEXT_CONFIRM_DELETE_MANUFACTURER = '{{ text_confirm_delete_manufacturer|escape('js') }}';
+var TEXT_MANUFACTURER_DELETED_SUCCESS = '{{ text_manufacturer_deleted_success|escape('js') }}';
+var TEXT_ERROR_DELETE_MANUFACTURER_PREFIX = '{{ text_error_delete_manufacturer_prefix|escape('js') }}';
+var TEXT_SELECT_MANUFACTURER_DELETE = '{{ text_select_manufacturer_delete|escape('js') }}';
+    
+// Gardez lautocomplétion existante
+$('input[name="category"]').autocomplete({
+   
+
+    'source': function(request, response) {
+        var user_token = document.querySelector('input[name="user_token"]').value;
+        $.ajax({
+            url: 'index.php?route=shopmanager/catalog/category/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
+            dataType: 'json',
+            success: function(json) {
+                response($.map(json, function(item) {
+                    return {
+                        label: item['name'],
+                        value: item['category_id'] 
+                    }
+                }));
+            }
+        });
+    },
+    'select': function(item) {
+        $('input[name="category"]').val('');
+
+        $('#product-category' + item['value']).remove();
+
+        $('#product-category').append('<div id="product-category-' + item['value'] + '"><i class="fa-solid fa-minus-circle"></i> ' + item['label'] + '<input type="hidden" name="product_category[]" value="' + item['value'] + '" /></div>');
+    }
+});
+
+// Nouvelle fonctionnalité pour lentrée manuelle dun category_id
+$('input[name="category"]').on('change', function() {
+    var user_token = document.querySelector('input[name="user_token"]').value;
+ //   var product_id = document.querySelector('input[name="product_id"]').value;
+    var category_id = document.querySelector('input[name="category_id"]').value;
+
+
+  //  showAlertPopup(product_id);
+//alert (user_token); 
+var categoryId = $(this).val().trim();
+
+    if ($.isNumeric(categoryId)) {
+      //  showAlertPopup(categoryId);
+     
+        $.ajax({
+            url: 'index.php?route=shopmanager/catalog/category.getCategoryDetails&category_id=' + encodeURIComponent(categoryId) + '&user_token=' + user_token,
+            dataType: 'json',
+            success: function(json) {
+                if (!json.erreur) {
+                    // Mettez à jour le champ avec le nom de la catégorie
+                    $('input[name="category"]').val(json.name + ' (' + categoryId +')');
+                    $('#category_id').val(categoryId);
+
+                    // Supprimez les catégories actuelles
+                    $('#product-category').empty();
+
+                    // Utilisez le chemin complet fourni par le JSON
+                    var fullPath = json.path + ' &gt; ' + json.name;
+                    fullPath += '<input type="hidden" name="product_category[]" value="' + categoryId + '" />';
+                    $.each(json.parents, function(index, parent) {
+                    
+
+                        // Ajoutez le chemin complet jusquà ce parent
+                 //       $.each(json.parents.slice(0, index + 1), function(i, p) {
+                            fullPath += '<input type="hidden" name="product_category[]" value="' + parent.id + '" />';
+                 //       });
+
+                    });
+                    $('#product-category').append('<div id="product-category-' + categoryId + '">' + fullPath + '</div>');
+
+                    if(category_id !== categoryId) {
+                    
+                     // generateProductSpecifics(categoryId);
+                    }
+
+                } else {
+                    //showAlertPopup('Catégorie non trouvée ou le chemin est manquant.');
+                }
+            }
+        });
+    }
+});
+
+// Gestion de la suppression des catégories
+$('#product-category').on('click', '.fa-minus-circle', function() {
+    $(this).parent().remove();
+});
+
+
+
+// Manufacturer
+$('input[name=\'manufacturer\']').autocomplete({
+  
+	'source': function(request, response) {
+      // console.log('sourcerequest:', request);
+        var user_token = document.querySelector('input[name="user_token"]').value;
+		$.ajax({
+			url: 'index.php?route=catalog/manufacturer/autocomplete&user_token=' + user_token + '&filter_name=' +  encodeURIComponent(request),
+			dataType: 'json',
+			success: function(json) {
+				json.unshift({
+					manufacturer_id: 0,
+					name: 'None'
+				});
+
+				response($.map(json, function(item) {
+					return {
+						label: item['name'],
+						value: item['manufacturer_id']
+					}
+				}));
+			}
+		});
+	},
+	'select': function(item) {
+     //   console.log('select:', item['label']);
+		$('input[name=\'manufacturer\']').val(item['label']);
+		$('input[name=\'manufacturer_id\']').val(item['value']);
+	}
+});
+
+
+</script>
+{{ footer }}
+<?php
+
+//phpinfo(); 
+?>

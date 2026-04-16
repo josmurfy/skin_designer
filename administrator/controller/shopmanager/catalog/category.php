@@ -14,9 +14,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function index(): void {
-	$lang = $this->load->language('shopmanager/catalog/category');
-	$data = $data ?? [];
-	$data += $lang;
+	$this->load->language('shopmanager/catalog/category');
+	$data = [];
+	
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -91,9 +91,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	* @return void
 	*/
  	public function list(): void {
-		$lang = $this->load->language('shopmanager/catalog/category');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category');
+		$data = [];
+		
 
 		$this->response->setOutput($this->load->controller('shopmanager/catalog/category.getList'));
 	}
@@ -355,9 +355,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function form(): void {
-		$lang = $this->load->language('shopmanager/catalog/category');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category');
+		$data = [];
+		
 
 		$this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -634,9 +634,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function save(): void {
-		$lang = $this->load->language('shopmanager/catalog/category');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category');
+		$data = [];
+		
 
 		$json = [];
 
@@ -727,9 +727,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function repair(): void {
-		$lang = $this->load->language('shopmanager/catalog/category');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category');
+		$data = [];
+		
 
 		$json = [];
 
@@ -755,9 +755,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
 	public function delete(): void {
-		$lang = $this->load->language('shopmanager/catalog/category');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category');
+		$data = [];
+		
 
 		$json = [];
 
@@ -827,9 +827,9 @@ class Category extends \Opencart\System\Engine\Controller {
 	}
 
 	public function getDetails() {
-		$lang = $this->load->language('shopmanager/catalog/category');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/catalog/category');
+		$data = [];
+		
 
 		$json = [];
 
@@ -862,9 +862,9 @@ class Category extends \Opencart\System\Engine\Controller {
 		$this->response->setOutput(json_encode($json));
 	}
 	public function uploadFromLink() {
-        $lang = $this->load->language('shopmanager/catalog/category');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category');
+        $data = [];
+        
 
 		$json = [];
 

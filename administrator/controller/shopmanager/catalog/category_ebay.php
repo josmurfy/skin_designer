@@ -5,9 +5,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     private $error = array();
 
     public function index(): void {
-        $lang = $this->load->language('shopmanager/catalog/category_ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_ebay');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -17,9 +17,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     public function add() {
-        $lang = $this->load->language('shopmanager/catalog/category_ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_ebay');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -51,9 +51,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     public function edit() {
-        $lang = $this->load->language('shopmanager/catalog/category_ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_ebay');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -85,9 +85,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     public function delete() {
-        $lang = $this->load->language('shopmanager/catalog/category_ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_ebay');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -121,9 +121,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
     }
 
     public function repair() {
-        $lang = $this->load->language('shopmanager/catalog/category_ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_ebay');
+        $data = [];
+        
 
         $this->document->setTitle(($lang['heading_title'] ?? ''));
 
@@ -905,9 +905,9 @@ class CategoryEbay extends \Opencart\System\Engine\Controller {
         }
     }
     public function uploadFromLink() {
-        $lang = $this->load->language('shopmanager/catalog/category_ebay');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/catalog/category_ebay');
+        $data = [];
+        
         $this->load->model('shopmanager/catalog/category_ebay');
         $json = array();
 

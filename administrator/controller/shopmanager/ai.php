@@ -3,9 +3,9 @@ namespace Opencart\Admin\Controller\Shopmanager;
 
 class Ai extends \Opencart\System\Engine\Controller {
     public function prompt_ai(): void {
-        $lang = $this->load->language('shopmanager/ai');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ai');
+        $data = [];
+        
         $this->load->model('shopmanager/ai');
 
         $json = [];
@@ -56,9 +56,9 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
     public function prompt_ai_image(): void {
-        $lang = $this->load->language('shopmanager/ai');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ai');
+        $data = [];
+        
         $this->load->model('shopmanager/ai');
 
         $json = [];
@@ -96,9 +96,9 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
     public function getProductSpecific(): void {
-        $lang = $this->load->language('shopmanager/ai');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ai');
+        $data = [];
+        
         $this->load->model('shopmanager/ai');
         $this->load->model('shopmanager/catalog/category');
         $this->load->model('shopmanager/catalog/product');
@@ -160,9 +160,9 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
       public function translate(): void {
-        $lang = $this->load->language('shopmanager/ai');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ai');
+        $data = [];
+        
         $this->load->model('shopmanager/ai');
 
         $json = [];
@@ -220,9 +220,9 @@ class Ai extends \Opencart\System\Engine\Controller {
     }
 
     public function getMadeInCountry(): void {
-        $lang = $this->load->language('shopmanager/ai');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/ai');
+        $data = [];
+        
         $this->load->model('shopmanager/ai');
         $this->load->model('shopmanager/catalog/product');
 

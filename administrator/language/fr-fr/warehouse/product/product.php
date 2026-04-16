@@ -1,0 +1,371 @@
+<?php
+// Original: shopmanager/catalog/product.php
+// En-tête
+$_['heading_title']          = 'Produits';
+
+// Texte
+$_['text_success']           = 'Succès : Vous avez modifié les produits !';
+$_['text_list']              = 'Liste des produits';
+$_['text_add']               = 'Ajouter un produit';
+$_['text_edit']              = 'Modifier le produit';
+$_['text_plus']              = '+';
+$_['text_minus']             = '-';
+$_['text_default']           = 'Par défaut';
+$_['text_option']            = 'Option';
+$_['text_option_value']      = 'Valeur de l\'option';
+$_['text_percent']           = 'Pourcentage';
+$_['text_amount']            = 'Montant fixe';
+$_['text_form']              = 'Formulaire';
+$_['text_model']             = 'Modèle';
+$_['text_price']             = 'Prix';
+$_['text_stock']             = 'Stock';
+$_['text_specification']     = 'Spécification';
+$_['text_upload_images']     = 'Télécharger des images';
+$_['text_image']             = 'Image';
+$_['text_image_additional']  = 'Images supplémentaires';
+$_['text_image_alt']         = 'Image du produit';
+$_['text_drop_here']         = 'Déposez votre image principale ici ou cliquez pour sélectionner';
+$_['text_drop_additional_here'] = 'Déposez vos images supplémentaires ici ou cliquez pour sélectionner';
+$_['text_condition_name']    = 'Nom de la condition';
+$_['text_condition_id']      = 'ID de la condition';
+$_['text_url']               = 'URL';
+$_['text_none']              = 'Aucun';
+$_['text_yes']               = 'Oui';
+$_['text_no']                = 'Non';
+$_['text_enabled']           = 'Activé';
+$_['text_disabled']          = 'Désactivé';
+$_['text_select']            = 'Sélectionner';
+$_['text_option_add']        = 'Ajouter une option';
+$_['text_fixed']             = 'Fixe';
+$_['text_percentage']        = 'Pourcentage';
+$_['text_points']            = 'Points';
+$_['text_reward']            = 'Récompense';
+$_['text_report']            = 'Rapport';
+$_['text_subtract']          = 'Soustraire';
+
+// Colonne
+$_['column_name']            = 'Nom du produit';
+$_['column_model']           = 'Modèle';
+$_['column_image']           = 'Image';
+$_['column_price']           = 'Prix';
+$_['column_price_with_shipping']           = 'Prix avec shipping';
+$_['column_quantity']        = 'Quantité';
+$_['column_status']          = 'Statut';
+$_['column_action']          = 'Action';
+$_['column_condition']          = 'Condition';
+$_['column_product_id']          = 'Product ID';
+$_['column_specifics']       = 'Spécificités';
+$_['column_found_value']     = 'Valeur trouvée';
+$_['column_actual_value']    = 'Valeur actuelle';
+
+// Entrée
+$_['entry_name']             = 'Nom du produit';
+$_['entry_description']      = 'Description';
+$_['entry_meta_title']       = 'Titre de la balise méta';
+$_['entry_meta_keyword']     = 'Mots-clés de la balise méta';
+$_['entry_meta_description'] = 'Description de la balise méta';
+$_['entry_keyword']          = 'URL SEO';
+$_['entry_model']            = 'Modèle';
+$_['entry_sku']              = 'UGS';
+$_['entry_upc']              = 'CUP';
+$_['entry_ean']              = 'EAN';
+$_['entry_jan']              = 'JAN';
+$_['entry_isbn']             = 'ISBN';
+$_['entry_mpn']              = 'MPN';
+$_['entry_location']         = 'Emplacement';
+$_['entry_shipping']         = 'Nécessite une livraison';
+$_['entry_manufacturer']     = 'Fabricant';
+$_['entry_store']            = 'Magasins';
+$_['entry_date_available']   = 'Date de disponibilité';
+$_['entry_quantity']         = 'Quantité';
+$_['entry_minimum']          = 'Quantité minimale';
+$_['entry_stock_status']     = 'Statut hors stock';
+$_['entry_price']            = 'Prix';
+$_['entry_price_with_shipping']            = 'Prix avec shipping';
+$_['entry_shipping_cost']    = 'Frais de livraison';
+$_['entry_rabate']           = 'Rabais';
+$_['entry_tax_class']        = 'Classe de taxe';
+$_['entry_points']           = 'Points';
+$_['entry_option_points']    = 'Points';
+$_['entry_subtract']         = 'Soustraire du stock';
+$_['entry_weight_class']     = 'Classe de poids';
+$_['entry_weight']           = 'Poids';
+$_['entry_dimension']        = 'Dimensions (L x l x H)';
+$_['entry_length_class']     = 'Classe de longueur';
+$_['entry_length']           = 'Longueur';
+$_['entry_width']            = 'Largeur';
+$_['entry_height']           = 'Hauteur';
+$_['entry_image']            = 'Image';
+$_['entry_additional_image'] = 'Images supplémentaires';
+$_['entry_customer_group']   = 'Groupe de clients';
+$_['entry_date_start']       = 'Date de début';
+$_['entry_date_end']         = 'Date de fin';
+$_['entry_priority']         = 'Priorité';
+$_['entry_attribute']        = 'Attribut';
+$_['entry_attribute_group']  = 'Groupe d\'attributs';
+$_['entry_text']             = 'Texte';
+$_['entry_option']           = 'Option';
+$_['entry_option_value']     = 'Valeur de l\'option';
+$_['entry_required']         = 'Requis';
+$_['entry_status']           = 'Statut';
+$_['entry_sort_order']       = 'Ordre de tri';
+$_['entry_category']         = 'Catégories';
+$_['entry_filter']           = 'Filtres';
+$_['entry_download']         = 'Téléchargements';
+$_['entry_related']          = 'Produits associés';
+$_['entry_tag']              = 'Étiquettes du produit';
+$_['entry_reward']           = 'Points de récompense';
+$_['entry_layout']           = 'Disposition de remplacement';
+$_['entry_recurring']        = 'Profil récurrent';
+$_['entry_type']             = 'Type';
+$_['entry_subscription']     = 'Plan d\'abonnement';
+$_['entry_condition_id']     = 'Condition';
+$_['entry_condition']        = 'Condition';
+$_['entry_color']            = 'Couleur';
+$_['entry_description_supp'] = 'Description supplémentaire';
+$_['entry_condition_supp']   = 'Conditions supplémentaires';
+$_['entry_included_accessories'] = 'Accessoires inclus';
+$_['entry_limit']            = 'Éléments par page';
+$_['entry_specifics']        = 'Spécificités';
+$_['entry_sources']          = 'Sources';
+$_['entry_external_images']  = 'Images externes';
+$_['entry_main_image']       = 'Image principale';
+$_['entry_additional_images'] = 'Images supplémentaires';
+$_['entry_image_url']        = 'URL de l\'image';
+$_['entry_image_file']       = 'Fichier image';
+$_['entry_image_alt']        = 'Texte alternatif de l\'image';
+$_['entry_made_in_country']  = 'Fabriqué dans le pays';
+$_['entry_image_principal']  = 'Image principale';
+$_['entry_sourcecode']       = 'Code source ou lien';
+$_['entry_marketplace_account_id'] = 'Compte Marketplace';
+$_['entry_ebay_search']      = 'Recherche eBay';
+$_['entry_weight_oz']        = 'Poids oz';
+$_['entry_unallocated_quantity'] = 'Non alloué';
+$_['entry_trial_price']      = 'Prix d\'essai';
+$_['entry_special']          = 'Spécial';
+$_['entry_product_code']     = 'Code produit';
+
+// Aide
+$_['help_keyword']           = 'N\'utilisez pas d\'espaces, remplacez les espaces par des tirets et assurez-vous que l\'URL SEO est unique globalement.';
+$_['help_sku']               = 'Unité de gestion des stocks';
+$_['help_upc']               = 'Code universel des produits';
+$_['help_ean']               = 'Numéro d\'article européen';
+$_['help_jan']               = 'Numéro d\'article japonais';
+$_['help_isbn']              = 'Numéro international normalisé du livre';
+$_['help_mpn']               = 'Numéro de pièce du fabricant';
+$_['help_manufacturer']      = '(Autocomplétion)';
+$_['help_minimum']           = 'Forcer une quantité minimale commandée';
+$_['help_stock_status']      = 'Statut affiché lorsqu\'un produit est hors stock';
+$_['help_points']            = 'Nombre de points nécessaires pour acheter cet article. Si vous ne souhaitez pas que ce produit soit acheté avec des points, laissez à 0.';
+$_['help_category']          = '(Autocomplétion)';
+$_['help_filter']            = '(Autocomplétion)';
+$_['help_download']          = '(Autocomplétion)';
+$_['help_related']           = '(Autocomplétion)';
+$_['help_tag']               = 'Séparées par des virgules';
+$_['help_option']            = 'Aide pour les options';
+$_['help_points']            = 'Nombre de points nécessaires pour acheter cet article. Si vous ne souhaitez pas que ce produit soit acheté avec des points, laissez à 0.';
+$_['help_product_code']      = 'Code produit (autocomplétion)';
+
+// Erreur
+$_['error_warning']          = 'Attention : Veuillez vérifier le formulaire attentivement pour les erreurs !';
+$_['error_permission']       = 'Attention : Vous n\'avez pas l\'autorisation de modifier les produits !';
+$_['error_name']             = 'Le nom du produit doit contenir entre 3 et 255 caractères !';
+$_['error_meta_title']       = 'Le titre de la méta doit contenir entre 3 et 255 caractères !';
+$_['error_model']            = 'Le modèle du produit doit contenir entre 1 et 64 caractères !';
+$_['error_keyword']          = 'L\'URL SEO est déjà utilisée !';
+
+// Boutons
+$_['button_save']            = 'Enregistrer';
+$_['button_cancel']          = 'Annuler';
+$_['button_edit']            = 'Modifier';
+$_['button_clear']           = 'Effacer';
+$_['button_remove']          = 'Supprimer';
+$_['button_image_add']       = 'Ajouter une image';
+$_['button_image_upload']    = 'Télécharger une image';
+$_['button_google_search']   = 'Rechercher le nom et l\'UPC sur Google';
+$_['button_add_specifics']   = 'Ajouter des spécificités';
+$_['button_get_specifics']   = 'Obtenir des spécificités';
+$_['button_regenerate_specifics'] = 'Régénérer les spécificités';
+$_['button_ai_suggest_entry_name'] = 'Recherche IA pour le meilleur nom de produit';
+$_['button_ai_description_supp'] = 'Recherche IA pour la description supplémentaire';
+$_['button_attribute_add']   = 'Ajouter un attribut';
+$_['button_option_value_add'] = 'Ajouter une valeur d\'option';
+$_['button_discount_add']    = 'Ajouter une remise';
+$_['button_subscription_add'] = 'Ajouter un abonnement';
+$_['button_upload']          = 'Télécharger';
+$_['button_download']        = 'Télécharger';
+
+// ====================
+// PLACEHOLDERS
+// ====================
+$_['placeholder_order_id_start'] = 'ID Commande Début';
+$_['placeholder_order_id_end'] = 'ID Commande Fin';
+$_['placeholder_price'] = 'Entrer le prix';
+$_['placeholder_ebay_value'] = 'Entrer la valeur eBay';
+$_['placeholder_search_stores'] = 'Rechercher des magasins et marchés en tapant le nom ici';
+
+// ====================
+// INFOBULLES DES BOUTONS
+// ====================
+$_['button_reset_filters'] = 'Réinitialiser les filtres';
+$_['button_transfer'] = 'Transférer la quantité non allouée';
+$_['button_ai_conditions'] = 'IA Générer conditions additionnelles';
+$_['button_ai_accessories'] = 'IA Générer accessoires inclus';
+$_['button_get_ebay'] = 'Obtenir la valeur eBay';
+$_['button_confirm_all'] = 'Confirmer toutes les sources';
+$_['button_unconfirm_all'] = 'Déconfirmer toutes les sources';
+$_['button_verify_specifics'] = 'Vérifier toutes les spécificités';
+$_['button_search'] = 'Rechercher';
+$_['button_open'] = 'Ouvrir';
+$_['button_add_secondary'] = 'Ajouter en secondaire';
+$_['button_print_qty_label'] = 'Imprimer étiquette quantité';
+$_['button_print_label'] = 'Imprimer étiquette';
+$_['button_update_selected_marketplace'] = 'Mettre à jour eBay sélectionnés';
+
+// ====================
+// MESSAGES JAVASCRIPT
+// ====================
+$_['confirm_sync_ebay'] = 'Ceci synchronisera tous les produits avec eBay. Cela peut prendre plusieurs minutes pour 5000+ produits. Continuer?';
+$_['error_sync_url'] = 'Erreur: URL de synchronisation non configurée';
+$_['confirm_are_you_sure'] = 'Êtes-vous sûr?';
+$_['error_occurred'] = 'Une erreur est survenue';
+$_['alert_select_product'] = 'Veuillez sélectionner au moins un produit';
+$_['alert_enter_location'] = 'Veuillez entrer une localisation';
+$_['confirm_product_found'] = 'Produit trouvé dans la localisation: %s\nQuantité: %s\n\nAjouter ce produit à la liste?';
+$_['alert_location_required'] = 'La localisation ne peut pas être vide';
+$_['alert_valid_quantity'] = 'Veuillez entrer une quantité valide';
+$_['alert_valid_unallocated'] = 'Veuillez entrer une quantité non allouée valide';
+$_['confirm_transfer'] = 'Confirmer le transfert de quantité?';
+$_['error_update'] = 'Erreur lors de la mise à jour';
+$_['error_api_call'] = 'Erreur lors de l\'appel à l\'API';
+$_['error_token_not_found'] = 'Erreur: Token non trouvé';
+$_['alert_location_not_empty_if_qty'] = 'La localisation ne peut pas être vide si la quantité n\'est pas à 0';
+$_['error_update_location'] = 'Erreur lors de la mise à jour de la localisation';
+$_['error_update_quantity'] = 'Erreur lors de la mise à jour de la quantité';
+$_['error_update_ebay'] = 'Erreur lors de la mise à jour du listing eBay. Veuillez réessayer.';
+$_['error_update_insufficient_images'] = 'Impossible de mettre à jour: DB a %d image(s), eBay en a %d. Complétez d\'abord vos images!';
+$_['text_update_marketplace_selected'] = 'Mise à jour des listings eBay sélectionnés';
+$_['text_update_marketplace_no_selection'] = 'Veuillez sélectionner au moins un produit.';
+$_['text_update_marketplace_skip_not_listed'] = 'Produit #%s ignoré : non listé sur eBay.';
+$_['text_update_marketplace_skip_zero_quantity'] = 'Produit #%s ignoré : quantity à 0.';
+$_['text_update_marketplace_processing'] = 'Traitement du produit #%s...';
+$_['text_update_marketplace_success'] = 'Produit #%s mis à jour avec succès.';
+$_['text_update_marketplace_error'] = 'Produit #%s en erreur : %s';
+$_['text_update_marketplace_done'] = 'Mise à jour eBay sélectionnée terminée.';
+$_['error_update_product'] = 'Erreur lors de la mise à jour du produit. Veuillez réessayer.';
+$_['error_occurred'] = 'Une erreur s\'est produite';
+$_['error_select_not_exist'] = 'Erreur: L\'élément select n\'existe pas pour le produit';
+$_['error_ajax'] = 'Erreur AJAX';
+$_['error_upload'] = 'Erreur d\'upload';
+$_['error_sources'] = 'Erreur de sources pour le produit #%s. Veuillez vérifier manuellement.';
+$_['confirm_set_sources'] = 'Définir les sources pour le produit #%s?';
+$_['alert_enter_value'] = 'Veuillez saisir une valeur avant de continuer.';
+$_['error_unknown'] = 'Erreur inconnue survenue.';
+$_['confirm_unsaved_changes'] = 'Des modifications ont été effectuées. Si vous quittez cette page, les modifications seront perdues. Voulez-vous continuer ?';
+$_['alert_enter_location_print'] = 'Veuillez saisir une location pour imprimer l\'étiquette.';
+$_['alert_no_sku'] = 'Aucun SKU détecté pour l\'impression.';
+$_['success_manufacturer_added'] = 'Le fabricant a été ajouté avec succès !';
+$_['alert_enter_manufacturer_name'] = 'Veuillez entrer un nom de fabricant.';
+$_['success_manufacturer_updated'] = 'Le fabricant a été modifié avec succès !';
+$_['alert_select_manufacturer_name'] = 'Veuillez sélectionner un fabricant et entrer un nom.';
+$_['confirm_delete_manufacturer'] = 'Êtes-vous sûr de vouloir supprimer ce fabricant ?';
+$_['success_manufacturer_deleted'] = 'Le fabricant a été supprimé avec succès !';
+$_['alert_select_manufacturer_delete'] = 'Veuillez sélectionner un fabricant à supprimer.';
+$_['error_image_upload'] = 'Erreur lors du téléchargement de l\'image';
+$_['error_server_response'] = 'Erreur serveur : Format de réponse invalide. Vérifiez la console pour plus de détails.';
+$_['error_upload_status'] = 'Échec du téléchargement avec le statut';
+$_['error_network_upload'] = 'Erreur réseau lors du téléchargement';
+$_['error_manufacturer'] = 'Erreur';
+
+// ====================
+// JAVASCRIPT - ADDITIONNEL
+// ====================
+$_['text_location_placeholder'] = 'Entrez la localisation';
+$_['text_location_empty'] = 'La localisation ne peut pas être vide';
+$_['text_error'] = 'Erreur';
+$_['text_upload_error'] = 'Erreur de téléchargement';
+
+// ====================
+// CLÉS MANQUANTES (ajoutées)
+// ====================
+$_['button_check_all']              = 'Tout cocher';
+$_['button_disable']                = 'Désactiver';
+$_['button_enable']                 = 'Activer';
+$_['button_feed']                   = 'Alimenter';
+$_['button_list_on_marketplace']    = 'Lister sur le Marketplace';
+$_['button_print']                  = 'Imprimer le rapport';
+$_['button_product_search']         = 'Rechercher un produit';
+$_['button_relist_on_marketplace']  = 'Relister sur le Marketplace';
+$_['button_end_listing']            = 'Terminer l\'annonce';
+$_['text_end_selected']             = 'Terminer Sélectionnés';
+$_['button_end_selected']           = 'Terminer Sélectionnés';
+$_['button_feed_selected']          = 'Alimenter Sélectionnés';
+$_['button_list_selected']          = 'Lister Sélectionnés';
+$_['button_sync_qty_all']           = 'Syncer toutes les quantités eBay';
+$_['button_remove_from_marketplace']= 'Retirer du Marketplace';
+$_['button_update_marketplace']     = 'Mettre à jour le Marketplace';
+$_['column_condition_id']           = 'Condition';
+$_['column_location']               = 'Localisation';
+$_['column_made_in_country_id']     = 'COO';
+$_['column_marketplace_item_id']    = 'Marketplace';
+$_['column_sources']                = 'Sources';
+$_['column_unallocated_quantity']   = 'QTÉ NA';
+$_['entry__search']                 = 'Recherche Marketplace';
+$_['entry_category_id']             = 'ID de catégorie';
+$_['entry_marketplace']             = 'Marketplace';
+$_['entry_product_id']              = 'ID produit';
+$_['error_category_not_leaf']       = 'La catégorie doit être un nœud feuille !';
+$_['error_height']                  = 'La hauteur doit être un nombre positif et ne pas dépasser 30 !';
+$_['error_length']                  = 'La longueur doit être un nombre positif et ne pas dépasser 30 !';
+$_['error_location']                = 'La localisation ne peut pas être vide si une quantité est disponible';
+$_['error_made_in_country_id']      = 'Le pays d\'origine doit être défini !';
+$_['error_manufacturer_id']         = 'Le fabricant doit être défini !';
+$_['error_shipping_cost']           = 'Doit être un nombre positif';
+$_['error_weight']                  = 'Le poids doit être un nombre positif et ne pas dépasser 100 !';
+$_['error_width']                   = 'La largeur doit être un nombre positif et ne pas dépasser 30 !';
+$_['placeholder_search']            = 'Collez le code source ou le lien ici';
+$_['placeholder_sourcecode']        = 'Collez le code source ou le lien ici';
+$_['tab_product_search']            = 'Recherche';
+$_['tab_specifics']                 = 'Spécificités';
+$_['tab_quick']                     = 'Rapide';
+$_['text_category_id']              = 'ID de catégorie';
+$_['text_drag_drop']                = 'Glissez-déposez une image ici ou cliquez pour sélectionner une image.';
+$_['text_error_listing']            = 'Erreur de listage';
+$_['text_feed_all_products']        = 'Alimenter tous les produits';
+$_['text_filter_invalid_price']     = 'Prix invalide';
+$_['text_filter_name_length']       = 'Longueur du nom';
+$_['text_image_upload']             = 'Télécharger une image';
+$_['text_keyword']                  = 'N\'utilisez pas d\'espaces, remplacez-les par des - et assurez-vous que l\'URL SEO est unique globalement.';
+$_['text_list_all_products']        = 'Lister tous les produits';
+$_['text_listed']                   = 'Listé';
+$_['text_missing_image_file']       = 'Fichier image manquant';
+$_['text_name_empty']               = 'Nom vide';
+$_['text_name_gt_80']               = 'Nom > 80 caractères';
+$_['text_no_data']                  = 'Aucune information produit disponible pour cet UPC.';
+$_['text_not_listed']               = 'Non listé';
+$_['text_price_negative']           = 'Prix < 0';
+$_['text_recognized_text']          = 'Texte reconnu';
+$_['text_sources_error']            = 'Erreur de sources';
+$_['text_sources_not_set']          = 'Sources non définies';
+$_['text_sources_set']              = 'Sources définies';
+$_['text_specifics_error']          = 'Erreur de spécificités';
+$_['text_specifics_na']             = 'Par défaut';
+$_['text_specifics_not_set']        = 'Non défini';
+$_['text_specifics_set']            = 'Défini';
+$_['text_url_sold']                 = 'URL VENDU';
+
+// Clés product_form.twig (ajoutées)
+$_['text_none']             = 'Aucun';
+$_['text_translate_all']    = 'Traduire dans toutes les langues';
+$_['text_ai_suggestion']    = 'Suggestion IA';
+$_['text_all_sold']         = 'Tout vendu';
+$_['text_view_website']     = 'Voir le site';
+$_['text_view_website_sold']= 'Voir le site - Vendus';
+$_['text_product_id_missing'] = 'L\'ID produit est manquant';
+$_['text_error_importing_ebay_images_prefix'] = 'Erreur lors de l\'import des images eBay : ';
+$_['text_error_deleting_image'] = 'Erreur lors de la suppression de l\'image';
+$_['text_translation_function_not_available'] = 'Fonction de traduction non disponible';
+$_['text_no_fields_found_translate'] = 'Aucun champ trouvé à traduire';
+$_['text_translation_completed_fields'] = 'Traduction terminée pour %s champs';
+$_['text_pagination']                   = 'Affichage de %d à %d sur %d (%d pages)';
+$_['button_uppercase'] = 'Capitaliser';

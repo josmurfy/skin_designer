@@ -9,9 +9,9 @@ class CardManufacturer extends \Opencart\System\Engine\Controller {
     // INDEX – list view
     // ------------------------------------------------------------------
     public function index(): void {
-        $lang = $this->load->language('shopmanager/card/card_manufacturer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_manufacturer');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $this->load->model('shopmanager/card/card_manufacturer');
 
@@ -24,9 +24,9 @@ class CardManufacturer extends \Opencart\System\Engine\Controller {
     public function add(): void {
         $json = [];
 
-        $lang = $this->load->language('shopmanager/card/card_manufacturer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_manufacturer');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $this->load->model('shopmanager/card/card_manufacturer');
 
@@ -74,9 +74,9 @@ class CardManufacturer extends \Opencart\System\Engine\Controller {
     public function edit(): void {
         $json = [];
 
-        $lang = $this->load->language('shopmanager/card/card_manufacturer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_manufacturer');
+        $data = [];
+        
         $this->document->setTitle(($lang['heading_title'] ?? ''));
         $this->load->model('shopmanager/card/card_manufacturer');
 
@@ -126,9 +126,9 @@ class CardManufacturer extends \Opencart\System\Engine\Controller {
     public function delete(): void {
         $json = [];
 
-        $lang = $this->load->language('shopmanager/card/card_manufacturer');
-        $data = $data ?? [];
-        $data += $lang;
+        $this->load->language('shopmanager/card/card_manufacturer');
+        $data = [];
+        
         $this->load->model('shopmanager/card/card_manufacturer');
 
         if (!$this->user->hasPermission('modify', 'shopmanager/card/card_manufacturer')) {

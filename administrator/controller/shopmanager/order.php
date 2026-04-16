@@ -14,9 +14,9 @@ class Order extends \Opencart\System\Engine\Controller {
 	 */
 	public function index(): void {
 		
-		$lang = $this->load->language('shopmanager/order');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/order');
+		$data = [];
+		
 
         	
 		if (isset($this->request->get['filter_date_start'])) {
@@ -107,9 +107,9 @@ class Order extends \Opencart\System\Engine\Controller {
 	 * @return void
 	 */
  	public function list(): void {
-		$lang = $this->load->language('shopmanager/order');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/order');
+		$data = [];
+		
 
 		$this->response->setOutput($this->load->controller('shopmanager/order.getList'));
 	}
@@ -280,9 +280,9 @@ class Order extends \Opencart\System\Engine\Controller {
 	public function updateQuantity(): void {
 		$json = [];
 
-		$lang = $this->load->language('shopmanager/order');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/order');
+		$data = [];
+		
 
 		if (!$this->user->hasPermission('modify', 'shopmanager/order')) {
 			$json['error']['warning'] = ($lang['error_permission'] ?? '');
@@ -317,9 +317,9 @@ class Order extends \Opencart\System\Engine\Controller {
 	public function undoProductQuantity(): void {
 		$json = [];
 
-		$lang = $this->load->language('shopmanager/order');
-		$data = $data ?? [];
-		$data += $lang;
+		$this->load->language('shopmanager/order');
+		$data = [];
+		
 
 		if (!$this->user->hasPermission('modify', 'shopmanager/order')) {
 			$json['error']['warning'] = ($lang['error_permission'] ?? '');
